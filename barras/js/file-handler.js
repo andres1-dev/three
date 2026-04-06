@@ -43,31 +43,39 @@ const FileHandler = {
   },
 
   readFile(file) {
+    console.log('📖 Iniciando lectura del archivo:', file.name, `(${(file.size / 1024 / 1024).toFixed(2)} MB)`);
     const reader = new FileReader();
 
     reader.onload = (e) => {
       try {
+        console.log('✅ Archivo cargado en memoria, parseando Excel...');
         const data = new Uint8Array(e.target.result);
         const workbook = XLSX.read(data, { type: 'array' });
         
+        console.log('📊 Hojas encontradas:', workbook.SheetNames);
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
           header: 1,
           defval: null 
         });
 
+        console.log('📋 Filas totales en Excel:', jsonData.length);
         this.parsedData = this.extractColumns(jsonData);
+        
+        console.log('✅ Datos extraídos:', this.parsedData.length, 'registros');
         
         // Completar paso 1
         UIController.completeStep1(this.parsedData.length);
         
         // Pequeña pausa para animación
+        console.log('⏳ Iniciando proceso de carga en 500ms...');
         setTimeout(() => {
+          console.log('🚀 Llamando a uploadToDatabase()...');
           uploadToDatabase();
         }, 500);
         
       } catch (error) {
-        console.error('Error al leer el archivo:', error);
+        console.error('❌ Error al leer el archivo:', error);
         
         // Mostrar error en el timeline
         const statusDiv = document.getElementById('trackingStatus');
@@ -84,7 +92,7 @@ const FileHandler = {
     };
 
     reader.onerror = () => {
-      console.error('Error al leer el archivo');
+      console.error('❌ Error al leer el archivo');
       
       // Mostrar error en el timeline
       const statusDiv = document.getElementById('trackingStatus');
@@ -99,6 +107,7 @@ const FileHandler = {
       document.getElementById('actionFooter').style.display = 'block';
     };
 
+    console.log('📂 Leyendo archivo como ArrayBuffer...');
     reader.readAsArrayBuffer(file);
   },
 

@@ -3,6 +3,8 @@
 const DatabaseUploader = {
   async uploadCSV(csvContent) {
     try {
+      const startTime = Date.now();
+      
       // Iniciar paso 4
       UIController.startStep4();
       
@@ -23,6 +25,8 @@ const DatabaseUploader = {
         });
       }
 
+      console.log(`Subiendo ${records.length.toLocaleString()} registros a la base de datos...`);
+
       // Llamar a la Edge Function para subir
       const response = await fetch(`${AdminConfig.FUNCTIONS_URL}/upload-barcodes`, {
         method: 'POST',
@@ -33,11 +37,22 @@ const DatabaseUploader = {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al subir registros');
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        let errorMessage;
+        try {
+          const error = JSON.parse(errorText);
+          errorMessage = error.error || `HTTP ${response.status}`;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${errorText.substring(0, 200)}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const results = await response.json();
+      
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`✅ Subida completada en ${elapsed}s - Exitosos: ${results.success.toLocaleString()}`);
       
       // Actualizar progreso al 100%
       UIController.updateStep4Progress(100);
@@ -94,16 +109,24 @@ const DatabaseUploader = {
 
 // Función global para subir (ahora automática)
 async function uploadToDatabase() {
+  console.log('🔄 uploadToDatabase() iniciada');
+  
   if (!FileHandler.parsedData) {
-    console.error('No hay datos para subir');
+    console.error('❌ No hay datos para subir');
     return;
   }
 
+  console.log('📦 Datos disponibles:', FileHandler.parsedData.length, 'registros');
+
   try {
     // Extraer solo los barcodes del Excel para verificar
+    console.log('🔍 Extrayendo barcodes del Excel...');
     const barcodesToCheck = FileHandler.parsedData.map(r => r.barcode);
+    console.log('✅ Barcodes extraídos:', barcodesToCheck.length);
+    
+    console.log('🌐 Llamando a DataValidator.loadExistingBarcodes()...');
     const existingCount = await DataValidator.loadExistingBarcodes(barcodesToCheck);
-    console.log(`Encontrados ${existingCount} barcodes duplicados`);
+    console.log(`✅ Encontrados ${existingCount} barcodes duplicados`);
 
     const validatedData = DataValidator.validate(FileHandler.parsedData);
     const stats = DataValidator.getStats(validatedData);

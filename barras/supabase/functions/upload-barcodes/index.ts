@@ -44,13 +44,17 @@ Deno.serve(async (req) => {
       errors: []
     }
 
-    // Insertar en lotes de 500
-    const batchSize = 500
+    // Insertar en lotes de 250 (optimizado para velocidad)
+    const batchSize = 250
     
     for (let i = 0; i < records.length; i += batchSize) {
       const batch = records.slice(i, i + batchSize)
+      const batchNum = Math.floor(i / batchSize) + 1
+      const totalBatches = Math.ceil(records.length / batchSize)
       
       try {
+        console.log(`Procesando lote ${batchNum}/${totalBatches} (${batch.length} registros)`)
+        
         // Usar upsert con ignoreDuplicates para manejar conflictos
         const { data, error } = await supabaseClient
           .from('BARRAS')
@@ -59,14 +63,18 @@ Deno.serve(async (req) => {
             ignoreDuplicates: true 
           })
 
-        if (error) throw error
+        if (error) {
+          console.error(`Error en lote ${batchNum}:`, error)
+          throw error
+        }
 
         results.success += batch.length
+        console.log(`Lote ${batchNum} completado. Progreso: ${results.success}/${records.length}`)
 
-      } catch (error) {
-        console.error(`Error en lote ${Math.floor(i / batchSize) + 1}:`, error)
+      } catch (error: any) {
+        console.error(`Error en lote ${batchNum}:`, error)
         results.failed += batch.length
-        results.errors.push(`Lote ${Math.floor(i / batchSize) + 1}: ${error.message}`)
+        results.errors.push(`Lote ${batchNum}: ${error.message}`)
       }
     }
 

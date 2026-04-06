@@ -1,7 +1,7 @@
 // Configuración del administrador
 
 const AdminConfig = {
-  // URLs de las Edge Functions (sin API keys expuestas)
+  // URLs de las Edge Functions
   FUNCTIONS_URL: "https://djgnfyglyvlfhnhvpzxy.supabase.co/functions/v1",
   
   // Columnas del Excel

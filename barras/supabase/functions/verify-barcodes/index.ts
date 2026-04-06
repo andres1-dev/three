@@ -39,22 +39,35 @@ Deno.serve(async (req) => {
     const uniqueBarcodes = [...new Set(barcodes.map(b => String(b).trim()))]
     console.log(`Verificando ${uniqueBarcodes.length} barcodes únicos`)
 
-    // Verificar en lotes de 1000 (límite de Supabase para IN)
-    const batchSize = 1000
+    // Verificar en lotes de 500 (optimizado para evitar timeouts)
+    const batchSize = 500
     const existingBarcodes = []
+    let processedCount = 0
 
     for (let i = 0; i < uniqueBarcodes.length; i += batchSize) {
       const batch = uniqueBarcodes.slice(i, i + batchSize)
       
-      const { data, error } = await supabaseClient
-        .from('BARRAS')
-        .select('barcode')
-        .in('barcode', batch)
+      try {
+        const { data, error } = await supabaseClient
+          .from('BARRAS')
+          .select('barcode')
+          .in('barcode', batch)
 
-      if (error) throw error
+        if (error) {
+          console.error(`Error en lote ${Math.floor(i / batchSize) + 1}:`, error)
+          throw error
+        }
 
-      if (data && data.length > 0) {
-        existingBarcodes.push(...data.map(item => item.barcode))
+        if (data && data.length > 0) {
+          existingBarcodes.push(...data.map(item => item.barcode))
+        }
+
+        processedCount += batch.length
+        console.log(`Progreso: ${processedCount}/${uniqueBarcodes.length} (${Math.round(processedCount/uniqueBarcodes.length*100)}%)`)
+        
+      } catch (error) {
+        console.error(`Error procesando lote ${Math.floor(i / batchSize) + 1}:`, error)
+        throw error
       }
     }
 

@@ -5,6 +5,7 @@ const DataValidator = {
 
   async loadExistingBarcodes(barcodesToCheck) {
     try {
+      const startTime = Date.now();
       console.log(`Verificando ${barcodesToCheck.length.toLocaleString()} barcodes contra la base de datos...`);
       
       // Iniciar paso 2
@@ -13,6 +14,8 @@ const DataValidator = {
       // Extraer solo los barcodes únicos del Excel
       const uniqueBarcodes = [...new Set(barcodesToCheck.map(b => String(b).trim()))];
       console.log(`Barcodes únicos a verificar: ${uniqueBarcodes.length.toLocaleString()}`);
+      
+      console.log('🌐 Enviando petición a:', `${AdminConfig.FUNCTIONS_URL}/verify-barcodes`);
       
       // Llamar a la Edge Function para verificar
       const response = await fetch(`${AdminConfig.FUNCTIONS_URL}/verify-barcodes`, {
@@ -23,16 +26,28 @@ const DataValidator = {
         body: JSON.stringify({ barcodes: uniqueBarcodes })
       });
 
+      console.log('📡 Respuesta recibida:', response.status, response.statusText);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Error al verificar barcodes');
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        let errorMessage;
+        try {
+          const error = JSON.parse(errorText);
+          errorMessage = error.error || `HTTP ${response.status}`;
+        } catch (e) {
+          errorMessage = `HTTP ${response.status}: ${errorText.substring(0, 200)}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
+      console.log('✅ Resultado parseado:', { checked: result.checked, duplicates: result.existingBarcodes?.length });
       
       this.existingBarcodes = new Set(result.existingBarcodes.map(b => String(b).trim()));
       
-      console.log(`✅ Barcodes duplicados encontrados: ${this.existingBarcodes.size.toLocaleString()}`);
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      console.log(`✅ Verificación completada en ${elapsed}s - Duplicados: ${this.existingBarcodes.size.toLocaleString()}`);
       
       // Completar paso 2
       UIController.completeStep2(result.checked, this.existingBarcodes.size);
@@ -43,7 +58,7 @@ const DataValidator = {
       return this.existingBarcodes.size;
       
     } catch (error) {
-      console.error('Error verificando barcodes:', error);
+      console.error('❌ Error verificando barcodes:', error);
       throw new Error('No se pudo verificar los barcodes en la base de datos: ' + error.message);
     }
   },
