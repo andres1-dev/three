@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Conteo Avanzado</title>
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Estilos -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <i class="fas fa-box-open"></i>
+        <span>Sistema de Conteo</span>
+      </div>
+    </div>
+    
+    <div class="sidebar-stats">
+      <div class="stat-card timer-card">
+        <div class="stat-icon timer-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value" id="sessionTimer">00:00:00</div>
+          <div class="stat-label">Tiempo Sesión</div>
+        </div>
+      </div>
+      
+      <div class="stat-card warehouse-stat" data-warehouse="DI">
+        <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-content">
+          <div class="stat-value" id="warehouseDI">0</div>
+          <div class="stat-label">DI - Primeras</div>
+        </div>
+      </div>
+      
+      <div class="stat-card warehouse-stat" data-warehouse="ZY">
+        <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-content">
+          <div class="stat-value" id="warehouseZY">0</div>
+          <div class="stat-label">ZY - Sin Confeccionar</div>
+        </div>
+      </div>
+      
+      <div class="stat-card warehouse-stat" data-warehouse="BP">
+        <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-content">
+          <div class="stat-value" id="warehouseBP">0</div>
+          <div class="stat-label">BP - Cobros</div>
+        </div>
+      </div>
+      
+      <div class="stat-card warehouse-stat" data-warehouse="ZZ">
+        <div class="stat-icon"><i class="fas fa-warehouse"></i></div>
+        <div class="stat-content">
+          <div class="stat-value" id="warehouseZZ">0</div>
+          <div class="stat-label">ZZ - Promociones</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-op-info hidden" id="sidebarOpInfo">
+      <div class="op-info-card">
+        <div class="op-info-label">Orden de Producción</div>
+        <div class="op-info-value" id="sidebarOp">-</div>
+      </div>
+      <div class="op-info-card">
+        <div class="op-info-label">Referencia</div>
+        <div class="op-info-value" id="sidebarRef">-</div>
+      </div>
+      <div class="op-info-card">
+        <div class="op-info-label">Cantidad Total</div>
+        <div class="op-info-value" id="sidebarQty">-</div>
+      </div>
+      <button class="btn-sidebar" onclick="changeOP()">
+        <i class="fas fa-exchange-alt"></i> Cambiar OP
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- OP Selector -->
+    <div class="op-selector-modern" id="opSelector">
+      <div class="op-selector-card">
+        <div class="op-selector-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <h1>Seleccionar Orden de Producción</h1>
+        <p>Ingresa el número de OP para comenzar</p>
+        <div class="op-input-modern">
+          <input 
+            type="text" 
+            id="opInput" 
+            placeholder="Número de OP..." 
+            autocomplete="off"
+          />
+          <i class="fas fa-search"></i>
+        </div>
+        <div id="opLoadingMessage"></div>
+        
+        <div class="op-divider">
+          <span>o</span>
+        </div>
+        
+        <button class="btn-scan-without-op" onclick="startScanWithoutOP()">
+          <i class="fas fa-barcode"></i>
+          <span>Escanear sin OP</span>
+          <small>Validar barras y ver referencias</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- Workspace -->
+    <div class="workspace hidden" id="workspace">
+      <!-- Control Panel -->
+      <div class="control-panel">
+        <div class="control-left">
+          <div class="mode-toggle">
+            <input type="radio" name="countMode" value="laser" id="modeLaser" checked onchange="switchCountMode()">
+            <label for="modeLaser">
+              <i class="fas fa-barcode"></i>
+              <span>Láser</span>
+            </label>
+            
+            <input type="radio" name="countMode" value="manual" id="modeManual" onchange="switchCountMode()">
+            <label for="modeManual">
+              <i class="fas fa-keyboard"></i>
+              <span>Manual</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="control-center">
+          <!-- Scan Input (solo en modo láser) -->
+          <input 
+            type="text" 
+            id="barcodeInput" 
+            class="barcode-input-visible"
+            placeholder="Escanea o escribe aquí..."
+            autocomplete="off"
+          />
+        </div>
+        
+        <div class="control-right">
+          <div class="scan-status" id="scanStatus">
+            <i class="fas fa-circle"></i>
+            <span>Listo para escanear</span>
+          </div>
+          <button class="btn-control btn-pause hidden" id="pauseBtn" onclick="pauseSession()">
+            <i class="fas fa-pause"></i>
+            <span>Pausar</span>
+          </button>
+          <button class="btn-control btn-stop hidden" id="stopBtn" onclick="endSession()">
+            <i class="fas fa-stop"></i>
+            <span>Finalizar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Log Panel -->
+      <div class="log-panel" id="logPanel">
+        <div class="log-header">
+          <div class="log-title">
+            <i class="fas fa-list-ul"></i>
+            <span>Registro de Eventos</span>
+          </div>
+          <button class="btn-clear-logs" onclick="clearLogs()">
+            <i class="fas fa-trash"></i>
+            Limpiar
+          </button>
+        </div>
+        
+        <div class="log-tabs">
+          <button class="log-tab active" data-tab="found" onclick="switchLogTab('found')">
+            <i class="fas fa-check-circle"></i>
+            <span>Encontradas</span>
+            <span class="log-tab-count" id="countFound">0</span>
+          </button>
+          <button class="log-tab" data-tab="notfound" onclick="switchLogTab('notfound')">
+            <i class="fas fa-times-circle"></i>
+            <span>No Encontradas</span>
+            <span class="log-tab-count" id="countNotFound">0</span>
+          </button>
+          <button class="log-tab" data-tab="errors" onclick="switchLogTab('errors')">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span>Errores</span>
+            <span class="log-tab-count" id="countErrors">0</span>
+          </button>
+        </div>
+        
+        <div class="log-content" id="logContent">
+          <div class="log-empty">
+            <i class="fas fa-info-circle"></i>
+            <span>No hay eventos registrados</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="data-panel">
+        <!-- Completed Items Cards -->
+        <div class="completed-section hidden" id="completedSection">
+          <div class="completed-header" onclick="toggleCompleted()">
+            <div class="completed-title">
+              <i class="fas fa-check-circle"></i>
+              <span>Items Completados</span>
+              <span class="completed-count" id="completedCount">0</span>
+            </div>
+            <i class="fas fa-chevron-down" id="completedChevron"></i>
+          </div>
+          <div class="completed-cards hidden" id="completedCards"></div>
+        </div>
+
+        <div class="data-panel-header">
+          <h2>
+            <i class="fas fa-table"></i>
+            Curva de Producción
+          </h2>
+          <div class="warehouse-selector">
+            <label><i class="fas fa-warehouse"></i> Enviar a:</label>
+            <select id="globalWarehouseSelect" onchange="sendToWarehouse(this.value)">
+              <option value="">Seleccionar bodega...</option>
+              <option value="DI">DI - PRIMERAS</option>
+              <option value="ZY">ZY - SIN CONFECCIONAR</option>
+              <option value="BP">BP - COBROS</option>
+              <option value="ZZ">ZZ - PROMOCIONES</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table class="data-table">
+            <thead id="tableHeader">
+              <tr>
+                <th>Color</th>
+                <th>Talla</th>
+                <th>Esperado</th>
+                <th>Contado</th>
+                <th>Faltante</th>
+                <th>Progreso</th>
+              </tr>
+            </thead>
+            <tbody id="curvaTableBody">
+              <tr>
+                <td colspan="6" class="empty-state">
+                  <i class="fas fa-inbox"></i>
+                  <span>Cargando datos...</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Scripts de la aplicación -->
+<script src="js/utils/utils.js"></script>
+<script src="js/managers/audio-manager.js"></script>
+<script src="js/managers/log-manager.js"></script>
+<script src="js/managers/ui-manager.js"></script>
+<script src="js/managers/data-manager.js"></script>
+<script src="js/core/session.js"></script>
+<script src="js/core/scanner.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
