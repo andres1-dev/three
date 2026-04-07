@@ -15,7 +15,6 @@ interface ConsolidatedRecord {
   notas?: string
   compania?: string
   op?: string
-  proveedor?: string
   tipo?: string
   // Campos del XLSX
   nro_documento: string
@@ -77,7 +76,6 @@ Deno.serve(async (req) => {
           notas: record.notas || undefined,
           compania: record.compania || undefined,
           op: record.op || undefined,
-          proveedor: record.proveedor || undefined,
           tipo: record.tipo || undefined,
           // Campos del XLSX
           nro_documento: nroDoc,
@@ -127,7 +125,6 @@ Deno.serve(async (req) => {
       "Notas": record.notas || null,
       "Compáa": (record.compania && !isNaN(Number(record.compania))) ? Number(record.compania) : null,
       "op": record.op || null,
-      "proveedor": record.proveedor || null,
       "tipo": record.tipo || null,
       
       // Datos del XLSX (usar los campos consolidados correctos)

@@ -7,9 +7,27 @@ const Consolidator = {
   consolidate(records) {
     console.log('📦 Iniciando consolidación...');
     
+    // Filtrar solo las razones sociales permitidas
+    const allowedRazonesSociales = [
+      'EL TEMPLO DE LA MODA SAS',
+      'EL TEMPLO DE LA MODA FRESCA SAS',
+      'INVERSIONES URBANA SAS',
+      'QUINTERO ORTIZ PATRICIA YAMILET',
+      'QUINTERO ORTIZ JOSE ALEXANDER',
+      'SON Y LIMON SAS',
+      'ZULUAGA GOMEZ RUBEN ESTEBAN'
+    ];
+    
+    const filteredRecords = records.filter(record => {
+      const razonSocial = (record.razon_social_cliente_factura || '').replace(/\./g, '').trim().toUpperCase();
+      return allowedRazonesSociales.includes(razonSocial);
+    });
+    
+    console.log(`🔍 Filtrados: ${filteredRecords.length} de ${records.length} registros (solo razones sociales permitidas)`);
+    
     const consolidatedMap = new Map();
     
-    for (const record of records) {
+    for (const record of filteredRecords) {
       const nroDoc = record.nro_documento;
       
       if (!consolidatedMap.has(nroDoc)) {
@@ -18,14 +36,11 @@ const Consolidator = {
         razonSocial = razonSocial.replace(/\./g, '');
         
         let opValue = '';
-        let proveedorValue = '';
         const compStr = String(record.compania || '').trim();
         
         if (compStr === '5') {
-          proveedorValue = 'TEXTILES Y CREACIONES EL UNIVERSO SAS';
           opValue = record.docto_referencia || '';
         } else if (compStr === '3') {
-          proveedorValue = 'TEXTILES Y CREACIONES LOS ANGELES SAS';
           opValue = record.notas || '';
         }
 
@@ -64,7 +79,6 @@ const Consolidator = {
           
           // Nuevas columnas calculadas
           op: opValue,
-          proveedor: proveedorValue,
           tipo: tipoValue,
           
           // Datos del XLSX
@@ -104,17 +118,25 @@ const Consolidator = {
     
     const consolidated = Array.from(consolidatedMap.values());
     
+    // Filtrar solo los tipos permitidos: OFICIAL y REMISION
+    const allowedTipos = ['OFICIAL', 'REMISION'];
+    const filteredByTipo = consolidated.filter(record => 
+      allowedTipos.includes(record.tipo)
+    );
+    
+    console.log(`🔍 Filtrados por tipo: ${filteredByTipo.length} de ${consolidated.length} documentos (solo OFICIAL y REMISION)`);
+    
     // Limpiar referencias_detalle si solo hay una referencia
-    for (const record of consolidated) {
+    for (const record of filteredByTipo) {
       if (record.referencias_detalle.length === 1) {
         record.referencias_detalle = null;
       }
     }
     
-    const refvarCount = consolidated.filter(r => r.referencia === SiesaConfig.CONSTANTS.REFVAR).length;
-    console.log(`✅ Consolidados: ${consolidated.length} documentos únicos`);
+    const refvarCount = filteredByTipo.filter(r => r.referencia === SiesaConfig.CONSTANTS.REFVAR).length;
+    console.log(`✅ Consolidados: ${filteredByTipo.length} documentos únicos`);
     console.log(`📋 Documentos con múltiples referencias (REFVAR): ${refvarCount}`);
     
-    return consolidated;
+    return filteredByTipo;
   }
 };
