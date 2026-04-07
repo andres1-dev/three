@@ -16,5 +16,29 @@ const SiesaConfig = {
   PROCESSING: {
     BATCH_SIZE: 250, // Registros por lote para enviar a Supabase
     DELAY_BETWEEN_BATCHES: 100 // ms entre lotes
+  },
+  
+  // Mapeo de columnas esperadas
+  COLUMNS: {
+    CSV: {
+      ESTADO: 'estado',
+      NRO_DOCUMENTO: 'nro_documento',
+      FECHA: 'fecha',
+      RAZON_SOCIAL: 'razon_social_cliente_factura',
+      DOCTO_REFERENCIA: 'docto_referencia',
+      NOTAS: 'notas',
+      COMPANIA: 'compania'
+    },
+    XLSX: {
+      NRO_DOCUMENTO: 'nro_documento',
+      VALOR_SUBTOTAL: 'valor_subtotal',
+      REFERENCIA: 'referencia',
+      CANTIDAD: 'cantidad'
+    }
+  },
+  
+  // Constantes
+  CONSTANTS: {
+    REFVAR: 'REFVAR' // Valor para referencias múltiples
   }
 };

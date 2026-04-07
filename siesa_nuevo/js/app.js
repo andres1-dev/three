@@ -119,111 +119,6 @@ function actualizarStats() {
     $('#percentPendientes').text(percPend + '%');
 }
 
-function descargarCSV() {
-    if (filteredData.length === 0) {
-        alert('No hay datos para exportar');
-        return;
-    }
-
-    const headers = [
-        'Estado SIESA', 'Documento', 'Docto. referencia', 'OP', 'Fecha Factura', 
-        'Cliente', 'Proveedor', 'Notas', 'Valor Subtotal', 'Referencia', 
-        'Cantidad', 'Tipo Documento', 'Estado Entrega', 
-        'Días Diferencia', 'Fecha Entrega'
-    ];
-
-    const rows = filteredData.map(f => {
-        const entregas = f.entregas || [];
-        const dias = calcularDiasNumero(f.Fecha, entregas);
-        const fechaEntrega = entregas.length > 0 ? new Date(entregas[0].Registro).toLocaleString('es-CO') : '-';
-        
-        // Limpiamos los datos para que no rompan el CSV
-        const limpiar = (val) => String(val || '-').replace(/(\r\n|\n|\r|;)/gm, " ");
-
-        return [
-            limpiar(f.Estado),
-            limpiar(f['Nro documento']),
-            limpiar(f['Docto. referencia']),
-            limpiar(f.op),
-            limpiar(f.Fecha),
-            limpiar(f['Razón social cliente factura']),
-            limpiar(f.proveedor),
-            limpiar(f.Notas),
-            Math.round(parseFloat(f['Valor subtotal local']) || 0),
-            limpiar(f.Referencia),
-            Math.round(f['Cantidad inv.'] || 0),
-            limpiar(f.tipo),
-            limpiar(f.confirmacion),
-            dias,
-            fechaEntrega
-        ].join(';');
-    });
-
-    const csvContent = "\uFEFF" + headers.join(';') + '\n' + rows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `SIESA_Delivery_${new Date().toISOString().slice(0,10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-
-
-function renderizarTarjetas() {
-    const container = document.getElementById('deliveryCards');
-    if (!container) return;
-    container.innerHTML = filteredData.map((f, index) => {
-        const entregas = f.entregas || [];
-        const esEntregado = entregas.length > 0;
-        const esAnulado = f.Estado && f.Estado.toLowerCase().includes('anulad');
-        let cardClass = 'card-pendiente';
-        if (esAnulado) cardClass = 'card-anulada';
-        else if (esEntregado) cardClass = 'card-entregada';
-        const dias = calcularDiasNumero(f.Fecha, entregas);
-        let diasClass = 'dias-ok';
-        if (dias > 5) diasClass = 'dias-danger';
-        else if (dias > 2) diasClass = 'dias-warning';
-        const collapseId = `collapse-${index}`;
-        return `
-            <div class="delivery-card ${cardClass} mb-3">
-                <div class="card-header-custom">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div><h6 class="mb-1">${f['Nro documento']}</h6><small class="text-muted">${f.Fecha}</small></div>
-                        <span class="badge ${esEntregado ? 'badge-entregado' : 'badge-pendiente'}">${esEntregado ? 'ENTREGADO' : 'PENDIENTE'}</span>
-                    </div>
-                </div>
-                <div class="card-body-custom">
-                    <div class="info-row"><span class="info-label">Cliente:</span><span class="info-value">${f['Razón social cliente factura'] || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">Proveedor:</span><span class="info-value">${f.proveedor || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">Valor:</span><span class="info-value">$${f['Valor subtotal local'] ? Math.round(parseFloat(f['Valor subtotal local'])).toLocaleString('es-CO') : '0'}</span></div>
-                    <div class="info-row"><span class="info-label">Referencia:</span><span class="info-value">${f.Referencia || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">Cantidad:</span><span class="info-value">${f['Cantidad inv.'] ? Math.round(f['Cantidad inv.']).toLocaleString('es-CO') : '0'}</span></div>
-                    <div class="info-row"><span class="info-label">Tipo:</span><span class="info-value">${f.tipo || '-'}</span></div>
-                    <div class="info-row"><span class="info-label">Diferencia:</span><span class="dias-badge ${diasClass}">${dias} día${dias !== 1 ? 's' : ''}</span></div>
-                    ${esEntregado && entregas[0].Registro ? `<div class="info-row"><span class="info-label">Fecha Entrega:</span><span class="info-value">${new Date(entregas[0].Registro).toLocaleString('es-CO', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'})}</span></div>` : ''}
-                    ${esEntregado && entregas[0].SoporteID ? `
-                        <div class="soporte-collapse mt-3">
-                            <button class="btn-collapse" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}">
-                                <i class="fas fa-image me-2"></i>Ver Soporte<i class="fas fa-chevron-down ms-auto"></i>
-                            </button>
-                            <div class="collapse" id="${collapseId}">
-                                <div class="soporte-content">
-                                    <a href="https://lh3.googleusercontent.com/d/${entregas[0].SoporteID}" target="_blank">
-                                        <img src="https://lh3.googleusercontent.com/d/${entregas[0].SoporteID}" alt="Soporte" class="img-fluid rounded" />
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }).join('');
-}
-
 function actualizarGrid() {
     if (grid && filteredData && filteredData.length > 0) {
         grid.updateConfig({
@@ -517,6 +412,70 @@ function setupInfiniteScroll() {
     // Ya lo manejamos dentro de renderizarTarjetas con el centinela
 }
 
+
+function descargarCSV() {
+    if (filteredData.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+
+    console.log('📄 Generando CSV...');
+    
+    // Headers en español
+    const headers = [
+      'Estado', 'Nro documento', 'Fecha', 'Razon Social', 'Docto Referencia',
+      'Notas', 'Cia', 'OP', 'Tipo', 'Valor Subtotal', 'Referencia', 'Cantidad',
+      'Confirmación', 'Fecha Confirmación', 'ID Soporte', 'Link Soporte IH3'
+    ];
+
+    const rows = filteredData.map(f => {
+      const entregas = f.entregas || [];
+      const fechaEntrega = (entregas.length > 0 && entregas[0].Registro) ? new Date(entregas[0].Registro).toLocaleString('es-CO') : '-';
+      
+      const soporteID = (entregas.length > 0 && entregas[0].SoporteID) ? entregas[0].SoporteID : '';
+      const linkLH3 = soporteID ? `https://lh3.googleusercontent.com/d/${soporteID}` : '';
+
+      return [
+        f.Estado || '',
+        f['Nro documento'] || '',
+        f.Fecha || '',
+        (f['Razón social cliente factura'] || '').replace(/;/g, ','),
+        f['Docto. referencia'] || '',
+        (f.Notas || '').replace(/;/g, ','),
+        f['Compáa'] || '',
+        f.op || '',
+        f.tipo || '',
+        f['Valor subtotal local'] || 0,
+        f.Referencia || '',
+        f['Cantidad inv.'] || 0,
+        f.confirmacion || '',
+        fechaEntrega,
+        soporteID,
+        linkLH3
+      ];
+    });
+
+    // Unir headers y filas con punto y coma
+    const csvContent = [
+      headers.join(';'),
+      ...rows.map(row => row.join(';'))
+    ].join('\n');
+
+    // Añadir BOM para que Excel reconozca caracteres especiales (eñes, tildes)
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reporte_delivery_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    console.log('✅ CSV descargado exitosamente');
+}
 
 // Event listener para botón flotante de filtros
 $(document).ready(function() {
