@@ -5,8 +5,6 @@ const Uploader = {
    * Sube registros consolidados a Supabase
    */
   async upload(records) {
-    console.log(`📤 Subiendo ${records.length} registros a Supabase...`);
-    
     try {
       const response = await fetch(`${SiesaConfig.FUNCTIONS_URL}/upload-siesa`, {
         method: 'POST',
@@ -31,8 +29,6 @@ const Uploader = {
       }
       
       const result = await response.json();
-      console.log('✅ Subida completada:', result);
-      
       return result;
       
     } catch (error) {

@@ -8,7 +8,6 @@ const SiesaApp = {
    * Inicializa la aplicación
    */
   init() {
-    console.log('[APP] SIESA App iniciada');
     this.setupEventListeners();
     this.setupDragAndDrop();
     UIController.showConnected();
@@ -62,7 +61,6 @@ const SiesaApp = {
    */
   handleDroppedFiles(fileList) {
     const files = Array.from(fileList);
-    console.log(`[FILE] ${files.length} archivo(s) seleccionado(s)`);
     
     let addedFiles = false;
     
@@ -121,7 +119,6 @@ const SiesaApp = {
     this.isProcessing = true;
     
     try {
-      console.log('[PROC] Iniciando procesamiento SIESA...');
       
       // 1. Leer todos los archivos
       const allRecords = [];
@@ -133,13 +130,10 @@ const SiesaApp = {
           this.selectedFiles[i].status = 'processing';
           UIController.updateFileList(this.selectedFiles);
           
-          console.log(`[READ] Leyendo: ${fileData.name}`);
           const records = await FileReader.read(fileData.file, fileData.type);
           allRecords.push(...records);
         }
       }
-      
-      console.log(`[DATA] Total registros leídos: ${allRecords.length}`);
       
       // 2. Unificar CSV + XLSX
       const unified = Unifier.unify(allRecords);

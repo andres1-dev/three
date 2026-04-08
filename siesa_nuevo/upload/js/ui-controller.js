@@ -136,15 +136,12 @@ const UIController = {
     // Relacionar con la interfaz principal: refrescar y cerrar modal
     if (result.success > 0) {
         if (typeof cargarDatos === 'function') {
-            // Usamos las fechas actuales del filtro para refrescar
-            const fechas = $('#dateRange').val().split(' a ');
-            if (fechas.length === 2) {
-                cargarDatos(fechas[0], fechas[1]);
-            } else {
+            // Usamos las fechas actuales de flatpickr si está disponible
+            if (window.flatpickrInstance && window.flatpickrInstance.selectedDates.length === 2) {
+                cargarDatos(window.flatpickrInstance.selectedDates[0], window.flatpickrInstance.selectedDates[1]);
+            } else if (typeof getPrimerDiaMes === 'function') {
                 // Fallback a mes actual
-                if (typeof getPrimerDiaMes === 'function') {
-                    cargarDatos(getPrimerDiaMes(), getHoy());
-                }
+                cargarDatos(getPrimerDiaMes(), getHoy());
             }
         }
         

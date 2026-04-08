@@ -4,11 +4,67 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
+  }
+
+  const supabaseClient = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    }
+  )
+
+  // ACTUALIZACIÓN DE DATOS (PATCH)
+  if (req.method === 'PATCH') {
+    try {
+      const { documento, nuevoEstado, nuevaOP } = await req.json()
+      
+      if (!documento) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Documento es requerido' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const updates: any = {}
+      if (nuevoEstado !== undefined) updates.Estado = nuevoEstado
+      if (nuevaOP !== undefined) updates.op = nuevaOP
+
+      if (Object.keys(updates).length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'No se enviaron datos para actualizar' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      console.log(`📝 Actualizando documento ${documento}:`, updates)
+
+      const { error } = await supabaseClient
+        .from('SIESA')
+        .update(updates)
+        .eq('Nro documento', documento)
+
+      if (error) throw error
+
+      return new Response(
+        JSON.stringify({ success: true, message: 'Estado actualizado correctamente' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    } catch (error: any) {
+      return new Response(
+        JSON.stringify({ success: false, error: error.message }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
   }
 
   try {
@@ -29,17 +85,6 @@ Deno.serve(async (req) => {
       )
     }
     
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
-
     console.log(`📦 Cargando datos desde ${fechaInicio} hasta ${fechaFin}...`)
 
     // Cargar TODAS las facturas sin límite (paginación automática)

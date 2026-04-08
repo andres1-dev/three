@@ -5,8 +5,6 @@ const Unifier = {
    * Unifica registros de CSV y XLSX por nro_documento
    */
   unify(allRecords) {
-    console.log('🔗 Iniciando unificación de registros...');
-    
     // Separar registros por tipo
     const csvRecords = new Map();
     const xlsxRecords = [];
@@ -27,9 +25,6 @@ const Unifier = {
         xlsxRecords.push(record);
       }
     }
-    
-    console.log(`📊 CSV: ${csvRecords.size} documentos maestros`);
-    console.log(`📊 XLSX: ${xlsxRecords.length} líneas de detalle`);
     
     // Unir XLSX con datos del CSV
     const unified = [];
@@ -59,12 +54,6 @@ const Unifier = {
       }
     }
     
-    if (missingInCSV.size > 0) {
-      console.warn(`⚠️ ${missingInCSV.size} documentos en XLSX no encontrados en CSV:`, 
-        Array.from(missingInCSV).slice(0, 5));
-    }
-    
-    console.log(`✅ Unificados: ${unified.length} registros`);
     return unified;
   }
 };

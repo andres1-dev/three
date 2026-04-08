@@ -22,7 +22,7 @@ const CSVParser = {
         const record = this.createRecord(headers, values);
         records.push(record);
       } catch (error) {
-        console.warn(`Error en línea ${i + 1}:`, error.message);
+        // Ignorar líneas con error
       }
     }
 

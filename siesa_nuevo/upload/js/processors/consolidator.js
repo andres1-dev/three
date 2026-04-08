@@ -5,8 +5,6 @@ const Consolidator = {
    * Consolida registros que tienen el mismo nro_documento
    */
   consolidate(records) {
-    console.log('📦 Iniciando consolidación...');
-    
     // Filtrar solo las razones sociales permitidas
     const allowedRazonesSociales = [
       'EL TEMPLO DE LA MODA SAS',
@@ -22,8 +20,6 @@ const Consolidator = {
       const razonSocial = (record.razon_social_cliente_factura || '').replace(/\./g, '').trim().toUpperCase();
       return allowedRazonesSociales.includes(razonSocial);
     });
-    
-    console.log(`🔍 Filtrados: ${filteredRecords.length} de ${records.length} registros (solo razones sociales permitidas)`);
     
     const consolidatedMap = new Map();
     
@@ -124,18 +120,12 @@ const Consolidator = {
       allowedTipos.includes(record.tipo)
     );
     
-    console.log(`🔍 Filtrados por tipo: ${filteredByTipo.length} de ${consolidated.length} documentos (solo OFICIAL y REMISION)`);
-    
     // Limpiar referencias_detalle si solo hay una referencia
     for (const record of filteredByTipo) {
       if (record.referencias_detalle.length === 1) {
         record.referencias_detalle = null;
       }
     }
-    
-    const refvarCount = filteredByTipo.filter(r => r.referencia === SiesaConfig.CONSTANTS.REFVAR).length;
-    console.log(`✅ Consolidados: ${filteredByTipo.length} documentos únicos`);
-    console.log(`📋 Documentos con múltiples referencias (REFVAR): ${refvarCount}`);
     
     return filteredByTipo;
   }

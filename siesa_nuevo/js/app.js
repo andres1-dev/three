@@ -70,6 +70,11 @@ function aplicarFiltros() {
     const filtroConfirmacion = $('#filtroConfirmacion').val();
     const busca = $('#globalSearch').val().toLowerCase();
     
+    // Sincronizar visual de tarjetas si se cambia el select
+    $('.stat-card').removeClass('active');
+    if (filtroConfirmacion === 'ENTREGADO') $('.stat-delivered').addClass('active');
+    if (filtroConfirmacion === 'PENDIENTE') $('.stat-pending').addClass('active');
+    
     filteredData = allData.filter(row => {
         if (busca) {
             const contenido = Object.values(row).join(' ').toLowerCase();
@@ -83,6 +88,21 @@ function aplicarFiltros() {
         if (filtroConfirmacion && row.confirmacion !== filtroConfirmacion) return false;
         return true;
     });
+    
+    // Guardar filtros en localStorage si está habilitada la persistencia
+    const persistenciaHabilitada = $('#switchPersistencia').is(':checked');
+    if (persistenciaHabilitada) {
+        const filtrosDoc = {
+            cliente: filtroCliente,
+            proveedor: filtroProveedor,
+            estado: filtroEstado,
+            tipo: filtroTipo,
+            confirmacion: filtroConfirmacion,
+            search: busca
+        };
+        localStorage.setItem('siesa_filtros', JSON.stringify(filtrosDoc));
+    }
+
     actualizarGrid();
     renderizarTarjetas();
     actualizarStats();
@@ -119,23 +139,117 @@ function actualizarStats() {
     $('#percentPendientes').text(percPend + '%');
 }
 
+async function actualizarEstadoSiesa(documento, nuevoEstado) {
+    try {
+        const response = await fetch(`${SiesaConfig.FUNCTIONS_URL}/delivery-operations`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documento, nuevoEstado })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        
+        // Actualizar datos locales
+        const index = allData.findIndex(f => f['Nro documento'] === documento);
+        if (index !== -1) allData[index].Estado = nuevoEstado;
+        
+        const filteredIndex = filteredData.findIndex(f => f['Nro documento'] === documento);
+        if (filteredIndex !== -1) filteredData[filteredIndex].Estado = nuevoEstado;
+
+        actualizarGrid();
+        renderizarTarjetas();
+    } catch (error) {
+        console.error('❌ Error actualizando estado:', error);
+        alert('Error al actualizar estado: ' + error.message);
+    }
+}
+
+async function actualizarOPSiesa(documento, nuevaOP) {
+    try {
+        const response = await fetch(`${SiesaConfig.FUNCTIONS_URL}/delivery-operations`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ documento, nuevaOP })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error);
+        
+        // Actualizar datos locales
+        const fIndex = allData.findIndex(f => f['Nro documento'] === documento);
+        if (fIndex !== -1) allData[fIndex].op = nuevaOP;
+        
+        const filteredIndex = filteredData.findIndex(f => f['Nro documento'] === documento);
+        if (filteredIndex !== -1) filteredData[filteredIndex].op = nuevaOP;
+
+    } catch (error) {
+        console.error('❌ Error actualizando OP:', error);
+        alert('Error al actualizar OP: ' + error.message);
+    }
+}
+
+function habilitarEdicionOP(container, documento) {
+    if (container.classList.contains('editing')) return;
+    
+    const span = container.querySelector('.op-text');
+    const valorActual = (span.innerText === '-' || span.innerText === 'Sin OP') ? '' : span.innerText;
+    
+    container.classList.add('editing');
+    container.innerHTML = `
+        <input type="text" class="input-op-siesa" 
+               value="${valorActual}" 
+               onblur="finalizarEdicionOP(this, '${documento}')"
+               onkeyup="if(event.key==='Enter') this.blur()">
+    `;
+    container.querySelector('input').focus();
+}
+
+async function finalizarEdicionOP(input, documento) {
+    const nuevaOP = input.value;
+    const container = input.parentElement;
+    
+    // Actualizar visual inmediatamente (optimista)
+    container.classList.remove('editing');
+    container.innerHTML = `
+        <span class="op-text">${nuevaOP || '-'}</span>
+    `;
+    
+    // Guardar en Supabase
+    await actualizarOPSiesa(documento, nuevaOP);
+}
+
 function actualizarGrid() {
     if (grid && filteredData && filteredData.length > 0) {
+        const estadosDisponibles = ['Aprobadas', 'Anuladas', 'En elaboración'];
+        
         grid.updateConfig({
-            data: filteredData.map(f => [
-                f.Estado, f['Nro documento'], f.Fecha, f['Razón social cliente factura'], f.Notas || '-', f.proveedor || '-',
-                f['Valor subtotal local'] ? '$' + Math.round(parseFloat(f['Valor subtotal local'])).toLocaleString('es-CO') : '$0',
-                f.Referencia || '-', f['Cantidad inv.'] ? Math.round(f['Cantidad inv.']).toLocaleString('es-CO') : '0',
-                f.referencias_detalle ? gridjs.html((typeof f.referencias_detalle === 'string' ? JSON.parse(f.referencias_detalle) : f.referencias_detalle).map(ref => `<div class="ref-detalle">${ref.referencia} (${ref.cantidad}) - $${Math.round(ref.valor_subtotal).toLocaleString('es-CO')}</div>`).join('')) : '-',
-                f.op || '-', f.tipo || '-',
-                gridjs.html(f.entregas.length > 0 ? '<span class="badge badge-entregado">ENTREGADO</span>' : '<span class="badge badge-pendiente">PENDIENTE</span>'),
-                calcularDias(f.Fecha, f.entregas),
-                f.entregas.length > 0 ? gridjs.html(f.entregas.map(e => `<div class="entrega-fecha">${new Date(e.Registro).toLocaleString('es-CO', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'})}</div>`).join('')) : '-',
-                f.entregas.length > 0 && f.entregas[0].SoporteID ? gridjs.html(`<div class="soporte-img"><a href="https://lh3.googleusercontent.com/d/${f.entregas[0].SoporteID}" target="_blank"><img src="https://lh3.googleusercontent.com/d/${f.entregas[0].SoporteID}" alt="Soporte" /></a></div>`) : '-'
-            ])
-        }).forceRender();
-        // Estilos removidos según solicitud del usuario
+            data: filteredData.map(f => {
+                const selectEstado = gridjs.html(`
+                    <select class="form-select form-select-sm select-estado-siesa" 
+                            onchange="actualizarEstadoSiesa('${f['Nro documento']}', this.value)">
+                        ${estadosDisponibles.map(e => `<option value="${e}" ${f.Estado === e ? 'selected' : ''}>${e}</option>`).join('')}
+                        ${!estadosDisponibles.includes(f.Estado) ? `<option value="${f.Estado}" selected>${f.Estado}</option>` : ''}
+                    </select>
+                `);
 
+                const displayOP = gridjs.html(`
+                    <div class="editable-op-container" onclick="habilitarEdicionOP(this, '${f['Nro documento']}')">
+                        <span class="op-text">${f.op || '-'}</span>
+                    </div>
+                `);
+
+                return [
+                    selectEstado, f['Nro documento'], f.Fecha, f['Razón social cliente factura'], f.Notas || '-', f.proveedor || '-',
+                    f['Valor subtotal local'] ? '$' + Math.round(parseFloat(f['Valor subtotal local'])).toLocaleString('es-CO') : '$0',
+                    f.Referencia || '-', f['Cantidad inv.'] ? Math.round(f['Cantidad inv.']).toLocaleString('es-CO') : '0',
+                    f.referencias_detalle ? gridjs.html((typeof f.referencias_detalle === 'string' ? JSON.parse(f.referencias_detalle) : f.referencias_detalle).map(ref => `<div class="ref-detalle">${ref.referencia} (${ref.cantidad}) - $${Math.round(ref.valor_subtotal).toLocaleString('es-CO')}</div>`).join('')) : '-',
+                    displayOP, f.tipo || '-',
+                    gridjs.html(f.entregas.length > 0 ? '<span class="badge badge-entregado">ENTREGADO</span>' : '<span class="badge badge-pendiente">PENDIENTE</span>'),
+                    calcularDias(f.Fecha, f.entregas),
+                    f.entregas.length > 0 ? gridjs.html(f.entregas.map(e => `<div class="entrega-fecha">${new Date(e.Registro).toLocaleString('es-CO', {year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'})}</div>`).join('')) : '-',
+                    f.entregas.length > 0 && f.entregas[0].SoporteID ? gridjs.html(`<div class="soporte-img"><a href="https://lh3.googleusercontent.com/d/${f.entregas[0].SoporteID}" target="_blank"><img src="https://lh3.googleusercontent.com/d/${f.entregas[0].SoporteID}" alt="Soporte" /></a></div>`) : '-'
+                ];
+            })
+        }).forceRender();
     }
 }
 
@@ -144,12 +258,10 @@ async function cargarDatos(fechaInicio, fechaFin) {
         $('#loading').show();
         const fechaInicioStr = formatearFecha(fechaInicio);
         const fechaFinStr = formatearFecha(fechaFin);
-        console.log(`📅 Cargando datos desde ${fechaInicioStr} hasta ${fechaFinStr}...`);
         const url = `${SiesaConfig.FUNCTIONS_URL}/delivery-operations?fechaInicio=${fechaInicioStr}&fechaFin=${fechaFinStr}`;
         const response = await fetch(url);
         const result = await response.json();
         if (!result.success) throw new Error(result.error);
-        console.log(`✅ ${result.data.length} facturas cargadas en ${result.stats.tiempoCarga}`);
         allData = result.data.map(f => ({...f, confirmacion: (f.entregas || []).length > 0 ? 'ENTREGADO' : 'PENDIENTE'}));
         filteredData = [...allData];
         poblarFiltros(allData);
@@ -204,9 +316,29 @@ async function cargarDatos(fechaInicio, fechaFin) {
         }
         
         setTimeout(() => {
+            // Cargar filtros guardados si la persistencia está habilitada
+            const persistenciaHabilitada = $('#switchPersistencia').is(':checked');
+            if (persistenciaHabilitada) {
+                const savedFilters = localStorage.getItem('siesa_filtros');
+                if (savedFilters) {
+                    try {
+                        const p = JSON.parse(savedFilters);
+                        if (p.cliente) $('#filtroCliente').val(p.cliente);
+                        if (p.proveedor) $('#filtroProveedor').val(p.proveedor);
+                        if (p.estado) $('#filtroEstado').val(p.estado);
+                        if (p.tipo) $('#filtroTipo').val(p.tipo);
+                        if (p.confirmacion) $('#filtroConfirmacion').val(p.confirmacion);
+                        if (p.search) $('#globalSearch').val(p.search);
+                    } catch (e) {
+                        console.error('Error al restaurar filtros:', e);
+                    }
+                }
+            }
+
             actualizarGrid();
             renderizarTarjetas();
             actualizarStats();
+            aplicarFiltros(); // Re-aplicar con los valores restaurados
             setupInfiniteScroll();
             $('#loading').hide();
 
@@ -220,8 +352,30 @@ async function cargarDatos(fechaInicio, fechaFin) {
 }
 
 $(document).ready(function() {
-    const primerDia = getPrimerDiaMes();
-    const hoy = getHoy();
+    let primerDia = getPrimerDiaMes();
+    let hoy = getHoy();
+    
+    // Inicializar estado del switch de persistencia
+    const persistenciaConfig = localStorage.getItem('siesa_persist_enabled');
+    const persistenciaHabilitada = persistenciaConfig === 'true'; // Por defecto false
+    $('#switchPersistencia').prop('checked', persistenciaHabilitada);
+
+    // Cargar rango guardado si existe y está habilitada la persistencia
+    if (persistenciaHabilitada) {
+        const savedRange = localStorage.getItem('siesa_date_range');
+        if (savedRange) {
+            try {
+                const parsed = JSON.parse(savedRange);
+                if (parsed && parsed.length === 2) {
+                    primerDia = new Date(parsed[0]);
+                    hoy = new Date(parsed[1]);
+                }
+            } catch (e) {
+                console.error('Error al cargar rango de fechas guardado:', e);
+            }
+        }
+    }
+
     flatpickrInstance = flatpickr("#dateRange", {
         mode: "range", dateFormat: "d/m/Y", locale: "es", maxDate: "today", altInput: false,
         onReady: function(selectedDates, dateStr, instance) {
@@ -237,21 +391,75 @@ $(document).ready(function() {
                 const inicio = selectedDates[0].toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'});
                 const fin = selectedDates[1].toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'});
                 $('#dateRange').val(`${inicio} a ${fin}`);
+                
+                // Guardar en local storage si está habilitado
+                if ($('#switchPersistencia').is(':checked')) {
+                    localStorage.setItem('siesa_date_range', JSON.stringify([
+                        selectedDates[0].toISOString(),
+                        selectedDates[1].toISOString()
+                    ]));
+                }
+                
                 cargarDatos(selectedDates[0], selectedDates[1]);
             }
         }
     });
+
+    // Manejar cambio en el switch de persistencia
+    $('#switchPersistencia').on('change', function() {
+        const isEnabled = $(this).is(':checked');
+        localStorage.setItem('siesa_persist_enabled', isEnabled);
+        
+        if (!isEnabled) {
+            // Limpiar datos guardados si se desactiva
+            localStorage.removeItem('siesa_date_range');
+            localStorage.removeItem('siesa_filtros');
+        } else {
+            // Guardar estado actual si se activa
+            aplicarFiltros();
+            if (flatpickrInstance.selectedDates.length === 2) {
+                localStorage.setItem('siesa_date_range', JSON.stringify(flatpickrInstance.selectedDates.map(d => d.toISOString())));
+            }
+        }
+    });
+
     cargarDatos(primerDia, hoy);
     $('#filtroCliente, #filtroProveedor, #filtroEstado, #filtroTipo, #filtroConfirmacion').on('change', aplicarFiltros);
     $('#globalSearch').on('keyup', aplicarFiltros);
     $('#btnLimpiarFiltros').on('click', function() {
         $('#filtroCliente, #filtroProveedor, #filtroEstado, #filtroTipo, #filtroConfirmacion').val('');
+        $('.stat-card').removeClass('active');
         filteredData = [...allData];
         actualizarGrid();
         renderizarTarjetas();
         actualizarStats();
     });
     $('#btnDescargarCSV').on('click', descargarCSV);
+
+    // Filtros rápidos por tarjetas de estadísticas
+    $('.stat-delivered').on('click', function() {
+        const current = $('#filtroConfirmacion').val();
+        const newVal = current === 'ENTREGADO' ? '' : 'ENTREGADO';
+        $('#filtroConfirmacion').val(newVal);
+        
+        // Actualizar visualmente las tarjetas
+        $('.stat-card').removeClass('active');
+        if (newVal) $(this).addClass('active');
+        
+        aplicarFiltros();
+    });
+    
+    $('.stat-pending').on('click', function() {
+        const current = $('#filtroConfirmacion').val();
+        const newVal = current === 'PENDIENTE' ? '' : 'PENDIENTE';
+        $('#filtroConfirmacion').val(newVal);
+        
+        // Actualizar visualmente las tarjetas
+        $('.stat-card').removeClass('active');
+        if (newVal) $(this).addClass('active');
+        
+        aplicarFiltros();
+    });
 });
 
 
@@ -284,6 +492,15 @@ function renderizarTarjetas() {
         
         const detalles = f.referencias_detalle ? (typeof f.referencias_detalle === 'string' ? JSON.parse(f.referencias_detalle) : f.referencias_detalle) : [];
 
+        const estadosDisponibles = ['Aprobadas', 'Anuladas', 'En elaboración'];
+        const selectEstado = `
+            <select class="form-select form-select-sm select-estado-siesa mt-1" 
+                    onchange="actualizarEstadoSiesa('${f['Nro documento']}', this.value)">
+                ${estadosDisponibles.map(e => `<option value="${e}" ${f.Estado === e ? 'selected' : ''}>${e}</option>`).join('')}
+                ${!estadosDisponibles.includes(f.Estado) ? `<option value="${f.Estado}" selected>${f.Estado}</option>` : ''}
+            </select>
+        `;
+
         return `
             <div class="delivery-card ${cardClass} mb-3">
                 <div class="card-header-custom">
@@ -291,6 +508,7 @@ function renderizarTarjetas() {
                         <div>
                             <h6 class="mb-1">${f['Nro documento']}</h6>
                             <small class="text-muted"><i class="far fa-calendar-alt me-1"></i>${f.Fecha}</small>
+                            ${selectEstado}
                         </div>
                         <span class="badge ${esEntregado ? 'badge-entregado' : 'badge-pendiente'}">
                             ${esEntregado ? 'ENTREGADO' : 'PENDIENTE'}
@@ -308,7 +526,11 @@ function renderizarTarjetas() {
                     </div>
                     <div class="info-row">
                         <span class="info-label">OP:</span>
-                        <span class="info-value fw-bold">${f.op || '-'}</span>
+                        <span class="info-value">
+                            <div class="editable-op-container justify-content-end" onclick="habilitarEdicionOP(this, '${f['Nro documento']}')">
+                                <span class="op-text">${f.op || '-'}</span>
+                            </div>
+                        </span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Valor:</span>
@@ -399,7 +621,6 @@ function observeSentinel() {
     
     cardsObserver = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting) {
-            console.log('📸 Cargando más tarjetas...');
             cardsVisible += 20;
             renderizarTarjetas();
         }
@@ -419,7 +640,6 @@ function descargarCSV() {
         return;
     }
 
-    console.log('📄 Generando CSV...');
     
     // Headers en español
     const headers = [
@@ -474,7 +694,6 @@ function descargarCSV() {
     link.click();
     document.body.removeChild(link);
     
-    console.log('✅ CSV descargado exitosamente');
 }
 
 // Event listener para botón flotante de filtros
