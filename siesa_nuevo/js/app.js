@@ -426,6 +426,16 @@ $(document).ready(function() {
     cargarDatos(primerDia, hoy);
     $('#filtroCliente, #filtroProveedor, #filtroEstado, #filtroTipo, #filtroConfirmacion').on('change', aplicarFiltros);
     $('#globalSearch').on('keyup', aplicarFiltros);
+    
+    // Enfocar buscador al hacer clic en el wrapper (para expansión)
+    $('.search-wrapper').on('click', function() {
+        $('#globalSearch').focus();
+    });
+
+    $('.date-picker-wrapper').on('click', function() {
+        $('#dateRange').focus();
+    });
+
     $('#btnLimpiarFiltros').on('click', function() {
         $('#filtroCliente, #filtroProveedor, #filtroEstado, #filtroTipo, #filtroConfirmacion').val('');
         $('.stat-card').removeClass('active');

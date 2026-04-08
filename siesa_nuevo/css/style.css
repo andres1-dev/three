@@ -44,31 +44,136 @@ body {
     align-items: center;
     background-color: var(--gray-50);
     border: 2px solid var(--gray-100);
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 0 16px;
-    transition: all 0.2s ease;
-    min-width: 200px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     height: 48px;
 }
 
-.date-picker-wrapper {
-    min-width: 280px;
+.search-wrapper {
+    min-width: 48px;
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
 }
 
-.search-wrapper:focus-within, .date-picker-wrapper:focus-within {
-    border-color: var(--gray-800);
+.search-wrapper:hover, .search-wrapper:focus-within {
+    width: 250px;
+    padding: 0 16px;
+    justify-content: flex-start;
+    border-color: var(--siesa-blue);
     background-color: white;
-    box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.1);
+    box-shadow: 0 8px 20px rgba(13, 121, 254, 0.15);
 }
+
+.search-wrapper:hover input, .search-wrapper:focus-within input {
+    opacity: 1;
+    width: 100%;
+}
+
+.search-wrapper:hover i, .search-wrapper:focus-within i {
+    margin-right: 12px;
+    color: var(--siesa-blue);
+}
+
+.date-picker-wrapper {
+    min-width: 48px;
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+/* Solo expandir al pasar por encima (Desktop) */
+@media (min-width: 769px) {
+    .date-picker-wrapper:hover {
+        width: 240px;
+        padding: 0 12px;
+        justify-content: center;
+        border-color: var(--siesa-blue);
+        background-color: white;
+        box-shadow: 0 8px 20px rgba(13, 121, 254, 0.15);
+    }
+
+    .date-picker-wrapper:hover input {
+        opacity: 1;
+        width: 100%;
+    }
+    
+    .date-picker-wrapper:hover i {
+        margin-right: 12px;
+        color: var(--siesa-blue);
+    }
+}
+
+/* En móvil, optimizar para touch */
+@media (max-width: 768px) {
+    .header-controls {
+        flex-wrap: wrap;
+        height: auto;
+        gap: 10px;
+        justify-content: center;
+    }
+    
+    .search-wrapper {
+        width: 100% !important;
+        height: 48px;
+        padding: 0 16px !important;
+        justify-content: flex-start !important;
+        order: -1; /* Poner el buscador arriba del todo */
+    }
+
+    .search-wrapper input {
+        opacity: 1 !important;
+        width: 100% !important;
+    }
+
+    .search-wrapper i {
+        margin-right: 12px !important;
+    }
+
+    .date-picker-wrapper {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        padding: 0;
+        justify-content: center;
+    }
+    
+    .date-picker-wrapper input {
+        display: none; /* No expandir en móvil */
+    }
+}
+
+@media (max-width: 991px) {
+    .header {
+        padding: 16px;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .header-controls {
+        display: flex;
+        width: 100%;
+        gap: 8px;
+        position: relative;
+    }
+}
+
 
 .search-wrapper i, .date-picker-wrapper i {
     color: var(--gray-600);
-    font-size: 14px;
-    margin-right: 12px;
+    font-size: 16px;
+    transition: all 0.3s;
+    margin-right: 0;
 }
 
-.search-wrapper:focus-within i, .date-picker-wrapper:focus-within i {
-    color: var(--gray-800);
+.search-wrapper:hover i, .search-wrapper:focus-within i {
+    margin-right: 12px;
+    color: var(--siesa-blue);
 }
 
 
@@ -76,10 +181,22 @@ body {
     border: none !important;
     padding: 10px 0 !important;
     background: transparent !important;
-    font-size: 14px !important;
+    font-size: 13.5px !important; /* Ligeramente más pequeño para ajustar mejor */
     font-weight: 600 !important;
     color: var(--gray-800) !important;
     box-shadow: none !important;
+    width: 0;
+    opacity: 0;
+    outline: none !important;
+    transition: all 0.3s;
+}
+
+.date-picker-wrapper input {
+    text-align: center;
+}
+
+.search-wrapper:hover input, .search-wrapper:focus-within input {
+    opacity: 1;
     width: 100%;
 }
 
@@ -860,28 +977,22 @@ body {
 
 @media (max-width: 991px) {
     .header {
+        padding: 16px;
         flex-direction: column;
-        gap: 16px;
-    }
-    
-    .header > div {
-        width: 100%;
-    }
-    
-    .header input {
-        width: 100% !important;
+        align-items: center;
+        text-align: center;
     }
     
     .header-controls {
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 8px;
+        position: relative;
+        height: 50px;
         width: 100%;
-        gap: 10px;
     }
-    
-    .search-wrapper, .date-picker-wrapper {
-        width: 100%;
-        max-width: none;
-    }
-    
+
     .filtros .col-md-2 {
         margin-bottom: 12px;
     }
