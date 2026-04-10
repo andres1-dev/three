@@ -8,138 +8,161 @@
 // espera la aplicación (esquema legado). Se aplica DESPUÉS de normalizar
 // claves a mayúsculas, por eso las claves aquí están en MAYÚSCULAS.
 const SISPRO_MAP = {
-    'OP':           'LOTE',
-    'REF':          'REFERENCIA',
-    'UNDPROG':      'CANTIDAD',
+    'OP': 'LOTE',
+    'REF': 'REFERENCIA',
+    'UNDPROG': 'CANTIDAD',
     'NOMBREPLANTA': 'PLANTA',
-    'FSALIDACONF':  'SALIDA',
-    'PROCESO':      'PROCESO',        // ya coincide, pero lo incluimos por claridad
-    'DESCRIPCION':  'PRENDA',
-    'CUENTO':       'LINEA',
-    'GENERO':       'GENERO',         // ya coincide
-    'TIPO TEJIDO':  'TEJIDO',
-    'COLECCION':    'COLECCION',      // extra útil
+    'FSALIDACONF': 'SALIDA',
+    'PROCESO': 'PROCESO',        // ya coincide, pero lo incluimos por claridad
+    'DESCRIPCION': 'PRENDA',
+    'CUENTO': 'LINEA',
+    'GENERO': 'GENERO',         // ya coincide
+    'TIPO TEJIDO': 'TEJIDO',
+    'COLECCION': 'COLECCION',      // extra útil
     'FECHA_ENTREGA': 'FECHA_ENTREGA',  // fecha de entrega confirmada
 };
 
-// ── Inicialización de Supabase Client (Realtime) ──
-const SUPABASE_URL = "https://doqsurxxxaudnutsydlk.supabase.co";
+// ── Inicialización de Configuración ──
+// Las claves de Supabase ya no se exponen al cliente de JS. Todo fluye por Edge Functions.
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg";
 
-// Singleton del cliente Supabase
-let _supabase = null;
-function getSupabase() {
-    if (!_supabase && typeof supabase !== 'undefined') {
-        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    }
-    return _supabase;
-}
-
-
-/**
- * Singleton para asegurar la configuración inicial si fuera necesaria.
- */
 let secureConfigPromise = null;
 
 async function fetchSecureConfig() {
-    // En Supabase, las llaves de cliente suelen ser seguras o manejadas via Edge Functions
-    // Si necesitasemos recuperar algo dinámico, lo haríamos aquí.
     return CONFIG;
 }
 
 /**
- * Obtiene los datos de una tabla de Supabase via Edge Function.
- * Reintenta hasta 3 veces en caso de errores de red.
+ * Obtiene los datos de una tabla proxying a la Edge Function segura.
+ * Reintenta en caso de errores de red y soporta caché para tablas masivas.
  */
-async function fetchSupabaseData(tableName) {
-    const MAX_RETRIES = 3;
-    let lastError;
+async function fetchSupabaseData(tableName, options = {}) {
+    const tableUpper = tableName.toUpperCase();
+    const isAuthTable = ['USUARIOS', 'PLANTAS'].includes(tableUpper);
+    const isSispro = tableUpper === 'SISPRO';
 
-    // Intentar primero con el nombre tal cual, luego con minúsculas como fallback
+    // 1. Caché estricto para SISPRO (15 min) para evitar descargas pesadas
+    const cacheKey = `sb_cache_SISPRO`;
+    if (isSispro && !options.noCache) {
+        const cached = sessionStorage.getItem(cacheKey);
+        if (cached) {
+            try {
+                const parsed = JSON.parse(cached);
+                if (Date.now() - parsed.ts < 15 * 60 * 1000) {
+                    console.log(`[API] ✓ SISPRO cargada desde Caché`);
+                    return _normalizeSupabaseData(parsed.data, tableName);
+                }
+            } catch(e){}
+        }
+    }
+
+    // 2. Ejecución hacia la Edge Function (Única fuente de verdad)
+    const MAX_RETRIES = 2;
     const namesToTry = [tableName];
     if (tableName !== tableName.toLowerCase()) namesToTry.push(tableName.toLowerCase());
 
     for (const nameToUse of namesToTry) {
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                const url = `${CONFIG.FUNCTIONS_URL}/query?table=${nameToUse}`;
-                const response = await fetch(url);
-
-                if (!response.ok) {
-                    const errBody = await response.text().catch(() => '');
-                    throw new Error(`HTTP ${response.status} al obtener ${nameToUse}: ${errBody}`);
+                let url = `${CONFIG.FUNCTIONS_URL}/query?table=${nameToUse}`;
+                
+                // Mapear el options.select si se proporciona para traer columnas específicas
+                if (options.select) {
+                    url += `&select=${encodeURIComponent(options.select)}`;
                 }
 
-                const result = await response.json();
-
-                // Edge Function devuelve { error: "..." } en algunos casos con status 200
-                if (result && result.error) {
-                    throw new Error(`Supabase: ${result.error}`);
-                }
-
-                // Supabase puede devolver el array directamente o envuelto en { data: [...] }
-                let records = result;
-                if (result && !Array.isArray(result) && result.data) {
-                    records = result.data;
-                }
-
-                if (!Array.isArray(records)) {
-                    console.warn(`[API] Respuesta inválida para ${nameToUse}:`, typeof records, records);
-                    records = [];
-                }
-
-                // Normalizar claves a MAYÚSCULAS y valores a STRING para compatibilidad total.
-                // Supabase devuelve números como number, pero el resto del código espera strings
-                // (usa .replace, .toLowerCase, .includes, etc.). NULL se convierte a cadena vacía.
-                records = records.map(r => {
-                    const normalized = {};
-                    for (const key in r) {
-                        const val = r[key];
-                        normalized[key.toUpperCase()] = (val === null || val === undefined) ? '' : String(val);
-                    }
-                    return normalized;
-                });
-
-                // ── Remapeo SISPRO: traducir columnas SIESA al esquema legado ──
-                // SIESA usa 'OP', 'Ref', 'NombrePlanta', 'UndProg', etc.
-                // La app espera 'LOTE', 'REFERENCIA', 'PLANTA', 'CANTIDAD', etc.
-                const isSispro = tableName.toUpperCase() === 'SISPRO';
-                if (isSispro) {
-                    records = records.map(r => {
-                        const remapped = { ...r }; // conservar todos los campos originales
-                        for (const [siesa, legacy] of Object.entries(SISPRO_MAP)) {
-                            if (siesa in remapped) {
-                                remapped[legacy] = remapped[siesa];
-                            }
-                        }
-                        return remapped;
+                // Armar filtros básicos pasados
+                if (options.filters) {
+                    options.filters.forEach(f => {
+                        url += `&${f.type}_${f.column}=${encodeURIComponent(f.value)}`;
                     });
                 }
 
-                // Filtro de seguridad: GUEST solo ve su propia planta
-                const sessionUser = (typeof currentUser !== 'undefined') ? currentUser : null;
-                if (sessionUser && sessionUser.ROL === 'GUEST' && sessionUser.PLANTA) {
-                    const userPlanta = String(sessionUser.PLANTA).trim().toUpperCase();
-                    records = records.filter(r => String(r.PLANTA || '').trim().toUpperCase() === userPlanta);
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'apikey': SUPABASE_KEY
+                    }
+                });
+
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+                const result = await response.json();
+                const records = (result && result.data) ? result.data : result;
+
+                if (Array.isArray(records)) {
+                    console.log(`[API] ✓ ${nameToUse} cargada (${records.length} filas desde Edge Function)`);
+                    if (isSispro) sessionStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: records }));
+                    return _normalizeSupabaseData(records, tableName);
                 }
-
-                if (nameToUse !== tableName) {
-                    console.info(`[API] Tabla "${tableName}" no encontrada, usando "${nameToUse}" (minúsculas).`);
-                }
-
-                return records;
-
             } catch (error) {
-                lastError = error;
-                console.warn(`[API] ${nameToUse} intento ${attempt + 1}/${MAX_RETRIES}:`, error.message);
-                if (attempt < MAX_RETRIES - 1) {
-                    await new Promise(r => setTimeout(r, 500 * Math.pow(3, attempt)));
+                if (attempt === MAX_RETRIES - 1 && nameToUse === namesToTry[namesToTry.length - 1]) {
+                    console.error(`[API ERROR] No se pudo cargar ${tableName}:`, error.message);
                 }
+                await new Promise(r => setTimeout(r, 600));
             }
         }
     }
+    
+    // Devolvemos vacío si falla la extracción para evitar crasheos de la app general
+    return []; 
+}
 
-    throw lastError;
+/** Helper para normalizar claves a MAYÚSCULAS y aplicar mapeos legacy */
+function _normalizeSupabaseData(records, tableName) {
+    const tableUpper = tableName.toUpperCase();
+
+    let normalized = records.map(r => {
+        const obj = {};
+        for (const key in r) {
+            const val = r[key];
+            obj[key.toUpperCase()] = (val === null || val === undefined) ? '' : String(val);
+        }
+        return obj;
+    });
+
+    const isSispro = tableUpper === 'SISPRO';
+    if (isSispro) {
+        normalized = normalized.map(r => {
+            const remapped = { ...r };
+            for (const [siesa, legacy] of Object.entries(SISPRO_MAP)) {
+                if (siesa in remapped) remapped[legacy] = remapped[siesa];
+            }
+            return remapped;
+        });
+    }
+
+    // Normalización adicional para SISPRO (DB -> APP)
+    // Nota: Usamos r.NOMBREPLANTA (mayúsculas) porque la normalización base ya ocurrió
+    if (tableUpper === 'SISPRO') {
+        normalized = normalized.map(r => ({
+            ...r,
+            LOTE: r.OP || r.LOTE || '',
+            REFERENCIA: r.REF || r.REFERENCIA || '',
+            CANTIDAD: r.UNDPROG || r.CANTIDAD || 0,
+            PLANTA: r.NOMBREPLANTA || r.PLANTA || '',
+            SALIDA: r.FSALIDACONF || r.SALIDA || '',
+            PRENDA: r.DESCRIPCION || r.PRENDA || '',
+            GENERO: r.GENERO || '',
+            TEJIDO: r['TIPO TEJIDO'] || r.TIPO_TEJIDO || r.TEJIDO || ''
+        }));
+    }
+
+    // Filtro de seguridad GUEST: solo aplica a tablas operativas, NO a usuarios/plantas (rompe login)
+    const sessionUser = (typeof currentUser !== 'undefined') ? currentUser : null;
+    const skipFilter = ['USUARIOS', 'PLANTAS'].includes(tableUpper); // Volvemos a habilitar SISPRO para filtrado
+
+    if (!skipFilter && sessionUser && sessionUser.ROL === 'GUEST' && sessionUser.PLANTA) {
+        const userPlanta = String(sessionUser.PLANTA).trim().toUpperCase();
+
+        // Filtrado inteligente: buscar en PLANTA (normalizado) o NombrePlanta (original SISPRO)
+        normalized = normalized.filter(r => {
+            const rowPlanta = String(r.PLANTA || r.NombrePlanta || '').trim().toUpperCase();
+            return rowPlanta === userPlanta;
+        });
+    }
+
+    return normalized;
 }
 
 /**

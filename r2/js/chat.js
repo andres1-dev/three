@@ -57,10 +57,27 @@ async function _chatFetch(body) {
  * Mucho más rápido para lecturas frecuentes.
  * @returns {Promise<Array>} filas crudas [[ID_MSG, ID_NOV, PLANTA, ROL, AUTOR, MENSAJE, TS], ...]
  */
-async function _readChatSheet() {
+/**
+ * Lee la hoja CHAT desde Supabase con filtrado por ID_NOV.
+ */
+async function _readChatSheet(idNovedad = null) {
     try {
-        // Usar fetchSupabaseData definido en api.js
-        return await fetchSupabaseData('CHAT');
+        const options = {};
+        if (idNovedad) {
+            options.filters = [{ type: 'eq', column: 'id_nov', value: idNovedad }];
+        }
+        const data = await fetchSupabaseData('CHAT', options);
+        
+        // Mapeo de compatibilidad: DB (MAYÚSCULAS) -> UI (minúsculas)
+        return data.map(r => ({
+            id:      r.ID_MSG || r.id || '',
+            idNov:   r.ID_NOVEDAD || r.ID_NOV || r.id_nov || '',
+            planta:  r.PLANTA || '',
+            rol:     r.AUTOR || r.ROL || '',  // Según JSON: AUTOR es el rol
+            autor:   r.ROL || r.AUTOR || '',    // Según JSON: ROL es el nombre
+            mensaje: r.MENSAJE || r.mensaje || '',
+            ts:      r.TIMESTAMP || r.TS || r.ts || new Date().toISOString()
+        }));
     } catch (e) {
         console.error('[CHAT] Error leyendo CHAT desde Supabase:', e);
         throw e;
@@ -92,10 +109,35 @@ async function _readNovedadChatMeta(idNovedad) {
 }
 
 async function _sendMsg(mensaje, imagenData = null) {
-    if (!mensaje.trim() && !imagenData || !_chatNovedadId) return;
-    const autor = currentUser.USUARIO || currentUser.PLANTA || 'Usuario';
+    if ((!mensaje || !mensaje.trim()) && !imagenData) return;
+    if (!_chatNovedadId) {
+        console.error('[CHAT] No hay ID de novedad seleccionado.');
+        return;
+    }
+
+    // Obtener nombre del autor de forma robusta
+    const autor = currentUser.USUARIO || currentUser.PLANTA || currentUser.NOMBRE || 'Usuario';
     const rol   = currentUser.ROL || 'GUEST';
-    return _chatFetch({ accion: 'SEND_CHAT_MSG', idNovedad: _chatNovedadId, planta: _chatPlanta, lote: _chatLote || '', autor, rol, mensaje: mensaje.trim(), imagen: imagenData || null });
+    
+    console.log('[CHAT] Iniciando envío a Supabase...', { idNovedad: _chatNovedadId, autor });
+
+    try {
+        const payload = { 
+            accion: 'SEND_CHAT_MSG', 
+            idNovedad: String(_chatNovedadId), 
+            planta: String(_chatPlanta || currentUser.PLANTA || ''), 
+            lote: String(_chatLote || ''), 
+            autor: String(autor), 
+            rol: String(rol), 
+            mensaje: mensaje ? mensaje.trim() : '', 
+            imagen: imagenData || null 
+        };
+        
+        return await _chatFetch(payload);
+    } catch (e) {
+        console.error('[CHAT] Error crítico enviando mensaje:', e);
+        throw e;
+    }
 }
 
 async function _archiveChat(idNovedad) {
@@ -454,11 +496,39 @@ async function _submitChatMsg() {
     }, true);
 
     try {
+        console.log('[DEBUG] Enviando mensaje a Supabase...');
         const res = await _sendMsg(texto, imagenData);
-        // Si GAS devuelve la URL de Drive, ya quedó guardada en el mensaje
+        console.log('[DEBUG] Respuesta de Supabase:', res);
+        
+        if (!res || !res.success) {
+            throw new Error(res ? res.message : 'Respuesta inválida');
+        }
         await _loadAndRender();
+
     } catch (e) {
-        console.error('[CHAT] Error al enviar:', e);
+        console.warn('[DEBUG] Supabase falló, intentando fallback a GAS...', e.message);
+        try {
+            const gasPayload = { 
+                accion: 'SEND_CHAT_MSG', 
+                idNovedad: _chatNovedadId, 
+                planta: _chatPlanta, 
+                lote: _chatLote, 
+                autor: currentUser.USUARIO || currentUser.PLANTA || 'Usuario', 
+                rol: currentUser.ROL, 
+                mensaje: texto, 
+                imagen: imagenData 
+            };
+            const gasRes = await fetch(GAS_ENDPOINT, { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify(gasPayload) 
+            }).then(r => r.json());
+            console.log('[DEBUG] Respuesta de GAS:', gasRes);
+            await _loadAndRender();
+        } catch (gasErr) {
+            console.error('[DEBUG] AMBOS MOTORES FALLARON:', gasErr);
+            Swal.fire('Error', 'No se pudo enviar el mensaje a ninguna base de datos.', 'error');
+        }
     } finally {
         if (btn) btn.disabled = false;
         input.focus();
@@ -466,46 +536,9 @@ async function _submitChatMsg() {
 }
 
 function _startChatPoll() {
-    // ── Cambio a REALTIME ──
-    const sb = getSupabase();
-    if (sb && _chatNovedadId) {
-        if (_chatChannel) _chatChannel.unsubscribe();
-        
-        _chatChannel = sb.channel(`chat:${_chatNovedadId}`)
-            .on('postgres_changes', { 
-                event: 'INSERT', 
-                schema: 'public', 
-                table: 'CHAT', 
-                filter: `ID_NOV=eq.${_chatNovedadId}` 
-            }, (payload) => {
-                console.log('[CHAT] Nuevo mensaje (Realtime):', payload.new);
-                _loadAndRender(); // Recargar para renderizar el nuevo mensaje
-            })
-            .on('postgres_changes', {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'NOVEDADES',
-                filter: `ID_NOVEDAD=eq.${_chatNovedadId}`
-            }, (payload) => {
-                // Si cambió CHAT_READ o se archivó el chat
-                const oldArchived = _chatArchived;
-                const meta = payload.new;
-                _chatArchived = String(meta.CHAT || '').startsWith('https://');
-                _chatReadReceipts = typeof meta.CHAT_READ === 'string' ? JSON.parse(meta.CHAT_READ || '{}') : (meta.CHAT_READ || {});
-                
-                if (oldArchived !== _chatArchived) {
-                    _updateChatActionBtn();
-                    _updateArchivedBanner(_chatArchived);
-                }
-                _loadAndRender();
-            })
-            .subscribe();
-            
-        console.log('[CHAT] Suscripción Realtime activa para:', _chatNovedadId);
-    }
-
+    // La conexión Realtime con WebSockets directos se removió a favor de Edge Functions seguras.
+    // Usamos exclusivamaente el mecanismo de polling via HTTP (cada 15s).
     _loadAndRender();
-    // No eliminamos el poll por completo, lo dejamos de backup a 15s por si falla Realtime
     if (_chatTimer) clearInterval(_chatTimer);
     _chatTimer = setInterval(_loadAndRender, 15000);
 }
@@ -539,17 +572,8 @@ async function _loadAndRender() {
             _renderMessages(msgs);
             if (msgs.length) _markChatSeen(id, _lastSeenTs(msgs));
         } else {
-            // Activo: solo Sheets API v4 — rápido
-            const allRows = await _readChatSheet();
-            const msgs = allRows
-                .filter(r => String(r.ID_NOV || r.ID_NOVEDAD || '').trim() === id)
-                .map(r => ({ 
-                    id: r.ID_MSG, 
-                    rol: r.ROL, 
-                    autor: r.AUTOR, 
-                    mensaje: r.MENSAJE, 
-                    ts: r.TS 
-                }));
+            // Activo: lectura directa desde Supabase — rápido y filtrado
+            const msgs = await _readChatSheet(id);
             _renderMessages(msgs);
             if (msgs.length) _markChatSeen(id, _lastSeenTs(msgs));
         }
@@ -692,16 +716,7 @@ function initChatBadges() {
 }
 
 function _startBadgePoll() {
-    const sb = getSupabase();
-    if (sb) {
-        // Suscribirse a todos los nuevos mensajes de chat para las insignias
-        sb.channel('chat-badges')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'CHAT' }, (payload) => {
-                _pollChatBadges();
-            })
-            .subscribe();
-    }
-
+    // Los badges ahora usan polling HTTP exclusicamente hacia las Edge Functions.
     if (_chatBadgeTimer) clearInterval(_chatBadgeTimer);
     _pollChatBadges();
     _chatBadgeTimer = setInterval(_pollChatBadges, document.hidden ? CHAT_POLL_HIDDEN : CHAT_POLL_IDLE);

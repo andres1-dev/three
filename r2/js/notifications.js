@@ -72,25 +72,13 @@ function initNotifications(preloadedNovedades) {
 }
 
 function _startNotifPoll() {
-    // ── Cambio a REALTIME ──
-    const sb = getSupabase();
-    if (sb) {
-        if (_notifChannel) _notifChannel.unsubscribe();
-        _notifChannel = sb.channel('novedades-changes')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'NOVEDADES' }, (payload) => {
-                console.log('[NOTIF] Cambio detectado (Realtime):', payload.new.ID_NOVEDAD);
-                _pollNovedades(); // Re-consultar para procesar el cambio
-            })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'NOVEDADES' }, (payload) => {
-                _pollNovedades();
-            })
-            .subscribe();
-    }
-
+    // La conexión Realtime fue reemplazada por la arquitectura de Edge Functions pura.
+    // Usamos exclusivamaente el mecanismo de polling seguro hacia las Functions.
     if (_notifPollTimer) clearInterval(_notifPollTimer);
     const interval = document.hidden ? NOTIF_POLL_HIDDEN : NOTIF_POLL_ACTIVE;
-    // Mantenemos polling de backup a 30s
-    _notifPollTimer = setInterval(_pollNovedades, Math.max(interval, 30000));
+    
+    // Configurar polling adaptativo basado en la visibilidad
+    _notifPollTimer = setInterval(_pollNovedades, Math.max(interval, 20000));
 }
 
 function _onVisibilityChange() {

@@ -17,7 +17,8 @@ serve(async (req) => {
     )
 
     const payload = await req.json()
-    const { accion, hoja, id, url } = payload
+    const { accion, hoja, url } = payload
+    const id = payload.id || payload.idNovedad || payload.idReporte;
     let result = { success: false, message: "" }
 
     console.log(`[OPERATIONS] Acción: ${accion || 'INSERT'}, Hoja: ${hoja || '--'}`)
@@ -51,9 +52,11 @@ serve(async (req) => {
         if (!hoja || !id || !url) throw new Error("Faltan parámetros para actualizar URL")
         const tableUp = hoja.toUpperCase()
         const pkName = tableUp === 'NOVEDADES' ? 'ID_NOVEDAD' : (tableUp === 'REPORTES' ? 'ID_REPORTE' : 'ID');
+        const colName = tableUp === 'REPORTES' ? 'SOPORTE' : 'IMAGEN';
+
         const { error: errUrl } = await supabaseClient
           .from(tableUp)
-          .update({ IMAGEN: url })
+          .update({ [colName]: url })
           .eq(pkName, id)
         if (errUrl) throw errUrl
         result = { success: true, message: "URL de imagen actualizada" }
@@ -68,21 +71,37 @@ serve(async (req) => {
         result = { success: true, message: "Estado actualizado" }
         break;
 
-      case "SEND_CHAT_MSG":
+      case "SEND_CHAT_MSG": {
         const finalMsg = payload.mensaje + (publicUrl ? ` [IMAGEN:${publicUrl}]` : '')
+
+        // Generar ID único similar al formato del usuario: MSG-XXXXXXXX
+        const msgId = "MSG-" + Math.floor(Math.random() * 0x100000000).toString(16).toUpperCase().padStart(8, '0');
+
+        // Mapeo EXACTO basado en el JSON proporcionado por el usuario
+        const insertData = {
+          ID_MSG: msgId,
+          ID_NOVEDAD: String(payload.idNovedad || ''),
+          PLANTA: String(payload.planta || ''),
+          AUTOR: String(payload.rol || 'GUEST'), // En el JSON del usuario, AUTOR es el rol
+          ROL: String(payload.autor || 'Usuario'), // En el JSON del usuario, ROL es el nombre
+          MENSAJE: String(finalMsg || ''),
+          TIMESTAMP: new Date().toISOString() // El usuario usa TIMESTAMP, no TS
+        }
+
+        console.log("[CHAT] Insertando con esquema exacto:", insertData)
+
         const { error: errChat } = await supabaseClient
           .from('CHAT')
-          .insert([{
-            ID_NOV: payload.idNovedad,
-            PLANTA: payload.planta,
-            ROL: payload.rol,
-            AUTOR: payload.autor,
-            MENSAJE: finalMsg,
-            TS: new Date().toISOString()
-          }])
-        if (errChat) throw errChat
-        result = { success: true, message: "Mensaje enviado" }
+          .insert([insertData])
+
+        if (errChat) {
+          console.error("[CHAT CRÍTICO] Error al insertar:", errChat.message)
+          throw new Error(`Error de base de datos: ${errChat.message}`)
+        }
+
+        result = { success: true, message: "Mensaje guardado exitosamente" }
         break;
+      }
 
       case "MARK_READ":
         const { data: nD } = await supabaseClient.from('NOVEDADES').select('CHAT_READ').eq('ID_NOVEDAD', payload.idNovedad).single()
@@ -95,40 +114,33 @@ serve(async (req) => {
         break;
 
       case "UPDATE_USER":
+        const userData: any = {};
+        if (payload.usuario !== undefined) userData.USUARIO = payload.usuario;
+        if (payload.correo !== undefined) userData.CORREO = payload.correo;
+        if (payload.telefono !== undefined) userData.TELEFONO = payload.telefono;
+        if (payload.rol !== undefined) userData.ROL = payload.rol;
+        if (payload.password !== undefined) userData.CONTRASEÑA = payload.password; // Usar CONTRASEÑA
+
         const { error: errU } = await supabaseClient
           .from('USUARIOS')
-          .update({
-            USUARIO: payload.usuario,
-            CORREO: payload.correo,
-            TELEFONO: payload.telefono,
-            ROL: payload.rol,
-            CONTRASEÑA: payload.password
-          })
+          .update(userData)
           .eq('ID_USUARIO', payload.id)
         if (errU) throw errU
         result = { success: true, message: "Usuario actualizado" }
         break;
 
-      case "UPDATE_USER_ROLE":
-        const { error: errUR } = await supabaseClient
-          .from('USUARIOS')
-          .update({ ROL: payload.nuevoRol })
-          .eq('ID_USUARIO', payload.id)
-        if (errUR) throw errUR
-        result = { success: true, message: "Rol actualizado" }
-        break;
-
       case "ACTUALIZAR_PLANTA":
+        const plantData: any = {};
+        if (payload.nombrePlanta !== undefined) plantData.PLANTA = payload.nombrePlanta;
+        if (payload.email !== undefined) plantData.EMAIL = payload.email;
+        if (payload.telefono !== undefined) plantData.TELEFONO = payload.telefono;
+        if (payload.direccion !== undefined) plantData.DIRECCION = payload.direccion;
+        if (payload.rol !== undefined) plantData.ROL = payload.rol;
+        if (payload.password !== undefined) plantData.CONTRASEÑA = payload.password; // Usar CONTRASEÑA
+
         const { error: errP } = await supabaseClient
           .from('PLANTAS')
-          .update({
-            PLANTA: payload.nombrePlanta,
-            EMAIL: payload.email,
-            TELEFONO: payload.telefono,
-            DIRECCION: payload.direccion,
-            ROL: payload.rol,
-            CONTRASEÑA: payload.password
-          })
+          .update(plantData)
           .eq('ID_PLANTA', payload.id)
         if (errP) throw errP
         result = { success: true, message: "Planta actualizada" }
@@ -141,11 +153,18 @@ serve(async (req) => {
           const dataToInsert = { ...payload }
           delete dataToInsert.accion
           delete dataToInsert.hoja
-          if (publicUrl) dataToInsert.imagen = publicUrl
+          if (publicUrl) {
+            // Unificar nombre de columna de imagen/soporte
+            if (table === 'REPORTES') dataToInsert.soporte = publicUrl
+            else dataToInsert.imagen = publicUrl
+          }
 
           const finalData: any = {}
           for (const key in dataToInsert) {
-            if (key === 'id' || key === 'ID_NOVEDAD' || key === 'ID_REPORTE') continue;
+            // No procesar IDs aquí, los manejamos abajo
+            if (['id', 'ID_NOVEDAD', 'ID_REPORTE', 'ID_VISITA'].includes(key.toUpperCase())) continue;
+
+            // Convertir camelCase a SNAKE_CASE para las columnas de la DB
             const snakeKey = key
               .replace(/([A-Z])/g, "_$1")
               .toUpperCase()
@@ -153,31 +172,57 @@ serve(async (req) => {
             finalData[snakeKey] = dataToInsert[key]
           }
 
-          // Réplica exacta de la generación de ID del sistema original
+          // Generación de Identificadores siguiendo el patrón del usuario
           if (table === 'NOVEDADES' && !finalData.ID_NOVEDAD) {
-            finalData.ID_NOVEDAD = "NOV-" + Math.floor(Math.random() * 1000000000).toString(16).toUpperCase();
+            finalData.ID_NOVEDAD = "NOV-" + Math.floor(Math.random() * 0x100000000).toString(16).toUpperCase();
           }
           if (table === 'REPORTES' && !finalData.ID_REPORTE) {
-            finalData.ID_REPORTE = "CAL-" + Math.floor(Math.random() * 1000000000).toString(16).toUpperCase();
+            finalData.ID_REPORTE = "REP-" + Math.floor(Math.random() * 0x100000000).toString(16).toUpperCase();
+          }
+          if (table === 'RUTERO' && !finalData.ID_VISITA) {
+            finalData.ID_VISITA = "VIS-" + Math.floor(Math.random() * 0x100000000).toString(16).toUpperCase();
           }
 
-          if (!finalData.FECHA) finalData.FECHA = new Date().toISOString();
-          if (table === 'NOVEDADES' && !finalData.ESTADO) finalData.ESTADO = 'ABIERTO';
+          if (table !== 'RUTERO' && !finalData.FECHA) finalData.FECHA = new Date().toISOString();
+          if (table === 'NOVEDADES' && !finalData.ESTADO) finalData.ESTADO = 'PENDIENTE'; // Según JSON es PENDIENTE
+
+          // Manejar AVANCE para REPORTES (no existe como columna, combinar en OBSERVACIONES)
+          if (table === 'REPORTES' && finalData.AVANCE !== undefined) {
+            if (finalData.AVANCE && finalData.AVANCE !== '' && finalData.AVANCE !== '0') {
+              finalData.OBSERVACIONES = `[Avance: ${finalData.AVANCE}%] ` + (finalData.OBSERVACIONES || '');
+            }
+            delete finalData.AVANCE;
+          }
+
+          // Filtro estricto de columnas según esquema
+          if (table === 'RUTERO') {
+            const ruteroCols = ['ID_VISITA', 'FECHA_VISITA', 'AUDITOR', 'PLANTA', 'LOTE', 'REFERENCIA', 'PROCESO', 'TIPO_VISITA', 'DESTINO', 'CANTIDAD', 'PRIORIDAD', 'ESTADO'];
+            for (const k of Object.keys(finalData)) {
+              if (!ruteroCols.includes(k)) delete finalData[k];
+            }
+          } else if (table === 'REPORTES') {
+            const reportesCols = ['ID_REPORTE', 'FECHA', 'LOTE', 'REFERENCIA', 'CANTIDAD', 'PLANTA', 'SALIDA', 'LINEA', 'PROCESO', 'PRENDA', 'GENERO', 'TEJIDO', 'EMAIL', 'LOCALIZACION', 'TIPO_VISITA', 'CONCLUSION', 'OBSERVACIONES', 'SOPORTE'];
+            for (const k of Object.keys(finalData)) {
+              if (!reportesCols.includes(k)) delete finalData[k];
+            }
+          }
+
+          console.log(`[INSERT] Tabla: ${table}, Datos:`, finalData)
 
           const { data: insData, error: errIns } = await supabaseClient
             .from(table)
             .insert([finalData])
             .select()
             .single()
-          
+
           if (errIns) {
             console.error(`[INSERT ERROR] Table: ${table}`, errIns)
             throw new Error(`Error insertando en ${table}: ${errIns.message}`)
           }
-          
-          result = { 
-            success: true, 
-            message: `Insertado en ${table}`, 
+
+          result = {
+            success: true,
+            message: `Insertado en ${table}`,
             id: insData.ID_NOVEDAD || insData.ID_REPORTE || insData.ID_VISITA || insData.ID,
             ID_NOVEDAD: insData.ID_NOVEDAD
           }

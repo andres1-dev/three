@@ -83,14 +83,15 @@ async function handleActualizarDatosSubmit(e) {
 
     setTimeout(() => window.location.reload(), 1500);
 
-    // 3. Sincronizar con GAS en background (no bloquea la UI)
+    // 3. Sincronizar con Supabase en background (no bloquea la UI)
     const payload = {
         accion: 'ACTUALIZAR_PLANTA',
-        cedula: rawCedula,
-        nombrePlanta,
-        direccion,
+        id: rawCedula, // El Edge Function busca 'id'
+        nombrePlanta: nombrePlanta,
+        direccion: direccion,
         telefono: rawTelefono,
         email: emailPlanta,
+        // No enviamos rol ni contraseña para no sobreescribir con null
     };
-    sendToGAS(payload).catch(err => console.warn('[plantas] Sync GAS falló, datos ya en localStorage:', err));
+    sendToSupabase(payload).catch(err => console.warn('[plantas] Sync Supabase falló:', err));
 }

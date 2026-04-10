@@ -561,15 +561,13 @@ async function cargarRutero() {
     try {
         await fetchSecureConfig();
 
-        // Cargar rutero, reportes y sispro en paralelo desde Supabase
-        const [ruteroRows, reportesRows, sisproRows] = await Promise.all([
+        // Cargar rutero y reportes en paralelo desde Supabase
+        const [ruteroRows, reportesRows] = await Promise.all([
             fetchSupabaseData(SHEET_RUTERO.name),
-            fetchSupabaseData(SHEET_REPORTES.name),
-            fetchSupabaseData(SHEET_SISPRO.name),
+            fetchSupabaseData(SHEET_REPORTES.name)
         ]);
 
         _reportesData = reportesRows;
-        _sisproData   = sisproRows;
 
         // Filtrar por auditor
         const rol     = currentUser?.ROL || '';
@@ -662,15 +660,9 @@ function parsarFechaUniversal(raw) {
 // Alias para compatibilidad con el código existente
 const parsarFechaReporte = parsarFechaUniversal;
 
-/* Obtiene la cantidad real del lote desde SISPRO cruzando LOTE + REFERENCIA */
+/* Devuelve la cantidad registrada en la propia visita, ignorando el cruce con SISPRO */
 function getCantidadSispro(visita) {
-    const norm = s => (s || '').toString().trim().toLowerCase();
-    const match = _sisproData.find(r =>
-        norm(r.LOTE)       === norm(visita.LOTE) &&
-        norm(r.REFERENCIA) === norm(visita.REFERENCIA)
-    );
-    if (!match) return null;
-    const n = parseInt(String(match.CANTIDAD).replace(/[^0-9]/g, ''));
+    const n = parseInt(String(visita.CANTIDAD).replace(/[^0-9]/g, ''));
     return isNaN(n) ? null : n;
 }
 
