@@ -535,7 +535,7 @@ function fillPlantaName() {
         if (direccionInput) direccionInput.value = plantaData.DIRECCION || '';
         if (emailInput)     emailInput.value     = plantaData.EMAIL     || '';
 
-        const tel = (plantaData.TELEFONO || '').replace(/\D/g, '');
+        const tel = String(plantaData.TELEFONO || '').replace(/\D/g, '');
         if (telefonoInput) {
             telefonoInput.value = tel.length === 10
                 ? `(${tel.slice(0,3)}) ${tel.slice(3,6)}-${tel.slice(6,10)}`
@@ -698,65 +698,27 @@ async function mejorarRedaccion(fieldId) {
     textarea.style.cursor = 'wait';
 
     try {
-        const apiKey = CONFIG.GEMINI_KEY;
+        const isCalidad = fieldId === 'observacionesCalidad';
+        const context = isCalidad ? {
+            prenda: document.getElementById('prenda')?.value || 'No especificada',
+            genero: document.getElementById('genero')?.value || 'No especificado',
+            tejido: document.getElementById('tejido')?.value || 'No especificado',
+            proceso: document.getElementById('proceso')?.value || 'No especificado'
+        } : null;
 
-        if (!apiKey) {
-            throw new Error("La llave de IA no se ha cargado correctamente desde el servidor.");
-        }
+        const data = await callSupabaseAI(textoOriginal, isCalidad ? 'CALIDAD_OBSERVATION' : 'GENERIC_CORRECTION', context);
 
-        const model = 'gemma-3n-e4b-it';
+        if (data.success && data.improvedText) {
+            // Guardar el texto original en un atributo data
+            textarea.setAttribute('data-original-text', textoOriginal);
+            textarea.value = data.improvedText;
 
-        const promptCalidad = `Eres un auditor senior de control de calidad en confección industrial. Reescribe el siguiente texto como una observación de seguimiento técnico: concisa, directa y sin ambigüedades. Usa el contexto del lote únicamente para orientar tu criterio técnico y elegir la terminología adecuada, pero no lo menciones ni lo repitas en la respuesta. Redacta de forma clara para que el personal operativo de planta o taller entienda exactamente qué se observó y qué se requiere corregir. Evita frases largas, rodeos o lenguaje administrativo innecesario. No agregues información que no esté en el texto original. No uses markdown, asteriscos, viñetas, negritas ni listas. No incluyas encabezados, títulos ni prefijos como "Observación:", "Hallazgo:", "Nota:" ni similares. Entrega únicamente el cuerpo del texto corregido en prosa continua, listo para pegar en un informe de seguimiento.
-
-Contexto del lote (solo para tu criterio, no lo menciones):
-- Prenda: ${document.getElementById('prenda')?.value || 'No especificada'}
-- Género: ${document.getElementById('genero')?.value || 'No especificado'}
-- Tejido: ${document.getElementById('tejido')?.value || 'No especificado'}
-- Proceso: ${document.getElementById('proceso')?.value || 'No especificado'}
-
-Texto a reescribir: ${textoOriginal}`;
-
-        const promptGenerico = `Actúa como corrector técnico industrial especializado en redacción profesional. Corrige la ortografía, gramática, puntuación y estilo del siguiente texto, mejorando su claridad y coherencia sin alterar el significado original. Normaliza abreviaturas técnicas comunes cuando corresponda. Si el texto está completamente en mayúsculas, conviértelo a formato de escritura estándar utilizando mayúscula inicial al inicio de las oraciones y en nombres propios, y minúsculas en el resto del texto. Sustituye términos vulgares, ofensivos o inapropiados por equivalentes profesionales o neutrales cuando sea necesario. Mantén el contenido técnico implícito en el original y no agregues información nueva. Devuelve únicamente el texto corregido.\n\nTexto a corregir: ${textoOriginal}`;
-
-        const promptIA = fieldId === 'observacionesCalidad' ? promptCalidad : promptGenerico;
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: promptIA }] }],
-                generationConfig: { temperature: 0.1, topP: 0.95, maxOutputTokens: 1024 }
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error?.message || "Error en la respuesta de la IA");
-        }
-
-        if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("La IA no pudo generar una respuesta (Filtro de seguridad o bloqueo).");
-        }
-
-        let textoPulido = data.candidates[0].content.parts[0].text.trim();
-        textoPulido = textoPulido.replace(/^["']|["']$/g, '');
-        // Limpiar markdown residual
-        textoPulido = textoPulido.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^[-•]\s+/gm, '').trim();
-        // Eliminar encabezados tipo "Observación técnica:", "Hallazgo:", etc. al inicio
-        textoPulido = textoPulido.replace(/^[A-ZÁÉÍÓÚÑ][^:\n]{0,40}:\s*/i, '').trim();
-
-        // Guardar el texto original en un atributo data
-        textarea.setAttribute('data-original-text', textoOriginal);
-
-        // Aplicar el texto mejorado inmediatamente
-        textarea.value = textoPulido;
-
-        // Mostrar el botón de restaurar
-        if (restoreBtn) {
-            restoreBtn.style.display = 'inline-flex';
+            // Mostrar el botón de restaurar
+            if (restoreBtn) {
+                restoreBtn.style.display = 'inline-flex';
+            }
+        } else {
+            throw new Error(data.error || 'No se pudo procesar el texto');
         }
 
     } catch (error) {

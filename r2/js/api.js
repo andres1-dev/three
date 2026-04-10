@@ -175,4 +175,25 @@ async function fetchReportesData() {
 async function fetchRuteroData() {
     return fetchSupabaseData('RUTERO');
 }
+/**
+ * Llama a la Edge Function de IA para procesar texto.
+ */
+async function callSupabaseAI(text, promptType = 'CHAT_CORRECTION', context = null) {
+    try {
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/ai`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text, promptType, context })
+        });
 
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Error en la IA');
+        }
+
+        return await response.json();
+    } catch (e) {
+        console.error('[API AI] Error:', e);
+        throw e;
+    }
+}

@@ -501,8 +501,14 @@ async function _loadAndRender() {
             // Activo: solo Sheets API v4 — rápido
             const allRows = await _readChatSheet();
             const msgs = allRows
-                .filter(r => String(r[1] || '').trim() === id)
-                .map(r => ({ id: r[0], rol: r[3], autor: r[4], mensaje: r[5], ts: r[6] }));
+                .filter(r => String(r.ID_NOV || r.ID_NOVEDAD || '').trim() === id)
+                .map(r => ({ 
+                    id: r.ID_MSG, 
+                    rol: r.ROL, 
+                    autor: r.AUTOR, 
+                    mensaje: r.MENSAJE, 
+                    ts: r.TS 
+                }));
             _renderMessages(msgs);
             if (msgs.length) _markChatSeen(id, _lastSeenTs(msgs));
         }
@@ -658,22 +664,27 @@ async function _pollChatBadges() {
         // Construir mapa: último mensaje de GUEST por novedad (cualquier novedad, no solo las del DOM)
         const latestGuestByNov = {};
         allRows.forEach(r => {
-            const novId = String(r[1] || '').trim();
-            const rol   = String(r[3] || '').trim();
+            const novId = String(r.ID_NOV || r.ID_NOVEDAD || '').trim();
+            const rol   = String(r.ROL || '').trim();
             if (!novId) return;
             if (rol === 'GUEST') {
                 // Guardar el más reciente (las filas vienen en orden cronológico)
-                latestGuestByNov[novId] = { id: r[0], rol, autor: r[4], mensaje: r[5], ts: r[6] };
+                latestGuestByNov[novId] = { 
+                    id: r.ID_MSG, 
+                    rol, 
+                    autor: r.AUTOR, 
+                    mensaje: r.MENSAJE, 
+                    ts: r.TS 
+                };
             }
         });
 
         // También construir mapa de metadatos (lote, planta) desde las filas de chat
-        // col: [ID_MSG, ID_NOV, PLANTA, ROL, AUTOR, MENSAJE, TS]
         const metaByNov = {};
         allRows.forEach(r => {
-            const novId = String(r[1] || '').trim();
+            const novId = String(r.ID_NOV || r.ID_NOVEDAD || '').trim();
             if (novId && !metaByNov[novId]) {
-                metaByNov[novId] = { planta: String(r[2] || '').trim() };
+                metaByNov[novId] = { planta: String(r.PLANTA || '').trim() };
             }
         });
 
@@ -919,9 +930,15 @@ async function _pollGuestChats() {
         const allRows = await _readChatSheet();
         const latestByNov = {};
         allRows.forEach(r => {
-            const novId = String(r[1] || '').trim();
+            const novId = String(r.ID_NOV || r.ID_NOVEDAD || '').trim();
             if (ids.has(novId)) {
-                latestByNov[novId] = { id: r[0], rol: r[3], autor: r[4], mensaje: r[5], ts: r[6] };
+                latestByNov[novId] = { 
+                    id: r.ID_MSG, 
+                    rol: r.ROL, 
+                    autor: r.AUTOR, 
+                    mensaje: r.MENSAJE, 
+                    ts: r.TS 
+                };
             }
         });
         for (const id of ids) {
@@ -1055,37 +1072,23 @@ async function _chatCorregirIA() {
     btn.style.color       = '#8b5cf6';
 
     try {
-        if (!CONFIG.GEMINI_KEY) await fetchSecureConfig();
-        const apiKey = CONFIG.GEMINI_KEY;
-        if (!apiKey) throw new Error('Clave IA no disponible');
+        const data = await callSupabaseAI(texto, 'CHAT_CORRECTION');
+        
+        if (data.success && data.improvedText) {
+            input.value = data.improvedText;
+            input.style.height = 'auto';
+            input.style.height = Math.min(input.scrollHeight, 100) + 'px';
 
-        const prompt = `Actúa como corrector técnico industrial. Corrige ortografía, gramática y normaliza abreviaturas (ej: pta -> planta, cant -> cantidad) del siguiente texto para que sea profesional y ejecutivo. Si el texto está completamente en MAYÚSCULAS, conviértelo a formato normal con mayúsculas y minúsculas apropiadas según las reglas del español. Devuelve solo el resultado corregido sin agregar información que no esté implícita en el texto original.\n\nTexto a corregir: ${texto}`;
-
-        const res  = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemma-3n-e4b-it:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.1, topP: 0.95, maxOutputTokens: 1024 }
-            })
-        });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error?.message || 'Error IA');
-        if (!data.candidates?.length) throw new Error('Sin respuesta de IA');
-
-        let corregido = data.candidates[0].content.parts[0].text.trim().replace(/^["']|["']$/g, '');
-        input.value = corregido;
-        input.style.height = 'auto';
-        input.style.height = Math.min(input.scrollHeight, 100) + 'px';
-
-        // Feedback visual: borde verde momentáneo
-        btn.style.borderColor = '#22c55e';
-        btn.style.color       = '#22c55e';
-        setTimeout(() => {
-            btn.style.borderColor = '#e2e8f0';
-            btn.style.color       = '#94a3b8';
-        }, 1500);
+            // Feedback visual: borde verde momentáneo
+            btn.style.borderColor = '#22c55e';
+            btn.style.color       = '#22c55e';
+            setTimeout(() => {
+                btn.style.borderColor = '#e2e8f0';
+                btn.style.color       = '#94a3b8';
+            }, 1500);
+        } else {
+            throw new Error(data.error || 'Sin respuesta de IA');
+        }
 
     } catch (err) {
         console.error('[CHAT IA]', err);

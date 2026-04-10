@@ -545,59 +545,29 @@ async function corregirTextoIA() {
     aiStatus.classList.add('active');
 
     try {
-        // Usar la misma configuración que ui.js
-        const apiKey = CONFIG.GEMINI_KEY;
-        
-        if (!apiKey) {
-            throw new Error("La llave de IA no se ha cargado correctamente desde el servidor.");
-        }
+        const data = await callSupabaseAI(texto, 'CHAT_CORRECTION');
 
-        const model = 'gemma-3n-e4b-it';
-        
-        // Solo corregir ortografía y gramática, sin considerar el tipo de cobro
-        const promptIA = `Actúa como corrector técnico industrial. Corrige ortografía, gramática y normaliza abreviaturas (ej: pta -> planta, cant -> cantidad) del siguiente texto para que sea profesional y ejecutivo. Si el texto está completamente en MAYÚSCULAS, conviértelo a formato normal con mayúsculas y minúsculas apropiadas según las reglas del español. Devuelve solo el resultado corregido sin agregar información que no esté implícita en el texto original.\n\nTexto a corregir: ${texto}`;
+        if (data.success && data.improvedText) {
+            // Mostrar el resultado
+            aiStatus.innerHTML = '<i class="fas fa-check-circle"></i> ¡Texto mejorado exitosamente!';
+            aiStatus.style.background = '#f0fdf4';
+            aiStatus.style.borderColor = '#bbf7d0';
+            aiStatus.style.color = '#15803d';
+            
+            textarea.value = data.improvedText;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: promptIA }] }],
-                generationConfig: { temperature: 0.1, topP: 0.95, maxOutputTokens: 1024 }
-            })
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error?.message || "Error en la respuesta de la IA");
-        }
-
-        if (!data.candidates || data.candidates.length === 0) {
-            throw new Error("La IA no pudo generar una respuesta (Filtro de seguridad o bloqueo).");
-        }
-
-        let textoPulido = data.candidates[0].content.parts[0].text.trim();
-        textoPulido = textoPulido.replace(/^["']|["']$/g, '');
-        
-        // Mostrar el resultado
-        aiStatus.innerHTML = '<i class="fas fa-check-circle"></i> ¡Texto mejorado exitosamente!';
-        aiStatus.style.background = '#f0fdf4';
-        aiStatus.style.borderColor = '#bbf7d0';
-        aiStatus.style.color = '#15803d';
-        
-        textarea.value = textoPulido;
-
-        setTimeout(() => {
-            aiStatus.classList.remove('active');
             setTimeout(() => {
-                aiStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> La IA está mejorando tu texto...';
-                aiStatus.style.background = '#f0f9ff';
-                aiStatus.style.borderColor = '#bae6fd';
-                aiStatus.style.color = '#0369a1';
-            }, 300);
-        }, 2000);
+                aiStatus.classList.remove('active');
+                setTimeout(() => {
+                    aiStatus.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> La IA está mejorando tu texto...';
+                    aiStatus.style.background = '#f0f9ff';
+                    aiStatus.style.borderColor = '#bae6fd';
+                    aiStatus.style.color = '#0369a1';
+                }, 300);
+            }, 2000);
+        } else {
+            throw new Error(data.error || 'Error en la respuesta de la IA');
+        }
 
     } catch (error) {
         console.error('Error al corregir con IA:', error);

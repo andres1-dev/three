@@ -191,7 +191,7 @@ function _checkForzarActualizarPerfil() {
         if (dir) dir.value = plantaData.DIRECCION || '';
         if (eml) eml.value = plantaData.EMAIL     || '';
         if (tel) {
-            const t = (plantaData.TELEFONO || '').replace(/\D/g, '');
+            const t = String(plantaData.TELEFONO || '').replace(/\D/g, '');
             tel.value = t.length === 10 ? `(${t.slice(0,3)}) ${t.slice(3,6)}-${t.slice(6,10)}` : t;
         }
     }

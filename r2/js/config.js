@@ -6,8 +6,8 @@
  * Configuración dinámica: Las llaves se recuperan desde GAS para mayor seguridad.
  */
 let CONFIG = {
-    API_KEY: null,      // Se cargará desde GAS
-    GEMINI_KEY: null,   // Se cargará desde GAS
+    API_KEY: null,
+    GEMINI_KEY: null,
     SPREADSHEET_ID: '1ZLGG8wfszE6D8vGwCECWguWGUiDXGUGfN87ZukyaCpo',
     FUNCTIONS_URL: 'https://doqsurxxxaudnutsydlk.supabase.co/functions/v1',
 };
@@ -16,7 +16,7 @@ let CONFIG = {
  * Endpoint de Google Apps Script para guardar datos de formularios.
  * @readonly
  */
-const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwHyBLQxirRHSXBpTE6Ax4t70DjzP2qrvh9YcSSvz-l6orIn7uC4DwM9PfqQJJh5qoQdw/exec';
+const GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbydiLxcTF1-zNzZoEmqAhPgHuj0GqrdfKYxUmZMQmVLq9XjPz4W7429YqA6DcBxEh_Z/exec';
 
 /**
  * Definición de la hoja SISPRO (lectura de lotes).

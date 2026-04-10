@@ -8,9 +8,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders })
-  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders })
 
   try {
     const supabaseClient = createClient(
@@ -19,104 +17,170 @@ serve(async (req) => {
     )
 
     const payload = await req.json()
-    const { accion, hoja } = payload
+    const { accion, hoja, id, url } = payload
     let result = { success: false, message: "" }
 
-    console.log(`[OPERATIONS] Acción recibida: ${accion || 'INSERT'}, Tabla/Hoja: ${hoja || '--'}`)
+    console.log(`[OPERATIONS] Acción: ${accion || 'INSERT'}, Hoja: ${hoja || '--'}`)
 
     // ── LÓGICA DE ARCHIVO (IMAGEN) ──
     let publicUrl = ""
-    if (payload.imagen && payload.imagen.base64) {
-      const fileName = `${Date.now()}_${payload.imagen.fileName || 'upload.jpg'}`
-      const contentType = payload.imagen.mimeType || 'image/jpeg'
-      const base64Data = payload.imagen.base64
+    const imgData = payload.imagen || payload.archivo // Soporta ambos formatos de payload
+    if (imgData && imgData.base64) {
+      const fileName = `${Date.now()}_${imgData.fileName || 'upload.jpg'}`
+      const contentType = imgData.mimeType || 'image/jpeg'
+      const base64Data = imgData.base64
 
-      // Subir a Supabase Storage (Bucket: soportes-r2)
-      // Nota: Si prefieres Google Drive, se requiere OAuth2 (no basta con API Key para subir), 
-      // por lo que usamos Supabase Storage como solución nativa y segura.
       const { data: storageData, error: storageError } = await supabaseClient
         .storage
         .from('soportes-r2')
         .upload(fileName, decode(base64Data), { contentType, upsert: true })
 
       if (storageError) throw storageError
-
-      const { data: { publicUrl: url } } = supabaseClient.storage.from('soportes-r2').getPublicUrl(fileName)
-      publicUrl = url
-      console.log(`[STORAGE] Imagen subida con éxito: ${publicUrl}`)
+      const { data: { publicUrl: pUrl } } = supabaseClient.storage.from('soportes-r2').getPublicUrl(fileName)
+      publicUrl = pUrl
     }
 
-    // ── MANEJO DE ACCIONES ESPECÍFICAS ──
+    // ── MANEJO DE ACCIONES ──
     switch (accion) {
+      case "SUBIR_ARCHIVO":
+        if (!publicUrl) throw new Error("No se pudo procesar el archivo")
+        result = { success: true, url: publicUrl }
+        break;
+
+      case "UPDATE_ARCHIVO_URL":
+        if (!hoja || !id || !url) throw new Error("Faltan parámetros para actualizar URL")
+        const tableUp = hoja.toUpperCase()
+        const pkName = tableUp === 'NOVEDADES' ? 'ID_NOVEDAD' : (tableUp === 'REPORTES' ? 'ID_REPORTE' : 'ID');
+        const { error: errUrl } = await supabaseClient
+          .from(tableUp)
+          .update({ IMAGEN: url })
+          .eq(pkName, id)
+        if (errUrl) throw errUrl
+        result = { success: true, message: "URL de imagen actualizada" }
+        break;
+
       case "UPDATE_ESTADO":
-        // Actualiza el estado de una novedad
-        const { error: errorUp } = await supabaseClient
+        const { error: errEst } = await supabaseClient
           .from('NOVEDADES')
-          .update({ estado: payload.nuevoEstado })
-          .eq('id_novedad', payload.timestampId)
-        
-        if (errorUp) throw errorUp
-        result = { success: true, message: "Estado de novedad actualizado" }
+          .update({ ESTADO: payload.nuevoEstado })
+          .eq('ID_NOVEDAD', payload.timestampId || payload.id)
+        if (errEst) throw errEst
+        result = { success: true, message: "Estado actualizado" }
         break;
 
       case "SEND_CHAT_MSG":
-        // Inserta un nuevo mensaje de chat
         const finalMsg = payload.mensaje + (publicUrl ? ` [IMAGEN:${publicUrl}]` : '')
-        const { error: errorChat } = await supabaseClient
+        const { error: errChat } = await supabaseClient
           .from('CHAT')
           .insert([{
-            id_nov: payload.idNovedad,
-            planta: payload.planta,
-            rol: payload.rol,
-            autor: payload.autor,
-            mensaje: finalMsg,
-            ts: new Date().toISOString()
+            ID_NOV: payload.idNovedad,
+            PLANTA: payload.planta,
+            ROL: payload.rol,
+            AUTOR: payload.autor,
+            MENSAJE: finalMsg,
+            TS: new Date().toISOString()
           }])
-        
-        if (errorChat) throw errorChat
-        result = { success: true, message: "Mensaje de chat enviado" }
+        if (errChat) throw errChat
+        result = { success: true, message: "Mensaje enviado" }
         break;
 
       case "MARK_READ":
-        // Actualiza el recibo de lectura en la tabla NOVEDADES
-        // (Simplificado: asume que existe columna chat_read tipo JSONB)
-        const { data: novData } = await supabaseClient.from('NOVEDADES').select('chat_read').eq('id_novedad', payload.idNovedad).single()
-        let currentRead = novData?.chat_read || {}
-        currentRead[payload.rol === 'GUEST' ? 'GUEST' : 'OPERATOR'] = new Date().toISOString()
-        
-        const { error: errorRead } = await supabaseClient
-          .from('NOVEDADES')
-          .update({ chat_read: currentRead })
-          .eq('id_novedad', payload.idNovedad)
-        
-        if (errorRead) throw errorRead
-        result = { success: true, message: "Recibo de lectura actualizado" }
+        const { data: nD } = await supabaseClient.from('NOVEDADES').select('CHAT_READ').eq('ID_NOVEDAD', payload.idNovedad).single()
+        let cR = nD?.CHAT_READ || {}
+        if (typeof cR === 'string') cR = JSON.parse(cR);
+        cR[payload.rol === 'GUEST' ? 'GUEST' : 'OPERATOR'] = new Date().toISOString()
+        const { error: errR } = await supabaseClient.from('NOVEDADES').update({ CHAT_READ: cR }).eq('ID_NOVEDAD', payload.idNovedad)
+        if (errR) throw errR
+        result = { success: true, message: "Leído" }
         break;
 
-      case "SOLICITAR_RESETEO_PASSWORD":
-        // Mock de reset (Se suele usar Supabase Auth pero lo mantenemos compatible con el flujo previo)
-        // Aquí podrías integrar un servicio de email (SendGrid/Resend)
-        result = { success: true, message: "Token generado (Simulado)" }
+      case "UPDATE_USER":
+        const { error: errU } = await supabaseClient
+          .from('USUARIOS')
+          .update({
+            USUARIO: payload.usuario,
+            CORREO: payload.correo,
+            TELEFONO: payload.telefono,
+            ROL: payload.rol,
+            CONTRASEÑA: payload.password
+          })
+          .eq('ID_USUARIO', payload.id)
+        if (errU) throw errU
+        result = { success: true, message: "Usuario actualizado" }
+        break;
+
+      case "UPDATE_USER_ROLE":
+        const { error: errUR } = await supabaseClient
+          .from('USUARIOS')
+          .update({ ROL: payload.nuevoRol })
+          .eq('ID_USUARIO', payload.id)
+        if (errUR) throw errUR
+        result = { success: true, message: "Rol actualizado" }
+        break;
+
+      case "ACTUALIZAR_PLANTA":
+        const { error: errP } = await supabaseClient
+          .from('PLANTAS')
+          .update({
+            PLANTA: payload.nombrePlanta,
+            EMAIL: payload.email,
+            TELEFONO: payload.telefono,
+            DIRECCION: payload.direccion,
+            ROL: payload.rol,
+            CONTRASEÑA: payload.password
+          })
+          .eq('ID_PLANTA', payload.id)
+        if (errP) throw errP
+        result = { success: true, message: "Planta actualizada" }
         break;
 
       default:
-        // Caso genérico: Inserción basada en la propiedad 'hoja'
+        // Caso genérico: Inserción (Novedades, Calidad, etc.)
         if (hoja) {
           const table = hoja.toUpperCase()
-          // Limpiar el payload de campos redundantes
           const dataToInsert = { ...payload }
           delete dataToInsert.accion
           delete dataToInsert.hoja
           if (publicUrl) dataToInsert.imagen = publicUrl
 
-          const { error: errorIns } = await supabaseClient
+          const finalData: any = {}
+          for (const key in dataToInsert) {
+            if (key === 'id' || key === 'ID_NOVEDAD' || key === 'ID_REPORTE') continue;
+            const snakeKey = key
+              .replace(/([A-Z])/g, "_$1")
+              .toUpperCase()
+              .replace(/^_/, "");
+            finalData[snakeKey] = dataToInsert[key]
+          }
+
+          // Réplica exacta de la generación de ID del sistema original
+          if (table === 'NOVEDADES' && !finalData.ID_NOVEDAD) {
+            finalData.ID_NOVEDAD = "NOV-" + Math.floor(Math.random() * 1000000000).toString(16).toUpperCase();
+          }
+          if (table === 'REPORTES' && !finalData.ID_REPORTE) {
+            finalData.ID_REPORTE = "CAL-" + Math.floor(Math.random() * 1000000000).toString(16).toUpperCase();
+          }
+
+          if (!finalData.FECHA) finalData.FECHA = new Date().toISOString();
+          if (table === 'NOVEDADES' && !finalData.ESTADO) finalData.ESTADO = 'ABIERTO';
+
+          const { data: insData, error: errIns } = await supabaseClient
             .from(table)
-            .insert([dataToInsert])
+            .insert([finalData])
+            .select()
+            .single()
           
-          if (errorIns) throw errorIns
-          result = { success: true, message: `Registro insertado en ${table}` }
-        } else {
-          throw new Error("Acción o tabla no especificada")
+          if (errIns) {
+            console.error(`[INSERT ERROR] Table: ${table}`, errIns)
+            throw new Error(`Error insertando en ${table}: ${errIns.message}`)
+          }
+          
+          result = { 
+            success: true, 
+            message: `Insertado en ${table}`, 
+            id: insData.ID_NOVEDAD || insData.ID_REPORTE || insData.ID_VISITA || insData.ID,
+            ID_NOVEDAD: insData.ID_NOVEDAD
+          }
         }
     }
 

@@ -68,14 +68,20 @@ function collectLotData() {
  * Envía un payload a la Edge Function de Supabase.
  */
 async function sendToSupabase(payload) {
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg';
     const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+        },
         body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        throw new Error(`Error ${response.status}: ${errorData.message || 'Error en el servidor'}`);
     }
 
     return response.json();
@@ -113,23 +119,14 @@ async function uploadArchivoAsync(file, id, hoja) {
 async function _uploadConReintentos(fileData, id, hoja, storageKey, intento = 1) {
     const MAX_INTENTOS = 5;
     try {
-        // 1. Subir el archivo a Supabase Storage (proxied via Edge Function)
-        const storageUrl = await _subirArchivoSupabase(fileData);
+        // 1. Subir el archivo a Google Drive via GAS
+        // GAS se encargará de llamar a la Edge Function de Supabase para actualizar la URL
+        const storageUrl = await _subirArchivoDrive(fileData, id, hoja);
 
-        // 2. Actualizar la URL en la fila del registro
-        const res = await sendToSupabase({
-            accion: 'UPDATE_ARCHIVO_URL',
-            hoja,
-            id,
-            url: storageUrl,
-        });
-
-        if (res.success) {
+        if (storageUrl) {
             localStorage.removeItem(storageKey);
             _hideUploadIndicator(id);
-            console.log(`[upload] ✓ Archivo subido para ${id}`);
-        } else {
-            throw new Error(res.message);
+            console.log(`[upload] ✓ Archivo subido a Drive para ${id}`);
         }
     } catch(e) {
         if (intento < MAX_INTENTOS) {
@@ -143,13 +140,23 @@ async function _uploadConReintentos(fileData, id, hoja, storageKey, intento = 1)
     }
 }
 
-async function _subirArchivoSupabase(fileData) {
-    const res = await sendToSupabase({
-        accion: 'SUBIR_ARCHIVO',
-        archivo: fileData,
+async function _subirArchivoDrive(fileData, id, hoja) {
+    const res = await fetch(GAS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // Evita preflight OPTIONS en GAS
+        body: JSON.stringify({
+            accion: 'SUBIR_DRIVE',
+            idNovedad: id,
+            hoja: hoja,
+            base64: fileData.base64,
+            mimeType: fileData.mimeType,
+            fileName: fileData.fileName
+        })
     });
-    if (!res.success || !res.url) throw new Error(res.message || 'Sin URL');
-    return res.url;
+    
+    const result = await res.json();
+    if (!result.success || !result.url) throw new Error(result.message || 'Error en GAS');
+    return result.url;
 }
 
 /** UI Helpers */
