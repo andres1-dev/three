@@ -378,6 +378,7 @@ $(document).ready(function() {
 
     flatpickrInstance = flatpickr("#dateRange", {
         mode: "range", dateFormat: "d/m/Y", locale: "es", maxDate: "today", altInput: false,
+        position: "auto center",
         onReady: function(selectedDates, dateStr, instance) {
             const fechas = [primerDia, hoy];
             instance.setDate(fechas, true);
@@ -386,21 +387,32 @@ $(document).ready(function() {
                 instance.input.value = `${primerDia.toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'})} a ${hoy.toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'})}`;
             }
         },
-        onClose: function(selectedDates) {
+        onOpen: function(selectedDates, dateStr, instance) {
+            // Guardar las fechas que había justo antes de abrir para comparar al cerrar
+            instance._datesBeforeOpen = [...selectedDates];
+        },
+        onClose: function(selectedDates, dateStr, instance) {
             if (selectedDates.length === 2) {
-                const inicio = selectedDates[0].toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'});
-                const fin = selectedDates[1].toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'});
-                $('#dateRange').val(`${inicio} a ${fin}`);
-                
-                // Guardar en local storage si está habilitado
-                if ($('#switchPersistencia').is(':checked')) {
-                    localStorage.setItem('siesa_date_range', JSON.stringify([
-                        selectedDates[0].toISOString(),
-                        selectedDates[1].toISOString()
-                    ]));
+                // Verificar si las fechas cambiaron realmente respecto a cuando se abrió
+                const antes = instance._datesBeforeOpen || [];
+                const haCambiado = antes.length !== 2 || 
+                                  selectedDates[0].getTime() !== antes[0].getTime() || 
+                                  selectedDates[1].getTime() !== antes[1].getTime();
+
+                if (haCambiado) {
+                    const inicio = selectedDates[0].toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                    const fin = selectedDates[1].toLocaleDateString('es-CO', {day: '2-digit', month: '2-digit', year: 'numeric'});
+                    $('#dateRange').val(`${inicio} a ${fin}`);
+                    
+                    if ($('#switchPersistencia').is(':checked')) {
+                        localStorage.setItem('siesa_date_range', JSON.stringify([
+                            selectedDates[0].toISOString(),
+                            selectedDates[1].toISOString()
+                        ]));
+                    }
+                    
+                    cargarDatos(selectedDates[0], selectedDates[1]);
                 }
-                
-                cargarDatos(selectedDates[0], selectedDates[1]);
             }
         }
     });
@@ -433,7 +445,7 @@ $(document).ready(function() {
     });
 
     $('.date-picker-wrapper').on('click', function() {
-        $('#dateRange').focus();
+        if (flatpickrInstance) flatpickrInstance.open();
     });
 
     $('#btnLimpiarFiltros').on('click', function() {

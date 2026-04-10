@@ -22,7 +22,7 @@ body {
     background: white;
     padding: 24px;
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -38,7 +38,8 @@ body {
     flex-wrap: wrap;
 }
 
-.search-wrapper, .date-picker-wrapper {
+.search-wrapper,
+.date-picker-wrapper {
     position: relative;
     display: flex;
     align-items: center;
@@ -59,7 +60,8 @@ body {
     overflow: hidden;
 }
 
-.search-wrapper:hover, .search-wrapper:focus-within {
+.search-wrapper:hover,
+.search-wrapper:focus-within {
     width: 250px;
     padding: 0 16px;
     justify-content: flex-start;
@@ -68,45 +70,49 @@ body {
     box-shadow: 0 8px 20px rgba(13, 121, 254, 0.15);
 }
 
-.search-wrapper:hover input, .search-wrapper:focus-within input {
+.search-wrapper:hover input,
+.search-wrapper:focus-within input {
     opacity: 1;
     width: 100%;
 }
 
-.search-wrapper:hover i, .search-wrapper:focus-within i {
+.search-wrapper:hover i,
+.search-wrapper:focus-within i {
     margin-right: 12px;
     color: var(--siesa-blue);
 }
 
 .date-picker-wrapper {
-    min-width: 48px;
-    width: 48px;
-    padding: 0;
+    min-width: 240px;
+    width: 240px;
+    padding: 0 12px;
     justify-content: center;
     cursor: pointer;
-    overflow: hidden;
+    background-color: var(--gray-50);
+    border: 2px solid var(--gray-100);
+    border-radius: 12px;
+    transition: all 0.3s ease;
 }
 
-/* Solo expandir al pasar por encima (Desktop) */
-@media (min-width: 769px) {
-    .date-picker-wrapper:hover {
-        width: 240px;
-        padding: 0 12px;
-        justify-content: center;
-        border-color: var(--siesa-blue);
-        background-color: white;
-        box-shadow: 0 8px 20px rgba(13, 121, 254, 0.15);
-    }
+.date-picker-wrapper:focus-within {
+    border-color: var(--siesa-blue);
+    background-color: white;
+    box-shadow: 0 8px 20px rgba(13, 121, 254, 0.15);
+}
 
-    .date-picker-wrapper:hover input {
-        opacity: 1;
-        width: 100%;
-    }
-    
-    .date-picker-wrapper:hover i {
-        margin-right: 12px;
-        color: var(--siesa-blue);
-    }
+.date-picker-wrapper i {
+    margin-right: 12px;
+    color: var(--gray-600);
+}
+
+.date-picker-wrapper:focus-within i {
+    color: var(--siesa-blue);
+}
+
+.date-picker-wrapper input {
+    opacity: 1 !important;
+    width: 100% !important;
+    text-align: center;
 }
 
 /* En móvil, optimizar para touch */
@@ -117,13 +123,14 @@ body {
         gap: 10px;
         justify-content: center;
     }
-    
+
     .search-wrapper {
         width: 100% !important;
         height: 48px;
         padding: 0 16px !important;
         justify-content: flex-start !important;
-        order: -1; /* Poner el buscador arriba del todo */
+        order: -1;
+        /* Poner el buscador arriba del todo */
     }
 
     .search-wrapper input {
@@ -136,15 +143,20 @@ body {
     }
 
     .date-picker-wrapper {
-        width: 48px;
+        width: 48px !important;
+        min-width: 48px !important;
         height: 48px;
-        min-width: 48px;
-        padding: 0;
-        justify-content: center;
+        padding: 0 !important;
+        justify-content: center !important;
     }
-    
+
     .date-picker-wrapper input {
-        display: none; /* No expandir en móvil */
+        position: absolute;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        padding: 0 !important;
+        pointer-events: none;
     }
 }
 
@@ -154,7 +166,7 @@ body {
         flex-direction: column;
         align-items: center;
     }
-    
+
     .header-controls {
         display: flex;
         width: 100%;
@@ -164,24 +176,28 @@ body {
 }
 
 
-.search-wrapper i, .date-picker-wrapper i {
+.search-wrapper i,
+.date-picker-wrapper i {
     color: var(--gray-600);
     font-size: 16px;
     transition: all 0.3s;
     margin-right: 0;
 }
 
-.search-wrapper:hover i, .search-wrapper:focus-within i {
+.search-wrapper:hover i,
+.search-wrapper:focus-within i {
     margin-right: 12px;
     color: var(--siesa-blue);
 }
 
 
-.search-wrapper input, .date-picker-wrapper input {
+.search-wrapper input,
+.date-picker-wrapper input {
     border: none !important;
     padding: 10px 0 !important;
     background: transparent !important;
-    font-size: 13.5px !important; /* Ligeramente más pequeño para ajustar mejor */
+    font-size: 13.5px !important;
+    /* Ligeramente más pequeño para ajustar mejor */
     font-weight: 600 !important;
     color: var(--gray-800) !important;
     box-shadow: none !important;
@@ -195,7 +211,8 @@ body {
     text-align: center;
 }
 
-.search-wrapper:hover input, .search-wrapper:focus-within input {
+.search-wrapper:hover input,
+.search-wrapper:focus-within input {
     opacity: 1;
     width: 100%;
 }
@@ -211,7 +228,7 @@ body {
 
 .card {
     border: none;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border-radius: 12px;
     border: 1px solid var(--gray-100);
 }
@@ -222,8 +239,10 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(15, 23, 42, 0.85); /* Un poco más oscuro para que resalte el logo */
-    backdrop-filter: blur(8px); /* Efecto cristal para más "premium" */
+    background: rgba(15, 23, 42, 0.85);
+    /* Un poco más oscuro para que resalte el logo */
+    backdrop-filter: blur(8px);
+    /* Efecto cristal para más "premium" */
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -248,10 +267,12 @@ body {
         transform: scale(0.9);
         opacity: 0.7;
     }
+
     50% {
         transform: scale(1.15);
         opacity: 1;
     }
+
     100% {
         transform: scale(0.9);
         opacity: 0.7;
@@ -286,7 +307,7 @@ body {
     background: white;
     padding: 20px;
     border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid var(--gray-100);
 }
 
@@ -299,7 +320,8 @@ body {
     letter-spacing: 0.5px;
 }
 
-.filtros .form-select-sm, .filtros .form-control-sm {
+.filtros .form-select-sm,
+.filtros .form-control-sm {
     font-size: 13px;
     border: 2px solid var(--gray-100);
     border-radius: 10px;
@@ -309,7 +331,8 @@ body {
     background-color: var(--gray-50);
 }
 
-.filtros .form-select-sm:focus, .filtros .form-control-sm:focus {
+.filtros .form-select-sm:focus,
+.filtros .form-control-sm:focus {
     border-color: var(--gray-800);
     background-color: white;
     box-shadow: 0 0 0 4px rgba(51, 65, 85, 0.1);
@@ -396,7 +419,7 @@ body {
     background: white;
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
     border: 1px solid var(--gray-100);
     transition: all 0.3s;
     cursor: pointer;
@@ -405,7 +428,7 @@ body {
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
 }
 
 .stat-card.active {
@@ -428,8 +451,15 @@ body {
 }
 
 @keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.5); }
-    to { opacity: 1; transform: scale(1); }
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
 }
 
 .stat-header {
@@ -554,7 +584,7 @@ body {
 .delivery-card {
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s, box-shadow 0.2s;
     border: 1px solid var(--gray-100);
 }
@@ -778,7 +808,7 @@ body {
     max-height: 400px;
     object-fit: contain;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Botones colapsables en tarjetas */
@@ -873,7 +903,7 @@ body {
         overflow-y: auto;
         border-radius: 0 0 12px 12px;
     }
-    
+
     .filtros.filtros-visible {
         transform: translateY(0);
     }
@@ -890,7 +920,8 @@ body {
     cursor: pointer;
 }
 
-.upload-area:hover, .upload-area.active {
+.upload-area:hover,
+.upload-area.active {
     border-color: var(--siesa-green);
     background: rgba(16, 185, 129, 0.03);
 }
@@ -938,10 +969,25 @@ body {
     text-transform: uppercase;
 }
 
-.status-waiting { background: #e2e8f0; color: #64748b; }
-.status-processing { background: #fef3c7; color: #d97706; }
-.status-success { background: #d1fae5; color: #047857; }
-.status-error { background: #fee2e2; color: #dc2626; }
+.status-waiting {
+    background: #e2e8f0;
+    color: #64748b;
+}
+
+.status-processing {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.status-success {
+    background: #d1fae5;
+    color: #047857;
+}
+
+.status-error {
+    background: #fee2e2;
+    color: #dc2626;
+}
 
 .summary-card {
     background: #f8fafc;
@@ -982,7 +1028,7 @@ body {
         align-items: center;
         text-align: center;
     }
-    
+
     .header-controls {
         display: flex;
         flex-wrap: nowrap;
@@ -1002,11 +1048,11 @@ body {
     .container-fluid {
         padding: 12px !important;
     }
-    
+
     .header h1 {
         font-size: 22px;
     }
-    
+
     .filtros {
         padding: 16px;
     }
@@ -1017,8 +1063,10 @@ body {
     background-color: transparent !important;
     font-weight: 500;
     color: var(--gray-800);
-    margin: -12px !important; /* Anular padding de la celda */
-    padding: 12px 30px 12px 12px !important; /* Reestablecer padding visual */
+    margin: -12px !important;
+    /* Anular padding de la celda */
+    padding: 12px 30px 12px 12px !important;
+    /* Reestablecer padding visual */
     width: calc(100% + 24px) !important;
     height: calc(100% + 24px) !important;
     min-height: 46px;
@@ -1053,7 +1101,7 @@ body {
     font-weight: 400;
     color: var(--gray-800);
     margin: -12px !important;
-    padding: 12px 30px 12px 12px !important; 
+    padding: 12px 30px 12px 12px !important;
     width: calc(100% + 24px) !important;
     height: calc(100% + 24px) !important;
     min-height: 46px;
@@ -1115,10 +1163,35 @@ body {
 }
 
 .dropdown-menu {
-    animation: fadeInScale 0.2s ease-out;
+    transform-origin: top right;
+    animation: dropdownShow 0.2s ease-out;
 }
 
-@keyframes fadeInScale {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+@keyframes dropdownShow {
+    from {
+        opacity: 0;
+        margin-top: -10px;
+    }
+    to {
+        opacity: 1;
+        margin-top: 0;
+    }
+}
+
+/* Forzar centrado de Flatpickr en móvil */
+@media (max-width: 768px) {
+    .flatpickr-calendar {
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        top: 16% !important;
+        position: fixed !important;
+        max-width: 95vw !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .flatpickr-calendar::before,
+    .flatpickr-calendar::after {
+        display: none !important;
+    }
 }
