@@ -19,8 +19,21 @@ const SISPRO_MAP = {
     'GENERO':       'GENERO',         // ya coincide
     'TIPO TEJIDO':  'TEJIDO',
     'COLECCION':    'COLECCION',      // extra útil
-    'FENTREGACONF': 'FECHA_ENTREGA',  // fecha de entrega confirmada
+    'FECHA_ENTREGA': 'FECHA_ENTREGA',  // fecha de entrega confirmada
 };
+
+// ── Inicialización de Supabase Client (Realtime) ──
+const SUPABASE_URL = "https://doqsurxxxaudnutsydlk.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg";
+
+// Singleton del cliente Supabase
+let _supabase = null;
+function getSupabase() {
+    if (!_supabase && typeof supabase !== 'undefined') {
+        _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    }
+    return _supabase;
+}
 
 
 /**

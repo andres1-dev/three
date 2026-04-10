@@ -11,6 +11,7 @@ const GUEST_POLL_IDLE   = 10_000; // chat cerrado pero pestaña visible: 10s
 const GUEST_POLL_HIDDEN = 60_000; // pestaña oculta: 60s
 
 let _chatTimer      = null;
+let _chatChannel    = null; // Supabase Realtime channel
 let _chatNovedadId  = null;
 let _chatPlanta     = null;
 let _chatLastTs     = null;
@@ -464,14 +465,54 @@ async function _submitChatMsg() {
     }
 }
 
-function _startChatPoll(interval = CHAT_POLL_ACTIVE) {
-    _stopChatPoll();
+function _startChatPoll() {
+    // ── Cambio a REALTIME ──
+    const sb = getSupabase();
+    if (sb && _chatNovedadId) {
+        if (_chatChannel) _chatChannel.unsubscribe();
+        
+        _chatChannel = sb.channel(`chat:${_chatNovedadId}`)
+            .on('postgres_changes', { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'CHAT', 
+                filter: `ID_NOV=eq.${_chatNovedadId}` 
+            }, (payload) => {
+                console.log('[CHAT] Nuevo mensaje (Realtime):', payload.new);
+                _loadAndRender(); // Recargar para renderizar el nuevo mensaje
+            })
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'NOVEDADES',
+                filter: `ID_NOVEDAD=eq.${_chatNovedadId}`
+            }, (payload) => {
+                // Si cambió CHAT_READ o se archivó el chat
+                const oldArchived = _chatArchived;
+                const meta = payload.new;
+                _chatArchived = String(meta.CHAT || '').startsWith('https://');
+                _chatReadReceipts = typeof meta.CHAT_READ === 'string' ? JSON.parse(meta.CHAT_READ || '{}') : (meta.CHAT_READ || {});
+                
+                if (oldArchived !== _chatArchived) {
+                    _updateChatActionBtn();
+                    _updateArchivedBanner(_chatArchived);
+                }
+                _loadAndRender();
+            })
+            .subscribe();
+            
+        console.log('[CHAT] Suscripción Realtime activa para:', _chatNovedadId);
+    }
+
     _loadAndRender();
-    _chatTimer = setInterval(_loadAndRender, interval);
+    // No eliminamos el poll por completo, lo dejamos de backup a 15s por si falla Realtime
+    if (_chatTimer) clearInterval(_chatTimer);
+    _chatTimer = setInterval(_loadAndRender, 15000);
 }
 
 function _stopChatPoll() {
     if (_chatTimer) { clearInterval(_chatTimer); _chatTimer = null; }
+    if (_chatChannel) { _chatChannel.unsubscribe(); _chatChannel = null; }
 }
 
 async function _loadAndRender() {
@@ -651,6 +692,16 @@ function initChatBadges() {
 }
 
 function _startBadgePoll() {
+    const sb = getSupabase();
+    if (sb) {
+        // Suscribirse a todos los nuevos mensajes de chat para las insignias
+        sb.channel('chat-badges')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'CHAT' }, (payload) => {
+                _pollChatBadges();
+            })
+            .subscribe();
+    }
+
     if (_chatBadgeTimer) clearInterval(_chatBadgeTimer);
     _pollChatBadges();
     _chatBadgeTimer = setInterval(_pollChatBadges, document.hidden ? CHAT_POLL_HIDDEN : CHAT_POLL_IDLE);
