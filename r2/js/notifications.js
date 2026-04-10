@@ -5,8 +5,8 @@
 
 const NOTIF_STORAGE_KEY       = 'sispro_notif_seen';
 const NOTIF_LIST_KEY          = 'sispro_notif_list';   // persistencia de notificaciones
-const NOTIF_POLL_ACTIVE       = 10_000;  // pestaña visible: 10s
-const NOTIF_POLL_HIDDEN       = 60_000;  // pestaña oculta: 60s
+const NOTIF_POLL_ACTIVE       = 5_000;   // pestaña visible: 5s
+const NOTIF_POLL_HIDDEN       = 30_000;  // pestaña oculta: 30s
 let _notifPollTimer = null;
 let _lastKnownStates = {}; // { ID_NOVEDAD: ESTADO }
 let _initialLoadDone = false;
@@ -72,23 +72,28 @@ function initNotifications(preloadedNovedades) {
 }
 
 function _startNotifPoll() {
-    // La conexión Realtime fue reemplazada por la arquitectura de Edge Functions pura.
-    // Usamos exclusivamaente el mecanismo de polling seguro hacia las Functions.
     if (_notifPollTimer) clearInterval(_notifPollTimer);
     const interval = document.hidden ? NOTIF_POLL_HIDDEN : NOTIF_POLL_ACTIVE;
-    
-    // Configurar polling adaptativo basado en la visibilidad
-    _notifPollTimer = setInterval(_pollNovedades, Math.max(interval, 20000));
+    _notifPollTimer = setInterval(_pollNovedades, interval);
+
+    _pollNovedades(); // Carga inicial
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (sb && !window._novedadesChannel) {
+        window._novedadesChannel = sb.channel('public:NOVEDADES')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public' }, payload => {
+                if (payload.table.toLowerCase() === 'novedades') {
+                    console.log('[NOTIF] Realtime update recibido:', payload);
+                    setTimeout(() => _pollNovedades(), 300);
+                }
+            })
+            .subscribe();
+    }
 }
 
 function _onVisibilityChange() {
     if (!currentUser || currentUser.ROL !== 'GUEST') return;
-    if (_notifPollTimer) clearInterval(_notifPollTimer);
     if (!document.hidden) {
-        _pollNovedades(); // inmediato al volver
-        _notifPollTimer = setInterval(_pollNovedades, NOTIF_POLL_ACTIVE);
-    } else {
-        _notifPollTimer = setInterval(_pollNovedades, NOTIF_POLL_HIDDEN);
+        _pollNovedades(); // Refrescar al volver a enfocar la pestaña
     }
 }
 
@@ -282,6 +287,7 @@ function _addNotifications(items) {
         const id = `${item.nov.ID_NOVEDAD}_${item.estadoActual}`;
         // Evitar duplicados exactos (misma novedad + mismo estado)
         if (_notifications.some(n => n.id === id)) return;
+        
         _notifications.unshift({
             id,
             nov: item.nov,
@@ -291,6 +297,9 @@ function _addNotifications(items) {
             read: false
         });
         hasNewNotifs = true;
+        
+        // Mostrar toast visual
+        _showToastNotification(item);
     });
 
     if (_notifications.length > 30) _notifications = _notifications.slice(0, 30);

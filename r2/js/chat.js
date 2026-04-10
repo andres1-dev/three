@@ -3,12 +3,12 @@
    ========================================================================== */
 
 /* ── Intervalos de polling adaptativos ── */
-const CHAT_POLL_ACTIVE  = 3_000;  // chat abierto: 3s
-const CHAT_POLL_IDLE    = 10_000; // badges campana (pestaña visible): 10s
-const CHAT_POLL_HIDDEN  = 60_000; // pestaña oculta: 60s
-const GUEST_POLL_ACTIVE = 3_000;
-const GUEST_POLL_IDLE   = 10_000; // chat cerrado pero pestaña visible: 10s
-const GUEST_POLL_HIDDEN = 60_000; // pestaña oculta: 60s
+const CHAT_POLL_ACTIVE  = 2_000;  // chat abierto: 2s
+const CHAT_POLL_IDLE    = 5_000;  // badges campana (pestaña visible): 5s
+const CHAT_POLL_HIDDEN  = 30_000; // pestaña oculta: 30s
+const GUEST_POLL_ACTIVE = 2_000;
+const GUEST_POLL_IDLE   = 5_000;  // chat cerrado pero pestaña visible: 5s
+const GUEST_POLL_HIDDEN = 30_000; // pestaña oculta: 30s
 
 let _chatTimer      = null;
 let _chatChannel    = null; // Supabase Realtime channel
@@ -64,7 +64,8 @@ async function _readChatSheet(idNovedad = null) {
     try {
         const options = {};
         if (idNovedad) {
-            options.filters = [{ type: 'eq', column: 'id_nov', value: idNovedad }];
+            // El esquema en DB usa ID_NOVEDAD, no id_nov
+            options.filters = [{ type: 'eq', column: 'ID_NOVEDAD', value: idNovedad }];
         }
         const data = await fetchSupabaseData('CHAT', options);
         
@@ -536,16 +537,31 @@ async function _submitChatMsg() {
 }
 
 function _startChatPoll() {
-    // La conexión Realtime con WebSockets directos se removió a favor de Edge Functions seguras.
-    // Usamos exclusivamaente el mecanismo de polling via HTTP (cada 15s).
     _loadAndRender();
     if (_chatTimer) clearInterval(_chatTimer);
-    _chatTimer = setInterval(_loadAndRender, 15000);
+    _chatTimer = setInterval(_loadAndRender, CHAT_POLL_ACTIVE || 3000); // Polling ultrarrápido de respaldo de 3 segundos
+    
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (sb && !window._chatActiveChannel) {
+        window._chatActiveChannel = sb.channel('public:CHAT_active')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
+                if (payload.table.toLowerCase() === 'chat') {
+                    if (payload.new && String(payload.new.ID_NOVEDAD || payload.new.id_novedad || payload.new.ID_NOV || payload.new.id_nov) === String(_chatNovedadId)) {
+                        setTimeout(() => _loadAndRender(), 300);
+                    }
+                }
+            })
+            .subscribe();
+    }
 }
 
 function _stopChatPoll() {
     if (_chatTimer) { clearInterval(_chatTimer); _chatTimer = null; }
-    if (_chatChannel) { _chatChannel.unsubscribe(); _chatChannel = null; }
+    // Si queremos destruir la suscripción al cerrar:
+    /* if (window._chatActiveChannel) {
+        getSupabaseClient().removeChannel(window._chatActiveChannel);
+        window._chatActiveChannel = null;
+    } */
 }
 
 async function _loadAndRender() {
@@ -705,21 +721,26 @@ function initChatBadges() {
     } catch (_) { _operatorChatNotifs = []; }
     _startBadgePoll();
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            if (_chatBadgeTimer) { clearInterval(_chatBadgeTimer); _chatBadgeTimer = null; }
-            _chatBadgeTimer = setInterval(_pollChatBadges, CHAT_POLL_HIDDEN);
-        } else if (!_chatNovedadId) {
-            _pollChatBadges(); // poll inmediato al volver
-            _startBadgePoll();
+        if (!document.hidden && !_chatNovedadId) {
+            _pollChatBadges(); // Refrescar si hubo cambios mientras estaba minimizado
         }
     });
 }
 
 function _startBadgePoll() {
-    // Los badges ahora usan polling HTTP exclusicamente hacia las Edge Functions.
     if (_chatBadgeTimer) clearInterval(_chatBadgeTimer);
-    _pollChatBadges();
     _chatBadgeTimer = setInterval(_pollChatBadges, document.hidden ? CHAT_POLL_HIDDEN : CHAT_POLL_IDLE);
+    _pollChatBadges();
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (sb && !window._chatBadgeChannel) {
+        window._chatBadgeChannel = sb.channel('public:CHAT_badges')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
+                if (payload.table.toLowerCase() === 'chat') {
+                    setTimeout(() => _pollChatBadges(), 500);
+                }
+            })
+            .subscribe();
+    }
 }
 
 async function _pollChatBadges() {
@@ -730,17 +751,17 @@ async function _pollChatBadges() {
         // Construir mapa: último mensaje de GUEST por novedad (cualquier novedad, no solo las del DOM)
         const latestGuestByNov = {};
         allRows.forEach(r => {
-            const novId = String(r.ID_NOV || r.ID_NOVEDAD || '').trim();
-            const rol   = String(r.ROL || '').trim();
+            const novId = String(r.idNov || '').trim();
+            const rol   = String(r.rol || '').trim();
             if (!novId) return;
             if (rol === 'GUEST') {
                 // Guardar el más reciente (las filas vienen en orden cronológico)
                 latestGuestByNov[novId] = { 
-                    id: r.ID_MSG, 
+                    id: r.id, 
                     rol, 
-                    autor: r.AUTOR, 
-                    mensaje: r.MENSAJE, 
-                    ts: r.TS 
+                    autor: r.autor, 
+                    mensaje: r.mensaje, 
+                    ts: r.ts 
                 };
             }
         });
@@ -748,9 +769,9 @@ async function _pollChatBadges() {
         // También construir mapa de metadatos (lote, planta) desde las filas de chat
         const metaByNov = {};
         allRows.forEach(r => {
-            const novId = String(r.ID_NOV || r.ID_NOVEDAD || '').trim();
+            const novId = String(r.idNov || '').trim();
             if (novId && !metaByNov[novId]) {
-                metaByNov[novId] = { planta: String(r.PLANTA || '').trim() };
+                metaByNov[novId] = { planta: String(r.planta || '').trim() };
             }
         });
 
@@ -796,8 +817,9 @@ function _addOperatorChatNotif(idNovedad, msg, lote, planta) {
         bellBtn.addEventListener('animationend', () => bellBtn.classList.remove('has-unread'), { once: true });
     }
     
-    // Reproducir sonido de chat
+    // Reproducir sonido y mostrar toast
     if (typeof playChatSound === 'function') playChatSound();
+    if (typeof _showChatToast === 'function') _showChatToast(lote, msg);
 }
 
 function _persistOperatorNotifs() {
@@ -964,20 +986,28 @@ function initGuestChat(novedades) {
     try { const s = localStorage.getItem(GUEST_CHAT_KEY); if (s) _guestChatSeen = JSON.parse(s); } catch (_) {}
     _startGuestPoll();
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            if (_guestPollTimer) { clearInterval(_guestPollTimer); _guestPollTimer = null; }
-            _guestPollTimer = setInterval(_pollGuestChats, GUEST_POLL_HIDDEN);
-        } else {
-            _startGuestPoll(); // poll inmediato + intervalo activo al volver
+        if (!document.hidden) {
+            _pollGuestChats(); // Refrescar al volver a enfocar
         }
     });
 }
 
 function _startGuestPoll() {
     if (_guestPollTimer) clearInterval(_guestPollTimer);
-    _pollGuestChats();
     const interval = _chatNovedadId ? GUEST_POLL_ACTIVE : (document.hidden ? GUEST_POLL_HIDDEN : GUEST_POLL_IDLE);
     _guestPollTimer = setInterval(_pollGuestChats, interval);
+    
+    _pollGuestChats();
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (sb && !window._guestBadgeChannel) {
+        window._guestBadgeChannel = sb.channel('public:CHAT_guest')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
+                if (payload.table.toLowerCase() === 'chat') {
+                    setTimeout(() => _pollGuestChats(), 500);
+                }
+            })
+            .subscribe();
+    }
 }
 
 async function _pollGuestChats() {
@@ -996,14 +1026,14 @@ async function _pollGuestChats() {
         const allRows = await _readChatSheet();
         const latestByNov = {};
         allRows.forEach(r => {
-            const novId = String(r.ID_NOV || r.ID_NOVEDAD || '').trim();
+            const novId = String(r.idNov || '').trim();
             if (ids.has(novId)) {
                 latestByNov[novId] = { 
-                    id: r.ID_MSG, 
-                    rol: r.ROL, 
-                    autor: r.AUTOR, 
-                    mensaje: r.MENSAJE, 
-                    ts: r.TS 
+                    id: r.id, 
+                    rol: r.rol, 
+                    autor: r.autor, 
+                    mensaje: r.mensaje, 
+                    ts: r.ts 
                 };
             }
         });
@@ -1045,6 +1075,59 @@ function _addChatNotification(nov, msg) {
         bellBtn.classList.add('has-unread');
         bellBtn.addEventListener('animationend', () => bellBtn.classList.remove('has-unread'), { once: true });
     }
+    
+    // Toast y Sonido
+    _showChatToast(nov.LOTE || 'S/N', msg);
+    if (typeof playChatSound === 'function') playChatSound();
+}
+
+function _showChatToast(loteStr, msg) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position:fixed; bottom:24px; left:50%;
+        transform:translateX(-50%) translateY(80px);
+        background:#eff6ff; border:1.5px solid #3b82f6;
+        border-radius:14px; padding:14px 20px;
+        display:flex; align-items:center; gap:14px;
+        box-shadow:0 8px 30px rgba(0,0,0,0.12);
+        z-index:9999; min-width:300px; max-width:90vw;
+        transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease;
+        opacity:0;
+    `;
+    
+    const preview = String(msg.mensaje || '').substring(0, 55) + ((msg.mensaje?.length || 0) > 55 ? '...' : '');
+
+    toast.innerHTML = `
+        <div style="width:38px;height:38px;border-radius:50%;background:white;
+            border:1.5px solid #3b82f6;display:flex;align-items:center;
+            justify-content:center;flex-shrink:0;">
+            <i class="fas fa-comments" style="color:#3b82f6;font-size:1rem;"></i>
+        </div>
+        <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;font-size:0.8rem;color:#1e293b;margin-bottom:2px;">
+                Nuevo mensaje — Lote ${loteStr}
+            </div>
+            <div style="font-size:0.72rem;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${preview || 'Imagen recibida'}
+            </div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="
+            background:none;border:none;color:#94a3b8;
+            cursor:pointer;font-size:1rem;padding:0 4px;flex-shrink:0;
+        "><i class="fas fa-times"></i></button>
+    `;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+        toast.style.opacity = '1';
+    }));
+
+    setTimeout(() => {
+        toast.style.transform = 'translateX(-50%) translateY(80px)';
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 350);
+    }, 5000);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

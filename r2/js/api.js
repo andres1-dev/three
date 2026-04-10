@@ -26,6 +26,18 @@ const SISPRO_MAP = {
 // Las claves de Supabase ya no se exponen al cliente de JS. Todo fluye por Edge Functions.
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg";
 
+let _sbClient = null;
+window.getSupabaseClient = function() {
+    if (_sbClient) return _sbClient;
+    if (!window.supabase) {
+        console.error("Supabase script no cargado en index.html");
+        return null;
+    }
+    const projectUrl = CONFIG.FUNCTIONS_URL.split('/functions/')[0];
+    _sbClient = window.supabase.createClient(projectUrl, SUPABASE_KEY);
+    return _sbClient;
+};
+
 let secureConfigPromise = null;
 
 async function fetchSecureConfig() {
