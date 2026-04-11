@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test de Notificaciones Push - SISPRO</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: #1e293b;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 30px;
+      font-size: 0.9rem;
+    }
+
+    .status {
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .status-item:last-child {
+      border-bottom: none;
+    }
+
+    .status-label {
+      color: #475569;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .status-value {
+      color: #1e293b;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .status-value.success {
+      color: #22c55e;
+    }
+
+    .status-value.error {
+      color: #ef4444;
+    }
+
+    .status-value.warning {
+      color: #f59e0b;
+    }
+
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 15px 20px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    button.secondary {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    button.secondary:hover {
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+
+    .log {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      margin-bottom: 8px;
+    }
+
+    .log-entry.success {
+      color: #22c55e;
+    }
+
+    .log-entry.error {
+      color: #ef4444;
+    }
+
+    .log-entry.info {
+      color: #3b82f6;
+    }
+
+    .icon {
+      font-size: 1.2rem;
+    }
+
+    @media (max-width: 600px) {
+      .button-group {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔔 Test de Notificaciones Push</h1>
+    <p class="subtitle">Panel de pruebas para el sistema de notificaciones SISPRO</p>
+
+    <div class="status">
+      <div class="status-item">
+        <span class="status-label">Soporte del Navegador</span>
+        <span class="status-value" id="browser-support">Verificando...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Permisos</span>
+        <span class="status-value" id="permission-status">Verificando...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Service Worker</span>
+        <span class="status-value" id="sw-status">Verificando...</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Token FCM</span>
+        <span class="status-value" id="token-status">No registrado</span>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button id="btn-request-permission">
+        <span class="icon">🔓</span>
+        Solicitar Permisos
+      </button>
+      <button id="btn-register" disabled>
+        <span class="icon">📝</span>
+        Registrar Dispositivo
+      </button>
+      <button id="btn-test-local" class="secondary" disabled>
+        <span class="icon">🔔</span>
+        Notificación Local
+      </button>
+      <button id="btn-test-remote" class="secondary" disabled>
+        <span class="icon">☁️</span>
+        Notificación Remota
+      </button>
+      <button id="btn-test-state" class="secondary" disabled>
+        <span class="icon">🔧</span>
+        Simular Estado
+      </button>
+      <button id="btn-test-chat" class="secondary" disabled>
+        <span class="icon">💬</span>
+        Simular Chat
+      </button>
+      <button id="btn-unsubscribe" class="danger" disabled>
+        <span class="icon">🚫</span>
+        Desregistrar
+      </button>
+      <button id="btn-clear-log" class="secondary">
+        <span class="icon">🗑️</span>
+        Limpiar Log
+      </button>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+
+  <!-- Configuración (reemplazar con tus credenciales) -->
+  <script src="./js/config-push.js"></script>
+
+  <!-- Sistema de notificaciones -->
+  <script src="./js/push-native.js"></script>
+
+  <script>
+    // ── Estado ──
+    let isInitialized = false;
+
+    // ── Elementos DOM ──
+    const logEl = document.getElementById('log');
+    const btnRequestPermission = document.getElementById('btn-request-permission');
+    const btnRegister = document.getElementById('btn-register');
+    const btnTestLocal = document.getElementById('btn-test-local');
+    const btnTestRemote = document.getElementById('btn-test-remote');
+    const btnTestState = document.getElementById('btn-test-state');
+    const btnTestChat = document.getElementById('btn-test-chat');
+    const btnUnsubscribe = document.getElementById('btn-unsubscribe');
+    const btnClearLog = document.getElementById('btn-clear-log');
+
+    // ── Logging ──
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(`[${type.toUpperCase()}]`, message);
+    }
+
+    function updateStatus(elementId, text, type = 'info') {
+      const el = document.getElementById(elementId);
+      el.textContent = text;
+      el.className = `status-value ${type}`;
+    }
+
+    // ── Inicialización ──
+    async function init() {
+      log('Iniciando sistema de notificaciones...', 'info');
+
+      // Verificar soporte
+      if (!window.PushNative || !window.PushNative.isSupported()) {
+        log('❌ Push notifications no soportadas', 'error');
+        updateStatus('browser-support', 'No soportado', 'error');
+        return;
+      }
+
+      log('✅ Push notifications soportadas', 'success');
+      updateStatus('browser-support', 'Soportado', 'success');
+
+      // Verificar permisos
+      const permission = Notification.permission;
+      log(`Permisos actuales: ${permission}`, 'info');
+      updateStatus('permission-status', permission === 'granted' ? 'Concedidos' : permission === 'denied' ? 'Denegados' : 'Pendientes', 
+        permission === 'granted' ? 'success' : permission === 'denied' ? 'error' : 'warning');
+
+      // Inicializar Firebase
+      if (typeof PUSH_NOTIFICATIONS_CONFIG !== 'undefined') {
+        firebase.initializeApp(PUSH_NOTIFICATIONS_CONFIG.firebase);
+        log('✅ Firebase inicializado', 'success');
+
+        // Inicializar PushNative
+        const success = await window.PushNative.init(
+          PUSH_NOTIFICATIONS_CONFIG.supabase.url,
+          PUSH_NOTIFICATIONS_CONFIG.supabase.anonKey,
+          PUSH_NOTIFICATIONS_CONFIG.firebase.vapidKey
+        );
+
+        if (success) {
+          log('✅ Sistema de notificaciones inicializado', 'success');
+          updateStatus('sw-status', 'Activo', 'success');
+          isInitialized = true;
+          updateButtons();
+        } else {
+          log('❌ Error inicializando sistema', 'error');
+          updateStatus('sw-status', 'Error', 'error');
+        }
+      } else {
+        log('❌ Configuración no encontrada. Crea config-push.js', 'error');
+      }
+    }
+
+    function updateButtons() {
+      const hasPermission = Notification.permission === 'granted';
+      const hasToken = window.PushNative && window.PushNative.getToken();
+
+      btnRequestPermission.disabled = hasPermission;
+      btnRegister.disabled = !hasPermission || hasToken;
+      btnTestLocal.disabled = !hasPermission;
+      btnTestRemote.disabled = !hasToken;
+      btnTestState.disabled = !hasToken;
+      btnTestChat.disabled = !hasToken;
+      btnUnsubscribe.disabled = !hasToken;
+
+      if (hasToken) {
+        updateStatus('token-status', 'Registrado', 'success');
+      }
+    }
+
+    // ── Event Handlers ──
+    btnRequestPermission.addEventListener('click', async () => {
+      log('Solicitando permisos...', 'info');
+      const result = await window.PushNative.requestPermission();
+      
+      if (result.success) {
+        log('✅ Permisos concedidos', 'success');
+        updateStatus('permission-status', 'Concedidos', 'success');
+        updateButtons();
+      } else {
+        log(`❌ Error: ${result.error}`, 'error');
+        updateStatus('permission-status', 'Denegados', 'error');
+      }
+    });
+
+    btnRegister.addEventListener('click', async () => {
+      log('Registrando dispositivo...', 'info');
+      // El registro se hace automáticamente en requestPermission
+      // Este botón es redundante pero útil para testing
+      const token = window.PushNative.getToken();
+      if (token) {
+        log(`✅ Token: ${token.substring(0, 20)}...`, 'success');
+        updateButtons();
+      } else {
+        log('❌ No se pudo obtener token', 'error');
+      }
+    });
+
+    btnTestLocal.addEventListener('click', () => {
+      log('Enviando notificación local...', 'info');
+      if (window.triggerPwaNotification) {
+        window.triggerPwaNotification(
+          '🔔 Notificación Local',
+          'Esta es una notificación de prueba local',
+          'test-local',
+          './index.html'
+        );
+        log('✅ Notificación local enviada', 'success');
+      }
+    });
+
+    btnTestRemote.addEventListener('click', async () => {
+      log('Enviando notificación remota...', 'info');
+      const success = await window.PushNative.sendTest();
+      if (success) {
+        log('✅ Notificación remota enviada', 'success');
+      } else {
+        log('❌ Error enviando notificación remota', 'error');
+      }
+    });
+
+    btnTestState.addEventListener('click', () => {
+      log('Simulando cambio de estado...', 'info');
+      log('⚠️ Ejecuta esto en SQL Editor de Supabase:', 'warning');
+      log('UPDATE "NOVEDADES" SET "ESTADO" = \'ELABORACION\' WHERE "ID_NOVEDAD" = \'NOV-12345678\';', 'info');
+    });
+
+    btnTestChat.addEventListener('click', () => {
+      log('Simulando mensaje de chat...', 'info');
+      log('⚠️ Ejecuta esto en SQL Editor de Supabase:', 'warning');
+      log('INSERT INTO "CHAT" ("ID_MSG", "ID_NOVEDAD", "LOTE", "AUTOR", "ROL", "MENSAJE", "TS") VALUES (\'MSG-TEST\', \'NOV-12345678\', \'LOTE-001\', \'ADMIN\', \'Juan Pérez\', \'Mensaje de prueba\', NOW());', 'info');
+    });
+
+    btnUnsubscribe.addEventListener('click', async () => {
+      log('Desregistrando dispositivo...', 'info');
+      const success = await window.PushNative.unsubscribe();
+      if (success) {
+        log('✅ Dispositivo desregistrado', 'success');
+        updateStatus('token-status', 'No registrado', 'warning');
+        updateButtons();
+      } else {
+        log('❌ Error desregistrando', 'error');
+      }
+    });
+
+    btnClearLog.addEventListener('click', () => {
+      logEl.innerHTML = '';
+      log('Log limpiado', 'info');
+    });
+
+    // ── Iniciar ──
+    window.addEventListener('load', init);
+  </script>
+</body>
+</html>
