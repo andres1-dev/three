@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Novedades - Grupo TDM</title>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="apple-touch-icon" href="icons/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+  <!-- ── Vendor CSS ── -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <!-- ── App CSS (orden importa) ── -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/footer.css">
+  
+  <!-- ── Supabase Realtime ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
+  <script>
+    (function(){
+      const s = localStorage.getItem('sispro_user');
+      if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
+    })();
+  </script>
+</head>
+
+<body>
+
+
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CONTENIDO PRINCIPAL
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="container-fluid">
+
+
+    <main class="content-wrapper px-2">
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO PRINCIPAL — Búsqueda y detalle del lote
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="mainForm">
+
+        <!-- Buscador de lote -->
+        <div class="mb-3">
+          <label for="loteInput" class="form-label">Orden de Producción:</label>
+          <div class="input-with-icon">
+            <i class="fas fa-search input-icon"></i>
+            <input type="text" id="loteInput" class="form-control"
+              placeholder="Seleccione la Orden de Producción">
+          </div>
+          <ul id="loteSuggestions" class="list-group mt-2 hidden"></ul>
+        </div>
+
+        <!-- Detalles del lote seleccionado -->
+        <div id="detailsSection" class="hidden">
+
+          <!-- Planta y Acciones: Simetría Perfecta en PC -->
+          <div class="row-pc-grid mb-4">
+            <div class="mb-3">
+              <div class="field-header mb-1">
+                <label for="planta" class="form-label mb-0">Planta:</label>
+                <button class="btn-action-muted" type="button" id="editPlantaBtn"
+                  title="Actualizar datos de la planta seleccionada">
+                  <i class="fas fa-user-edit"></i> Actualizar
+                </button>
+              </div>
+              <div class="input-with-icon">
+                <i class="fas fa-industry input-icon"></i>
+                <select id="planta" class="form-control" required>
+                  <option value="">Seleccione una planta...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="field-header mb-1">
+                <label for="acciones" class="form-label mb-0">Acciones:</label>
+                <!-- Placeholder para simetría vertical -->
+                <div class="sync-placeholder"></div>
+              </div>
+              <div class="input-with-icon">
+                <i class="fas fa-tasks input-icon"></i>
+                <select id="acciones" class="form-control" required>
+                  <option value="">Seleccione una acción...</option>
+                  <option value="NOVEDADES">NOVEDADES</option>
+                  <option value="CALIDAD">CALIDAD</option>
+                  <option value="RUTERO">RUTERO</option>
+                  <option value="ACTUALIZAR_DATOS" hidden>ACTUALIZAR DATOS</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toggle: datos del lote (colapsado por defecto) -->
+          <div class="lot-collapse-header" id="lotCollapseToggle" aria-expanded="false" aria-controls="lotCollapseBody">
+            <span class="lot-collapse-label">
+              <i class="fas fa-layer-group"></i> Ver datos del lote
+            </span>
+            <i class="fas fa-chevron-down lot-chevron"></i>
+          </div>
+
+          <div id="lotCollapseBody" class="lot-collapse-body">
+            <div class="mb-3">
+              <label for="linea" class="form-label">Línea:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-industry input-icon"></i>
+                <input type="text" id="linea" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="fecha" class="form-label">Fecha y Hora:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-calendar-alt input-icon"></i>
+                <input type="text" id="fecha" class="form-control" readonly required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="lote" class="form-label">Lote:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-box input-icon"></i>
+                <input type="text" id="lote" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="referencia" class="form-label">Referencia:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-barcode input-icon"></i>
+                <input type="text" id="referencia" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="prenda" class="form-label">Prenda:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-tshirt input-icon"></i>
+                <input type="text" id="prenda" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="genero" class="form-label">Género:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-venus-mars input-icon"></i>
+                <input type="text" id="genero" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="tejido" class="form-label">Tejido:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-scroll input-icon"></i>
+                <input type="text" id="tejido" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="cantidad" class="form-label">Cantidad:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="text" id="cantidad" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="salida" class="form-label">Salida:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-calendar-check input-icon"></i>
+                <input type="text" id="salida" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="proceso" class="form-label">Proceso:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-cogs input-icon"></i>
+                <input type="text" id="proceso" class="form-control" readonly>
+              </div>
+            </div>
+
+            <!-- Duración Estimada: Ocupa todo el ancho al final -->
+            <div class="mb-3" style="grid-column: 1 / -1;">
+              <label for="duracionEstimada" class="form-label">Duración:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-clock input-icon"></i>
+                <input type="text" id="duracionEstimada" class="form-control" readonly>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <p id="errorMessage" class="text-danger hidden">Ocurrió un error al cargar los datos. Intente nuevamente.</p>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO DE NOVEDADES
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="novedadesForm">
+        <div id="novedadesSection" class="hidden">
+          <div class="row-pc-grid mt-2">
+            <div class="mb-3">
+              <label for="area" class="form-label">Área de Servicios:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-building input-icon"></i>
+                <select id="area" class="form-control" required>
+                  <option value="">Seleccione un área...</option>
+                  <option value="DISEÑO">DISEÑO</option>
+                  <option value="TELAS">TELAS</option>
+                  <option value="INSUMOS">INSUMOS</option>
+                  <option value="CORTE">CORTE</option>
+                  <option value="SESGO">SESGO</option>
+                  <option value="CODIGOS">CÓDIGOS</option>
+                  <option value="OTROS">OTROS</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="cantidadSolicitada" class="form-label">Cantidad Solicitada:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="number" class="form-control" id="cantidadSolicitada" required>
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="observacionesNovedad" class="form-label mb-0">Descripción detallada:</label>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('observacionesNovedad')"
+                  title="Mejorar redacción y ortografía">
+                  <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                </button>
+                <button type="button" class="btn-restore-text" onclick="restaurarTextoOriginal('observacionesNovedad')"
+                  title="Restaurar texto original" style="display: none;">
+                  <i class="fas fa-undo"></i> Restaurar
+                </button>
+              </div>
+            </div>
+            <div class="ai-textarea-wrapper">
+              <textarea id="observacionesNovedad" class="form-control"
+                placeholder="Escribe aquí los detalles de la novedad..." rows="4" required></textarea>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Evidencia Fotográfica:</label>
+            <div class="file-dropzone" id="imagenDropzone" role="button" tabindex="0">
+              <i class="fas fa-camera file-dropzone__icon"></i>
+              <div class="file-dropzone__text">
+                <span class="file-dropzone__action">Haz clic para subir imagen</span>
+                <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
+              </div>
+              <span class="file-dropzone__name" id="imagenName"></span>
+            </div>
+            <input type="file" id="imagen" class="file-dropzone__input" accept="image/*">
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary">Enviar Reporte de Novedad</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO DE CALIDAD
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="calidadForm">
+        <div id="calidadSection" class="hidden">
+
+          <!-- 1. MAPA GPS — ancho completo -->
+          <div class="mb-3 mt-2">
+            <!-- Cabecera con toggle de permiso -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+              <label class="form-label mb-0">
+                <i class="fas fa-map-marker-alt me-1"></i> Localización:
+              </label>
+              <div style="display:flex; align-items:center; gap:10px; font-size:0.8rem; color:#64748b;">
+                <!-- Ícono de refrescar sin texto -->
+                <button type="button" id="gps-refresh-btn" onclick="activarGpsManual()" title="Actualizar ubicación"
+                  style="
+                  display:none; background:none; border:none;
+                  color:#94a3b8; cursor:pointer; padding:2px; line-height:1;
+                  transition:color 0.15s;
+                " onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94a3b8'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                </button>
+                <span id="gps-status-label">Cargando...</span>
+                <div style="position:relative; display:inline-block; width:42px; height:22px; cursor:pointer;"
+                   onclick="toggleGpsPermission()">
+                  <input type="checkbox" id="gps-toggle-check" style="opacity:0; width:0; height:0; position:absolute;">
+                  <span id="gps-toggle-slider" style="
+                    position:absolute; inset:0;
+                    background:#cbd5e1;
+                    border-radius:22px;
+                    transition:background 0.25s;
+                  "></span>
+                  <span id="gps-toggle-knob" style="
+                    position:absolute; top:3px; left:3px;
+                    width:16px; height:16px;
+                    background:white;
+                    border-radius:50%;
+                    transition:transform 0.25s;
+                    box-shadow:0 1px 4px rgba(0,0,0,0.2);
+                  "></span>
+                </div>
+              </div>
+            </div>
+            <!-- Campo oculto para guardar coords en el payload -->
+            <input type="hidden" id="localizacion">
+            <!-- Tarjeta del mapa -->
+            <div id="mapa-calidad-card" style="
+              border-radius: 14px;
+              overflow: hidden;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 4px 12px rgba(38,82,219,0.08);
+              background: #f8fafc;
+              min-height: 220px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.85rem;
+              color: #94a3b8;
+            ">
+              <span><i class="fas fa-spinner fa-spin me-2"></i> Obteniendo coordenadas...</span>
+            </div>
+          </div>
+
+          <!-- 2. CORREO y TIPO DE VISITA — fila de dos columnas -->
+          <div class="row-pc-grid">
+            <div class="mb-3">
+              <label for="email" class="form-label">Correo:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" class="form-control" placeholder="usuario@ejemplo.com" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="tipoVisita" class="form-label">Tipo de Visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-clipboard-check input-icon"></i>
+                <select id="tipoVisita" class="form-control" required>
+                  <option value="">Seleccione tipo...</option>
+                  <option value="AUDITORIA">AUDITORIA</option>
+                  <option value="RONDA">RONDA</option>
+                  <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                  <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón guía AQL -->
+          <div class="mb-3">
+            <button type="button" id="aqlBtn" onclick="abrirModalAQL()"
+              style="display:none; width:100%; border-radius:14px;
+                     border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer;
+                     transition:all 0.2s; padding:0; overflow:hidden;
+                     flex-direction:column; align-items:stretch;">
+              <!-- Header centrado -->
+              <div style="padding:10px 14px 8px; border-bottom:1px solid #e2e8f0;
+                           display:flex; flex-direction:column; align-items:center; gap:2px;">
+                <span style="font-size:0.75rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+                  <i class="fas fa-ruler-combined" style="color:#64748b;"></i>Muestreo AQL
+                </span>
+                <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:3px;">
+                  Ver detalle <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
+                </span>
+              </div>
+              <!-- Tarjetas -->
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; width:100%;">
+                <div style="padding:12px 6px; text-align:center; border-right:1px solid #e2e8f0;
+                             display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:0.58rem; font-weight:600; text-transform:uppercase; color:#94a3b8; letter-spacing:0.04em; height:14px; display:flex; align-items:center;">Revisar</div>
+                  <div id="aqlBtnMuestra" style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1; margin:4px 0;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; height:14px; display:flex; align-items:center;">unidades</div>
+                </div>
+                <div style="padding:12px 6px; text-align:center; border-right:1px solid #e2e8f0;
+                             display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:0.58rem; font-weight:600; text-transform:uppercase; color:#94a3b8; letter-spacing:0.04em; height:14px; display:flex; align-items:center;">Aprobar si</div>
+                  <div id="aqlBtnAceptar" style="font-size:1.5rem; font-weight:800; color:#16a34a; line-height:1; margin:4px 0;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; height:14px; display:flex; align-items:center;">≤ defectos</div>
+                </div>
+                <div style="padding:12px 6px; text-align:center;
+                             display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:0.58rem; font-weight:600; text-transform:uppercase; color:#94a3b8; letter-spacing:0.04em; height:14px; display:flex; align-items:center;">Rechazar si</div>
+                  <div id="aqlBtnRechazar" style="font-size:1.5rem; font-weight:800; color:#dc2626; line-height:1; margin:4px 0;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; height:14px; display:flex; align-items:center;">≥ defectos</div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Modal AQL -->
+          <div id="aqlModal" style="display:none; position:fixed; inset:0; z-index:9000;
+               background:rgba(15,23,42,0.45); backdrop-filter:blur(4px);
+               align-items:center; justify-content:center;">
+            <div style="background:white; border-radius:20px; padding:24px; width:360px;
+                        max-width:calc(100vw - 32px); box-shadow:0 20px 50px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <button type="button" onclick="cerrarModalAQL()"
+                  style="background:none; border:none; color:transparent; font-size:1.2rem; cursor:default; padding:4px; visibility:hidden;">
+                  <i class="fas fa-times"></i>
+                </button>
+                <div style="text-align:center; flex:1;">
+                  <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-ruler-combined" style="color:#3F51B5; font-size:1rem;"></i>
+                    <span style="font-size:1rem; font-weight:800; color:#1e293b;">Muestreo por Aceptación</span>
+                    <i class="fas fa-circle-info" style="color:#3F51B5; font-size:0.9rem; cursor:help;"
+                      title="ISO 2859-1:2026 / MIL-STD-1916 — Muestreo por Aceptacion
+
+NIVEL DE INSPECCION — define cuantas prendas se revisan:
+  I   Reducido: proveedor confiable, menos muestras
+  II  Estandar: uso general en confeccion (predeterminado)
+  III Severo: proveedor nuevo o con historial de fallas
+
+NIVEL AQL — tolerancia maxima de defectos aceptados:
+  1.0  Critico: alta gama o exportacion
+  1.5  Muy estricto: clientes exigentes
+  2.5  Estandar internacional
+  4.0  Normal: uso general en talleres (predeterminado)
+  6.5  Permisivo: proceso muy confiable
+
+RESULTADOS:
+  Revisar    prendas a tomar al azar del lote
+  Aprobar    si los defectos son iguales o menores, el lote pasa
+  Rechazar   si los defectos son iguales o mayores, el lote se rechaza"></i>
+                  </div>
+                  <div style="font-size:0.68rem; color:#94a3b8; margin-top:3px;">ISO 2859-1:2026 · Tabla Militar Estándar</div>
+                </div>
+                <button type="button" onclick="cerrarModalAQL()"
+                  style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:4px;">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <div>
+                  <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; display:block; margin-bottom:6px;">Nivel de inspección</label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-layer-group input-icon"></i>
+                    <select id="aqlNivelInspeccion" class="form-control" onchange="calcularAQL()">
+                      <option value="I">I — Reducido</option>
+                      <option value="II" selected>II — Estándar</option>
+                      <option value="III">III — Severo</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; display:block; margin-bottom:6px;">Nivel AQL</label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-sliders-h input-icon"></i>
+                    <select id="aqlNivel" class="form-control" onchange="calcularAQL()">
+                      <option value="1.0">1.0 — Crítico</option>
+                      <option value="1.5">1.5 — Estricto</option>
+                      <option value="2.5">2.5 — Normal</option>
+                      <option value="4.0" selected>4.0 — Flexible</option>
+                      <option value="6.5">6.5 — Permisivo</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style="background:linear-gradient(135deg,#eef2ff,#f8fafc); border:1px solid #c7d2fe;
+                          border-radius:14px; padding:16px; display:grid;
+                          grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; margin-bottom:10px;">
+                <div>
+                  <div style="font-size:0.55rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Revisar</div>
+                  <div id="aqlMuestra" style="font-size:2rem; font-weight:900; color:#3F51B5; line-height:1;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; margin-top:3px;">unidades</div>
+                </div>
+                <div style="border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                  <div style="font-size:0.55rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Aprobar ≤</div>
+                  <div id="aqlAceptar" style="font-size:2rem; font-weight:900; color:#16a34a; line-height:1;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; margin-top:3px;">defectos</div>
+                </div>
+                <div>
+                  <div style="font-size:0.55rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Rechazar ≥</div>
+                  <div id="aqlRechazar" style="font-size:2rem; font-weight:900; color:#dc2626; line-height:1;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; margin-top:3px;">defectos</div>
+                </div>
+              </div>
+              <div id="aqlLetra" style="font-size:0.62rem; color:#94a3b8; font-weight:600; text-align:center; margin-bottom:14px;"></div>
+              <button type="button" onclick="cerrarModalAQL()"
+                style="width:100%; padding:12px; border-radius:10px; border:none;
+                       background:#3F51B5; color:white; font-weight:700; font-size:0.85rem; cursor:pointer;">
+                Entendido
+              </button>
+            </div>
+          </div>
+
+          <!-- Conclusión -->
+          <div class="mb-3">
+            <label for="conclusion" class="form-label">Conclusión:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-check-circle input-icon"></i>
+              <select id="conclusion" class="form-control" required>
+                <option value="">Seleccione una conclusión...</option>
+                <option value="APROBADO">APROBADO</option>
+                <option value="RECHAZADO">RECHAZADO</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Avance de producción — visible solo en RONDA y CONTRAMUESTRA -->
+          <div id="avanceSection" class="mb-3" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <label class="form-label mb-0">Avance de producción:</label>
+              <span id="avanceValor" style="font-size:1.1rem; font-weight:800; color:#3F51B5; min-width:42px; text-align:right;">0%</span>
+            </div>
+            <div style="position:relative; padding: 6px 0;">
+              <input type="range" id="avanceSlider" min="0" max="100" step="5" value="0"
+                style="width:100%; accent-color:#3F51B5; height:6px; cursor:pointer;">
+              <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">0%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">25%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">50%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">75%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">100%</span>
+              </div>
+            </div>
+            <input type="hidden" id="avancePorcentaje">
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="observacionesCalidad" class="form-label mb-0">Observaciones:</label>
+              <div style="display: flex; gap: 8px;">
+                <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('observacionesCalidad')"
+                  title="Mejorar redacción y ortografía">
+                  <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                </button>
+                <button type="button" class="btn-restore-text" onclick="restaurarTextoOriginal('observacionesCalidad')"
+                  title="Restaurar texto original" style="display: none;">
+                  <i class="fas fa-undo"></i> Restaurar
+                </button>
+              </div>
+            </div>
+            <div class="ai-textarea-wrapper">
+              <textarea id="observacionesCalidad" class="form-control"
+                placeholder="Detalla los hallazgos encontrados..." rows="4" required></textarea>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Soporte:</label>
+            <div class="file-dropzone" id="soporteDropzone" role="button" tabindex="0">
+              <i class="fas fa-camera file-dropzone__icon"></i>
+              <div class="file-dropzone__text">
+                <span class="file-dropzone__action">Haz clic para subir soporte técnico</span>
+                <span class="file-dropzone__hint">Imagen (JPG, PNG, WEBP) o Video (MP4, MOV - Máx 10 seg, 10MB)</span>
+              </div>
+              <span class="file-dropzone__name" id="soporteName"></span>
+            </div>
+            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*,video/mp4,video/quicktime">
+          </div>
+
+          <div class="mb-3 text-center">
+            <button type="submit" class="btn btn-primary">Enviar Reporte</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO RUTERO
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="ruteroForm">
+        <div id="ruteroSection" class="hidden">
+
+          <div class="row-pc-grid mt-2">
+            <div class="mb-3">
+              <label for="ruteroFechaVisita" class="form-label">Fecha de Visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-calendar-alt input-icon"></i>
+                <input type="date" id="ruteroFechaVisita" class="form-control" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="ruteroTipoVisita" class="form-label">Tipo de Visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-clipboard-check input-icon"></i>
+                <select id="ruteroTipoVisita" class="form-control" required>
+                  <option value="">Seleccione tipo...</option>
+                  <option value="AUDITORIA">AUDITORIA</option>
+                  <option value="RONDA">RONDA</option>
+                  <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                  <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row-pc-grid">
+            <div class="mb-3">
+              <label for="ruteroDestino" class="form-label">Destino post-visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-map-signs input-icon"></i>
+                <select id="ruteroDestino" class="form-control" required>
+                  <option value="">Seleccione destino...</option>
+                  <option value="CDI">CDI</option>
+                  <option value="PROCESO">PROCESO</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="ruteroCantidad" class="form-label">Cantidad del lote:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="text" id="ruteroCantidad" class="form-control" readonly placeholder="Se llena automáticamente">
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3 text-center">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-route"></i> Agregar al Rutero
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO DE ACTUALIZAR DATOS DE PLANTA
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="actualizarDatosForm">
+        <div id="actualizarDatosSection" class="hidden">
+
+          <div class="mb-3">
+            <label for="cedulaPlanta" class="form-label">NIT o Cédula de Ciudadanía:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-id-card input-icon"></i>
+              <input type="text" id="cedulaPlanta" class="form-control" readonly
+                placeholder="Se carga automáticamente" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="nombrePlanta" class="form-label">Nombre de la Planta:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-industry input-icon"></i>
+              <input type="text" id="nombrePlanta" class="form-control" readonly>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="direccionPlanta" class="form-label">Dirección:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-map-marker-alt input-icon"></i>
+              <input type="text" id="direccionPlanta" class="form-control" placeholder="Ej: CL 26 # 7-75" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="telefonoPlanta" class="form-label">Teléfono de Contacto:</label>
+            <div class="phone-input-integrated">
+              <div class="phone-prefix-area">
+                <img src="https://flagcdn.com/w20/co.png" srcset="https://flagcdn.com/w40/co.png 2x" width="20"
+                  alt="Colombia">
+                <span class="phone-prefix-text">+57</span>
+              </div>
+              <input type="tel" id="telefonoPlanta" class="form-control" placeholder="(316) 800-7979" required
+                maxlength="15">
+            </div>
+            <div class="form-text small">Ingrese un número celular valido.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="emailPlanta" class="form-label">Correo Electrónico:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" id="emailPlanta" class="form-control" list="emailOptions"
+                placeholder="Ej: planta@empresa.com" required>
+            </div>
+            <datalist id="emailOptions">
+              <option value="@gmail.com">
+              <option value="@outlook.com">
+              <option value="@hotmail.com">
+              <option value="@yahoo.com">
+              <option value="@icloud.com">
+              <option value="@live.com">
+              <option value="@msn.com">
+              <option value="@me.com">
+              <option value="@aol.com">
+              <option value="@protonmail.com">
+              <option value="@zoho.com">
+            </datalist>
+          </div>
+
+          <div class="mb-3 text-center">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Guardar Datos
+            </button>
+          </div>
+        </div>
+      </form>
+
+  </div>
+  </div>
+
+
+  <!-- ── Vendor JS ── -->
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+  <!-- ── App JS (orden importa: dependencias primero) ── -->
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin/usuarios.js"></script>
+
+  <!-- ── Módulo de formularios (js/forms/) ── -->
+  <script src="js/forms/index.js"></script> <!-- estado compartido + dispatcher -->
+  <script src="js/forms/gas.js"></script> <!-- sendToGAS, fileToBase64, collectLotData -->
+  <script src="js/forms/lotes.js"></script> <!-- búsqueda y selección de lotes -->
+  <script src="js/forms/novedades.js"></script> <!-- formulario novedades -->
+  <script src="js/forms/calidad.js"></script> <!-- formulario calidad -->
+  <script src="js/forms/plantas.js"></script> <!-- formulario plantas + Google Maps -->
+  <script src="js/forms/dropzone.js"></script> <!-- dropzone personalizado de archivos -->
+  <script src="js/forms/rutero.js"></script> <!-- formulario rutero -->
+
+  <script src="js/particles-config.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/push.js"></script>
+  
+  <!-- ── Sistema de Notificaciones Push Supabase ── -->
+  <script src="js/push-supabase.js"></script>
+
+</body>
+
+</html>
