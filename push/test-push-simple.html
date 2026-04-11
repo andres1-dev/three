@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Push - Diagnóstico Simple</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #00ff00;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .log {
+      background: #000;
+      padding: 10px;
+      margin-top: 20px;
+      border: 1px solid #00ff00;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .error { color: #ff5555; }
+    .success { color: #50fa7b; }
+    .info { color: #8be9fd; }
+  </style>
+</head>
+<body>
+  <h1>🔔 Diagnóstico Push Supabase</h1>
+  
+  <div>
+    <button onclick="testInit()">1. Inicializar</button>
+    <button onclick="testPermission()">2. Solicitar Permisos</button>
+    <button onclick="testSubscription()">3. Ver Suscripción</button>
+    <button onclick="testSend()">4. Enviar Prueba</button>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./js/push-supabase.js"></script>
+  
+  <script>
+    const log = document.getElementById('log');
+    
+    function addLog(msg, type = 'info') {
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+      console.log(msg);
+    }
+
+    // Configuración
+    const SUPABASE_URL = 'https://doqsurxxxaudnutsydlk.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1OTU5NzcsImV4cCI6MjA1MTE3MTk3N30.Ql-Ql0Ql0Ql0Ql0Ql0Ql0Ql0Ql0Ql0Ql0Ql0Ql0'; // Reemplaza con tu key real
+    const VAPID_PUBLIC_KEY = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEMUTkkkISEH7rI9lCSvaSK4uxyfpcDH_SQL5Pm663bMaOeNvLmjta8ABCz5u3cdWj8rfWl8mRxj2aMNnMSHtjQA';
+
+    async function testInit() {
+      addLog('Inicializando...', 'info');
+      
+      if (!PushSupabase.isSupported()) {
+        addLog('❌ Push no soportado en este navegador', 'error');
+        return;
+      }
+      
+      const result = await PushSupabase.init(SUPABASE_URL, SUPABASE_ANON_KEY, VAPID_PUBLIC_KEY);
+      
+      if (result) {
+        addLog('✅ Inicializado correctamente', 'success');
+        addLog(`Permiso actual: ${PushSupabase.getPermission()}`, 'info');
+      } else {
+        addLog('❌ Error inicializando', 'error');
+      }
+    }
+
+    async function testPermission() {
+      addLog('Solicitando permisos...', 'info');
+      
+      const result = await PushSupabase.requestPermission();
+      
+      if (result.success) {
+        addLog('✅ Permisos concedidos', 'success');
+        addLog('✅ Dispositivo registrado en Supabase', 'success');
+      } else {
+        addLog(`❌ Error: ${result.error}`, 'error');
+      }
+    }
+
+    async function testSubscription() {
+      const sub = PushSupabase.getSubscription();
+      
+      if (sub) {
+        addLog('✅ Suscripción activa:', 'success');
+        addLog(`Endpoint: ${sub.endpoint.substring(0, 50)}...`, 'info');
+        addLog(`Keys: p256dh=${sub.keys.p256dh.substring(0, 20)}...`, 'info');
+        addLog(`Keys: auth=${sub.keys.auth.substring(0, 20)}...`, 'info');
+      } else {
+        addLog('❌ No hay suscripción activa', 'error');
+      }
+    }
+
+    async function testSend() {
+      addLog('Enviando notificación de prueba...', 'info');
+      
+      const result = await PushSupabase.sendTest();
+      
+      if (result) {
+        addLog('✅ Notificación enviada', 'success');
+      } else {
+        addLog('❌ Error enviando notificación', 'error');
+      }
+    }
+
+    // Auto-inicializar
+    addLog('Página cargada. Haz clic en "1. Inicializar"', 'info');
+  </script>
+</body>
+</html>
