@@ -58,10 +58,30 @@ const PushSupabase = (() => {
 
   async function requestPermission() {
     if (!('Notification' in window) || !('PushManager' in window)) {
+      console.error('[PUSH-SUPABASE] Push API no disponible')
       return { success: false, error: 'unavailable' }
     }
 
+    // Verificación especial para iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+    const isStandalone = window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches
+    
+    if (isIOS) {
+      console.log('[PUSH-SUPABASE] Dispositivo iOS detectado')
+      console.log('[PUSH-SUPABASE] Modo standalone:', isStandalone)
+      
+      if (!isStandalone) {
+        console.error('[PUSH-SUPABASE] iOS requiere que la PWA esté instalada y abierta desde la pantalla de inicio')
+        return { 
+          success: false, 
+          error: 'ios_not_standalone',
+          message: 'En iOS, debes instalar la app en la pantalla de inicio y abrirla desde ahí'
+        }
+      }
+    }
+
     const currentPerm = Notification.permission
+    console.log('[PUSH-SUPABASE] Permiso actual:', currentPerm)
 
     if (currentPerm === 'denied') {
       return { success: false, error: 'denied' }
@@ -73,7 +93,9 @@ const PushSupabase = (() => {
     }
 
     try {
+      console.log('[PUSH-SUPABASE] Solicitando permiso...')
       const result = await Notification.requestPermission()
+      console.log('[PUSH-SUPABASE] Resultado del permiso:', result)
       
       if (result === 'granted') {
         _showWelcomeNotification()
@@ -127,14 +149,27 @@ const PushSupabase = (() => {
   async function _registerInSupabase(subscription) {
     const userId = window.currentUser?.ID_USUARIO || window.currentUser?.ID_PLANTA || 'anonymous'
     
+    console.log('[PUSH-SUPABASE] Registrando en Supabase para usuario:', userId)
+    
     // Extraer keys de la suscripción
     const subscriptionJson = subscription.toJSON()
     const endpoint = subscriptionJson.endpoint
     const p256dh = subscriptionJson.keys.p256dh
     const auth = subscriptionJson.keys.auth
 
+    console.log('[PUSH-SUPABASE] Datos de suscripción:', {
+      userId,
+      endpoint: endpoint.substring(0, 50) + '...',
+      p256dh: p256dh.substring(0, 20) + '...',
+      auth: auth.substring(0, 20) + '...',
+      deviceType: _getDeviceType()
+    })
+
     try {
-      const response = await fetch(`${config.supabaseUrl}/functions/v1/push-notifications`, {
+      const url = `${config.supabaseUrl}/functions/v1/push-notifications`
+      console.log('[PUSH-SUPABASE] Enviando a:', url)
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +186,11 @@ const PushSupabase = (() => {
         }),
       })
 
+      console.log('[PUSH-SUPABASE] Respuesta HTTP:', response.status, response.statusText)
+      
       const result = await response.json()
+      console.log('[PUSH-SUPABASE] Resultado:', result)
+      
       return result.success
     } catch (error) {
       console.error('[PUSH-SUPABASE] Error registrando en Supabase:', error)
