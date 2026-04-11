@@ -245,6 +245,11 @@ async function activarNotificaciones() {
         if (result.success) {
             console.log('[PUSH] ✅ Notificaciones activadas correctamente');
             
+            // Enviar notificación de prueba automáticamente
+            setTimeout(async () => {
+                await enviarNotificacionPrueba();
+            }, 1000);
+            
             // Mostrar mensaje de éxito si existe la función showToast
             if (typeof showToast === 'function') {
                 showToast('Notificaciones activadas correctamente', 'success');

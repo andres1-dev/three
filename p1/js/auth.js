@@ -866,12 +866,16 @@ async function togglePushNotifications(enable) {
 
         let finalPerm = permission;
         if (permission === 'granted') {
-            if (typeof _subscribeToPush === 'function') {
-                await _subscribeToPush().catch(e => console.warn('[PUSH] Error suscribiendo:', e));
+            // Usar el nuevo sistema de Supabase
+            if (window.PushSupabase && typeof PushSupabase.requestPermission === 'function') {
+                const result = await PushSupabase.requestPermission();
+                finalPerm = result.success ? 'granted' : permission;
             }
         } else {
-            if (typeof _requestPushPermission === 'function') {
-                finalPerm = await _requestPushPermission();
+            // Solicitar permisos con el nuevo sistema
+            if (window.activarNotificaciones && typeof activarNotificaciones === 'function') {
+                const success = await activarNotificaciones();
+                finalPerm = success ? 'granted' : 'default';
             }
             if (finalPerm !== 'granted') {
                 localStorage.setItem('sispro_notif_soft_off', '1');

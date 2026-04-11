@@ -641,11 +641,11 @@ function toggleNotifPanel() {
         } else if (typeof _renderOperatorNotifPanel === 'function') {
             _renderOperatorNotifPanel();
         }
-        // Solicitar permiso push la primera vez que se abre la campana
-        if (typeof _requestPushPermission === 'function' &&
+        // Solicitar permiso push la primera vez que se abre la campana (nuevo sistema Supabase)
+        if (window.activarNotificaciones && typeof activarNotificaciones === 'function' &&
             typeof Notification !== 'undefined' &&
             Notification.permission === 'default') {
-            setTimeout(_requestPushPermission, 500);
+            setTimeout(activarNotificaciones, 500);
         }
     }
 }
