@@ -240,28 +240,17 @@ async function activarNotificaciones() {
     }
 
     try {
-        console.log('[PUSH] Solicitando permisos...');
         const result = await PushSupabase.requestPermission();
-        
-        console.log('[PUSH] Resultado:', result);
         
         if (result.success) {
             console.log('[PUSH] ✅ Notificaciones activadas correctamente');
             
-            // Esperar un poco más para asegurar que la suscripción se registró
+            // Enviar notificación de prueba automáticamente
             setTimeout(async () => {
-                console.log('[PUSH] Verificando suscripción antes de enviar prueba...');
-                const sub = PushSupabase.getSubscription();
-                
-                if (sub) {
-                    console.log('[PUSH] Suscripción confirmada, enviando notificación de prueba...');
-                    await enviarNotificacionPrueba();
-                } else {
-                    console.warn('[PUSH] No hay suscripción activa, no se puede enviar prueba');
-                }
-            }, 2000);
+                await enviarNotificacionPrueba();
+            }, 1000);
             
-            // Mostrar mensaje de éxito
+            // Mostrar mensaje de éxito si existe la función showToast
             if (typeof showToast === 'function') {
                 showToast('Notificaciones activadas correctamente', 'success');
             }
@@ -270,17 +259,13 @@ async function activarNotificaciones() {
         } else {
             console.error('[PUSH] ❌ Error activando notificaciones:', result.error);
             
-            // Mensajes específicos según el error
+            // Mostrar mensaje de error
             let mensaje = 'No se pudieron activar las notificaciones';
             
-            if (result.error === 'ios_not_standalone') {
-                mensaje = 'En iOS: Instala la app en tu pantalla de inicio y ábrela desde ahí para activar notificaciones';
-            } else if (result.error === 'denied') {
-                mensaje = 'Has bloqueado las notificaciones. Actívalas en Ajustes → Safari → Notificaciones';
+            if (result.error === 'denied') {
+                mensaje = 'Has bloqueado las notificaciones. Actívalas en la configuración del navegador.';
             } else if (result.error === 'unavailable') {
                 mensaje = 'Tu navegador no soporta notificaciones push';
-            } else if (result.message) {
-                mensaje = result.message;
             }
             
             if (typeof showToast === 'function') {
