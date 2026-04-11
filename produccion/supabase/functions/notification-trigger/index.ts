@@ -248,7 +248,7 @@ async function handleNewChatMessage(supabase: any, record: any): Promise<any> {
 }
 
 /**
- * Envía la notificación usando la función push-native-supabase
+ * Envía la notificación usando la función push-notifications
  */
 async function sendNotification(supabase: any, notificationData: any): Promise<void> {
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")
@@ -260,7 +260,7 @@ async function sendNotification(supabase: any, notificationData: any): Promise<v
   }
 
   try {
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/push-native-supabase`, {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/push-notifications`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

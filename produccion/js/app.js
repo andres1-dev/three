@@ -135,19 +135,6 @@ window.onload = async function() {
     
     initDropzones();
 
-    // 2. Inicializar notificaciones push nativas (Supabase)
-    if (window.PushSupabaseNative && window.PushSupabaseNative.isSupported() && PUSH_CONFIG.enabled) {
-        PushSupabaseNative.init(PUSH_CONFIG.supabaseUrl, PUSH_CONFIG.supabaseAnonKey)
-            .then(success => {
-                if (success) {
-                    console.log('✅ Push notifications inicializadas');
-                }
-            })
-            .catch(err => {
-                console.warn('⚠️ Error inicializando push:', err);
-            });
-    }
-
     // El escudo se quita dentro de loadUsers() cuando todo es válido
     setInterval(updateDateTime, 60_000);
 

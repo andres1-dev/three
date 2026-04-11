@@ -641,17 +641,11 @@ function toggleNotifPanel() {
         } else if (typeof _renderOperatorNotifPanel === 'function') {
             _renderOperatorNotifPanel();
         }
-        // Solicitar permiso push nativo (Supabase) la primera vez que se abre la campana
-        if (window.PushSupabaseNative && 
+        // Solicitar permiso push la primera vez que se abre la campana
+        if (typeof _requestPushPermission === 'function' &&
             typeof Notification !== 'undefined' &&
             Notification.permission === 'default') {
-            setTimeout(() => {
-                PushSupabaseNative.requestPermission().then(result => {
-                    if (result.success) {
-                        console.log('✅ Permisos de notificaciones concedidos');
-                    }
-                });
-            }, 500);
+            setTimeout(_requestPushPermission, 500);
         }
     }
 }

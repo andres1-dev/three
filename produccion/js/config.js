@@ -10,17 +10,6 @@ let CONFIG = {
     GEMINI_KEY: null,
     SPREADSHEET_ID: '1ZLGG8wfszE6D8vGwCECWguWGUiDXGUGfN87ZukyaCpo',
     FUNCTIONS_URL: 'https://doqsurxxxaudnutsydlk.supabase.co/functions/v1',
-    SUPABASE_URL: 'https://doqsurxxxaudnutsydlk.supabase.co',
-    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg',
-};
-
-/**
- * Configuración de notificaciones push nativas (Supabase)
- */
-const PUSH_CONFIG = {
-    enabled: true,
-    supabaseUrl: 'https://doqsurxxxaudnutsydlk.supabase.co',
-    supabaseAnonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg',
 };
 
 /**
