@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 
 <head>
@@ -26,6 +26,9 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/footer.css">
   
+  <!-- ── Supabase Realtime ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
   <script>
     (function(){
@@ -269,7 +272,7 @@
               </div>
               <span class="file-dropzone__name" id="imagenName"></span>
             </div>
-            <input type="file" id="imagen" class="file-dropzone__input" accept="image/*" required>
+            <input type="file" id="imagen" class="file-dropzone__input" accept="image/*">
           </div>
 
           <div class="text-center">
@@ -307,7 +310,7 @@
                 </button>
                 <span id="gps-status-label">Cargando...</span>
                 <div style="position:relative; display:inline-block; width:42px; height:22px; cursor:pointer;"
-                  onclick="toggleGpsPermission()">
+                   onclick="toggleGpsPermission()">
                   <input type="checkbox" id="gps-toggle-check" style="opacity:0; width:0; height:0; position:absolute;">
                   <span id="gps-toggle-slider" style="
                     position:absolute; inset:0;
@@ -571,8 +574,7 @@ RESULTADOS:
               </div>
               <span class="file-dropzone__name" id="soporteName"></span>
             </div>
-            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*,video/mp4,video/quicktime"
-              required>
+            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*,video/mp4,video/quicktime">
           </div>
 
           <div class="mb-3 text-center">
