@@ -116,25 +116,56 @@ function collectLotData() {
 
 /**
  * Envía un payload a la Edge Function de Supabase.
+ * Mejorado para compatibilidad con móviles iOS/Android
  */
 async function sendToSupabase(payload) {
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg';
-    const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
-        method: 'POST',
-        headers: { 
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-        },
-        body: JSON.stringify(payload),
+    
+    console.log('[sendToSupabase] Enviando payload:', {
+        hoja: payload.hoja,
+        lote: payload.lote,
+        url: `${CONFIG.FUNCTIONS_URL}/operations`
     });
 
+    let response;
+    try {
+        response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            },
+            body: JSON.stringify(payload),
+        });
+    } catch (fetchError) {
+        console.error('[sendToSupabase] Error en fetch:', fetchError);
+        throw new Error(`Error de conexión: ${fetchError.message}`);
+    }
+
+    console.log('[sendToSupabase] Respuesta HTTP:', response.status, response.statusText);
+
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        let errorData;
+        try {
+            errorData = await response.json();
+        } catch (e) {
+            errorData = { message: 'Error desconocido' };
+        }
+        console.error('[sendToSupabase] Error del servidor:', errorData);
         throw new Error(`Error ${response.status}: ${errorData.message || 'Error en el servidor'}`);
     }
 
-    return response.json();
+    let result;
+    try {
+        result = await response.json();
+        console.log('[sendToSupabase] Respuesta exitosa:', result);
+    } catch (e) {
+        console.error('[sendToSupabase] Error parseando JSON:', e);
+        throw new Error('Error al procesar respuesta del servidor');
+    }
+
+    return result;
 }
 
 /**

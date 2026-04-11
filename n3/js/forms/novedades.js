@@ -18,6 +18,8 @@ async function handleNovedadesSubmit(e) {
     btn.disabled = true;
     btn.textContent = 'Enviando...';
 
+    console.log('[novedades] Iniciando envío de formulario');
+
     try {
         // ── Datos del lote seleccionado ──
         const lotData = collectLotData();
@@ -25,6 +27,12 @@ async function handleNovedadesSubmit(e) {
         const descripcion        = document.getElementById('observacionesNovedad').value;
         const cantidadSolicitada = document.getElementById('cantidadSolicitada').value;
         const imagenFile         = document.getElementById('imagen').files?.[0] || null;
+
+        console.log('[novedades] Datos recopilados:', {
+            lote: lotData.lote,
+            area,
+            tieneImagen: !!imagenFile
+        });
 
         // 1. Enviar texto inmediatamente sin esperar la imagen
         const payload = {
@@ -36,8 +44,16 @@ async function handleNovedadesSubmit(e) {
             imagen: '',   // se actualizará en background
         };
 
+        console.log('[novedades] Enviando a Supabase...');
         const result = await sendToGAS(payload);
+        console.log('[novedades] Respuesta recibida:', result);
+        
         const idNovedad = result.id || result.ID_NOVEDAD;
+
+        if (!idNovedad) {
+            console.error('[novedades] No se recibió ID de novedad:', result);
+            throw new Error('No se recibió ID de la novedad');
+        }
 
         // 2. UI libre — el usuario puede seguir
         Swal.fire({
@@ -54,14 +70,17 @@ async function handleNovedadesSubmit(e) {
 
         // 3. Subir imagen en background (no bloquea)
         if (imagenFile && idNovedad) {
+            console.log('[novedades] Iniciando subida de imagen en background');
             uploadArchivoAsync(imagenFile, idNovedad, SHEETS_DESTINO.NOVEDADES);
         }
 
     } catch (error) {
         console.error('[novedades] Error al enviar:', error);
+        console.error('[novedades] Stack:', error.stack);
+        
         Swal.fire({
-            title: 'Error',
-            text: 'No se pudo enviar el reporte. Intente nuevamente.',
+            title: 'Error al enviar',
+            text: error.message || 'No se pudo enviar el reporte. Intente nuevamente.',
             icon: 'error',
             confirmButtonText: 'OK',
         });

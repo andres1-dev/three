@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug Móvil - SISPRO</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1e293b;
+      color: white;
+      padding: 10px;
+      font-size: 12px;
+    }
+
+    .header {
+      background: #3b82f6;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 1.2rem;
+      margin-bottom: 5px;
+    }
+
+    .subtitle {
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .section {
+      background: #334155;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #60a5fa;
+      font-size: 0.9rem;
+    }
+
+    .info-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      border-bottom: 1px solid #475569;
+      font-size: 0.75rem;
+    }
+
+    .info-item:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #94a3b8;
+    }
+
+    .info-value {
+      color: white;
+      font-weight: 600;
+    }
+
+    .success {
+      color: #22c55e;
+    }
+
+    .error {
+      color: #ef4444;
+    }
+
+    .warning {
+      color: #f59e0b;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      width: 100%;
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    button:active {
+      background: #2563eb;
+    }
+
+    .log {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 300px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.65rem;
+      line-height: 1.4;
+    }
+
+    .log-entry {
+      margin-bottom: 3px;
+      word-break: break-all;
+    }
+
+    .log-entry.success {
+      color: #22c55e;
+    }
+
+    .log-entry.error {
+      color: #ef4444;
+    }
+
+    .log-entry.info {
+      color: #60a5fa;
+    }
+
+    .log-entry.warning {
+      color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔍 Debug Móvil</h1>
+    <p class="subtitle">Diagnóstico de conexión a Supabase</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Información del Dispositivo</div>
+    <div class="info-item">
+      <span class="info-label">Dispositivo</span>
+      <span class="info-value" id="device">-</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Navegador</span>
+      <span class="info-value" id="browser">-</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">User Agent</span>
+      <span class="info-value" id="ua" style="font-size: 0.6rem;">-</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Conexión</span>
+      <span class="info-value" id="connection">-</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Estado de APIs</div>
+    <div class="info-item">
+      <span class="info-label">Fetch API</span>
+      <span class="info-value" id="fetchapi">-</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">Promise</span>
+      <span class="info-value" id="promise">-</span>
+    </div>
+    <div class="info-item">
+      <span class="info-label">JSON</span>
+      <span class="info-value" id="json">-</span>
+    </div>
+  </div>
+
+  <button onclick="testSupabaseConnection()">🔌 Probar Conexión a Supabase</button>
+  <button onclick="testSupabaseInsert()">📝 Probar Inserción de Datos</button>
+  <button onclick="clearLog()">🗑️ Limpiar Log</button>
+
+  <div class="section">
+    <div class="section-title">Log de Eventos</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      FUNCTIONS_URL: 'https://doqsurxxxaudnutsydlk.supabase.co/functions/v1',
+      SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg'
+    };
+
+    const logEl = document.getElementById('log');
+
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(`[${type.toUpperCase()}]`, message);
+    }
+
+    function clearLog() {
+      logEl.innerHTML = '';
+      log('Log limpiado', 'info');
+    }
+
+    // Detectar información del dispositivo
+    function detectDevice() {
+      const ua = navigator.userAgent;
+      let device = 'Desktop';
+      
+      if (/android/i.test(ua)) device = 'Android';
+      else if (/iPad|iPhone|iPod/.test(ua)) device = 'iOS';
+      else if (/Windows Phone/i.test(ua)) device = 'Windows Phone';
+      
+      document.getElementById('device').textContent = device;
+      document.getElementById('device').className = 'info-value success';
+      
+      let browser = 'Desconocido';
+      if (/chrome|chromium|crios/i.test(ua) && !/edg/i.test(ua)) browser = 'Chrome';
+      else if (/firefox|fxios/i.test(ua)) browser = 'Firefox';
+      else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Safari';
+      else if (/edg/i.test(ua)) browser = 'Edge';
+      
+      document.getElementById('browser').textContent = browser;
+      document.getElementById('browser').className = 'info-value success';
+      
+      document.getElementById('ua').textContent = ua;
+      
+      const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+      let status = 'Online';
+      if (conn) {
+        status = `${conn.effectiveType || 'unknown'}`;
+      }
+      document.getElementById('connection').textContent = status;
+      document.getElementById('connection').className = 'info-value success';
+      
+      log(`Dispositivo: ${device}, Navegador: ${browser}`, 'info');
+    }
+
+    function detectAPIs() {
+      const hasFetch = typeof fetch !== 'undefined';
+      document.getElementById('fetchapi').textContent = hasFetch ? 'Soportado' : 'No soportado';
+      document.getElementById('fetchapi').className = hasFetch ? 'info-value success' : 'info-value error';
+      
+      const hasPromise = typeof Promise !== 'undefined';
+      document.getElementById('promise').textContent = hasPromise ? 'Soportado' : 'No soportado';
+      document.getElementById('promise').className = hasPromise ? 'info-value success' : 'info-value error';
+      
+      const hasJSON = typeof JSON !== 'undefined';
+      document.getElementById('json').textContent = hasJSON ? 'Soportado' : 'No soportado';
+      document.getElementById('json').className = hasJSON ? 'info-value success' : 'info-value error';
+      
+      log('APIs verificadas', 'info');
+    }
+
+    async function testSupabaseConnection() {
+      log('=== PROBANDO CONEXIÓN A SUPABASE ===', 'info');
+      log(`URL: ${CONFIG.FUNCTIONS_URL}/operations`, 'info');
+      
+      try {
+        log('Enviando request...', 'info');
+        
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'apikey': CONFIG.SUPABASE_KEY,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`
+          },
+          body: JSON.stringify({
+            accion: 'TEST',
+            test: true
+          }),
+        });
+        
+        log(`Respuesta HTTP: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          log(`Error del servidor: ${errorText}`, 'error');
+          return;
+        }
+        
+        const result = await response.json();
+        log(`Respuesta JSON: ${JSON.stringify(result)}`, 'success');
+        log('✓ Conexión exitosa a Supabase', 'success');
+        
+      } catch (error) {
+        log(`✗ Error de conexión: ${error.message}`, 'error');
+        log(`Stack: ${error.stack}`, 'error');
+      }
+    }
+
+    async function testSupabaseInsert() {
+      log('=== PROBANDO INSERCIÓN DE DATOS ===', 'info');
+      
+      const testPayload = {
+        hoja: 'NOVEDADES',
+        fecha: new Date().toISOString().split('T')[0],
+        lote: 'TEST-' + Date.now(),
+        referencia: 'REF-TEST',
+        cantidad: '100',
+        planta: 'PLANTA-TEST',
+        salida: new Date().toISOString().split('T')[0],
+        linea: 'LINEA-TEST',
+        proceso: 'CORTE',
+        prenda: 'CAMISETA',
+        genero: 'DAMA',
+        tejido: 'JERSEY',
+        area: 'CORTE',
+        descripcion: 'Test desde móvil',
+        cantidadSolicitada: '10',
+        imagen: ''
+      };
+      
+      log(`Payload: ${JSON.stringify(testPayload, null, 2)}`, 'info');
+      
+      try {
+        log('Enviando inserción...', 'info');
+        
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'apikey': CONFIG.SUPABASE_KEY,
+            'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`
+          },
+          body: JSON.stringify(testPayload),
+        });
+        
+        log(`Respuesta HTTP: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          log(`Error del servidor: ${errorText}`, 'error');
+          return;
+        }
+        
+        const result = await response.json();
+        log(`Respuesta: ${JSON.stringify(result, null, 2)}`, 'success');
+        
+        if (result.success) {
+          log(`✓ Inserción exitosa! ID: ${result.id || result.ID_NOVEDAD}`, 'success');
+        } else {
+          log(`✗ Inserción falló: ${result.message}`, 'error');
+        }
+        
+      } catch (error) {
+        log(`✗ Error en inserción: ${error.message}`, 'error');
+        log(`Stack: ${error.stack}`, 'error');
+      }
+    }
+
+    // Inicializar
+    detectDevice();
+    detectAPIs();
+    log('Debug iniciado. Presiona los botones para probar.', 'info');
+  </script>
+</body>
+</html>

@@ -89,7 +89,7 @@ function _bindDropzone(zoneId, inputId, nameId, validateVideo = false) {
     });
 
     // Cuando el usuario elige un archivo
-    input.addEventListener('change', async () => {
+    input.addEventListener('change', () => {
         const file = input.files && input.files[0];
         if (file) {
             // Validar tamaño (10MB máximo)
@@ -106,18 +106,23 @@ function _bindDropzone(zoneId, inputId, nameId, validateVideo = false) {
                 return;
             }
 
-            // Si es video y debe validarse, verificar duración
+            // Si es video y debe validarse, verificar duración (no bloqueante)
             if (validateVideo && file.type.startsWith('video/')) {
-                const isValid = await validateVideoDuration(file);
-                if (!isValid) {
-                    input.value = '';
-                    zone.classList.remove('has-file');
-                    if (nameEl) nameEl.textContent = '';
-                    return;
-                }
+                validateVideoDuration(file).then(isValid => {
+                    if (!isValid) {
+                        input.value = '';
+                        zone.classList.remove('has-file');
+                        if (nameEl) nameEl.textContent = '';
+                    } else {
+                        // Archivo válido
+                        zone.classList.add('has-file');
+                        if (nameEl) nameEl.textContent = file.name;
+                    }
+                });
+                return;
             }
 
-            // Archivo válido
+            // Archivo válido (no es video o no requiere validación)
             zone.classList.add('has-file');
             if (nameEl) nameEl.textContent = file.name;
         } else {
@@ -138,7 +143,7 @@ function _bindDropzone(zoneId, inputId, nameId, validateVideo = false) {
         }
     });
 
-    zone.addEventListener('drop', async (e) => {
+    zone.addEventListener('drop', (e) => {
         e.preventDefault();
         const files = e.dataTransfer.files;
         if (files && files[0]) {
@@ -155,25 +160,34 @@ function _bindDropzone(zoneId, inputId, nameId, validateVideo = false) {
                 return;
             }
 
-            // Si es video y debe validarse, verificar duración
+            // Si es video y debe validarse, verificar duración (no bloqueante)
             if (validateVideo && file.type.startsWith('video/')) {
-                const isValid = await validateVideoDuration(file);
-                if (!isValid) {
-                    return;
-                }
+                validateVideoDuration(file).then(isValid => {
+                    if (isValid) {
+                        _assignFileToInput(file, input, zone, nameEl);
+                    }
+                });
+                return;
             }
 
-            // Transferir al input nativo (requiere DataTransfer trick)
-            try {
-                const dt = new DataTransfer();
-                dt.items.add(file);
-                input.files = dt.files;
-                zone.classList.add('has-file');
-                if (nameEl) nameEl.textContent = file.name;
-            } catch (_) {
-                // Fallback: algunos navegadores no permiten asignar input.files
-                console.warn('[dropzone] Drag & Drop no soportado completamente en este navegador');
-            }
+            // Archivo válido (no es video o no requiere validación)
+            _assignFileToInput(file, input, zone, nameEl);
         }
     });
+}
+
+/**
+ * Asigna un archivo al input (helper para evitar duplicación de código)
+ */
+function _assignFileToInput(file, input, zone, nameEl) {
+    try {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        input.files = dt.files;
+        zone.classList.add('has-file');
+        if (nameEl) nameEl.textContent = file.name;
+    } catch (_) {
+        // Fallback: algunos navegadores no permiten asignar input.files
+        console.warn('[dropzone] Drag & Drop no soportado completamente en este navegador');
+    }
 }
