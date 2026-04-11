@@ -5,42 +5,92 @@
 
 /**
  * Comprime y convierte un archivo a Base64 antes de enviarlo.
+ * Mejorado para compatibilidad con iOS/Android
  */
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
+        // Para videos y archivos no-imagen, conversión directa
         if (!file.type.startsWith('image/')) {
             const reader = new FileReader();
-            reader.onload = () => resolve({
-                base64: reader.result.split(',')[1],
-                mimeType: file.type,
-                fileName: file.name,
-            });
-            reader.onerror = reject;
+            reader.onload = () => {
+                try {
+                    const base64 = reader.result.split(',')[1];
+                    if (!base64) {
+                        reject(new Error('Error al convertir archivo a base64'));
+                        return;
+                    }
+                    resolve({
+                        base64,
+                        mimeType: file.type,
+                        fileName: file.name,
+                    });
+                } catch (e) {
+                    reject(e);
+                }
+            };
+            reader.onerror = () => reject(new Error('Error al leer el archivo'));
             reader.readAsDataURL(file);
             return;
         }
 
+        // Para imágenes: comprimir y optimizar
         const img = new Image();
         const url = URL.createObjectURL(file);
-        img.onload = () => {
+        
+        // Timeout para evitar bloqueos en móviles
+        const timeout = setTimeout(() => {
             URL.revokeObjectURL(url);
-            const MAX_W = 1280;
-            let w = img.width, h = img.height;
-            if (w > MAX_W) { h = Math.round(h * MAX_W / w); w = MAX_W; }
+            reject(new Error('Timeout al cargar imagen'));
+        }, 30000);
 
-            const canvas = document.createElement('canvas');
-            canvas.width = w;
-            canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        img.onload = () => {
+            clearTimeout(timeout);
+            URL.revokeObjectURL(url);
+            
+            try {
+                const MAX_W = 1280;
+                let w = img.width, h = img.height;
+                if (w > MAX_W) { 
+                    h = Math.round(h * MAX_W / w); 
+                    w = MAX_W; 
+                }
 
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.72);
-            resolve({
-                base64: dataUrl.split(',')[1],
-                mimeType: 'image/jpeg',
-                fileName: file.name.replace(/\.[^.]+$/, '.jpg'),
-            });
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                
+                // Fondo blanco para transparencias
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, w, h);
+                ctx.drawImage(img, 0, 0, w, h);
+
+                // Calidad adaptativa según tamaño
+                const quality = w > 800 ? 0.7 : 0.8;
+                const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                const base64 = dataUrl.split(',')[1];
+                
+                if (!base64) {
+                    reject(new Error('Error al generar base64 de imagen'));
+                    return;
+                }
+
+                resolve({
+                    base64,
+                    mimeType: 'image/jpeg',
+                    fileName: file.name.replace(/\.[^.]+$/, '.jpg'),
+                });
+            } catch (e) {
+                reject(e);
+            }
         };
-        img.onerror = reject;
+        
+        img.onerror = () => {
+            clearTimeout(timeout);
+            URL.revokeObjectURL(url);
+            reject(new Error('Error al cargar la imagen'));
+        };
+        
         img.src = url;
     });
 }
@@ -94,22 +144,64 @@ const sendToGAS = sendToSupabase;
 
 /**
  * Sube una imagen en background a Supabase Storage via Edge Function.
+ * Mejorado con mejor manejo de errores y compatibilidad móvil
  */
 async function uploadArchivoAsync(file, id, hoja) {
     const STORAGE_KEY = `pending_upload_${id}`;
 
-    let fileData;
-    try {
-        fileData = await fileToBase64(file);
-    } catch(e) {
-        console.error('[upload] Error comprimiendo archivo:', e);
+    console.log(`[upload] Iniciando subida para ${id}:`, {
+        nombre: file.name,
+        tipo: file.type,
+        tamaño: `${(file.size / 1024).toFixed(2)}KB`,
+        hoja
+    });
+
+    // Validar archivo
+    if (!file || !file.size) {
+        console.error('[upload] Archivo inválido o vacío');
         return;
     }
 
+    // Validar tamaño (10MB máximo)
+    if (file.size > 10 * 1024 * 1024) {
+        console.error('[upload] Archivo muy grande:', file.size);
+        Swal.fire({
+            icon: 'error',
+            title: 'Archivo muy grande',
+            text: 'El archivo no debe superar los 10MB',
+            confirmButtonColor: '#3F51B5'
+        });
+        return;
+    }
+
+    let fileData;
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ fileData, id, hoja, ts: Date.now() }));
+        fileData = await fileToBase64(file);
+        console.log(`[upload] Archivo convertido a base64: ${(fileData.base64.length / 1024).toFixed(2)}KB`);
     } catch(e) {
-        console.warn('[upload] localStorage lleno.');
+        console.error('[upload] Error comprimiendo archivo:', e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al procesar archivo',
+            text: 'No se pudo procesar el archivo. Intente con otro.',
+            confirmButtonColor: '#3F51B5'
+        });
+        return;
+    }
+
+    // Guardar en localStorage para reintentos
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
+            fileData, 
+            id, 
+            hoja, 
+            ts: Date.now(),
+            fileName: file.name,
+            fileSize: file.size
+        }));
+        console.log(`[upload] Guardado en localStorage: ${STORAGE_KEY}`);
+    } catch(e) {
+        console.warn('[upload] No se pudo guardar en localStorage (puede estar lleno):', e);
     }
 
     _showUploadIndicator(id);
@@ -118,44 +210,97 @@ async function uploadArchivoAsync(file, id, hoja) {
 
 async function _uploadConReintentos(fileData, id, hoja, storageKey, intento = 1) {
     const MAX_INTENTOS = 5;
+    
+    console.log(`[upload] Intento ${intento}/${MAX_INTENTOS} para ${id}`);
+    
     try {
-        // 1. Subir el archivo a Google Drive via GAS
-        // GAS se encargará de llamar a la Edge Function de Supabase para actualizar la URL
         const storageUrl = await _subirArchivoDrive(fileData, id, hoja);
 
         if (storageUrl) {
             localStorage.removeItem(storageKey);
             _hideUploadIndicator(id);
-            console.log(`[upload] ✓ Archivo subido a Drive para ${id}`);
+            console.log(`[upload] ✓ Subida completada exitosamente para ${id}`);
+            
+            // Notificación de éxito (opcional, solo en desarrollo)
+            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                console.log(`[upload] URL final: ${storageUrl}`);
+            }
         }
     } catch(e) {
+        console.error(`[upload] Error en intento ${intento}:`, e.message);
+        
         if (intento < MAX_INTENTOS) {
-            const delay = Math.min(2000 * Math.pow(2, intento - 1), 30000); 
-            console.warn(`[upload] Intento ${intento} fallido, reintentando...`);
-            setTimeout(() => _uploadConReintentos(fileData, id, hoja, storageKey, intento + 1), delay);
+            // Backoff exponencial: 2s, 4s, 8s, 16s, 30s
+            const delay = Math.min(2000 * Math.pow(2, intento - 1), 30000);
+            console.warn(`[upload] Reintentando en ${delay/1000}s...`);
+            
+            setTimeout(() => {
+                _uploadConReintentos(fileData, id, hoja, storageKey, intento + 1);
+            }, delay);
         } else {
-            console.error(`[upload] Falló tras ${MAX_INTENTOS} intentos.`);
+            console.error(`[upload] ❌ Falló tras ${MAX_INTENTOS} intentos para ${id}`);
             _showUploadError(id);
+            
+            // Mostrar error al usuario
+            Swal.fire({
+                icon: 'warning',
+                title: 'Imagen pendiente',
+                text: 'La imagen se guardará cuando haya mejor conexión. El reporte ya fue enviado.',
+                confirmButtonColor: '#3F51B5',
+                timer: 5000
+            });
         }
     }
 }
 
 async function _subirArchivoDrive(fileData, id, hoja) {
-    const res = await fetch(GAS_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' }, // Evita preflight OPTIONS en GAS
-        body: JSON.stringify({
-            accion: 'SUBIR_DRIVE',
-            idNovedad: id,
-            hoja: hoja,
-            base64: fileData.base64,
-            mimeType: fileData.mimeType,
-            fileName: fileData.fileName
-        })
-    });
+    // Preparar payload
+    const payload = {
+        accion: 'SUBIR_DRIVE',
+        idNovedad: id,
+        hoja: hoja,
+        base64: fileData.base64,
+        mimeType: fileData.mimeType,
+        fileName: fileData.fileName
+    };
+
+    console.log(`[upload] Subiendo archivo para ${id}, tamaño: ${(fileData.base64.length / 1024).toFixed(2)}KB`);
+
+    // Intentar con diferentes métodos para máxima compatibilidad
+    let res;
+    try {
+        // Método 1: POST con text/plain (evita preflight en algunos casos)
+        res = await fetch(GAS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(payload)
+        });
+    } catch (e) {
+        console.warn('[upload] Método 1 falló, intentando método 2...', e.message);
+        
+        // Método 2: POST con application/json (estándar)
+        res = await fetch(GAS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    }
     
+    if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
+
     const result = await res.json();
-    if (!result.success || !result.url) throw new Error(result.message || 'Error en GAS');
+    
+    if (!result.success) {
+        throw new Error(result.message || 'Error en GAS');
+    }
+    
+    if (!result.url) {
+        throw new Error('GAS no retornó URL del archivo');
+    }
+
+    console.log(`[upload] ✓ Archivo subido exitosamente: ${result.url}`);
     return result.url;
 }
 
