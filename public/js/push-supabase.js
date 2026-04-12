@@ -283,8 +283,8 @@ const PushSupabase = (() => {
 
     config.swRegistration.showNotification('¡SISPRO Activado!', {
       body: 'Las notificaciones push están funcionando correctamente',
-      icon: './icons/TDM_variable_colors.svg',
-      badge: './icons/TDM_variable_colors.svg',
+      icon: './icons/pwa-icon.svg',
+      badge: './icons/pwa-icon.svg',
       vibrate: [100, 50, 100],
       tag: 'sispro-welcome',
       requireInteraction: false,

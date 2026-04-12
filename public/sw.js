@@ -402,8 +402,8 @@ async function _showIfNew(payload) {
   // App en background o cerrada → notificación nativa del SO
   console.log('[SW] App en background, mostrando notificación nativa');
   const { title, body, url } = _formatNotif(payload);
-  const icon = './icons/TDM_variable_colors.svg';
-  const badge = './icons/TDM_variable_colors.svg';
+  const icon = './icons/pwa-icon.svg';
+  const badge = './icons/pwa-icon.svg';
 
   await self.registration.showNotification(title, {
     body,
