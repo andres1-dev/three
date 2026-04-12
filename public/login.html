@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Acceso - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="icons/favicon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <!-- ── Vendor CSS ── -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- ── App CSS ── -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/login.css">
+    <!-- ── Supabase Realtime ── -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body class="auth-shield-pass login-body">
+    <!-- ── Fondo de partículas ── -->
+    <div id="particles-js"></div>
+
+    <div class="login-page-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="icons/app.svg" alt="Logo TMD" class="login-logo">
+                <div class="brand-divider"></div>
+                <p class="login-subtitle">EMPLEADOS</p>
+            </div>
+
+            <!-- ── SECCIÓN: INICIO DE SESIÓN ── -->
+            <div id="login-section" class="auth-section">
+
+                <div class="auth-tabs"
+                    style="display:flex; margin-bottom: 25px; background: #eaecf5; border-radius: 12px; padding: 5px;">
+                    <div id="tab-interno" onclick="setLoginType('interno')"
+                        style="flex:1; text-align:center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #3F51B5; transition: 0.3s; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                        Interno</div>
+                    <div id="tab-planta" onclick="setLoginType('planta')"
+                        style="flex:1; text-align:center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #7986cb; transition: 0.3s; background: transparent; box-shadow: none;">
+                        Planta</div>
+                </div>
+
+                <div class="form-floating-group">
+                    <i class="fas fa-id-card input-icon"></i>
+                    <input type="text" id="login-user" placeholder="Identificación o Cédula" required
+                        autocomplete="username">
+                </div>
+                <div class="form-floating-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="login-pass" placeholder="Contraseña" required
+                        autocomplete="current-password">
+                    <i class="fas fa-eye toggle-pass" onclick="togglePassword('login-pass')"></i>
+                </div>
+
+                <button class="btn-auth-primary" id="loginBtn" onclick="processMultiLogin()">
+                    <span class="btn-text">INGRESAR</span>
+                    <i class="fas fa-right-to-bracket"></i>
+                </button>
+
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('reset')">¿Olvidó su contraseña?</a>
+                    <span class="dot-separator">•</span>
+                    <a href="javascript:void(0)" onclick="routeRegistration()">Crear cuenta</a>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: REGISTRO ── -->
+            <div id="register-section" class="auth-section hidden">
+                <div class="section-title">Solicitud de Acceso</div>
+                <p class="section-hint">Complete todos los campos para solicitar su ingreso.</p>
+
+                <div class="form-floating-group">
+                    <i class="fas fa-id-badge input-icon"></i>
+                    <input type="text" id="reg-id" placeholder="NIT o Cédula de Ciudadanía" required>
+                </div>
+
+                <button class="btn-auth-primary" id="btnCheckId" onclick="validateRegistrationId()">
+                    <span class="btn-text">CONTINUAR</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <!-- Campos ocultos inicialmente -->
+                <div id="registration-details" class="hidden">
+                    <div class="form-floating-group">
+                        <i class="fas fa-user-edit input-icon"></i>
+                        <input type="text" id="reg-name" placeholder="Nombre completo" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="reg-email" placeholder="Correo electrónico" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="reg-tel" placeholder="Número Celular" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="reg-pass" placeholder="Defina su Contraseña" required>
+                        <i class="fas fa-eye toggle-pass" onclick="togglePassword('reg-pass')"></i>
+                    </div>
+
+                    <button class="btn-auth-primary" id="regBtn" onclick="requestRegister()">
+                        <span class="btn-text">ENVIAR SOLICITUD</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: REGISTRO PLANTA/TALLER ── -->
+            <div id="register-planta-section" class="auth-section hidden">
+                <div class="section-title">Actualización de Taller</div>
+                <p class="section-hint">Ingrese una Orden Activa para buscar su planta.</p>
+
+                <div class="form-floating-group">
+                    <i class="fas fa-barcode input-icon"></i>
+                    <input type="text" id="reg-planta-op" placeholder="Número de OP o Lote" required>
+                </div>
+
+                <button class="btn-auth-primary" id="btnCheckOP" onclick="validateOpForRegister()">
+                    <span class="btn-text">BUSCAR TALLER</span>
+                    <i class="fas fa-search"></i>
+                </button>
+
+                <!-- Campos ocultos inicialmente tras verificar la OP -->
+                <div id="planta-registration-details" class="hidden">
+                    <div
+                        style="background:#e8eaf6; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #3f51b5; font-size:13px; color:#1a237e; text-align: left;">
+                        <i class="fas fa-info-circle"></i> Verifique el nombre y complete sus datos. De ser correctos se
+                        actualizará su acceso.
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-industry input-icon"></i>
+                        <select id="reg-planta-names" required title="Planta"
+                            style="border:1px solid #ddd; outline:none; background:#ffffff; width:100%; height:48px; padding-left:38px; border-radius:12px; color:#333; appearance:none;">
+                            <!-- Opciones cargadas dinámicamente -->
+                        </select>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-id-card input-icon"></i>
+                        <input type="text" id="reg-planta-documento" placeholder="NIT o Cédula (Su ID de acceso)"
+                            required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-map-marker-alt input-icon"></i>
+                        <input type="text" id="reg-planta-direccion" placeholder="Dirección Completa" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="reg-planta-tel" placeholder="Número Celular" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="reg-planta-email" placeholder="Correo electrónico" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="reg-planta-pass" placeholder="Defina su Contraseña" required>
+                        <i class="fas fa-eye toggle-pass" onclick="togglePassword('reg-planta-pass')"></i>
+                    </div>
+
+                    <button class="btn-auth-primary" id="regPlantaBtn" onclick="requestRegisterPlanta()">
+                        <span class="btn-text">ACTUALIZAR Y ACCEDER</span>
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: RECUPERACIÓN ── -->
+            <div id="reset-section" class="auth-section hidden">
+                <div class="section-title">Recuperar Acceso</div>
+                <p class="section-hint">Ingrese su identificación para enviarle un token de recuperación a su correo.
+                </p>
+                <div class="form-floating-group">
+                    <i class="fas fa-id-card input-icon"></i>
+                    <input type="text" id="reset-id" placeholder="Número de Identificación">
+                </div>
+                <button class="btn-auth-primary" id="resetBtn" onclick="requestReset()">
+                    <span class="btn-text">ENVIAR TOKEN</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: VALIDAR TOKEN ── -->
+            <div id="token-section" class="auth-section hidden">
+                <div class="section-title">Validar Token</div>
+                <p class="section-hint">Hemos enviado un código a su correo. (Caduca en 5 minutos)</p>
+                <div class="form-floating-group">
+                    <i class="fas fa-key input-icon"></i>
+                    <input type="text" id="reset-token" placeholder="Código de 6 dígitos" maxlength="6"
+                        style="text-align:center; font-size:1.2rem; letter-spacing:4px; text-transform:uppercase;">
+                </div>
+                <div class="form-floating-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="reset-new-pass" placeholder="Nueva Contraseña">
+                    <i class="fas fa-eye toggle-pass" onclick="togglePassword('reset-new-pass')"></i>
+                </div>
+                <button class="btn-auth-primary" id="validateTokenBtn" onclick="validateResetToken()">
+                    <span class="btn-text">RESTAURAR CONTRASEÑA</span>
+                    <i class="fas fa-check-circle"></i>
+                </button>
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Cancelar</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="login-footer-credits">
+            <p>Developed by Andrés Mendoza © 2026</p>
+            <p class="system-version">v2.4.0 • Enterprise Edition</p>
+        </div>
+    </div>
+
+    <!-- ── Vendor Scripts ── -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+    <!-- ── App Logic ── -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/particles-config.js"></script>
+    
+    <!-- Sistema de Notificaciones Push Supabase -->
+    <script src="js/push-supabase.js"></script>
+
+    <script>
+        // Inicialización al cargar
+        window.onload = async () => {
+            if (typeof initParticles === 'function') initParticles();
+
+            try {
+                // Verificar si ya hay una sesión activa
+                const session = localStorage.getItem('sispro_user');
+                const isValid = session && session !== 'undefined' && session !== 'null';
+
+                if (isValid && !window.location.pathname.toLowerCase().includes('index.html')) {
+                    window.location.replace('index.html');
+                    return;
+                }
+
+                // Cargar llaves y usuarios en segundo plano
+                await fetchSecureConfig();
+                await loadUsers();
+            } catch (err) {
+                console.error("Error en inicialización:", err);
+            }
+        };
+
+        let currentLoginType = 'interno';
+
+        function setLoginType(type) {
+            currentLoginType = type;
+            const tabInterno = document.getElementById('tab-interno');
+            const tabPlanta = document.getElementById('tab-planta');
+            const title = document.querySelector('.login-subtitle');
+
+            if (type === 'interno') {
+                tabInterno.style.background = '#ffffff';
+                tabInterno.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                tabInterno.style.color = '#3F51B5';
+
+                tabPlanta.style.background = 'transparent';
+                tabPlanta.style.boxShadow = 'none';
+                tabPlanta.style.color = '#7986cb';
+
+                title.textContent = 'EMPLEADOS';
+            } else {
+                tabPlanta.style.background = '#ffffff';
+                tabPlanta.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                tabPlanta.style.color = '#3F51B5';
+
+                tabInterno.style.background = 'transparent';
+                tabInterno.style.boxShadow = 'none';
+                tabInterno.style.color = '#7986cb';
+
+                title.textContent = 'PLANTAS';
+            }
+        }
+
+        function routeRegistration() {
+            if (currentLoginType === 'interno') {
+                switchAuth('register');
+            } else {
+                switchAuth('register-planta');
+            }
+        }
+
+        function switchAuth(target) {
+            const sections = document.querySelectorAll('.auth-section');
+            sections.forEach(s => s.classList.add('hidden'));
+
+            if (target === 'register') {
+                const details = document.getElementById('registration-details');
+                const btnCheck = document.getElementById('btnCheckId');
+                const idInput = document.getElementById('reg-id');
+
+                if (details) details.classList.add('hidden');
+                if (btnCheck) btnCheck.classList.remove('hidden');
+                if (idInput) {
+                    idInput.readOnly = false;
+                    idInput.value = '';
+                }
+            } else if (target === 'register-planta') {
+                document.getElementById('planta-registration-details').classList.add('hidden');
+                document.getElementById('btnCheckOP').classList.remove('hidden');
+                const opInput = document.getElementById('reg-planta-op');
+                if (opInput) {
+                    opInput.readOnly = false;
+                    opInput.value = '';
+                }
+            }
+
+            const active = document.getElementById(target + '-section');
+            if (active) active.classList.remove('hidden');
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            const icon = event.target;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        async function processMultiLogin() {
+            const userId = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            const btn = document.getElementById('loginBtn');
+
+            if (!userId || !pass) {
+                Swal.fire({
+                    title: 'Campos Incompletos',
+                    text: 'Por favor ingrese su identificación y contraseña.',
+                    icon: 'warning',
+                    confirmButtonColor: '#3F51B5'
+                });
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDANDO...';
+
+            try {
+                if (allUsers.length === 0 || typeof allPlantas === 'undefined' || allPlantas.length === 0) {
+                    console.log('[LOGIN] Cargando datos...');
+                    await loadUsers();
+                }
+
+                // Llamar a la lógica central pasando el tipo actual
+                handleLogin(userId, pass, true, currentLoginType);
+
+            } catch (error) {
+                console.error('[LOGIN] Error:', error);
+                Swal.fire('Error', 'No se pudo conectar con el servidor. Intente nuevamente.', 'error');
+            } finally {
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = '<span class="btn-text">INGRESAR AL SISTEMA</span><i class="fas fa-chevron-right"></i>';
+                }, 2000);
+            }
+        }
+
+        async function requestRegister() {
+            const id = document.getElementById('reg-id').value.trim();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const tel = document.getElementById('reg-tel').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const btn = document.getElementById('regBtn');
+
+            if (!id || !name || !email || !tel || !pass) {
+                Swal.fire('Atención', 'Todos los campos son obligatorios para el registro.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+
+            try {
+                const payload = {
+                    hoja: 'USUARIOS', // Definido en SHEETS_DESTINO aunque aquí lo pasamos directo para seguridad
+                    id: id,
+                    usuario: name,
+                    correo: email,
+                    telefono: tel,
+                    rol: 'PENDIENTE', // El ADMIN le asignará el rol después
+                    password: pass
+                };
+
+                const result = await sendToGAS(payload);
+
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡SOLICITUD ENVIADA!',
+                        text: 'Sus datos han sido registrados. El administrador le asignará un rol pronto.',
+                        icon: 'success',
+                        confirmButtonColor: '#3F51B5'
+                    }).then(() => {
+                        switchAuth('login');
+                        // Limpiar campos
+                        document.getElementById('reg-id').value = '';
+                        document.getElementById('reg-name').value = '';
+                        document.getElementById('reg-email').value = '';
+                        document.getElementById('reg-tel').value = '';
+                        document.getElementById('reg-pass').value = '';
+                    });
+                } else {
+                    // Aquí mostramos el mensaje de validación del servidor (ej: "Su solicitud está PENDIENTE")
+                    Swal.fire({
+                        title: 'Atención',
+                        text: result.message || 'No se pudo completar el registro.',
+                        icon: 'info',
+                        confirmButtonColor: '#3F51B5'
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error al registrar usuario:", error);
+                Swal.fire('Error', 'No se pudo enviar la solicitud. Intente nuevamente.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">ENVIAR SOLICITUD</span><i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        async function validateRegistrationId() {
+            const idInput = document.getElementById('reg-id');
+            const detailsDiv = document.getElementById('registration-details');
+            const btnCheck = document.getElementById('btnCheckId');
+            const id = idInput.value.trim();
+
+            if (!id) {
+                Swal.fire('Atención', 'Por favor ingrese su identificación', 'warning');
+                return;
+            }
+
+            if (allUsers.length === 0) {
+                await loadUsers(); // Asegurar datos cargados
+            }
+
+            const existingUser = allUsers.find(u => {
+                const dbId = String(u.ID_USUARIO || u.ID || '').trim();
+                return dbId === String(id);
+            });
+
+            if (existingUser) {
+                detailsDiv.classList.add('hidden');
+                btnCheck.classList.remove('hidden');
+
+                let text = "Usted ya se encuentra registrado.";
+                if (existingUser.ROL === 'PENDIENTE') {
+                    text = "Su solicitud aún está PENDIENTE de aprobación por el administrador.";
+                } else {
+                    text = `Ya tiene una cuenta activa con el rol: ${existingUser.ROL}. Por favor inicie sesión.`;
+                }
+
+                Swal.fire({
+                    title: 'Identificación ya registrada',
+                    text: text,
+                    icon: 'info',
+                    confirmButtonColor: '#3F51B5'
+                });
+            } else {
+                // USUARIO NUEVO -> Mostrar resto del formulario
+                detailsDiv.classList.remove('hidden');
+                btnCheck.classList.add('hidden');
+                idInput.readOnly = true; // Bloquear ID para evitar cambios después de validar
+
+                // Animación css-native enfocando el siguiente input
+                setTimeout(() => {
+                    const nameInput = document.getElementById('reg-name');
+                    if (nameInput) nameInput.focus();
+                }, 50);
+            }
+        }
+
+        async function validateOpForRegister() {
+            const opInput = document.getElementById('reg-planta-op').value.trim().toUpperCase();
+            if (!opInput) {
+                Swal.fire('Atención', 'Ingrese la OP o Lote', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('btnCheckOP');
+            const prevHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> BUSCANDO...';
+
+            try {
+                if (!window.allLots || window.allLots.length === 0) {
+                    const data = await fetchAllData();
+                    window.allLots = data.lots;
+                }
+
+                // Normalizar entrada para búsqueda
+                const cleanInput = opInput.trim().toUpperCase();
+
+                console.log("[LOGIN] Iniciando búsqueda de OP:", cleanInput);
+
+                const allMatching = window.allLots.filter(l => {
+                    const dbLote = String(l.LOTE || '').trim().toUpperCase();
+                    return dbLote === cleanInput;
+                });
+
+                if (allMatching.length === 0) {
+                    Swal.fire('Sin resultados', 'No se encontró la OP "' + cleanInput + '" en la base de datos.', 'info');
+                    return;
+                }
+
+                // Extraer plantas únicas referenciadas
+                const rawPlantNames = [...new Set(allMatching.map(l => {
+                    const p = l.PLANTA || l.planta || l['PLANTA'] || '';
+                    return String(p).trim();
+                }))].filter(Boolean);
+
+                if (rawPlantNames.length === 0) {
+                    Swal.fire('Error', 'La OP existe pero no tiene ninguna Planta/Taller asignado.', 'error');
+                    return;
+                }
+
+                // Cargar plantas registradas para validar duplicados
+                if (!window.allPlantas || window.allPlantas.length === 0) {
+                    const data = await fetchAllData();
+                    window.allPlantas = data.plantas;
+                }
+
+                const registeredPlants = window.allPlantas || [];
+
+                // Clasificar plantas
+                const availablePlantNames = rawPlantNames.filter(name => {
+                    const exists = registeredPlants.some(p => String(p.PLANTA).trim().toUpperCase() === name.toUpperCase());
+                    return !exists;
+                });
+
+                if (availablePlantNames.length === 0) {
+                    Swal.fire({
+                        title: 'Acceso Activo',
+                        text: 'Este taller ya cuenta con un registro en el sistema. Por favor, inicie sesión.',
+                        icon: 'info',
+                        confirmButtonText: 'IR AL LOGIN',
+                        confirmButtonColor: '#3F51B5'
+                    }).then(() => {
+                        setLoginType('planta');
+                        switchAuth('login');
+                    });
+                    return;
+                }
+
+                const select = document.getElementById('reg-planta-names');
+                select.innerHTML = '';
+                availablePlantNames.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                });
+
+                if (availablePlantNames.length === 1) select.disabled = true;
+                else select.disabled = false;
+
+                document.getElementById('planta-registration-details').classList.remove('hidden');
+                btn.classList.add('hidden');
+                document.getElementById('reg-planta-op').readOnly = true;
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Error al consultar la base de datos.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = prevHtml;
+            }
+        }
+
+        async function requestRegisterPlanta() {
+            const op = document.getElementById('reg-planta-op').value.trim().toUpperCase();
+            const plantaName = document.getElementById('reg-planta-names').value;
+            const documentId = document.getElementById('reg-planta-documento').value.trim();
+            const address = document.getElementById('reg-planta-direccion').value.trim();
+            const tel = document.getElementById('reg-planta-tel').value.trim();
+            const email = document.getElementById('reg-planta-email').value.trim();
+            const pass = document.getElementById('reg-planta-pass').value.trim();
+            const btn = document.getElementById('regPlantaBtn');
+
+            if (!documentId || !address || !tel || !email || !pass) {
+                Swal.fire('Atención', 'Complete todos los campos solicitados.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDANDO...';
+
+            // Doble validación local contra duplicados por ID
+            const registeredPlants = window.allPlantas || [];
+            const idExists = registeredPlants.some(p => String(p.ID_PLANTA || p.id || '').trim().toUpperCase() === documentId.toUpperCase());
+
+            if (idExists) {
+                Swal.fire({
+                    title: 'ID Registrada',
+                    text: 'Esta identificación ya está vinculada a una cuenta activa. Por favor, inicie sesión.',
+                    icon: 'info',
+                    confirmButtonText: 'IR AL LOGIN',
+                    confirmButtonColor: '#3F51B5'
+                }).then(() => {
+                    setLoginType('planta');
+                    switchAuth('login');
+                });
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">TERMINAR REGISTRO</span><i class="fas fa-check-circle"></i>';
+                return;
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ESCRIBIENDO...';
+
+            const payload = {
+                hoja: 'PLANTAS',
+                cedula: documentId,
+                nombrePlanta: plantaName,
+                direccion: address,
+                telefono: tel,
+                email: email,
+                password: pass
+            };
+
+            try {
+                const result = await sendToGAS(payload);
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡Acceso Creado!',
+                        text: 'Tus credenciales y datos han sido guardados correctamente. Ingresando al sistema...',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload(); // Recarga y fuerza el login de la manera más limpia
+                    }, 2000);
+                } else {
+                    Swal.fire('Error', result.message || 'No se pudo completar el registro.', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Error de conexión', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">ACTUALIZAR Y ACCEDER</span><i class="fas fa-check"></i>';
+            }
+        }
+
+        async function requestReset() {
+            const idInput = document.getElementById('reset-id').value.trim();
+            const btn = document.getElementById('resetBtn');
+
+            if (!idInput) {
+                Swal.fire('Atención', 'Debe ingresar su identificación.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFICANDO...';
+
+            try {
+                if (allUsers.length === 0 || allPlantas.length === 0) {
+                    await loadUsers(); // Asegurar datos cargados
+                }
+
+                // Buscar en Empleados
+                let existingUser = allUsers.find(u => {
+                    const dbId = String(u.ID_USUARIO || u.ID || '').trim();
+                    return dbId === String(idInput);
+                });
+
+                let sheetType = 'USUARIOS';
+
+                // Si no está en empleados, buscar en Plantas
+                if (!existingUser) {
+                    existingUser = allPlantas.find(u => {
+                        const dbId = String(u.ID_PLANTA || u.id || u.cedula || '').trim();
+                        return dbId === String(idInput);
+                    });
+                    if (existingUser) sheetType = 'PLANTAS';
+                }
+
+                if (!existingUser) {
+                    throw new Error("No se encontró una cuenta con esta identificación.");
+                }
+
+                const dbEmail = String(existingUser.CORREO || existingUser.EMAIL || '').trim();
+                if (!dbEmail) {
+                    throw new Error("Esta cuenta no tiene un correo electrónico asociado.");
+                }
+
+                // Ofuscar correo para mostrar
+                let obscuredEmail = dbEmail;
+                const emailParts = dbEmail.split('@');
+                if (emailParts.length === 2) {
+                    const name = emailParts[0];
+                    const domain = emailParts[1];
+                    if (name.length > 3) {
+                        obscuredEmail = name.substring(0, 3) + '***@' + domain;
+                    } else if (name.length > 0) {
+                        obscuredEmail = name.substring(0, 1) + '***@' + domain;
+                    }
+                }
+
+                // Llamar a GAS para que genere token y envíe el correo
+                const payload = {
+                    accion: 'SOLICITAR_RESETEO_PASSWORD',
+                    hoja: sheetType,
+                    id: idInput,
+                    email: dbEmail,
+                    usuario: existingUser.USUARIO || existingUser.NOMBRE || existingUser.PLANTA || 'Usuario'
+                };
+
+                const result = await sendToGAS(payload);
+
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡Token Enviado!',
+                        html: `Hemos enviado un código a su correo de recuperación con enmascaramiento: <br><strong style="font-size:1.1rem; color:#3F51B5; margin-top:10px; display:block;">${obscuredEmail}</strong><br><span style="font-size:0.9rem;">Revise su bandeja de entrada o SPAM. El código expira en 5 minutos.</span>`,
+                        icon: 'success',
+                        confirmButtonColor: '#3F51B5'
+                    }).then(() => {
+                        // Guardar datos temporales para la validación
+                        window.resetTempData = { id: idInput, email: dbEmail, hoja: sheetType };
+                        document.getElementById('reset-token').value = '';
+                        document.getElementById('reset-new-pass').value = '';
+                        switchAuth('token');
+                    });
+                } else {
+                    throw new Error(result.message || "Error al solicitar el token desde el servidor.");
+                }
+            } catch (error) {
+                console.error("Error en requestReset:", error);
+                Swal.fire('Error', error.message || 'Error al procesar la solicitud.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">ENVIAR TOKEN</span><i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        async function validateResetToken() {
+            const token = document.getElementById('reset-token').value.trim().toUpperCase();
+            const newPass = document.getElementById('reset-new-pass').value.trim();
+            const btn = document.getElementById('validateTokenBtn');
+
+            if (!token || !newPass) {
+                Swal.fire('Atención', 'Debe ingresar el código de recuperación y su nueva contraseña.', 'warning');
+                return;
+            }
+
+            if (!window.resetTempData || !window.resetTempData.id) {
+                Swal.fire('Error', 'Sesión de recuperación inválida o expirada. Vuelva a solicitar el token.', 'error');
+                switchAuth('reset');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ACTUALIZANDO...';
+
+            try {
+                const payload = {
+                    accion: 'CONFIRMAR_RESETEO_PASSWORD',
+                    hoja: window.resetTempData.hoja || 'USUARIOS',
+                    id: window.resetTempData.id,
+                    email: window.resetTempData.email,
+                    token: token,
+                    newPassword: newPass
+                };
+
+                const result = await sendToGAS(payload);
+
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡Contraseña Actualizada!',
+                        text: 'Su contraseña ha sido restaurada correctamente. Ya puede iniciar sesión.',
+                        icon: 'success',
+                        confirmButtonColor: '#3F51B5'
+                    }).then(() => {
+                        // Cleanup
+                        window.resetTempData = null;
+                        document.getElementById('reset-id').value = '';
+                        document.getElementById('reset-token').value = '';
+                        document.getElementById('reset-new-pass').value = '';
+
+                        // Silenciosamente recargar usuarios locales con la nueva contraseña
+                        loadUsers();
+                        switchAuth('login');
+                    });
+                } else {
+                    throw new Error(result.message || "El código es incorrecto o ha expirado.");
+                }
+            } catch (error) {
+                console.error("Error en validateResetToken:", error);
+                Swal.fire('Error', error.message || 'Error al validar el código.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">RESTAURAR CONTRASEÑA</span><i class="fas fa-check-circle"></i>';
+            }
+        }
+    </script>
+</body>
+
+</html>
