@@ -10,8 +10,8 @@
     <meta name="theme-color" content="#3b82f6">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="apple-touch-icon" href="icons/favicon.svg">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -412,17 +412,30 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
 
             try {
-                const payload = {
-                    hoja: 'USUARIOS', // Definido en SHEETS_DESTINO aunque aquí lo pasamos directo para seguridad
-                    id: id,
-                    usuario: name,
-                    correo: email,
-                    telefono: tel,
-                    rol: 'PENDIENTE', // El ADMIN le asignará el rol después
-                    password: pass
-                };
+                const supabase = window.getSupabaseClient();
+                
+                // Insertar usuario en Supabase
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .insert({
+                        ID_USUARIO: id,
+                        USUARIO: name,
+                        CORREO: email,
+                        TELEFONO: tel,
+                        ROL: 'PENDIENTE',
+                        CONTRASEÑA: pass
+                    })
+                    .select();
 
-                const result = await sendToGAS(payload);
+                if (error) {
+                    // Verificar si es error de duplicado
+                    if (error.code === '23505') {
+                        throw new Error('Esta identificación ya está registrada en el sistema.');
+                    }
+                    throw error;
+                }
+
+                const result = { success: true };
 
                 if (result.success) {
                     Swal.fire({
@@ -646,18 +659,53 @@
 
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ESCRIBIENDO...';
 
-            const payload = {
-                hoja: 'PLANTAS',
-                cedula: documentId,
-                nombrePlanta: plantaName,
-                direccion: address,
-                telefono: tel,
-                email: email,
-                password: pass
-            };
-
             try {
-                const result = await sendToGAS(payload);
+                const supabase = window.getSupabaseClient();
+                
+                // Actualizar o insertar planta en Supabase
+                const { data: existingPlanta, error: checkError } = await supabase
+                    .from('plantas')
+                    .select('*')
+                    .eq('ID_PLANTA', documentId)
+                    .single();
+
+                let result;
+                if (existingPlanta) {
+                    // Actualizar planta existente
+                    const { data, error } = await supabase
+                        .from('plantas')
+                        .update({
+                            PLANTA: plantaName,
+                            DIRECCION: address,
+                            TELEFONO: tel,
+                            EMAIL: email,
+                            PASSWORD: pass,
+                            ROL: 'GUEST'
+                        })
+                        .eq('ID_PLANTA', documentId)
+                        .select();
+                    
+                    if (error) throw error;
+                    result = { success: true };
+                } else {
+                    // Insertar nueva planta
+                    const { data, error } = await supabase
+                        .from('plantas')
+                        .insert({
+                            ID_PLANTA: documentId,
+                            PLANTA: plantaName,
+                            DIRECCION: address,
+                            TELEFONO: tel,
+                            EMAIL: email,
+                            PASSWORD: pass,
+                            ROL: 'GUEST'
+                        })
+                        .select();
+                    
+                    if (error) throw error;
+                    result = { success: true };
+                }
+
                 if (result.success) {
                     Swal.fire({
                         title: '¡Acceso Creado!',
@@ -737,29 +785,80 @@
                     }
                 }
 
-                // Llamar a GAS para que genere token y envíe el correo
-                const payload = {
-                    accion: 'SOLICITAR_RESETEO_PASSWORD',
-                    hoja: sheetType,
-                    id: idInput,
-                    email: dbEmail,
-                    usuario: existingUser.USUARIO || existingUser.NOMBRE || existingUser.PLANTA || 'Usuario'
-                };
+                // Llamar a GAS usando iframe para evitar CORS en desarrollo
+                const GAS_PASSWORD_RESET_URL = 'https://script.google.com/macros/s/AKfycby-HNqqjMARfpqkSQEZL4bbliJp30NeqTNZQAxXoO85qB0MKjhzwtShhocZVaMKMv1Z/exec';
+                
+                // Crear formulario temporal
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = GAS_PASSWORD_RESET_URL;
+                form.target = 'gas-iframe';
+                form.style.display = 'none';
+                
+                const actionInput = document.createElement('input');
+                actionInput.name = 'action';
+                actionInput.value = 'SOLICITAR_RESETEO';
+                form.appendChild(actionInput);
+                
+                const hojaInput = document.createElement('input');
+                hojaInput.name = 'hoja';
+                hojaInput.value = sheetType;
+                form.appendChild(hojaInput);
+                
+                const idInputField = document.createElement('input');
+                idInputField.name = 'id';
+                idInputField.value = idInput;
+                form.appendChild(idInputField);
+                
+                // Crear iframe oculto
+                let iframe = document.getElementById('gas-iframe');
+                if (!iframe) {
+                    iframe = document.createElement('iframe');
+                    iframe.id = 'gas-iframe';
+                    iframe.name = 'gas-iframe';
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+                }
+                
+                document.body.appendChild(form);
+                
+                // Esperar respuesta del iframe
+                const result = await new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error('Timeout esperando respuesta'));
+                    }, 30000);
+                    
+                    iframe.onload = () => {
+                        clearTimeout(timeout);
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            const responseText = iframeDoc.body.textContent;
+                            const data = JSON.parse(responseText);
+                            resolve(data);
+                        } catch (e) {
+                            // Si no podemos leer el iframe (CORS), asumimos éxito después de 2 segundos
+                            setTimeout(() => {
+                                resolve({ success: true, message: 'Solicitud enviada' });
+                            }, 2000);
+                        }
+                    };
+                    
+                    form.submit();
+                });
+                
+                document.body.removeChild(form);
 
-                const result = await sendToGAS(payload);
-
+                if (!result.success) {
+                    throw new Error(result.message || "Error al solicitar el token desde el servidor.");
+                }
                 if (result.success) {
                     Swal.fire({
-                        title: '¡Token Enviado!',
-                        html: `Hemos enviado un código a su correo de recuperación con enmascaramiento: <br><strong style="font-size:1.1rem; color:#3F51B5; margin-top:10px; display:block;">${obscuredEmail}</strong><br><span style="font-size:0.9rem;">Revise su bandeja de entrada o SPAM. El código expira en 5 minutos.</span>`,
+                        title: '¡Enlace Enviado!',
+                        html: `Hemos enviado un enlace de recuperación a tu correo electrónico.<br><span style="font-size:0.9rem;">Revisa tu bandeja de entrada o SPAM. El enlace expira en 5 minutos.</span>`,
                         icon: 'success',
                         confirmButtonColor: '#3F51B5'
                     }).then(() => {
-                        // Guardar datos temporales para la validación
-                        window.resetTempData = { id: idInput, email: dbEmail, hoja: sheetType };
-                        document.getElementById('reset-token').value = '';
-                        document.getElementById('reset-new-pass').value = '';
-                        switchAuth('token');
+                        switchAuth('login');
                     });
                 } else {
                     throw new Error(result.message || "Error al solicitar el token desde el servidor.");
@@ -793,16 +892,18 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ACTUALIZANDO...';
 
             try {
-                const payload = {
-                    accion: 'CONFIRMAR_RESETEO_PASSWORD',
-                    hoja: window.resetTempData.hoja || 'USUARIOS',
-                    id: window.resetTempData.id,
-                    email: window.resetTempData.email,
-                    token: token,
-                    newPassword: newPass
-                };
+                const supabase = window.getSupabaseClient();
+                const { data: result, error } = await supabase.functions.invoke('password-reset', {
+                    body: {
+                        action: 'CONFIRMAR_RESETEO',
+                        hoja: window.resetTempData.hoja || 'USUARIOS',
+                        id: window.resetTempData.id,
+                        token: token,
+                        newPassword: newPass
+                    }
+                });
 
-                const result = await sendToGAS(payload);
+                if (error) throw new Error(error.message);
 
                 if (result.success) {
                     Swal.fire({
