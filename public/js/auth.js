@@ -103,17 +103,41 @@ function showLoginPrompt() {
 /** Devuelve true si el GUEST tiene perfil incompleto (faltan EMAIL, TELEFONO o DIRECCION). */
 function _guestPerfilIncompleto() {
     if (!currentUser || currentUser.ROL !== 'GUEST') return false;
+    
     // Leer siempre desde localStorage para capturar datos recién guardados
     // antes de que loadUsers() los sincronice con la DB
     try {
         const fresh = JSON.parse(localStorage.getItem('sispro_user') || '{}');
-        return !(String(fresh.EMAIL    || '').trim() &&
-                 String(fresh.TELEFONO || '').trim() &&
-                 String(fresh.DIRECCION|| '').trim());
+        
+        // Verificar campos obligatorios básicos
+        const tieneEmail = String(fresh.EMAIL || '').trim() !== '';
+        const tieneTelefono = String(fresh.TELEFONO || '').trim() !== '';
+        const tieneDireccion = String(fresh.DIRECCION || '').trim() !== '';
+        
+        // Verificar campos de ubicación obligatorios desde currentPlantas
+        let tieneUbicacion = false;
+        if (typeof currentPlantas !== 'undefined' && currentPlantas && fresh.PLANTA) {
+            const plantaData = currentPlantas.find(p => 
+                (p.PLANTA || '').trim().toLowerCase() === String(fresh.PLANTA || '').trim().toLowerCase()
+            );
+            
+            if (plantaData) {
+                const tieneDepartamento = String(plantaData.DEPARTAMENTO || '').trim() !== '';
+                const tieneCiudad = String(plantaData.CIUDAD || '').trim() !== '';
+                const tieneBarrio = String(plantaData.BARRIO || '').trim() !== '';
+                
+                tieneUbicacion = tieneDepartamento && tieneCiudad && tieneBarrio;
+            }
+        }
+        
+        // Perfil completo solo si tiene todos los campos obligatorios
+        return !(tieneEmail && tieneTelefono && tieneDireccion && tieneUbicacion);
+        
     } catch(e) {
-        return !(String(currentUser.EMAIL    || '').trim() &&
+        // Fallback: verificar solo campos básicos si hay error
+        return !(String(currentUser.EMAIL || '').trim() &&
                  String(currentUser.TELEFONO || '').trim() &&
-                 String(currentUser.DIRECCION|| '').trim());
+                 String(currentUser.DIRECCION || '').trim());
     }
 }
 
@@ -241,13 +265,27 @@ async function loadUsers() {
 function handleLogin(userId, password, isLoginPage = false, tipoAcceso = 'interno') {
     let targetArray = tipoAcceso === 'interno' ? allUsers : allPlantas;
     
+    console.log('[handleLogin] Tipo de acceso:', tipoAcceso);
+    console.log('[handleLogin] Array a buscar:', targetArray.length, 'registros');
+    console.log('[handleLogin] Buscando ID:', userId);
+    
     const userFound = targetArray.find(u => {
         const dbId = String(u.ID_USUARIO || u.ID_PLANTA || u.ID || u.USUARIO || u.CEDULA || '').trim();
         const dbPass = String(u.PASSWORD || u.CONTRASEÑA || u.PASS || u.CLAVE || '').trim();
         const inputId = String(userId).trim();
         const inputPass = String(password).trim();
         
-        return dbId.toLowerCase() === inputId.toLowerCase() && dbPass === inputPass;
+        const idMatch = dbId.toLowerCase() === inputId.toLowerCase();
+        const passMatch = dbPass === inputPass;
+        
+        if (idMatch) {
+            console.log('[handleLogin] ID encontrado:', dbId);
+            console.log('[handleLogin] Password en DB:', dbPass ? '***' : '(vacío)');
+            console.log('[handleLogin] Password ingresado:', inputPass ? '***' : '(vacío)');
+            console.log('[handleLogin] Coincide:', passMatch);
+        }
+        
+        return idMatch && passMatch;
     });
 
     if (userFound) {

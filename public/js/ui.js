@@ -239,6 +239,9 @@ function toggleActionSections(action) {
 
     // Auto-llenar nombre de planta al abrir formulario de actualización
     if (action === 'ACTUALIZAR_DATOS') {
+        console.log('[toggleActionSections] Abriendo formulario ACTUALIZAR_DATOS');
+        console.log('[toggleActionSections] currentUser:', currentUser);
+        console.log('[toggleActionSections] currentPlantas:', currentPlantas);
         fillPlantaName();
     }
 
@@ -525,13 +528,32 @@ function activarGpsManual() {
  * con los datos del usuario GUEST en sesión.
  */
 function fillPlantaName() {
-    const plantaValue = DOM.plantaSelect().value;
+    // Para usuarios GUEST, usar el nombre de planta del currentUser
+    let plantaValue = '';
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.ROL === 'GUEST') {
+        plantaValue = currentUser.PLANTA || '';
+        console.log('[fillPlantaName] Usuario GUEST, usando planta de currentUser:', plantaValue);
+    } else {
+        plantaValue = DOM.plantaSelect().value;
+        console.log('[fillPlantaName] Usuario no-GUEST, usando selector:', plantaValue);
+    }
+    
     DOM.nombrePlanta().value = plantaValue || '';
 
     const cedulaInput   = document.getElementById('cedulaPlanta');
     const direccionInput= document.getElementById('direccionPlanta');
     const telefonoInput = document.getElementById('telefonoPlanta');
     const emailInput    = document.getElementById('emailPlanta');
+    
+    // Nuevos campos de ubicación
+    const paisInput         = document.getElementById('paisPlanta');
+    const departamentoInput = document.getElementById('departamentoPlanta');
+    const ciudadInput       = document.getElementById('ciudadPlanta');
+    const barrioInput       = document.getElementById('barrioPlanta');
+    const barrioManualInput = document.getElementById('barrioPlantaManual');
+    const comunaInput       = document.getElementById('comunaPlanta');
+    const contactoInput     = document.getElementById('contactoPlanta');
+    const localizacionInput = document.getElementById('localizacionPlanta');
 
     // Pre-llenar cédula desde currentUser (bloqueado, no editable)
     if (cedulaInput && typeof currentUser !== 'undefined' && currentUser) {
@@ -542,13 +564,31 @@ function fillPlantaName() {
     // Pre-llenar datos existentes si los hay
     let plantaData = null;
     if (typeof currentPlantas !== 'undefined' && plantaValue) {
+        console.log('[fillPlantaName] Buscando planta:', plantaValue);
+        console.log('[fillPlantaName] currentPlantas disponibles:', currentPlantas);
+        
         plantaData = currentPlantas.find(p =>
             (p.PLANTA || '').toString().trim().toLowerCase() === plantaValue.trim().toLowerCase()
         );
+        
+        if (!plantaData) {
+            console.warn('[fillPlantaName] No se encontró la planta en currentPlantas');
+        }
+    } else {
+        console.warn('[fillPlantaName] currentPlantas no está definido o plantaValue está vacío');
+        console.log('[fillPlantaName] currentPlantas:', typeof currentPlantas);
+        console.log('[fillPlantaName] plantaValue:', plantaValue);
     }
 
+    console.log('[fillPlantaName] Datos de planta encontrados:', plantaData);
+
     if (plantaData) {
-        if (direccionInput) direccionInput.value = plantaData.DIRECCION || '';
+        // Datos básicos
+        if (direccionInput) {
+            direccionInput.value = plantaData.DIRECCION || '';
+            // NO parsear ni mostrar constructor automáticamente
+            // Solo mostrar el input con la dirección guardada y el icono de edición
+        }
         if (emailInput)     emailInput.value     = plantaData.EMAIL     || '';
 
         const tel = String(plantaData.TELEFONO || '').replace(/\D/g, '');
@@ -556,6 +596,166 @@ function fillPlantaName() {
             telefonoInput.value = tel.length === 10
                 ? `(${tel.slice(0,3)}) ${tel.slice(3,6)}-${tel.slice(6,10)}`
                 : tel;
+        }
+
+        // Pre-llenar campos de ubicación con timeouts escalonados
+        if (paisInput) paisInput.value = plantaData.PAIS || 'Colombia';
+        
+        if (contactoInput) contactoInput.value = plantaData.CONTACTO || '';
+        
+        // Departamento
+        if (departamentoInput && plantaData.DEPARTAMENTO) {
+            console.log('[fillPlantaName] Cargando departamento:', plantaData.DEPARTAMENTO);
+            departamentoInput.value = plantaData.DEPARTAMENTO;
+            departamentoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Ciudad (esperar a que se carguen las opciones)
+            if (plantaData.CIUDAD) {
+                setTimeout(() => {
+                    console.log('[fillPlantaName] Cargando ciudad:', plantaData.CIUDAD);
+                    if (ciudadInput) {
+                        ciudadInput.value = plantaData.CIUDAD;
+                        ciudadInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        
+                        // Barrio (esperar a que se carguen las opciones)
+                        if (plantaData.BARRIO) {
+                            setTimeout(() => {
+                                console.log('[fillPlantaName] Cargando barrio:', plantaData.BARRIO);
+                                if (barrioInput) {
+                                    // Verificar si el barrio existe en el selector
+                                    const barrioExists = Array.from(barrioInput.options).some(opt => opt.value === plantaData.BARRIO);
+                                    console.log('[fillPlantaName] Barrio existe en selector:', barrioExists);
+                                    
+                                    if (barrioExists) {
+                                        barrioInput.value = plantaData.BARRIO;
+                                        barrioInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                    } else if (barrioManualInput) {
+                                        // Si no existe, usar entrada manual
+                                        console.log('[fillPlantaName] Usando entrada manual para barrio');
+                                        barrioInput.style.display = 'none';
+                                        barrioInput.required = false;
+                                        barrioManualInput.style.display = 'block';
+                                        barrioManualInput.required = true;
+                                        barrioManualInput.value = plantaData.BARRIO;
+                                        
+                                        // Si hay comuna y la ciudad la maneja, hacer el campo editable
+                                        if (plantaData.COMUNA && typeof ciudadTieneComunas !== 'undefined' && ciudadTieneComunas(plantaData.CIUDAD)) {
+                                            if (comunaInput) {
+                                                comunaInput.readOnly = false;
+                                                comunaInput.required = true;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                // Comuna
+                                if (comunaInput && plantaData.COMUNA) {
+                                    console.log('[fillPlantaName] Cargando comuna:', plantaData.COMUNA);
+                                    comunaInput.value = plantaData.COMUNA;
+                                }
+                            }, 300);
+                        }
+                    }
+                }, 150);
+            }
+        } else {
+            // Si no hay departamento guardado, usar valores por defecto
+            console.log('[fillPlantaName] No hay departamento guardado, usando valores por defecto');
+            if (departamentoInput) {
+                departamentoInput.value = 'Valle del Cauca';
+                departamentoInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+            setTimeout(() => {
+                if (ciudadInput) {
+                    ciudadInput.value = 'Cali';
+                    ciudadInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }, 150);
+        }
+        
+        // Coordenadas GPS y mapa
+        if (localizacionInput) localizacionInput.value = plantaData.LOCALIZACION || '';
+        
+        // Pre-llenar checkbox de notificaciones si existe el dato
+        const checkNotificaciones = document.getElementById('checkNotificaciones');
+        if (checkNotificaciones && plantaData.NOTIFICACIONES !== undefined) {
+            checkNotificaciones.checked = plantaData.NOTIFICACIONES === true || plantaData.NOTIFICACIONES === 'true';
+            console.log('[fillPlantaName] Notificaciones:', plantaData.NOTIFICACIONES);
+        }
+        
+        // Si hay coordenadas GPS guardadas, mostrarlas en el mapa
+        if (plantaData.LOCALIZACION) {
+            setTimeout(() => {
+                const locInputContainer = document.getElementById('localizacionInputContainer');
+                const preguntaCard = document.getElementById('gps-pregunta-card');
+                const mapaCard = document.getElementById('gps-planta-card');
+                
+                console.log('[fillPlantaName] Mostrando GPS guardado:', plantaData.LOCALIZACION);
+                
+                if (locInputContainer) locInputContainer.style.display = 'block';
+                if (preguntaCard) preguntaCard.style.display = 'none';
+                
+                // Parsear coordenadas y mostrar mapa
+                const coords = plantaData.LOCALIZACION.split(',').map(c => c.trim());
+                if (coords.length === 2 && mapaCard) {
+                    const lat = coords[0];
+                    const lng = coords[1];
+                    
+                    const delta = 0.0045;
+                    const minLng = (parseFloat(lng) - delta).toFixed(6);
+                    const minLat = (parseFloat(lat) - delta).toFixed(6);
+                    const maxLng = (parseFloat(lng) + delta).toFixed(6);
+                    const maxLat = (parseFloat(lat) + delta).toFixed(6);
+                    
+                    mapaCard.style.display = 'block';
+                    mapaCard.innerHTML = `
+                        <div style="text-align:center;">
+                            <div style="margin-bottom:8px;">
+                                <i class="fas fa-check-circle" style="color:#10b981; font-size:1.5rem;"></i>
+                                <p style="margin:4px 0 0; color:#10b981; font-weight:600; font-size:0.85rem;">Ubicación guardada</p>
+                            </div>
+                            <div style="border-radius:8px; overflow:hidden; border:2px solid #e2e8f0;">
+                                <iframe 
+                                    width="100%" 
+                                    height="200" 
+                                    frameborder="0" 
+                                    style="border:0; display:block;" 
+                                    src="https://www.openstreetmap.org/export/embed.html?bbox=${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=mapnik&marker=${lat}%2C${lng}" 
+                                    allowfullscreen>
+                                </iframe>
+                            </div>
+                            <p style="margin:8px 0 0; font-size:0.72rem; color:#64748b;">
+                                <i class="fas fa-map-marker-alt me-1"></i> ${lat}, ${lng}
+                            </p>
+                            <button type="button" onclick="activarGpsPlanta()" style="
+                                margin-top:8px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;
+                                padding:6px 16px; border-radius:6px; font-size:0.75rem; cursor:pointer;
+                            ">
+                                <i class="fas fa-sync-alt me-1"></i> Actualizar ubicación
+                            </button>
+                        </div>
+                    `;
+                }
+            }, 500);
+        }
+    } else {
+        // Si no hay datos, establecer valores por defecto
+        console.log('[fillPlantaName] No hay datos guardados, usando valores por defecto');
+        if (departamentoInput) {
+            departamentoInput.value = 'Valle del Cauca';
+            departamentoInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        setTimeout(() => {
+            if (ciudadInput) {
+                ciudadInput.value = 'Cali';
+                ciudadInput.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, 150);
+        
+        // Checkbox de notificaciones sin marcar por defecto
+        const checkNotificaciones = document.getElementById('checkNotificaciones');
+        if (checkNotificaciones) {
+            checkNotificaciones.checked = false;
         }
     }
 }

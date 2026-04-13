@@ -57,8 +57,8 @@ const SHEET_NOVEDADES = Object.freeze({
  */
 const SHEET_PLANTAS = Object.freeze({
     name: 'PLANTAS',
-    indices: [0, 1, 2, 3, 4, 5, 6],
-    headers: ['ID_PLANTA', 'PLANTA', 'DIRECCION', 'TELEFONO', 'EMAIL', 'ROL', 'PASSWORD'],
+    indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13],
+    headers: ['ID_PLANTA', 'PLANTA', 'DIRECCION', 'TELEFONO', 'EMAIL', 'ROL', 'PASSWORD', 'PAIS', 'DEPARTAMENTO', 'CIUDAD', 'BARRIO', 'COMUNA', 'CONTACTO', 'LOCALIZACION'],
 });
 
 /**

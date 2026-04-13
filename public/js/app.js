@@ -22,6 +22,10 @@ async function loadData() {
         if (Array.isArray(lots)) {
             setCurrentLots(lots);
             setCurrentPlantas(plantas || []);
+            
+            console.log('[loadData] Plantas cargadas:', plantas);
+            console.log('[loadData] Total de plantas:', plantas ? plantas.length : 0);
+            
             populatePlantaOptions(lots);
             applyAccessControl();
             hideLoaderShowForm();
@@ -188,9 +192,15 @@ function _checkForzarActualizarPerfil() {
     if (cedulaInput) cedulaInput.value = String(currentUser.ID_PLANTA || '').trim();
     if (nombreInput) nombreInput.value = String(currentUser.PLANTA    || '').trim();
 
+    console.log('[_checkForzarActualizarPerfil] Pre-llenando datos para GUEST');
+    console.log('[_checkForzarActualizarPerfil] currentUser.PLANTA:', currentUser.PLANTA);
+    console.log('[_checkForzarActualizarPerfil] currentPlantas:', currentPlantas);
+
     // Pre-llenar datos existentes si los hay
     const plantaData = (typeof currentPlantas !== 'undefined' ? currentPlantas : [])
         .find(p => (p.PLANTA || '').trim().toLowerCase() === String(currentUser.PLANTA || '').trim().toLowerCase());
+
+    console.log('[_checkForzarActualizarPerfil] plantaData encontrado:', plantaData);
 
     if (plantaData) {
         const dir = document.getElementById('direccionPlanta');
@@ -201,6 +211,12 @@ function _checkForzarActualizarPerfil() {
         if (tel) {
             const t = String(plantaData.TELEFONO || '').replace(/\D/g, '');
             tel.value = t.length === 10 ? `(${t.slice(0,3)}) ${t.slice(3,6)}-${t.slice(6,10)}` : t;
+        }
+        
+        // Llamar a fillPlantaName para llenar los campos de ubicación
+        console.log('[_checkForzarActualizarPerfil] Llamando a fillPlantaName()');
+        if (typeof fillPlantaName === 'function') {
+            fillPlantaName();
         }
     }
 

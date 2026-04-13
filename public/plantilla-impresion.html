@@ -285,7 +285,7 @@
             try {
                 const user = JSON.parse(s);
                 const role = user.ROL;
-                if (role !== 'ADMIN' && role !== 'USER-P') {
+                if (role !== 'ADMIN' && role !== 'MODERATOR' && role !== 'USER-P') {
                     window.location.replace('index.html');
                 }
             } catch (e) {

@@ -768,7 +768,7 @@ RESULTADOS:
           </div>
 
           <div class="mb-3">
-            <label for="nombrePlanta" class="form-label">Nombre de la Planta:</label>
+            <label for="nombrePlanta" class="form-label">RAZON SOCIAL:</label>
             <div class="input-with-icon">
               <i class="fas fa-industry input-icon"></i>
               <input type="text" id="nombrePlanta" class="form-control" readonly>
@@ -776,15 +776,283 @@ RESULTADOS:
           </div>
 
           <div class="mb-3">
-            <label for="direccionPlanta" class="form-label">Dirección:</label>
+            <label for="direccionPlanta" class="form-label">Dirección: <span style="color:#ef4444;">*</span></label>
+            
+            <!-- Campo de dirección con icono de edición -->
+            <div style="position:relative;">
+              <div class="input-with-icon">
+                <i class="fas fa-map-marker-alt input-icon"></i>
+                <input type="text" id="direccionPlanta" class="form-control" style="padding-right:40px;" placeholder="Escribe la dirección o usa el constructor" required>
+              </div>
+              <i id="iconConstructor" class="codicon codicon-edit" onclick="mostrarConstructorDireccion()" title="Abrir constructor de direcciones" style="
+                position:absolute; right:12px; top:50%; transform:translateY(-50%);
+                color:#6b7280; font-size:1rem; cursor:pointer;
+                pointer-events:auto;
+              "></i>
+            </div>
+            <div class="form-text" style="font-size:0.75rem; color:#64748b; margin-top:4px;">
+              <i class="fas fa-info-circle me-1"></i>
+              Puedes escribir directamente o usar el constructor haciendo clic en <i class="codicon codicon-edit" style="font-size:0.7rem;"></i>
+            </div>
+            
+            <!-- Constructor de dirección (oculto por defecto) -->
+            <div id="constructorDireccion" style="display:none; margin-top:16px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+              
+              <!-- Instrucciones sutiles -->
+              <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 16px 0; line-height:1.5;">
+                Ingresa cada uno de los datos que conforman tu dirección. Ten en cuenta que no todos los campos aplican, registra solo la información que se requiera.
+              </p>
+              
+              <!-- Sección: Vía Principal -->
+              <div style="margin-bottom:20px;">
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-road" style="color:#94a3b8; margin-right:6px;"></i>
+                  Vía principal
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo de vía</label>
+                    <select id="tipoVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value="">Seleccionar</option>
+                      <option value="CL">CALLE</option>
+                      <option value="AC">AVENIDA CALLE</option>
+                      <option value="CR">CARRERA</option>
+                      <option value="AK">AVENIDA CARRERA</option>
+                      <option value="TV">TRANSVERSAL</option>
+                      <option value="DG">DIAGONAL</option>
+                      <option value="AV">AVENIDA</option>
+                      <option value="AUTOPISTA">AUTOPISTA</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                    <input type="text" id="numPrincipal" class="form-control form-control-sm" placeholder="27" oninput="construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Letra</label>
+                    <select id="letraVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                      <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                      <option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                      <option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option>
+                      <option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
+                      <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                      <option value="Y">Y</option><option value="Z">Z</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Bis</label>
+                    <select id="bisVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="BIS">Bis</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                    <select id="sectorVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="NORTE">NORTE</option>
+                      <option value="SUR">SUR</option>
+                      <option value="ESTE">ESTE</option>
+                      <option value="OESTE">OESTE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sección: Cruce -->
+              <div style="margin-bottom:20px;">
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-hashtag" style="color:#94a3b8; margin-right:6px;"></i>
+                  Cruce (#)
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                    <input type="text" id="numCruce" class="form-control form-control-sm" placeholder="105" oninput="construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Letra</label>
+                    <select id="letraCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                      <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                      <option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                      <option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option>
+                      <option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
+                      <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                      <option value="Y">Y</option><option value="Z">Z</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Bis</label>
+                    <select id="bisCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="BIS">Bis</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                    <select id="sectorCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="NORTE">NORTE</option>
+                      <option value="SUR">SUR</option>
+                      <option value="ESTE">ESTE</option>
+                      <option value="OESTE">OESTE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sección: Placa -->
+              <div style="margin-bottom:20px;">
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-minus" style="color:#94a3b8; margin-right:6px;"></i>
+                  Placa (-)
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                    <input type="text" id="numPlaca" class="form-control form-control-sm" placeholder="108" oninput="construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                    <select id="sectorPlaca" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="NORTE">NORTE</option>
+                      <option value="SUR">SUR</option>
+                      <option value="ESTE">ESTE</option>
+                      <option value="OESTE">OESTE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sección: Información Adicional -->
+              <div>
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:8px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-home" style="color:#94a3b8; margin-right:6px;"></i>
+                  Información adicional
+                </h6>
+                <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
+                  Especifica indicaciones adicionales como apartamento, torre, etc.
+                </p>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo</label>
+                    <select id="tipoComplemento" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="APARTAMENTO">APARTAMENTO</option>
+                      <option value="BLOQUE">BLOQUE</option>
+                      <option value="BODEGA">BODEGA</option>
+                      <option value="CASA">CASA</option>
+                      <option value="CONJUNTO">CONJUNTO</option>
+                      <option value="EDIFICIO">EDIFICIO</option>
+                      <option value="ESQUINA">ESQUINA</option>
+                      <option value="ETAPA">ETAPA</option>
+                      <option value="INTERIOR">INTERIOR</option>
+                      <option value="LOCAL">LOCAL</option>
+                      <option value="LOTE">LOTE</option>
+                      <option value="MANZANA">MANZANA</option>
+                      <option value="PISO">PISO</option>
+                      <option value="PLANTA">PLANTA</option>
+                      <option value="TORRE">TORRE</option>
+                      <option value="UNIDAD">UNIDAD</option>
+                      <option value="UNIDAD RESIDENCIAL">UNIDAD RESIDENCIAL</option>
+                    </select>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Complemento</label>
+                    <input type="text" id="complementoDireccion" class="form-control form-control-sm" placeholder="Ej: 201, Torre 3, Conjunto Los Pinos" oninput="construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Botón para confirmar dirección -->
+              <div style="text-align:right; margin-top:16px; padding-top:16px; border-top:1px solid #e2e8f0;">
+                <button type="button" onclick="confirmarDireccion()" style="
+                  background:#10b981; color:#fff; border:none; padding:10px 24px;
+                  border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:600;
+                  box-shadow:0 2px 6px rgba(16,185,129,0.25);
+                ">
+                  <i class="fas fa-check me-2"></i> Confirmar dirección
+                </button>
+                <button type="button" onclick="cancelarConstructor()" style="
+                  background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:10px 24px;
+                  border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:600;
+                  margin-left:8px;
+                ">
+                  <i class="fas fa-times me-2"></i> Cancelar
+                </button>
+              </div>
+              
+            </div>
+          </div>
+
+          <!-- Nuevos campos de ubicación -->
+          <div class="mb-3">
+            <label for="paisPlanta" class="form-label">País: <span style="color:#ef4444;">*</span></label>
             <div class="input-with-icon">
-              <i class="fas fa-map-marker-alt input-icon"></i>
-              <input type="text" id="direccionPlanta" class="form-control" placeholder="Ej: CL 26 # 7-75" required>
+              <i class="fas fa-globe input-icon"></i>
+              <input type="text" id="paisPlanta" class="form-control" value="Colombia" readonly required>
             </div>
           </div>
 
           <div class="mb-3">
-            <label for="telefonoPlanta" class="form-label">Teléfono de Contacto:</label>
+            <label for="departamentoPlanta" class="form-label">Departamento: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-map input-icon"></i>
+              <select id="departamentoPlanta" class="form-control" required>
+                <option value="">Seleccione departamento</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3" id="ciudadContainer" style="display:none;">
+            <label for="ciudadPlanta" class="form-label">Ciudad: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-city input-icon"></i>
+              <select id="ciudadPlanta" class="form-control" required>
+                <option value="">Seleccione ciudad</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3" id="barrioContainer" style="display:none;">
+            <label for="barrioPlanta" class="form-label">Barrio: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-home input-icon"></i>
+              <select id="barrioPlanta" class="form-control">
+                <option value="">Seleccione barrio</option>
+              </select>
+              <input type="text" id="barrioPlantaManual" class="form-control" placeholder="Escribe el nombre del barrio" style="display:none;">
+            </div>
+            <div id="barrioToggleLink" class="form-text small" style="display:none;">
+              <a href="#" onclick="toggleBarrioManual(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
+                <i class="codicon codicon-edit" style="font-size:0.75rem;"></i> ¿No encuentras tu barrio?
+              </a>
+            </div>
+          </div>
+
+          <div class="mb-3" id="comunaContainer" style="display:none;">
+            <label for="comunaPlanta" class="form-label"><span id="comunaLabel">Comuna</span>: <span id="comunaAsterisk" style="color:#ef4444; display:none;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-map-pin input-icon"></i>
+              <input type="text" id="comunaPlanta" class="form-control" placeholder="Se llena automáticamente" readonly>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="contactoPlanta" class="form-label">Nombre de Contacto:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-user input-icon"></i>
+              <input type="text" id="contactoPlanta" class="form-control" placeholder="Ej: Juan Pérez">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="telefonoPlanta" class="form-label">Teléfono: <span style="color:#ef4444;">*</span></label>
             <div class="phone-input-integrated">
               <div class="phone-prefix-area">
                 <img src="https://flagcdn.com/w20/co.png" srcset="https://flagcdn.com/w40/co.png 2x" width="20"
@@ -794,11 +1062,10 @@ RESULTADOS:
               <input type="tel" id="telefonoPlanta" class="form-control" placeholder="(316) 800-7979" required
                 maxlength="15">
             </div>
-            <div class="form-text small">Ingrese un número celular valido.</div>
           </div>
 
           <div class="mb-3">
-            <label for="emailPlanta" class="form-label">Correo Electrónico:</label>
+            <label for="emailPlanta" class="form-label">Correo Electrónico: <span style="color:#ef4444;">*</span></label>
             <div class="input-with-icon">
               <i class="fas fa-envelope input-icon"></i>
               <input type="email" id="emailPlanta" class="form-control" list="emailOptions"
@@ -819,6 +1086,114 @@ RESULTADOS:
             </datalist>
           </div>
 
+          <div class="mb-3">
+            <label for="localizacionPlanta" class="form-label">Localización GPS:</label>
+            
+            <!-- Pregunta inicial con diseño sutil -->
+            <div id="gps-pregunta-card" style="background:white; border:1px solid #e2e8f0; border-radius:8px; padding:1.25rem; margin-bottom:12px;">
+              <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div style="flex-shrink:0; width:40px; height:40px; background:#eff6ff; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                  <i class="fas fa-map-marker-alt" style="font-size:18px; color:#3b82f6;"></i>
+                </div>
+                <div style="flex:1;">
+                  <h5 style="margin:0 0 6px; color:#1e293b; font-size:0.95rem; font-weight:600;">
+                    Ubicación del taller
+                  </h5>
+                  <p style="margin:0 0 12px; color:#64748b; font-size:0.85rem; line-height:1.5;">
+                    Si te encuentras físicamente en el taller, podemos capturar las coordenadas GPS automáticamente. Esto nos ayuda a optimizar la programación de rutas y mantener un mapeo geográfico preciso de nuestras plantas de producción. Es opcional y solo toma unos segundos.
+                  </p>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" onclick="respuestaUbicacionTaller(true)" class="btn-gps-option btn-gps-si">
+                      <i class="fas fa-check"></i>
+                      <span>Estoy en el taller</span>
+                    </button>
+                    <button type="button" onclick="respuestaUbicacionTaller(false)" class="btn-gps-option btn-gps-no">
+                      <i class="fas fa-times"></i>
+                      <span>Omitir ubicación</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Contenedor del mapa (oculto inicialmente) -->
+            <div id="gps-planta-card" style="display:none; background:#f8f9fc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; margin-bottom:12px;"></div>
+            
+            <!-- Input de coordenadas (oculto inicialmente) -->
+            <div style="display:none; position:relative;" id="localizacionInputContainer">
+              <i class="fas fa-location-dot" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; z-index:10;"></i>
+              <input type="text" id="localizacionPlanta" class="form-control" placeholder="Coordenadas GPS" readonly style="padding-left:40px;">
+            </div>
+          </div>
+          
+          <style>
+            .btn-gps-option {
+              display:inline-flex;
+              align-items:center;
+              gap:6px;
+              padding:8px 16px;
+              border:1px solid #e2e8f0;
+              border-radius:6px;
+              font-weight:500;
+              font-size:0.85rem;
+              cursor:pointer;
+              transition:all 0.2s ease;
+              background:white;
+            }
+            
+            .btn-gps-si {
+              color:#059669;
+              border-color:#d1fae5;
+            }
+            
+            .btn-gps-si:hover {
+              background:#ecfdf5;
+              border-color:#10b981;
+              transform:translateY(-1px);
+            }
+            
+            .btn-gps-no {
+              color:#64748b;
+              border-color:#e2e8f0;
+            }
+            
+            .btn-gps-no:hover {
+              background:#f8fafc;
+              border-color:#cbd5e1;
+              transform:translateY(-1px);
+            }
+            
+            .btn-gps-option i {
+              font-size:0.9rem;
+            }
+          </style>
+
+          <!-- Checkboxes de Consentimiento -->
+          <div class="mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+            
+            <!-- Checkbox 1: Política de Datos -->
+            <div class="mb-3" style="display:flex; align-items:start; gap:12px;">
+              <input type="checkbox" id="checkPoliticaDatos" required style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+              <label for="checkPoliticaDatos" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
+                Acepto la 
+                <a href="#" onclick="mostrarPoliticaDatos(); return false;" style="color:#3b82f6; font-weight:600; text-decoration:none; border-bottom:1px dashed #3b82f6; text-transform:none !important;">
+                  política de tratamiento de datos personales
+                </a>
+                <span style="color:#ef4444; margin-left:4px; font-weight:700;">*</span>
+              </label>
+            </div>
+
+            <!-- Checkbox 2: Notificaciones (Obligatorio) -->
+            <div style="display:flex; align-items:start; gap:12px;">
+              <input type="checkbox" id="checkNotificaciones" required style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+              <label for="checkNotificaciones" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
+                Acepto recibir notificaciones operativas del sistema
+                <span style="color:#ef4444; margin-left:4px; font-weight:700;">*</span>
+              </label>
+            </div>
+
+          </div>
+
           <div class="mb-3 text-center">
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-save"></i> Guardar Datos
@@ -835,8 +1210,237 @@ RESULTADOS:
   <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
+  <!-- ══════════════════════════════════════════════════════════════════
+       MODAL DE POLÍTICA DE DATOS (Completa y Extensa)
+       ══════════════════════════════════════════════════════════════════ -->
+  <div id="modalPoliticaDatos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; backdrop-filter:blur(4px); overflow-y:auto; align-items:center; justify-content:center;">
+    <div style="display:flex; align-items:center; justify-content:center; min-height:100%; padding:40px 20px; width:100%;">
+      <div style="background:white; border-radius:12px; max-width:800px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.4); overflow:hidden; display:flex; flex-direction:column; margin:auto; position:relative;">
+        
+        <!-- Header -->
+        <div style="padding:24px; border-bottom:2px solid #e2e8f0; background:linear-gradient(135deg, #f8fafc, #ffffff);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <div style="width:48px; height:48px; background:linear-gradient(135deg, #3b82f6, #6366f1); border-radius:10px; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-shield-alt" style="font-size:24px; color:white;"></i>
+              </div>
+              <div>
+                <h3 style="margin:0; font-size:1.3rem; font-weight:700; color:#1e293b;">Política de Tratamiento de Datos Personales</h3>
+                <p style="margin:0; font-size:0.85rem; color:#64748b;">Ley 1581 de 2012 - Habeas Data</p>
+              </div>
+            </div>
+            <button onclick="cerrarPoliticaDatos()" style="background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body (Scrollable) -->
+        <div style="padding:24px; overflow-y:auto; max-height:60vh;">
+          
+          <!-- Introducción -->
+          <div style="background:#eff6ff; border-left:4px solid #3b82f6; padding:16px; border-radius:6px; margin-bottom:24px;">
+            <p style="margin:0; font-size:0.9rem; line-height:1.7; color:#1e40af;">
+              <strong>Grupo TDM</strong> se compromete a proteger la privacidad y seguridad de sus datos personales. Esta política describe cómo recopilamos, usamos, almacenamos y protegemos su información de acuerdo con la legislación colombiana vigente.
+            </p>
+          </div>
+
+          <!-- Sección 1 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-user-shield" style="color:#3b82f6;"></i>
+              1. Responsable del Tratamiento
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              <strong>Razón Social:</strong> TEXTILES Y CREACIONES EL UNIVERSO S.A.S.<br>
+              <strong>NIT:</strong> 900.616.124-4<br>
+              <strong>Domicilio:</strong> Calle 26 # 7-21 B/ Jorge Isaacs, Cali, Valle del Cauca, Colombia<br>
+              <strong>Correo Electrónico:</strong> coordinadorlogistico@eltemplodelamoda.com.co<br>
+              <strong>Teléfono:</strong> +57 (316) 800-7979
+            </p>
+          </div>
+
+          <!-- Sección 2 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-database" style="color:#3b82f6;"></i>
+              2. Datos Personales Recopilados
+            </h4>
+            <p style="margin:0 0 12px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Recopilamos los siguientes tipos de datos personales:
+            </p>
+            <ul style="margin:0; padding-left:20px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              <li><strong>Datos de identificación:</strong> Nombre completo, NIT, Cédula de Ciudadanía</li>
+              <li><strong>Datos de contacto:</strong> Dirección física, correo electrónico, número telefónico</li>
+              <li><strong>Datos de ubicación:</strong> País, departamento, ciudad, barrio, comuna, coordenadas GPS</li>
+              <li><strong>Datos de la planta:</strong> Razón social, información de contacto, ubicación geográfica</li>
+              <li><strong>Datos operacionales:</strong> Información relacionada con procesos productivos, lotes, calidad</li>
+            </ul>
+          </div>
+
+          <!-- Sección 3 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-bullseye" style="color:#3b82f6;"></i>
+              3. Finalidades del Tratamiento
+            </h4>
+            <p style="margin:0 0 12px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Sus datos personales serán utilizados para las siguientes finalidades:
+            </p>
+            <ul style="margin:0; padding-left:20px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              <li>Gestión y administración de información de plantas de producción</li>
+              <li>Programación, optimización y seguimiento de rutas logísticas</li>
+              <li>Mapeo geográfico y geolocalización de instalaciones productivas</li>
+              <li>Comunicación relacionada con operaciones, novedades y actualizaciones</li>
+              <li>Envío de notificaciones operativas sobre confirmaciones de novedades registradas</li>
+              <li>Interacciones y comunicaciones con Grupo TDM relacionadas con procesos productivos</li>
+              <li>Cumplimiento de obligaciones contractuales y legales</li>
+              <li>Generación de reportes, estadísticas y análisis operacionales</li>
+              <li>Mejora continua de procesos y servicios</li>
+              <li>Atención de solicitudes, quejas y reclamos</li>
+              <li>Auditorías internas y externas de calidad</li>
+            </ul>
+            <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:12px; border-radius:6px; margin-top:12px;">
+              <p style="margin:0; font-size:0.85rem; line-height:1.6; color:#78350f;">
+                <strong><i class="fas fa-info-circle me-1"></i> Nota importante:</strong> Las notificaciones del sistema son de carácter operativo y necesarias para el funcionamiento del servicio. No incluyen publicidad ni comunicaciones comerciales no solicitadas.
+              </p>
+            </div>
+          </div>
+
+          <!-- Sección 4 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-balance-scale" style="color:#3b82f6;"></i>
+              4. Derechos del Titular
+            </h4>
+            <p style="margin:0 0 12px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Como titular de los datos personales, usted tiene derecho a:
+            </p>
+            <ul style="margin:0; padding-left:20px; font-size:0.875rem; line-height:1.7; color:#475569;">
+              <li><strong>Conocer, actualizar y rectificar</strong> sus datos personales</li>
+              <li><strong>Solicitar prueba</strong> de la autorización otorgada</li>
+              <li><strong>Ser informado</strong> sobre el uso que se ha dado a sus datos</li>
+              <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio</li>
+              <li><strong>Revocar la autorización</strong> y/o solicitar la supresión de datos cuando sea procedente</li>
+              <li><strong>Acceder gratuitamente</strong> a sus datos personales objeto de tratamiento</li>
+            </ul>
+          </div>
+
+          <!-- Sección 5 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-lock" style="color:#3b82f6;"></i>
+              5. Seguridad de la Información
+            </h4>
+            <p style="margin:0; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Grupo TDM implementa medidas técnicas, humanas y administrativas necesarias para proteger sus datos personales y evitar su adulteración, pérdida, consulta, uso o acceso no autorizado o fraudulento. Utilizamos protocolos de seguridad como cifrado SSL/TLS, autenticación de usuarios, respaldos periódicos y controles de acceso.
+            </p>
+          </div>
+
+          <!-- Sección 6 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-clock" style="color:#3b82f6;"></i>
+              6. Tiempo de Conservación
+            </h4>
+            <p style="margin:0; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Los datos personales serán conservados durante el tiempo que sea necesario para cumplir con las finalidades descritas, y posteriormente durante el tiempo que exijan las normas legales aplicables. Una vez cumplida la finalidad y los términos legales, los datos serán eliminados de forma segura.
+            </p>
+          </div>
+
+          <!-- Sección 7 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-share-nodes" style="color:#3b82f6;"></i>
+              7. Transferencia y Transmisión de Datos
+            </h4>
+            <p style="margin:0; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Grupo TDM podrá transferir o transmitir sus datos personales a terceros únicamente cuando sea necesario para el cumplimiento de las finalidades autorizadas, garantizando que dichos terceros cumplan con las obligaciones de protección de datos establecidas en la ley colombiana.
+            </p>
+          </div>
+
+          <!-- Sección 8 -->
+          <div style="margin-bottom:24px;">
+            <h4 style="margin:0 0 12px; font-size:1.05rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-envelope" style="color:#3b82f6;"></i>
+              8. Ejercicio de Derechos
+            </h4>
+            <p style="margin:0; font-size:0.875rem; line-height:1.7; color:#475569;">
+              Para ejercer sus derechos o presentar consultas o reclamos relacionados con el tratamiento de sus datos personales, puede contactarnos a través de:
+            </p>
+            <div style="background:#f8fafc; border-radius:6px; padding:12px; margin-top:12px;">
+              <p style="margin:0; font-size:0.875rem; color:#475569;">
+                <strong>Correo:</strong> coordinadorlogistico@eltemplodelamoda.com.co<br>
+                <strong>Teléfono:</strong> +57 (316) 800-7979<br>
+                <strong>Horario:</strong> Lunes a Viernes, 7:10 AM - 4:43 PM
+              </p>
+            </div>
+          </div>
+
+          <!-- Marco Legal -->
+          <div style="background:#fef3c7; border-left:4px solid #f59e0b; padding:16px; border-radius:6px;">
+            <h5 style="margin:0 0 8px; font-size:0.95rem; font-weight:700; color:#92400e; display:flex; align-items:center; gap:8px;">
+              <i class="fas fa-gavel"></i>
+              Marco Legal
+            </h5>
+            <p style="margin:0; font-size:0.85rem; line-height:1.6; color:#78350f;">
+              Esta política se rige por la <strong>Ley 1581 de 2012</strong>, el <strong>Decreto 1377 de 2013</strong>, y demás normas concordantes que regulan la protección de datos personales en Colombia.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:20px 24px; border-top:2px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+          <p style="margin:0; font-size:0.8rem; color:#64748b;">
+            <i class="fas fa-calendar-alt me-1"></i>
+            Última actualización: Abril 2026
+          </p>
+          <button onclick="cerrarPoliticaDatos()" style="
+            background:linear-gradient(135deg, #3b82f6, #6366f1); color:white; border:none;
+            padding:10px 24px; border-radius:8px; font-weight:600; font-size:0.9rem;
+            cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); transition:all 0.2s;
+          ">
+            <i class="fas fa-check me-2"></i>
+            Entendido
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function mostrarPoliticaDatos() {
+      const modal = document.getElementById('modalPoliticaDatos');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+      }
+    }
+
+    function cerrarPoliticaDatos() {
+      const modal = document.getElementById('modalPoliticaDatos');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restaurar scroll del body
+      }
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modalPoliticaDatos')?.addEventListener('click', function(e) {
+      if (e.target === this) cerrarPoliticaDatos();
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') cerrarPoliticaDatos();
+    });
+  </script>
+
   <!-- ── App JS (orden importa: dependencias primero) ── -->
   <script src="js/config.js"></script>
+  <script src="js/data/colombia-locations.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/auth.js"></script>
