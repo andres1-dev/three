@@ -76,6 +76,13 @@ function switchAdminMode(mode) {
         searchInput.value = '';
     }
 
+    const createBtn = document.getElementById('btnCreateUser');
+    if (createBtn) {
+        createBtn.innerHTML = mode === 'USERS' 
+            ? '<i class="fas fa-user-plus"></i> <span class="d-none d-sm-inline">Nuevo Usuario</span>'
+            : '<i class="fas fa-industry"></i> <span class="d-none d-sm-inline">Nueva Planta</span>';
+    }
+
     cargarDatosLocales();
 }
 
@@ -612,68 +619,166 @@ async function openEditModal(targetId) {
  * Si está DESHABILITADO → restaura al rol anterior guardado, o GUEST para plantas.
  * Si está activo → cambia a DESHABILITADO.
  */
-async function toggleUserStatus(targetId, rolActual, isPlant) {
-    const deshabilitar = rolActual !== 'DESHABILITADO';
-    const accion = deshabilitar ? 'deshabilitar' : 'habilitar';
-    const icono  = deshabilitar ? 'warning' : 'question';
+async function openCreateModal() {
+    const isPlant = gsCurrentMode === 'PLANTS';
+    
+    const html = `
+        <style>
+            .swal2-popup { border-radius: 16px !important; padding: 0 !important; overflow: hidden !important; }
+            .swal2-html-container { margin: 0 !important; padding: 0 !important; overflow: visible !important; width: 100% !important; max-width: 100% !important; }
+            .swal2-actions { padding: 12px 20px 20px !important; gap: 8px !important; margin: 0 !important; }
+            .swal2-confirm { border-radius: 10px !important; font-size: 0.82rem !important; font-weight: 700 !important; letter-spacing: 0.04em !important; padding: 10px 22px !important; box-shadow: none !important; }
+            .swal2-cancel { border-radius: 10px !important; font-size: 0.82rem !important; font-weight: 600 !important; padding: 10px 22px !important; background: #f1f5f9 !important; color: #64748b !important; box-shadow: none !important; text-transform: uppercase !important; letter-spacing: 0.04em !important; }
+            .edit-modal-lux { font-family: 'Inter', sans-serif; text-align: left; }
+            .modal-header-lux { display: flex; align-items: center; gap: 12px; background: white; padding: 18px 20px 14px; margin: 0; width: 100%; box-sizing: border-box; border-bottom: 1.5px solid #f1f5f9; border-radius: 16px 16px 0 0; }
+            .modal-header-lux .header-icon { width: 40px; height: 40px; background: #eef0fb; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #3f51b5; font-size: 1rem; flex-shrink: 0; }
+            .modal-header-lux .header-text { color: #3f51b5; font-weight: 800; font-size: 1rem; line-height: 1.2; }
+            .modal-header-lux .header-sub { color: #94a3b8; font-size: 0.72rem; font-weight: 500; margin-top: 2px; }
+            .modal-body-lux { padding: 16px 20px 4px; }
+            .fields-section { background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+            .fields-section-title { font-size: 0.63rem; font-weight: 700; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+            .field-container-lux { margin-bottom: 10px; }
+            .label-lux { display: flex; align-items: center; gap: 5px; font-size: 0.67rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+            .input-lux { width: 100%; padding: 8px 12px; border-radius: 8px; border: 1.5px solid #e2e8f0 !important; background: white !important; font-size: 0.875rem; font-weight: 500; color: #1e293b !important; box-sizing: border-box; }
+            .input-lux:focus { outline: none !important; border-color: #3b82f6 !important; }
+            .phone-input-integrated { display: flex; align-items: center; padding-left: 12px; background: white; }
+            .phone-prefix-area { display: flex; align-items: center; gap: 4px; padding-right: 8px; border-right: 1px solid #e2e8f0; margin-right: 8px; font-size: 0.8rem; font-weight: 600; color: #64748b; }
+        </style>
 
-    const { isConfirmed } = await Swal.fire({
-        icon: icono,
-        title: deshabilitar ? '¿Deshabilitar usuario?' : '¿Habilitar usuario?',
-        text: deshabilitar
-            ? 'El usuario no podrá iniciar sesión hasta que sea habilitado nuevamente.'
-            : 'El usuario podrá volver a iniciar sesión.',
+        <div class="edit-modal-lux">
+            <div class="modal-header-lux">
+                <div class="header-icon"><i class="fas ${isPlant ? 'fa-industry' : 'fa-user-plus'}"></i></div>
+                <div>
+                    <div class="header-text">Nuevo ${isPlant ? 'Taller' : 'Usuario'}</div>
+                    <div class="header-sub">Complete los datos para el registro</div>
+                </div>
+            </div>
+            <div class="modal-body-lux">
+                <div class="fields-section">
+                    <div class="fields-section-title"><i class="fas fa-circle-info"></i> Identificación</div>
+                    <div class="field-container-lux">
+                        <label class="label-lux"><i class="fas fa-id-card"></i> ${isPlant ? 'NIT / ID Planta' : 'Cédula / ID'}</label>
+                        <input type="text" id="create-id" class="input-lux" placeholder="Ej: 10203040">
+                    </div>
+                    <div class="field-container-lux" style="margin-bottom:0">
+                        <label class="label-lux"><i class="fas fa-signature"></i> ${isPlant ? 'Nombre Planta' : 'Nombre Completo'}</label>
+                        <input type="text" id="create-nombre" class="input-lux" placeholder="Nombre real">
+                    </div>
+                </div>
+
+                <div class="fields-section">
+                    <div class="fields-section-title"><i class="fas fa-address-book"></i> Contacto</div>
+                    <div class="field-container-lux">
+                        <label class="label-lux"><i class="fas fa-envelope"></i> Correo</label>
+                        <input type="email" id="create-correo" class="input-lux" placeholder="correo@ejemplo.com">
+                    </div>
+                    <div class="field-container-lux" style="margin-bottom:0">
+                        <label class="label-lux"><i class="fas fa-phone"></i> Teléfono</label>
+                        <div class="phone-input-integrated" id="phone-wrap-create" style="border-radius:8px; border:1.5px solid #e2e8f0;">
+                            <div class="phone-prefix-area" style="height:38px;">
+                                <img src="https://flagcdn.com/w20/co.png" width="20">
+                                <span>+57</span>
+                            </div>
+                            <input type="tel" id="create-telefono" class="input-lux" style="border:none !important; height:38px !important; flex:1;" placeholder="300 123 4567">
+                        </div>
+                    </div>
+                    ${isPlant ? `
+                    <div class="field-container-lux" style="margin-top:14px; margin-bottom:0">
+                        <label class="label-lux"><i class="fas fa-location-dot"></i> Dirección</label>
+                        <input type="text" id="create-direccion" class="input-lux" placeholder="Calle, Carrera, Ciudad">
+                    </div>` : ''}
+                </div>
+
+                <div class="fields-section" style="margin-bottom:0">
+                    <div class="fields-section-title"><i class="fas fa-shield-halved"></i> Seguridad</div>
+                    <div class="field-container-lux">
+                        <label class="label-lux"><i class="fas fa-shield-halved"></i> Rol Inicial</label>
+                        <select id="create-rol" class="input-lux">
+                            ${isPlant ? `
+                                <option value="GUEST" selected>GUEST (Taller)</option>
+                            ` : `
+                                <option value="GUEST">GUEST (Invitado)</option>
+                                <option value="USER-P" selected>USER-P (Producción)</option>
+                                <option value="USER-C">USER-C (Calidad)</option>
+                                <option value="MODERATOR">MODERATOR</option>
+                                <option value="ADMIN">ADMIN</option>
+                            `}
+                        </select>
+                    </div>
+                    <div class="field-container-lux" style="margin-bottom:0">
+                        <label class="label-lux"><i class="fas fa-lock"></i> Contraseña</label>
+                        <input type="password" id="create-password" class="input-lux" placeholder="Defina una clave">
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const { value: formValues } = await Swal.fire({
+        html: html,
         showCancelButton: true,
-        confirmButtonText: deshabilitar ? 'Sí, deshabilitar' : 'Sí, habilitar',
-        confirmButtonColor: deshabilitar ? '#dc2626' : '#16a34a',
-        cancelButtonText: 'Cancelar',
+        confirmButtonText: 'CREAR REGISTRO',
+        confirmButtonColor: '#3F51B5',
+        width: '380px',
+        customClass: { popup: 'edit-modal-popup' },
+        didOpen: () => {
+            const tel = document.getElementById('create-telefono');
+            if (tel) {
+                tel.addEventListener('input', (e) => {
+                    let val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                    if (val.length > 6) e.target.value = `(${val.slice(0,3)}) ${val.slice(3,6)}-${val.slice(6)}`;
+                    else if (val.length > 3) e.target.value = `(${val.slice(0,3)}) ${val.slice(3)}`;
+                    else e.target.value = val;
+                });
+            }
+        },
+        preConfirm: () => {
+            const id = document.getElementById('create-id').value.trim();
+            const name = document.getElementById('create-nombre').value.trim();
+            const email = document.getElementById('create-correo').value.trim();
+            const phone = document.getElementById('create-telefono').value.replace(/\D/g, '');
+            const pass = document.getElementById('create-password').value.trim();
+            const rol = document.getElementById('create-rol').value;
+
+            if (!id || !name || !email || !phone || !pass) {
+                Swal.showValidationMessage('Todos los campos son obligatorios');
+                return false;
+            }
+            return {
+                id, name, email, phone, pass, rol,
+                direccion: isPlant ? document.getElementById('create-direccion').value.trim() : null
+            };
+        }
     });
 
-    if (!isConfirmed) return;
+    if (formValues) {
+        try {
+            Swal.fire({ title: 'Procesando...', didOpen: () => Swal.showLoading() });
+            
+            const payload = {
+                accion: isPlant ? 'CREAR_PLANTA' : 'CREAR_USUARIO',
+                id: formValues.id,
+                usuario: !isPlant ? formValues.name : null,
+                planta: isPlant ? formValues.name : null,
+                correo: formValues.email,
+                email: isPlant ? formValues.email : null,
+                telefono: formValues.phone,
+                direccion: formValues.direccion,
+                rol: formValues.rol,
+                password: formValues.pass
+            };
 
-    try {
-        Swal.fire({ title: 'Aplicando cambio...', didOpen: () => Swal.showLoading() });
+            const response = await sendToGAS(payload);
 
-        let nuevoRol;
-        if (deshabilitar) {
-            nuevoRol = 'DESHABILITADO';
-        } else {
-            // Restaurar: para plantas siempre GUEST, para usuarios buscar el rol previo en la lista
-            if (isPlant) {
-                nuevoRol = 'GUEST';
+            if (response.success) {
+                Swal.fire('✔ Creado', 'Registro creado exitosamente.', 'success');
+                await loadUsers(); 
+                cargarDatosLocales();
             } else {
-                // Intentar recuperar el rol que tenía antes (guardado en campo CORREO como fallback no aplica)
-                // Por defecto restaurar a PENDIENTE para que el admin asigne el rol correcto
-                nuevoRol = 'PENDIENTE';
+                Swal.fire('Error', response.message, 'error');
             }
+        } catch (e) {
+            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
         }
-
-        const payload = isPlant
-            ? { accion: 'ACTUALIZAR_PLANTA', cedula: targetId, id: targetId, rol: nuevoRol }
-            : { accion: 'UPDATE_USER_ROLE', id: targetId, nuevoRol };
-
-        const res = await sendToGAS(payload);
-
-        if (res.success) {
-            // Actualizar lista local sin recargar
-            if (isPlant) {
-                const p = gsPlantList.find(x => String(x.ID_PLANTA || x.ID).trim() === String(targetId).trim());
-                if (p) p.ROL = nuevoRol;
-            } else {
-                const u = gsUserList.find(x => String(x.ID_USUARIO || x.ID).trim() === String(targetId).trim());
-                if (u) u.ROL = nuevoRol;
-            }
-            Swal.fire({
-                icon: 'success',
-                title: deshabilitar ? 'Usuario deshabilitado' : 'Usuario habilitado',
-                timer: 1500,
-                showConfirmButton: false,
-            });
-            handleFilter(); // re-renderizar tabla
-        } else {
-            Swal.fire('Error', res.message, 'error');
-        }
-    } catch(e) {
-        Swal.fire('Error', 'No se pudo conectar con el servidor.', 'error');
     }
 }

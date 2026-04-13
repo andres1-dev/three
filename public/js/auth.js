@@ -307,7 +307,7 @@ function applyAccessControl() {
 
     // 1. Módulo de Resolución (Botón estático si existe)
     if (resolutionBtn) {
-        if (role === 'ADMIN' || role === 'USER-P') {
+        if (role === 'ADMIN' || role === 'MODERATOR' || role === 'USER-P') {
             resolutionBtn.classList.remove('hidden');
         } else {
             resolutionBtn.classList.add('hidden');
@@ -388,7 +388,7 @@ function checkRouteAccess(role) {
     let isAuthorized = true;
 
     if (path.includes('resolucion.html')) {
-        if (role !== 'ADMIN' && role !== 'USER-P') isAuthorized = false;
+        if (role !== 'ADMIN' && role !== 'MODERATOR' && role !== 'USER-P') isAuthorized = false;
     } else if (path.includes('calidad.html')) {
         if (role !== 'ADMIN' && role !== 'MODERATOR') isAuthorized = false;
     } else if (path.includes('usuarios.html')) {
@@ -600,7 +600,7 @@ function createSidebar() {
                 <a href="index.html" class="sidebar-link ${(path.includes('index.html') || path.endsWith('/')) ? 'active' : ''}">
                     <i class="fas fa-home"></i> Reportes
                 </a>
-                ${(currentUser.ROL === 'ADMIN' || currentUser.ROL === 'USER-P') ? `
+                ${(currentUser.ROL === 'ADMIN' || currentUser.ROL === 'MODERATOR' || currentUser.ROL === 'USER-P') ? `
                     <a href="resolucion.html" class="sidebar-link ${isResolutionPage ? 'active' : ''}">
                         <i class="fas fa-desktop"></i> Novedades
                     </a>

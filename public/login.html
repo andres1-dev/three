@@ -412,30 +412,16 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
 
             try {
-                const supabase = window.getSupabaseClient();
-                
-                // Insertar usuario en Supabase
-                const { data, error } = await supabase
-                    .from('usuarios')
-                    .insert({
-                        ID_USUARIO: id,
-                        USUARIO: name,
-                        CORREO: email,
-                        TELEFONO: tel,
-                        ROL: 'PENDIENTE',
-                        CONTRASEÑA: pass
-                    })
-                    .select();
-
-                if (error) {
-                    // Verificar si es error de duplicado
-                    if (error.code === '23505') {
-                        throw new Error('Esta identificación ya está registrada en el sistema.');
-                    }
-                    throw error;
-                }
-
-                const result = { success: true };
+                // Insertar usuario usando la Edge Function segura para evitar bloqueos por RLS
+                const result = await sendToSupabase({
+                    accion: 'CREAR_USUARIO',
+                    id: id,
+                    usuario: name,
+                    correo: email,
+                    telefono: tel,
+                    rol: 'PENDIENTE',
+                    password: pass
+                });
 
                 if (result.success) {
                     Swal.fire({
@@ -660,51 +646,17 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ESCRIBIENDO...';
 
             try {
-                const supabase = window.getSupabaseClient();
-                
-                // Actualizar o insertar planta en Supabase
-                const { data: existingPlanta, error: checkError } = await supabase
-                    .from('plantas')
-                    .select('*')
-                    .eq('ID_PLANTA', documentId)
-                    .single();
-
-                let result;
-                if (existingPlanta) {
-                    // Actualizar planta existente
-                    const { data, error } = await supabase
-                        .from('plantas')
-                        .update({
-                            PLANTA: plantaName,
-                            DIRECCION: address,
-                            TELEFONO: tel,
-                            EMAIL: email,
-                            PASSWORD: pass,
-                            ROL: 'GUEST'
-                        })
-                        .eq('ID_PLANTA', documentId)
-                        .select();
-                    
-                    if (error) throw error;
-                    result = { success: true };
-                } else {
-                    // Insertar nueva planta
-                    const { data, error } = await supabase
-                        .from('plantas')
-                        .insert({
-                            ID_PLANTA: documentId,
-                            PLANTA: plantaName,
-                            DIRECCION: address,
-                            TELEFONO: tel,
-                            EMAIL: email,
-                            PASSWORD: pass,
-                            ROL: 'GUEST'
-                        })
-                        .select();
-                    
-                    if (error) throw error;
-                    result = { success: true };
-                }
+                // Actualizar o insertar planta usando la Edge Function segura
+                const result = await sendToSupabase({
+                    accion: 'CREAR_PLANTA',
+                    id: documentId,
+                    planta: plantaName,
+                    direccion: address,
+                    telefono: tel,
+                    email: email,
+                    password: pass,
+                    rol: 'GUEST'
+                });
 
                 if (result.success) {
                     Swal.fire({
