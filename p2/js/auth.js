@@ -276,7 +276,6 @@ async function loadUsers() {
                 }
                 return;
             }
-            console.log('[AUTH] Descargando base de datos inicial...');
             const [usersData, plantasData] = await Promise.all([
                 fetchUsuariosData(),
                 fetchPlantasData()
@@ -485,6 +484,11 @@ async function handleLogin(userId, password, isLoginPage = false, tipoAcceso = '
             // Si tiene datos completos o no es GUEST, ir a index
             window.location.href = 'index.html';
         } else {
+            // Reproducir sonido de bienvenida al entrar a index.html
+            if (typeof window.playInicioSound === 'function') {
+                window.playInicioSound();
+            }
+            
             Swal.fire({
                 icon: 'success',
                 title: '¡BIENVENIDO!',

@@ -122,7 +122,6 @@ function bindEvents() {
     const actualizarForm = document.getElementById('actualizarDatosForm');
     if (actualizarForm) {
         if (typeof handleActualizarDatosSubmit === 'function') {
-            console.log('[bindEvents] Registrando evento submit para actualizarDatosForm');
             actualizarForm.addEventListener('submit', handleActualizarDatosSubmit);
         } else {
             console.error('[bindEvents] ERROR: handleActualizarDatosSubmit no está definida');

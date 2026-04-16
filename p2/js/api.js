@@ -289,19 +289,26 @@ async function fetchRuteroData() {
  */
 async function callSupabaseAI(text, promptType = 'CHAT_CORRECTION', context = null) {
     try {
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg";
+        
         const response = await fetch(`${CONFIG.FUNCTIONS_URL}/ai`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
+            },
             body: JSON.stringify({ text, promptType, context })
         });
 
         if (!response.ok) {
-            const err = await response.json();
+            const err = await response.json().catch(() => ({ error: 'Error de conexión' }));
             throw new Error(err.error || 'Error en la IA');
         }
 
         return await response.json();
     } catch (e) {
+        console.error('[API] Error en callSupabaseAI:', e);
         throw e;
     }
 }

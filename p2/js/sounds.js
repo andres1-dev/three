@@ -11,12 +11,14 @@ const SOUND_PREFS_KEY = 'sispro_sound_prefs';
 let audioContext = null;
 
 // Buffers de sonido
+let inicioBuffer = null;
 let chatBuffer = null;
 let stateBuffer = null;
 
 // Estados
 let audioUnlocked = false;
 let soundEnabled = true;
+let inicioPlayed = false; // Para reproducir inicio solo una vez
 
 /* ══════════════════════════════════════════════════════════════════════════
    Inicialización
@@ -31,18 +33,10 @@ async function initSounds() {
     } catch (e) {}
   }
 
-  // Crear AudioContext (compatible con iOS)
-  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  // NO crear AudioContext aquí - se creará en unlockAudio
+  // audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-  try {
-    // Cargar audios como buffers
-    chatBuffer = await loadSound('sounds/chat.mp3');
-    stateBuffer = await loadSound('sounds/estado.mp3');
-  } catch (e) {
-    console.warn('Error cargando sonidos:', e);
-  }
-
-  // Desbloqueo requerido en iOS
+  // Desbloqueo requerido - crear AudioContext en primera interacción
   document.addEventListener('click', unlockAudio, { once: true });
   document.addEventListener('touchstart', unlockAudio, { once: true });
 }
@@ -59,8 +53,22 @@ async function loadSound(url) {
 /* ══════════════════════════════════════════════════════════════════════════
    Desbloquear audio (iOS)
    ══════════════════════════════════════════════════════════════════════════ */
-function unlockAudio() {
+async function unlockAudio() {
   if (audioUnlocked) return;
+
+  // Crear AudioContext en primera interacción del usuario
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    // Cargar audios como buffers
+    try {
+      inicioBuffer = await loadSound('sounds/inicio.mp3');
+      chatBuffer = await loadSound('sounds/chat.mp3');
+      stateBuffer = await loadSound('sounds/estado.mp3');
+    } catch (e) {
+      console.warn('Error cargando sonidos:', e);
+    }
+  }
 
   if (audioContext && audioContext.state === 'suspended') {
     audioContext.resume();
@@ -100,6 +108,13 @@ function playSound(buffer) {
 /* ══════════════════════════════════════════════════════════════════════════
    Sonidos específicos
    ══════════════════════════════════════════════════════════════════════════ */
+function playInicioSound() {
+  if (!inicioPlayed) {
+    playSound(inicioBuffer);
+    inicioPlayed = true;
+  }
+}
+
 function playChatSound() {
   playSound(chatBuffer);
 }
@@ -126,6 +141,7 @@ function isSoundEnabled() {
 /* ══════════════════════════════════════════════════════════════════════════
    Exponer globalmente
    ══════════════════════════════════════════════════════════════════════════ */
+window.playInicioSound = playInicioSound;
 window.playChatSound = playChatSound;
 window.playStateSound = playStateSound;
 window.toggleSound = toggleSound;
