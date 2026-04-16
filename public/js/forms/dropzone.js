@@ -17,8 +17,8 @@
 function initDropzones() {
     // Par imagen
     _bindDropzone('imagenDropzone', 'imagen', 'imagenName', false);
-    // Par soporte (con validación de video)
-    _bindDropzone('soporteDropzone', 'soporte', 'soporteName', true);
+    // Par soporte (solo imágenes)
+    _bindDropzone('soporteDropzone', 'soporte', 'soporteName', false);
 }
 
 /**

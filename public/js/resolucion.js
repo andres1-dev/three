@@ -8,11 +8,12 @@ let gsCurrentPage = 1;
 const gsRecordsPerPage = 6;
 
 window.onload = async function () {
-    // 1. Validar usuario antes de mostrar nada
+    // Disparar fetches de datos en paralelo con loadUsers
+    const novedadesPromise = fetchNovedadesData();
+    const plantasPromise   = fetchPlantasData();
+
     await loadUsers();
 
-
-    
     // Aplicar modo compacto si estaba guardado
     const isCompact = localStorage.getItem('viewModeResolucion') === 'compact';
     if (isCompact) {
@@ -20,7 +21,7 @@ window.onload = async function () {
         document.getElementById('toggleViewMode')?.classList.add('active');
     }
 
-    await cargarDatos();
+    await cargarDatos(novedadesPromise, plantasPromise);
 };
 
 /**
@@ -40,17 +41,16 @@ function toggleCompactView() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-async function cargarDatos() {
+async function cargarDatos(novedadesPromise, plantasPromise) {
     const loader = document.getElementById('loader');
     const section = document.getElementById('dataSection');
 
     try {
-        // PASO 1: Recuperar llaves de API desde GAS (Seguridad)
         await fetchSecureConfig();
 
         const [novedades, plantas] = await Promise.all([
-            fetchNovedadesData(),
-            fetchPlantasData()
+            novedadesPromise || fetchNovedadesData(),
+            plantasPromise   || fetchPlantasData()
         ]);
 
         gsNovedades = novedades;
@@ -436,8 +436,6 @@ async function actualizarEstado(timestampId, nuevoEstado, selectEl) {
         btnContainer.classList.remove('is-loading');
         btnContainer.innerHTML = originalHTML;
         renderTabla();
-    } finally {
-        // No es necesario selectEl.disabled = false porque renderTabla() recrea el elemento
     }
 }
 
@@ -916,4 +914,28 @@ function parsearFechaLatina(d) {
 function formatearHora(d) {
     const dt = parsearFechaLatina(d);
     return dt ? dt.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true }) : '';
+}
+
+/* ── Toggle KPIs ── */
+function toggleKPIs() {
+    const container = document.getElementById('kpiContainer');
+    const chevron = document.getElementById('kpiChevron');
+    if (!container) return;
+    const open = container.style.display === 'none' || container.style.display === '';
+    container.style.display = open ? 'grid' : 'none';
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+/* ── Toggle cerradas con ojo ── */
+function _toggleFinalizados() {
+    const checkbox = document.getElementById('toggleFinalizados');
+    const icon = document.getElementById('icon-toggle-cerradas');
+    const label = document.getElementById('label-toggle-cerradas');
+    if (!checkbox) return;
+    checkbox.checked = !checkbox.checked;
+    const showing = checkbox.checked;
+    if (icon) icon.className = showing ? 'fas fa-eye-slash' : 'fas fa-eye';
+    if (label) label.textContent = showing ? 'Ocultar' : 'Cerradas';
+    gsCurrentPage = 1;
+    renderTabla();
 }

@@ -117,7 +117,24 @@ function bindEvents() {
     // Envío de formularios
     document.getElementById('novedadesForm').addEventListener('submit', handleNovedadesSubmit);
     document.getElementById('calidadForm').addEventListener('submit', handleCalidadSubmit);
-    document.getElementById('actualizarDatosForm').addEventListener('submit', handleActualizarDatosSubmit);
+    
+    // Verificar que handleActualizarDatosSubmit existe antes de registrar el evento
+    const actualizarForm = document.getElementById('actualizarDatosForm');
+    if (actualizarForm) {
+        if (typeof handleActualizarDatosSubmit === 'function') {
+            actualizarForm.addEventListener('submit', handleActualizarDatosSubmit);
+        } else {
+            console.error('[bindEvents] ERROR: handleActualizarDatosSubmit no está definida');
+            // Registrar un handler temporal que muestre el error
+            actualizarForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                console.error('[actualizarDatosForm] handleActualizarDatosSubmit no disponible');
+                alert('Error: La función de guardado no está disponible. Por favor recarga la página.');
+            });
+        }
+    } else {
+        console.error('[bindEvents] ERROR: No se encontró el formulario actualizarDatosForm');
+    }
 
     // Acordeón de datos del lote
     initLotCollapse();
@@ -163,6 +180,9 @@ window.onload = async function() {
     // Mantener GAS caliente con un ping periódico (evita cold start en el próximo envío)
     _warmUpGAS();
     setInterval(_warmUpGAS, 4 * 60 * 1000); // cada 4 minutos
+
+    // Warm-up de la edge function /query para evitar cold start en la primera carga real
+    if (typeof _warmUpQuery === 'function') _warmUpQuery();
 };
 
 /* ── Forzar actualización de perfil para GUEST con datos incompletos ── */

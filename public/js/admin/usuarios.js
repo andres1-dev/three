@@ -6,7 +6,7 @@ let gsUserList = [];
 let gsPlantList = [];
 let gsCurrentMode = 'USERS'; // 'USERS' o 'PLANTS'
 let gsCurrentPage = 1;
-const gsRecordsPerPage = 3;
+const gsRecordsPerPage = 4;
 
 window.onload = async function() {
     // 1. Validar sesión ADMIN antes de mostrar el panel
@@ -19,64 +19,9 @@ window.onload = async function() {
 };
 
 function initTabs() {
-    const searchBar = document.querySelector('.unified-tool-bar');
-    if (!searchBar) return;
-
-    const tabsHtml = `
-        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 20px;">
-            <button id="tab-users" class="btn-tab-admin active" onclick="switchAdminMode('USERS')">
-                <i class="fas fa-users-gear"></i> <span class="tab-text">Empleados</span>
-            </button>
-            <button id="tab-plants" class="btn-tab-admin" onclick="switchAdminMode('PLANTS')">
-                <i class="fas fa-industry"></i> <span class="tab-text">Plantas</span>
-            </button>
-            <button id="btnCreateUser" class="btn-tab-admin btn-create-inline" onclick="openCreateModal()" style="background: #3b82f6; color: white; border-color: #3b82f6;">
-                <i class="fas fa-plus"></i> <span class="tab-text">Nuevo</span>
-            </button>
-        </div>
-        <style>
-            .btn-tab-admin {
-                padding: 8px 4px;
-                border-radius: 10px;
-                border: 1.5px solid #e2e8f0;
-                background: white;
-                color: #64748b;
-                font-size: 0.72rem;
-                font-weight: 800;
-                cursor: pointer;
-                transition: all 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                text-align: center;
-                min-width: 0;
-                white-space: nowrap;
-                height: 38px;
-            }
-            .btn-tab-admin i { font-size: 0.85rem; }
-            .btn-tab-admin.active {
-                background: #3f51b5;
-                color: white;
-                border-color: #3f51b5;
-                box-shadow: 0 3px 8px rgba(63, 81, 181, 0.1);
-            }
-            .btn-create-inline:hover {
-                background: #2563eb !important;
-                transform: translateY(-1px);
-            }
-            .tab-text {
-                display: inline-block;
-                overflow: hidden;
-                text-overflow: clip;
-            }
-            @media (max-width: 400px) {
-                .btn-tab-admin { font-size: 0.65rem; gap: 4px; }
-                .btn-tab-admin i { font-size: 0.75rem; }
-            }
-        </style>
-    `;
-    searchBar.insertAdjacentHTML('beforebegin', tabsHtml);
+    // Los tabs ya están en el HTML, solo actualizamos el placeholder inicial
+    const searchInput = document.getElementById('userSearchInput');
+    if (searchInput) searchInput.placeholder = 'Filtrar empleados por nombre, ID o correo...';
 }
 
 function switchAdminMode(mode) {
@@ -88,17 +33,10 @@ function switchAdminMode(mode) {
 
     const searchInput = document.getElementById('userSearchInput');
     if (searchInput) {
-        searchInput.placeholder = mode === 'USERS' 
-            ? "Filtrar empleados por nombre, ID o correo..." 
-            : "Filtrar plantas por nombre, NIT o ciudad...";
+        searchInput.placeholder = mode === 'USERS'
+            ? 'Filtrar empleados por nombre, ID o correo...'
+            : 'Filtrar plantas por nombre, NIT o ciudad...';
         searchInput.value = '';
-    }
-
-    const createBtn = document.getElementById('btnCreateUser');
-    if (createBtn) {
-        createBtn.innerHTML = mode === 'USERS' 
-            ? '<i class="fas fa-user-plus"></i> <span class="d-none d-sm-inline">Nuevo Usuario</span>'
-            : '<i class="fas fa-industry"></i> <span class="d-none d-sm-inline">Nueva Planta</span>';
     }
 
     cargarDatosLocales();
@@ -154,22 +92,13 @@ function updateStats() {
     const pendingEl = document.getElementById('stat-pending');
     const activeEl = document.getElementById('stat-active');
     
-    if (pendingEl) {
-        pendingEl.textContent = gsCurrentMode === 'USERS' ? stats.pending : stats.completed;
-    }
-    if (activeEl) {
-        activeEl.textContent = stats.total;
-    }
-    
-    const pendingLab = pendingEl?.closest('.stat-card-mini')?.querySelector('.stat-lab');
-    const totalLab = activeEl?.closest('.stat-card-mini')?.querySelector('.stat-lab');
-    
-    if (pendingLab) {
-        pendingLab.textContent = gsCurrentMode === 'USERS' ? 'Pendientes' : 'Diligenciadas';
-    }
-    if (totalLab) {
-        totalLab.textContent = gsCurrentMode === 'USERS' ? 'Total Empleados' : 'Total Plantas';
-    }
+    if (pendingEl) pendingEl.textContent = gsCurrentMode === 'USERS' ? stats.pending : stats.completed;
+    if (activeEl) activeEl.textContent = stats.total;
+
+    const pendingLab = document.getElementById('stat-label-pending');
+    const totalLab = document.getElementById('stat-label-active');
+    if (pendingLab) pendingLab.textContent = gsCurrentMode === 'USERS' ? 'Pendientes' : 'Diligenciadas';
+    if (totalLab) totalLab.textContent = gsCurrentMode === 'USERS' ? 'Total' : 'Total';
 }
 
 function renderTable(dataToRender) {
@@ -198,11 +127,11 @@ function renderTable(dataToRender) {
     }
 
     const ROL_META = {
-        'ADMIN':          { color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: 'fa-shield-halved' },
+        'ADMIN':          { color: '#dc2626', bg: '#fef2f2', border: '#fecaca', icon: 'fa-user-shield'     },
         'MODERATOR':      { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', icon: 'fa-user-tie'       },
         'USER-P':         { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: 'fa-industry'       },
         'USER-C':         { color: '#06b6d4', bg: '#ecfeff', border: '#a5f3fc', icon: 'fa-magnifying-glass' },
-        'GUEST':          { color: '#64748b', bg: '#f8fafc', border: '#e2e8f0', icon: 'fa-user'            },
+        'GUEST':          { color: '#64748b', bg: '#f8fafc', border: '#e2e8f0', icon: 'fa-user-secret'    },
         'PENDIENTE':      { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: 'fa-user-clock'      },
         'DESHABILITADO':  { color: '#94a3b8', bg: '#f1f5f9', border: '#cbd5e1', icon: 'fa-user-slash'      },
     };
@@ -225,23 +154,25 @@ function renderTable(dataToRender) {
             return `
             <div class="admin-card-lux" style="background:#fff; border:1px solid ${rol === 'DESHABILITADO' ? '#fecaca' : '#f1f5f9'}; border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.04); overflow:hidden; display:flex; flex-direction:column;">
                 <div style="background:${rol === 'DESHABILITADO' ? 'linear-gradient(135deg,#fff5f5 0%,#fee2e2 100%)' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)'}; padding:16px; display:flex; align-items:center; gap:12px; border-bottom:1px solid ${rol === 'DESHABILITADO' ? '#fecaca' : '#f1f5f9'};">
-                    <div style="width:44px; height:44px; border-radius:50%; background:${meta.bg}; border:2px solid ${meta.border}; display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:800; color:${meta.color}; flex-shrink:0;">${initial}</div>
+                    <div style="width:44px; height:44px; border-radius:50%; background:${meta.bg}; border:2px solid ${meta.border}; display:flex; align-items:center; justify-content:center; font-size:1.1rem; color:${meta.color}; flex-shrink:0;">
+                        <i class="fas ${isPlant ? 'fa-user-secret' : meta.icon}"></i>
+                    </div>
                     <div style="flex:1; min-width:0;">
                         <div style="font-weight:800; font-size:0.88rem; color:#0f172a; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
                         <div style="font-family:'JetBrains Mono', monospace; font-size:0.65rem; color:#94a3b8; font-weight:600;"># ${id}</div>
                     </div>
-                    <span style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border}; padding:3px 9px; border-radius:20px; font-size:0.6rem; font-weight:800; text-transform:uppercase; display:flex; align-items:center; gap:5px;">
-                        <i class="fas ${isPlant ? 'fa-industry' : meta.icon}"></i> ${rol}
+                    <span style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border}; padding:3px 9px; border-radius:20px; font-size:0.6rem; font-weight:800; text-transform:uppercase;">
+                        ${rol}
                     </span>
                 </div>
                 <div style="padding:16px; flex:1; display:flex; flex-direction:column; gap:8px;">
                     <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:#475569;">
-                        <i class="fas fa-envelope" style="width:16px; color:#94a3b8;"></i>
-                        <span style="overflow:hidden; text-overflow:ellipsis;">${email || '—'}</span>
+                        ${email ? `<a href="mailto:${email}" title="Enviar correo" style="color:#94a3b8;flex-shrink:0;"><i class="fas fa-envelope"></i></a>
+                        <span style="overflow:hidden; text-overflow:ellipsis;">${email}</span>` : `<i class="fas fa-envelope" style="width:16px; color:#e2e8f0;"></i><span style="color:#cbd5e1;">—</span>`}
                     </div>
                     <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:#475569;">
-                        <i class="fas fa-phone" style="width:16px; color:#94a3b8;"></i>
-                        <span>${item.TELEFONO || '—'}</span>
+                        ${item.TELEFONO ? `<a href="tel:+57${item.TELEFONO.replace(/\D/g,'')}" title="Llamar" style="color:#94a3b8;flex-shrink:0;"><i class="fas fa-phone"></i></a>
+                        <span>${item.TELEFONO}</span>` : `<i class="fas fa-phone" style="width:16px; color:#e2e8f0;"></i><span style="color:#cbd5e1;">—</span>`}
                     </div>
                     ${isPlant ? `
                     <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; color:#475569;">
@@ -252,7 +183,7 @@ function renderTable(dataToRender) {
                 <div style="padding:12px 16px; border-top:1px solid #f8fafc; background:#fafbfc; display:flex; gap:8px;">
                     ${canEdit ? `
                     <button onclick="openEditModal('${id}')" style="flex:1; padding:8px; background:linear-gradient(135deg, #3b82f6, #6366f1); color:#fff; border:none; border-radius:10px; font-size:0.75rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
-                        <i class="fas fa-pen-to-square"></i> Editar
+                        <i class="fas ${isPlant ? 'fa-building-user' : 'fa-user-pen'}"></i> Editar
                     </button>
                     ` : '<div style="text-align:center; font-size:0.7rem; color:#94a3b8; font-weight:700; width:100%;"><i class="fas fa-lock"></i> Protegido</div>'}
                 </div>
@@ -837,4 +768,14 @@ async function openCreateModal() {
             Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
         }
     }
+}
+
+/* ── Toggle KPIs usuarios ── */
+function toggleUsuariosKPIs() {
+    const container = document.getElementById('usuariosKpiContainer');
+    const chevron = document.getElementById('usuariosKpiChevron');
+    if (!container) return;
+    const open = container.style.display === 'none' || container.style.display === '';
+    container.style.display = open ? 'grid' : 'none';
+    if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
 }

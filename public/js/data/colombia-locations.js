@@ -126,28 +126,117 @@ const CIUDADES_COLOMBIA = {
  * Barrios de Cali organizados por comuna
  */
 const BARRIOS_CALI = {
-    1: ['El Calvario', 'San Nicolás', 'Santa Rosa', 'El Guabal', 'Sucre'],
-    2: ['Obrero', 'Belisario Caicedo', 'Santa Fe', 'San Pascual', 'Juanambú'],
-    3: ['San Cayetano', 'El Peñón', 'La Merced', 'Colseguros', 'Santander'],
-    4: ['Salomia', 'San Marino', 'Jorge Isaacs', 'Mariano Ramos', 'Guillermo Valencia'],
-    5: ['Camilo Torres', 'Alfonso López', 'Chiminangos', 'San Pedro', 'Alameda'],
-    6: ['San Joaquín', 'Guayaquil', 'Colón', 'Junín', 'La Esperanza'],
-    7: ['Alfonso Bonilla Aragón', 'El Jardín', 'La Paz', 'Comuneros', 'Poblado I'],
-    8: ['Marroquín', 'Terrón Colorado', 'Nápoles', 'Lourdes', 'Villa del Sur'],
-    9: ['Bretaña', 'Limonar', 'Normandía', 'El Ingenio', 'Valle Grande'],
-    10: ['La Base', 'Los Chorros', 'Meléndez', 'Pance', 'Cañaveralejo'],
-    11: ['Ciudad Jardín', 'Limonar', 'El Ingenio', 'Prados del Limonar', 'Urbanización Colina de San Antonio'],
-    12: ['Belalcázar', 'Cristóbal Colón', 'Caldas', 'Versalles', 'Centenario'],
-    13: ['Pampalinda', 'El Diamante', 'El Vergel', 'Llano Verde', 'Potrero Grande'],
-    14: ['Mariano Ramos', 'Poblado II', 'Los Andes', 'Calipso', 'Manuela Beltrán'],
-    15: ['Mojica', 'Floralia', 'El Retiro', 'Polvorines', 'Castilla'],
-    16: ['Cañaveralejo', 'El Lido', 'La Selva', 'Los Farallones', 'Ciudad Córdoba'],
-    17: ['Ciudad Córdoba', 'El Poblado', 'Los Robles', 'Prados del Norte', 'Menga'],
-    18: ['Caldas', 'Caney', 'Los Lagos', 'Prados del Caney', 'Urbanización Caney'],
-    19: ['Siloé', 'Lleras Camargo', 'Bellavista', 'Montebello', 'Pueblo Joven'],
-    20: ['Siloé Alto', 'Bellavista Alta', 'Montebello Alto', 'Los Chorros', 'Pueblo Joven Alto'],
-    21: ['Pance', 'Los Andes', 'Pance Bajo', 'Pance Alto', 'Bosques de Pance'],
-    22: ['Montebello', 'Los Chorros', 'Bellavista', 'Alto Menga', 'Siloé']
+  1: [
+    'Terrón Colorado', 'Vista Hermosa', 'Aguacatal',
+    'Alto Aguacatal', 'Ulpiano Lloreda'
+  ],
+
+  2: [
+    'Granada', 'Versalles', 'Centenario',
+    'Juanambú', 'Santa Mónica Residencial'
+  ],
+
+  3: [
+    'San Antonio', 'El Peñón', 'San Cayetano',
+    'La Merced', 'El Calvario'
+  ],
+
+  4: [
+    'Salomia', 'Santander', 'Porvenir',
+    'La Esmeralda', 'Jorge Isaacs'
+  ], // confirmado por alcaldía :contentReference[oaicite:1]{index=1}
+
+  5: [
+    'Chiminangos I', 'Chiminangos II', 'Los Andes',
+    'Metropolitano del Norte', 'Los Guayacanes'
+  ], // :contentReference[oaicite:2]{index=2}
+
+  6: [
+    'Floralia', 'Petecuy I', 'Petecuy II',
+    'Los Guaduales', 'San Luis'
+  ], // :contentReference[oaicite:3]{index=3}
+
+  7: [
+    'Alfonso López I', 'Alfonso López II', 'Alfonso López III',
+    'Puerto Mallarino', 'Fepicol'
+  ], // :contentReference[oaicite:4]{index=4}
+
+  8: [
+    'La Base', 'Villacolombia', 'Municipal',
+    'Simón Bolívar', 'Primitivo Crespo'
+  ], // :contentReference[oaicite:5]{index=5}
+
+  9: [
+    'Bretaña', 'Champagnat', 'Tequendama',
+    'Nueva Granada', 'Junín'
+  ],
+
+  10: [
+    'Cristóbal Colón', 'El Dorado', 'Santa Elena',
+    'Las Acacias', 'Colseguros'
+  ], // :contentReference[oaicite:6]{index=6}
+
+  11: [
+    'Ciudad Modelo', 'El Jardín', 'La Fortaleza',
+    'Los Sauces', 'Villa del Sur'
+  ], // :contentReference[oaicite:7]{index=7}
+
+  12: [
+    'Nueva Floresta', 'Doce de Octubre',
+    'El Rodeo', 'La Independencia'
+  ],
+
+  13: [
+    'Calipso', 'El Diamante', 'El Poblado II',
+    'Los Comuneros II', 'Charco Azul'
+  ], // :contentReference[oaicite:8]{index=8}
+
+  14: [
+    'Alfonso Bonilla Aragón', 'Manuela Beltrán',
+    'Las Orquídeas', 'Los Naranjos', 'Marroquín'
+  ], // :contentReference[oaicite:9]{index=9}
+
+  15: [
+    'Ciudad Córdoba', 'El Retiro', 'El Vallado',
+    'Mojica', 'Los Comuneros I'
+  ], // :contentReference[oaicite:10]{index=10}
+
+  16: [
+    'Antonio Nariño', 'Ciudad 2000',
+    'La Hacienda', 'Valle del Lili'
+  ],
+
+  17: [
+    'Ciudad Jardín', 'El Caney',
+    'Ciudadela Comfandi', 'Valle del Lili',
+    'Cañaverales'
+  ], // :contentReference[oaicite:11]{index=11}
+
+  18: [
+    'Meléndez', 'Buenos Aires', 'Nápoles',
+    'Los Chorros', 'Alto Nápoles'
+  ], // :contentReference[oaicite:12]{index=12}
+
+  19: [
+    'El Refugio', 'Pampalinda',
+    'La Selva', 'Tequendama', 'Bellavista'
+  ],
+
+  20: [
+    'Siloé', 'Belén', 'Pueblo Joven',
+    'Lleras Camargo'
+  ], // :contentReference[oaicite:13]{index=13}
+
+  21: [
+    'Desepaz', 'Potrero Grande',
+    'Pizamos I', 'Pizamos II',
+    'Valle Grande'
+  ], // :contentReference[oaicite:14]{index=14}
+
+  22: [
+    'Pance', 'Ciudad Campestre',
+    'Parcelaciones Pance', 'Bochalema'
+  ]
 };
 
 /**

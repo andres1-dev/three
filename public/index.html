@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
-  <title>Novedades - Grupo TDM</title>
+  <title>Reportes - Grupo TDM</title>
   <base target="_top">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
   <link rel="manifest" href="manifest.json">
@@ -16,20 +16,23 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="preconnect" href="https://stackpath.bootstrapcdn.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
 
   <!-- ── Vendor CSS ── -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"></noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
 
   <!-- ── App CSS (orden importa) ── -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/footer.css">
-  
-  <!-- ── Supabase Realtime ── -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
   <script>
@@ -38,6 +41,33 @@
       if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
     })();
   </script>
+  <style>
+    #viewToggle .view-toggle-btn.active {
+      background-color: white !important;
+      background: white !important;
+    }
+    .wrapper-dashboard {
+      margin-top: 80px;
+      max-width: 1400px;
+      width: 96%;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 2rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+    @media (min-width: 768px) {
+      .wrapper-dashboard { margin-top: 100px; padding: 3rem; }
+    }
+    @media (max-width: 767px) {
+      .wrapper-dashboard {
+        width: 100%; border-radius: 0;
+        border-left: none; border-right: none; box-shadow: none;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -47,10 +77,8 @@
   <!-- ══════════════════════════════════════════════════════════════════════
        CONTENIDO PRINCIPAL
        ══════════════════════════════════════════════════════════════════════ -->
-  <div class="container-fluid">
+  <div class="wrapper-dashboard">
 
-
-    <main class="content-wrapper px-2">
 
       <!-- ══════════════════════════════════════════════════════════════════
            FORMULARIO PRINCIPAL — Búsqueda y detalle del lote
@@ -681,11 +709,11 @@ RESULTADOS:
               <i class="fas fa-camera file-dropzone__icon"></i>
               <div class="file-dropzone__text">
                 <span class="file-dropzone__action">Haz clic para subir soporte técnico</span>
-                <span class="file-dropzone__hint">Imagen (JPG, PNG, WEBP) o Video (MP4, MOV - Máx 10 seg, 10MB)</span>
+              <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
               </div>
               <span class="file-dropzone__name" id="soporteName"></span>
             </div>
-            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*,video/mp4,video/quicktime">
+            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*">
           </div>
 
           <div class="mb-3 text-center">
@@ -994,30 +1022,30 @@ RESULTADOS:
           </div>
 
           <div class="mb-3">
-            <label for="departamentoPlanta" class="form-label">Departamento: <span style="color:#ef4444;">*</span></label>
+            <label for="departamentoPlanta" class="form-label">Departamento:</label>
             <div class="input-with-icon">
               <i class="fas fa-map input-icon"></i>
-              <select id="departamentoPlanta" class="form-control" required>
+              <select id="departamentoPlanta" class="form-control">
                 <option value="">Seleccione departamento</option>
               </select>
             </div>
           </div>
 
           <div class="mb-3" id="ciudadContainer" style="display:none;">
-            <label for="ciudadPlanta" class="form-label">Ciudad: <span style="color:#ef4444;">*</span></label>
+            <label for="ciudadPlanta" class="form-label">Ciudad:</label>
             <div class="input-with-icon">
               <i class="fas fa-city input-icon"></i>
-              <select id="ciudadPlanta" class="form-control" required>
+              <select id="ciudadPlanta" class="form-control">
                 <option value="">Seleccione ciudad</option>
               </select>
             </div>
           </div>
 
           <div class="mb-3" id="barrioContainer" style="display:none;">
-            <label for="barrioPlanta" class="form-label">Barrio: <span style="color:#ef4444;">*</span></label>
+            <label for="barrioPlanta" class="form-label">Barrio:</label>
             <div class="input-with-icon">
               <i class="fas fa-home input-icon"></i>
-              <select id="barrioPlanta" class="form-control" required>
+              <select id="barrioPlanta" class="form-control">
                 <option value="">Seleccione barrio</option>
               </select>
               <input type="text" id="barrioPlantaManual" class="form-control" placeholder="Escribe el nombre del barrio" style="display:none;">
@@ -1167,22 +1195,20 @@ RESULTADOS:
             
             <!-- Checkbox 1: Política de Datos -->
             <div class="mb-3" style="display:flex; align-items:start; gap:12px;">
-              <input type="checkbox" id="checkPoliticaDatos" required style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+              <input type="checkbox" id="checkPoliticaDatos" style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
               <label for="checkPoliticaDatos" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
                 Acepto la 
                 <a href="#" onclick="mostrarPoliticaDatos(); return false;" style="color:#3b82f6; font-weight:600; text-decoration:none; border-bottom:1px dashed #3b82f6; text-transform:none !important;">
                   política de tratamiento de datos personales
                 </a>
-                <span style="color:#ef4444; margin-left:4px; font-weight:700;">*</span>
               </label>
             </div>
 
-            <!-- Checkbox 2: Notificaciones (Obligatorio) -->
+            <!-- Checkbox 2: Notificaciones (Opcional) -->
             <div style="display:flex; align-items:start; gap:12px;">
-              <input type="checkbox" id="checkNotificaciones" required style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+              <input type="checkbox" id="checkNotificaciones" style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
               <label for="checkNotificaciones" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
                 Acepto recibir notificaciones operativas del sistema
-                <span style="color:#ef4444; margin-left:4px; font-weight:700;">*</span>
               </label>
             </div>
 
@@ -1197,11 +1223,11 @@ RESULTADOS:
       </form>
 
   </div>
-  </div>
 
 
   <!-- ── Vendor JS ── -->
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 
   <!-- ══════════════════════════════════════════════════════════════════
@@ -1454,9 +1480,7 @@ RESULTADOS:
   <script src="js/notifications.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/app.js"></script>
-  
-  <!-- ── Sistema de Notificaciones Push Supabase ── -->
-  <script src="js/push-supabase.js"></script>
+
 
 </body>
 

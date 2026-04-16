@@ -43,7 +43,7 @@ function initPlantasMasks() {
     initLocationFilters();
 }
 
-document.addEventListener('DOMContentLoaded', initPlantasMasks);
+// initPlantasMasks se llama desde inicializarFormulario() en gestion-planta.html (window.onload)
 
 /**
  * Inicializa los filtros en cascada de ubicación (País -> Departamento -> Ciudad -> Barrio/Comuna)
@@ -52,10 +52,7 @@ function initLocationFilters() {
     const departamentoSelect = document.getElementById('departamentoPlanta');
     const ciudadSelect = document.getElementById('ciudadPlanta');
     const ciudadContainer = document.getElementById('ciudadContainer');
-    const barrioSelect = document.getElementById('barrioPlanta');
     const barrioContainer = document.getElementById('barrioContainer');
-    const barrioManualInput = document.getElementById('barrioPlantaManual');
-    const barrioToggleLink = document.getElementById('barrioToggleLink');
     const comunaInput = document.getElementById('comunaPlanta');
     const comunaContainer = document.getElementById('comunaContainer');
     const comunaLabel = document.getElementById('comunaLabel');
@@ -79,8 +76,7 @@ function initLocationFilters() {
         
         // Reset y ocultar campos siguientes
         ciudadSelect.innerHTML = '<option value="">Seleccione ciudad</option>';
-        if (barrioSelect) barrioSelect.innerHTML = '<option value="">Seleccione barrio</option>';
-        if (barrioManualInput) barrioManualInput.value = '';
+        resetBarrioField();
         if (comunaInput) comunaInput.value = '';
         
         if (departamento) {
@@ -114,15 +110,7 @@ function initLocationFilters() {
         const ciudad = this.value;
         
         // Reset barrio y comuna
-        if (barrioSelect) {
-            barrioSelect.innerHTML = '<option value="">Seleccione barrio</option>';
-            barrioSelect.style.display = 'none';
-        }
-        if (barrioManualInput) {
-            barrioManualInput.value = '';
-            barrioManualInput.style.display = 'none';
-        }
-        if (barrioToggleLink) barrioToggleLink.style.display = 'none';
+        resetBarrioField();
         if (comunaInput) {
             comunaInput.value = '';
             comunaInput.readOnly = true;
@@ -149,27 +137,16 @@ function initLocationFilters() {
                 if (comunaContainer) comunaContainer.style.display = 'none';
             }
 
-            // Cargar barrios
+            // Cargar barrios - AUTOMÁTICO
             if (typeof getBarriosPorCiudad !== 'undefined') {
                 const barrios = getBarriosPorCiudad(ciudad);
                 
                 if (barrios.length > 0) {
-                    // Hay barrios predefinidos - mostrar selector
-                    barrios.forEach(barrio => {
-                        const option = document.createElement('option');
-                        option.value = barrio;
-                        option.textContent = barrio;
-                        if (barrioSelect) barrioSelect.appendChild(option);
-                    });
-                    if (barrioSelect) barrioSelect.style.display = 'block';
-                    if (barrioToggleLink) barrioToggleLink.style.display = 'block';
+                    // Hay barrios predefinidos - crear SELECT automáticamente
+                    createBarrioSelect(barrios);
                 } else {
-                    // No hay barrios predefinidos - mostrar input manual directamente
-                    if (barrioManualInput) {
-                        barrioManualInput.style.display = 'block';
-                        barrioManualInput.placeholder = 'Escribe el nombre del barrio';
-                        barrioManualInput.required = true;
-                    }
+                    // No hay barrios predefinidos - crear INPUT automáticamente
+                    createBarrioInput();
                     
                     // Si la ciudad tiene comunas, hacer el campo editable y obligatorio
                     if (typeof ciudadTieneComunas !== 'undefined' && ciudadTieneComunas(ciudad) && comunaInput) {
@@ -197,103 +174,94 @@ function initLocationFilters() {
             if (comunaContainer) comunaContainer.style.display = 'none';
         }
     });
-
-    // Listener: Cambio de barrio auto-llena comuna
-    if (barrioSelect) {
-        barrioSelect.addEventListener('change', function() {
-            const barrio = this.value;
-            const ciudad = ciudadSelect.value;
-
-            if (barrio && comunaInput && typeof ciudadTieneComunas !== 'undefined' && ciudadTieneComunas(ciudad)) {
-                if (ciudad === 'Cali' && typeof getComunaPorBarrio !== 'undefined') {
-                    const comuna = getComunaPorBarrio(barrio);
-                    if (comuna) {
-                        comunaInput.value = comuna;
-                    }
-                }
-            }
-        });
-    }
 }
 
 /**
- * Alterna entre selector de barrio y entrada manual
+ * Resetea el campo de barrio (lo convierte en select vacío)
  */
-function toggleBarrioManual() {
-    const barrioSelect = document.getElementById('barrioPlanta');
-    const barrioManualInput = document.getElementById('barrioPlantaManual');
-    const barrioToggleLink = document.getElementById('barrioToggleLink');
-    const comunaInput = document.getElementById('comunaPlanta');
-    const ciudadSelect = document.getElementById('ciudadPlanta');
+function resetBarrioField() {
+    const container = document.querySelector('#barrioPlanta')?.parentElement;
+    if (!container) return;
     
-    if (!barrioSelect || !barrioManualInput) return;
+    const icon = container.querySelector('.fas');
+    container.innerHTML = '';
+    if (icon) container.appendChild(icon);
     
-    const ciudad = ciudadSelect ? ciudadSelect.value : '';
-    const tieneComunas = typeof ciudadTieneComunas !== 'undefined' && ciudadTieneComunas(ciudad);
+    const select = document.createElement('select');
+    select.id = 'barrioPlanta';
+    select.className = 'form-control';
+    select.required = true;
+    select.innerHTML = '<option value="">Seleccione barrio</option>';
+    container.appendChild(select);
+}
+
+/**
+ * Crea un SELECT con los barrios predefinidos
+ */
+function createBarrioSelect(barrios) {
+    const container = document.querySelector('#barrioPlanta')?.parentElement;
+    if (!container) return;
     
-    if (barrioSelect.style.display === 'none') {
-        // Volver a selector
-        barrioSelect.style.display = 'block';
-        barrioSelect.required = true;
-        barrioManualInput.style.display = 'none';
-        barrioManualInput.required = false;
-        barrioManualInput.value = '';
-        
-        // Volver comuna a readonly si la ciudad tiene comunas
-        if (tieneComunas && comunaInput) {
-            comunaInput.readOnly = true;
-            comunaInput.required = false;
-            comunaInput.placeholder = 'Se llena automáticamente';
-            comunaInput.value = '';
-        }
-        
-        if (barrioToggleLink) {
-            barrioToggleLink.innerHTML = `
-                <a href="#" onclick="toggleBarrioManual(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
-                    <i class="codicon codicon-edit" style="font-size:0.75rem;"></i> ¿No encuentras tu barrio?
-                </a>
-            `;
-        }
-    } else {
-        // Cambiar a manual
-        barrioSelect.style.display = 'none';
-        barrioSelect.required = false;
-        barrioManualInput.style.display = 'block';
-        barrioManualInput.required = true;
-        barrioManualInput.focus();
-        
-        // Si la ciudad tiene comunas, hacer el campo editable y obligatorio
-        if (tieneComunas && comunaInput) {
-            comunaInput.readOnly = false;
-            comunaInput.required = true;
-            comunaInput.placeholder = 'Escribe la comuna o localidad';
-            comunaInput.value = '';
-            
-            // Actualizar hint
-            const comunaHint = document.getElementById('comunaHint');
-            const comunaLabel = document.getElementById('comunaLabel');
-            const nombreCampo = typeof getNombreCampoComuna !== 'undefined' ? getNombreCampoComuna(ciudad) : 'Comuna';
-            
-            if (comunaHint) {
-                comunaHint.innerHTML = `<span style="color:#ef4444;">*</span> Obligatorio al escribir barrio manualmente`;
-            }
-            if (comunaLabel) {
-                comunaLabel.textContent = nombreCampo;
-            }
-            const comunaAsterisk = document.getElementById('comunaAsterisk');
-            if (comunaAsterisk) {
-                comunaAsterisk.style.display = 'inline';
+    const icon = container.querySelector('.fas');
+    container.innerHTML = '';
+    if (icon) container.appendChild(icon);
+    
+    const select = document.createElement('select');
+    select.id = 'barrioPlanta';
+    select.className = 'form-control';
+    select.required = true;
+    
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Seleccione barrio';
+    select.appendChild(defaultOption);
+    
+    barrios.forEach(barrio => {
+        const option = document.createElement('option');
+        option.value = barrio;
+        option.textContent = barrio;
+        select.appendChild(option);
+    });
+    
+    container.appendChild(select);
+    
+    // Agregar listener para auto-llenar comuna
+    select.addEventListener('change', function() {
+        const barrio = this.value;
+        const ciudadSelect = document.getElementById('ciudadPlanta');
+        const ciudad = ciudadSelect?.value;
+        const comunaInput = document.getElementById('comunaPlanta');
+
+        if (barrio && comunaInput && typeof ciudadTieneComunas !== 'undefined' && ciudadTieneComunas(ciudad)) {
+            if (ciudad === 'Cali' && typeof getComunaPorBarrio !== 'undefined') {
+                const comuna = getComunaPorBarrio(barrio);
+                if (comuna) {
+                    comunaInput.value = comuna;
+                }
             }
         }
-        
-        if (barrioToggleLink) {
-            barrioToggleLink.innerHTML = `
-                <a href="#" onclick="toggleBarrioManual(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
-                    <i class="codicon codicon-arrow-left" style="font-size:0.75rem;"></i> Volver a lista de barrios
-                </a>
-            `;
-        }
-    }
+    });
+}
+
+/**
+ * Crea un INPUT para escribir el barrio manualmente
+ */
+function createBarrioInput() {
+    const container = document.querySelector('#barrioPlanta')?.parentElement;
+    if (!container) return;
+    
+    const icon = container.querySelector('.fas');
+    container.innerHTML = '';
+    if (icon) container.appendChild(icon);
+    
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.id = 'barrioPlanta';
+    input.className = 'form-control';
+    input.placeholder = 'Escribe el nombre del barrio';
+    input.required = true;
+    
+    container.appendChild(input);
 }
 
 /**
@@ -721,7 +689,6 @@ function parsearDireccion(direccion) {
 }
 
 // Exponer funciones globalmente
-window.toggleBarrioManual = toggleBarrioManual;
 window.respuestaUbicacionTaller = respuestaUbicacionTaller;
 window.activarGpsPlanta = activarGpsPlanta;
 window.construirDireccion = construirDireccion;
@@ -735,26 +702,84 @@ window.handleActualizarDatosSubmit = handleActualizarDatosSubmit;
  * Maneja el envío del formulario de Actualizar Datos de Planta.
  */
 async function handleActualizarDatosSubmit(e) {
-    console.log('[handleActualizarDatosSubmit] Función llamada');
+    console.log('[handleActualizarDatosSubmit] ===== INICIO =====');
+    console.log('[handleActualizarDatosSubmit] Evento recibido:', e);
+    console.log('[handleActualizarDatosSubmit] Tipo de evento:', e.type);
+    console.log('[handleActualizarDatosSubmit] Target:', e.target);
+    
     e.preventDefault();
     console.log('[handleActualizarDatosSubmit] preventDefault ejecutado');
+    
+    // Verificar que sendToSupabase existe
+    if (typeof sendToSupabase === 'undefined') {
+        console.error('[handleActualizarDatosSubmit] ERROR: sendToSupabase no está definida');
+        alert('Error: La función sendToSupabase no está disponible. Recarga la página.');
+        return;
+    }
+    console.log('[handleActualizarDatosSubmit] sendToSupabase está disponible:', typeof sendToSupabase);
 
     // Verificar si el constructor está abierto ANTES de validar
     const constructor = document.getElementById('constructorDireccion');
-    console.log('[handleActualizarDatosSubmit] Constructor display:', constructor?.style.display);
-    
-    if (constructor && constructor.style.display !== 'none') {
-        console.log('[handleActualizarDatosSubmit] Constructor abierto - deteniendo');
+    if (constructor && constructor.style.display === 'block') {
+        console.log('[handleActualizarDatosSubmit] Constructor de dirección está abierto');
         constructor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        Swal.fire({
+            icon: 'info',
+            title: 'Constructor abierto',
+            text: 'Confirma o cancela el constructor de dirección antes de guardar.',
+            confirmButtonColor: '#3F51B5',
+            confirmButtonText: 'Entendido'
+        });
+        return;
+    }
+    
+    // Validar checkboxes obligatorios
+    console.log('[handleActualizarDatosSubmit] Validando checkboxes...');
+    const checkPolitica = document.getElementById('checkPoliticaDatos');
+    const checkNotif = document.getElementById('checkNotificaciones');
+    
+    console.log('[handleActualizarDatosSubmit] Checkboxes:', {
+        politica: checkPolitica?.checked,
+        notificaciones: checkNotif?.checked
+    });
+    
+    if (!checkPolitica || !checkPolitica.checked) {
+        console.log('[handleActualizarDatosSubmit] Checkbox de política no marcado');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Política de datos',
+            text: 'Debes aceptar la política de tratamiento de datos personales para continuar.',
+            confirmButtonColor: '#3F51B5',
+            confirmButtonText: 'Entendido'
+        });
+        checkPolitica?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    
+    if (!checkNotif || !checkNotif.checked) {
+        console.log('[handleActualizarDatosSubmit] Checkbox de notificaciones no marcado');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Notificaciones',
+            text: 'Debes aceptar recibir notificaciones operativas del sistema para continuar.',
+            confirmButtonColor: '#3F51B5',
+            confirmButtonText: 'Entendido'
+        });
+        checkNotif?.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }
 
-    const btn      = e.target.querySelector('button[type="submit"]');
+    console.log('[handleActualizarDatosSubmit] Buscando botón submit...');
+    const btn = e.target.querySelector('button[type="submit"]');
+    console.log('[handleActualizarDatosSubmit] Botón encontrado:', btn);
+    
+    console.log('[handleActualizarDatosSubmit] Buscando campos del formulario...');
     const inputTel = document.getElementById('telefonoPlanta');
     const inputCed = document.getElementById('cedulaPlanta');
+    console.log('[handleActualizarDatosSubmit] Campos encontrados:', { inputTel, inputCed });
 
     if (!inputTel || !inputCed) {
-        console.error('[handleActualizarDatosSubmit] Campos no encontrados:', { inputTel, inputCed });
+        console.error('[handleActualizarDatosSubmit] ERROR: Campos no encontrados:', { inputTel, inputCed });
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -783,25 +808,35 @@ async function handleActualizarDatosSubmit(e) {
     const departamento = document.getElementById('departamentoPlanta')?.value || '';
     const ciudad       = document.getElementById('ciudadPlanta')?.value || '';
     
-    // Capturar barrio: manual o selector
-    const barrioSelect = document.getElementById('barrioPlanta');
-    const barrioManual = document.getElementById('barrioPlantaManual');
-    
-    // Verificar cuál está visible y tiene valor
-    let barrio = '';
-    if (barrioManual && barrioManual.style.display !== 'none' && barrioManual.value.trim()) {
-        barrio = barrioManual.value.trim();
-    } else if (barrioSelect && barrioSelect.value) {
-        barrio = barrioSelect.value;
-    }
+    // Capturar barrio: siempre del campo #barrioPlanta (sea select o input)
+    const barrioField = document.getElementById('barrioPlanta');
+    const barrio = barrioField?.value.trim() || '';
     
     console.log('[handleActualizarDatosSubmit] Captura de barrio:', {
-        barrioSelectDisplay: barrioSelect?.style.display,
-        barrioSelectValue: barrioSelect?.value,
-        barrioManualDisplay: barrioManual?.style.display,
-        barrioManualValue: barrioManual?.value,
-        barrioFinal: barrio
+        barrioFieldExists: !!barrioField,
+        barrioFieldType: barrioField?.tagName,
+        barrioFieldValue: barrioField?.value,
+        barrioTrimmed: barrio,
+        barrioLength: barrio.length
     });
+    
+    // Validar que el barrio no esté vacío
+    if (!barrio) {
+        console.error('[handleActualizarDatosSubmit] Barrio vacío');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Barrio requerido',
+            text: 'Por favor ingresa o selecciona el barrio.',
+            confirmButtonColor: '#3F51B5',
+            confirmButtonText: 'Entendido'
+        });
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-save"></i> Guardar Datos';
+        const barrioContainer = document.getElementById('barrioContainer');
+        if (barrioContainer) barrioContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        if (barrioField) barrioField.focus();
+        return;
+    }
     
     const comuna       = document.getElementById('comunaPlanta')?.value.trim() || '';
     const contacto     = document.getElementById('contactoPlanta')?.value.trim() || '';
@@ -823,9 +858,12 @@ async function handleActualizarDatosSubmit(e) {
 
     // 1. Actualizar localStorage ANTES de esperar al GAS — la UI se desbloquea al instante
     if (typeof currentUser !== 'undefined' && currentUser && currentUser.ROL === 'GUEST') {
-        currentUser.EMAIL     = emailPlanta;
-        currentUser.TELEFONO  = rawTelefono;
-        currentUser.DIRECCION = direccion;
+        currentUser.EMAIL        = emailPlanta;
+        currentUser.TELEFONO     = rawTelefono;
+        currentUser.DIRECCION    = direccion;
+        currentUser.DEPARTAMENTO = departamento;
+        currentUser.CIUDAD       = ciudad;
+        currentUser.BARRIO       = barrio;
         localStorage.setItem('sispro_user', JSON.stringify(currentUser));
     }
 
@@ -844,9 +882,12 @@ async function handleActualizarDatosSubmit(e) {
         LOCALIZACION: localizacion,
         NOTIFICACIONES: aceptaNotificaciones
     };
-    const idx = currentPlantas.findIndex(p => p.PLANTA === nombrePlanta);
-    if (idx !== -1) currentPlantas[idx] = nuevaPlanta;
-    else currentPlantas.push(nuevaPlanta);
+    // Actualizar currentPlantas si está disponible (solo en index.html)
+    if (typeof currentPlantas !== 'undefined' && Array.isArray(currentPlantas)) {
+        const idx = currentPlantas.findIndex(p => p.PLANTA === nombrePlanta);
+        if (idx !== -1) currentPlantas[idx] = nuevaPlanta;
+        else currentPlantas.push(nuevaPlanta);
+    }
 
     // 2. Sincronizar con Supabase ANTES de mostrar éxito
     const payload = {
@@ -876,16 +917,18 @@ async function handleActualizarDatosSubmit(e) {
             throw new Error(result?.message || 'Error al guardar en la base de datos');
         }
         
-        // 3. Mostrar éxito y recargar
+        // 3. Mostrar éxito y redirigir a index.html
         Swal.fire({
             title: '¡Datos guardados!',
-            text: 'Tu información ha sido registrada.',
+            text: 'Tu información ha sido registrada correctamente.',
             icon: 'success',
             timer: 1500,
             showConfirmButton: false,
         });
 
-        setTimeout(() => window.location.reload(), 1500);
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 1500);
         
     } catch (err) {
         console.error('[handleActualizarDatosSubmit] Error al guardar:', err);

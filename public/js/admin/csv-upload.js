@@ -14,43 +14,118 @@ function createFloatingCSVButton() {
   // Verificar si ya existe
   if (document.getElementById('floating-csv-btn')) return;
   
-  const floatingBtn = document.createElement('button');
-  floatingBtn.id = 'floating-csv-btn';
-  floatingBtn.onclick = openCSVUploadModal;
-  floatingBtn.title = 'Cargar CSV de lotes';
-  floatingBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
-  floatingBtn.style.cssText = `
+  // Contenedor del speed-dial
+  const container = document.createElement('div');
+  container.id = 'floating-csv-btn';
+  container.style.cssText = `
     position: fixed;
     bottom: 24px;
     right: 24px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
-    border: none;
-    color: white;
-    font-size: 1.3rem;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1000;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 10px;
+    z-index: 1000;
+  `;
+
+  // Opciones del menú (ocultas por defecto)
+  const options = [
+    { label: 'Inventario de proceso', icon: 'fa-file-csv',    action: 'modal' },
+    { label: 'Cargar barras',         icon: 'fa-barcode',     action: 'barras' },
+    { label: 'Cargar curvas',         icon: 'fa-chart-line',  action: 'curva' },
+  ];
+
+  const menuEl = document.createElement('div');
+  menuEl.id = 'floating-csv-menu';
+  menuEl.style.cssText = `
+    display: none;
+    flex-direction: column-reverse;
+    gap: 8px;
+    align-items: flex-end;
+  `;
+
+  options.forEach(opt => {
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex; align-items:center; gap:10px; cursor:pointer;`;
+
+    const label = document.createElement('span');
+    label.textContent = opt.label;
+    label.style.cssText = `
+      background: white;
+      color: #1e293b;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+      white-space: nowrap;
+      text-transform: none;
+      font-family: 'Inter', system-ui, sans-serif;
+    `;
+
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3f51b5, #303f9f);
+      border: none; color: white;
+      font-size: 1.3rem; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(63,81,181,0.35);
+      display: flex; align-items: center; justify-content: center;
+      transition: transform 0.2s;
+    `;
+    btn.innerHTML = `<i class="fas ${opt.icon}"></i>`;
+    btn.onmouseover = () => btn.style.transform = 'scale(1.1)';
+    btn.onmouseout  = () => btn.style.transform = 'scale(1)';
+
+    row.onclick = () => {
+      toggleCSVMenu(false);
+      if (opt.action === 'modal')   window.location.href = 'sispro.html';
+      if (opt.action === 'barras')  window.location.href = 'barras.html';
+      if (opt.action === 'curva')   window.location.href = 'curva.html';
+    };
+
+    row.appendChild(label);
+    row.appendChild(btn);
+    menuEl.appendChild(row);
+  });
+
+  // Botón principal
+  const mainBtn = document.createElement('button');
+  mainBtn.style.cssText = `
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3f51b5, #303f9f);
+    border: none; color: white;
+    font-size: 1.3rem; cursor: pointer;
+    box-shadow: 0 8px 24px rgba(63,81,181,0.4);
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    display: flex; align-items: center; justify-content: center;
     outline: none;
   `;
-  
-  floatingBtn.onmouseover = function() {
-    this.style.transform = 'scale(1.1) translateY(-2px)';
-    this.style.boxShadow = '0 12px 32px rgba(59, 130, 246, 0.5)';
-  };
-  
-  floatingBtn.onmouseout = function() {
-    this.style.transform = 'scale(1) translateY(0)';
-    this.style.boxShadow = '0 8px 24px rgba(59, 130, 246, 0.4)';
-  };
-  
-  document.body.appendChild(floatingBtn);
+  mainBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i>';
+  mainBtn.title = 'Carga masiva';
+  mainBtn.onclick = () => toggleCSVMenu();
+  mainBtn.onmouseover = () => { mainBtn.style.transform = 'scale(1.1) translateY(-2px)'; };
+  mainBtn.onmouseout  = () => { mainBtn.style.transform = 'scale(1) translateY(0)'; };
+
+  container.appendChild(menuEl);
+  container.appendChild(mainBtn);
+  document.body.appendChild(container);
+  menuEl.dataset.open = 'false';
+
+  // Cerrar al hacer clic fuera
+  document.addEventListener('click', e => {
+    if (!container.contains(e.target)) toggleCSVMenu(false);
+  });
+}
+
+function toggleCSVMenu(force) {
+  const menu = document.getElementById('floating-csv-menu');
+  if (!menu) return;
+  const open = force !== undefined ? force : menu.dataset.open !== 'true';
+  menu.dataset.open = open ? 'true' : 'false';
+  menu.style.display = open ? 'flex' : 'none';
 }
 
 // Crear el botón al cargar el script
@@ -69,192 +144,190 @@ function openCSVUploadModal() {
   csvUploadModal = document.createElement('div');
   csvUploadModal.style.cssText = `
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.55);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
     padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   `;
-  
+
   csvUploadModal.innerHTML = `
     <div style="
       background: white;
-      border-radius: 12px;
+      border-radius: 16px;
       width: 100%;
-      max-width: 600px;
+      max-width: 560px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.25);
     ">
+      <!-- Header -->
       <div style="
-        padding: 20px 24px;
+        padding: 24px 28px 20px;
         border-bottom: 1px solid #e2e8f0;
         display: flex;
         align-items: center;
         justify-content: space-between;
       ">
-        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #1e293b;">
-          <i class="fas fa-file-csv" style="color: #3b82f6; margin-right: 8px;"></i>
-          Cargar CSV de Lotes
-        </h3>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="
+            width: 44px; height: 44px;
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+          ">
+            <img src="icons/app.svg" alt="Logo" style="width:40px; height:40px; object-fit:contain;">
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.1rem; font-weight:700; color:#1e293b; letter-spacing:-0.3px; text-transform:none;">
+              Inventario de Proceso
+            </h3>
+            <p style="margin:0; font-size:0.8rem; color:#64748b; font-weight:400; text-transform:none;">
+              Carga masiva a Supabase · SISPRO
+            </p>
+          </div>
+        </div>
         <button onclick="closeCSVUploadModal()" style="
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          color: #94a3b8;
-          cursor: pointer;
-          padding: 0;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          border-radius: 6px;
-          transition: all 0.2s;
-        " onmouseover="this.style.background='#f1f5f9'; this.style.color='#1e293b';" 
+          background: none; border: none;
+          width: 32px; height: 32px;
+          border-radius: 8px;
+          display: flex; align-items: center; justify-content: center;
+          color: #94a3b8; font-size: 1.1rem; cursor: pointer;
+        " onmouseover="this.style.background='#f1f5f9'; this.style.color='#475569';"
            onmouseout="this.style.background='none'; this.style.color='#94a3b8';">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      
-      <div style="padding: 24px;">
-        <div style="margin-bottom: 20px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <label style="font-weight: 600; color: #334155; font-size: 0.875rem;">
-              Seleccionar archivo CSV:
-            </label>
-            <button type="button" id="csv-info-toggle" onclick="toggleCSVInfo()" style="
-              background: #eff6ff;
-              border: 1px solid #bfdbfe;
-              border-radius: 6px;
-              padding: 4px 10px;
-              color: #3b82f6;
-              font-size: 0.75rem;
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              gap: 6px;
-              transition: all 0.2s;
-            " onmouseover="this.style.background='#dbeafe';" onmouseout="this.style.background='#eff6ff';">
-              <i class="fas fa-info-circle"></i>
-              <span>Ver formato</span>
-            </button>
-          </div>
-          
-          <div id="csv-info-panel" style="
-            display: none;
-            background: #eff6ff;
-            border: 1px solid #bfdbfe;
-            border-radius: 8px;
-            padding: 12px;
-            margin-bottom: 12px;
-            font-size: 0.75rem;
-            color: #1e40af;
-          ">
-            <strong>Formato esperado:</strong> CSV con separador punto y coma (;)
-            <div style="margin-top: 8px; background: white; padding: 8px; border-radius: 4px; overflow-x: auto;">
-              <strong>Headers (23 columnas):</strong><br>
-              <code style="font-size: 0.7rem; color: #475569;">OP;Ref;Coleccion;UndProg;UndCort;FechaCorte;Estado de integracion;Bodega Despacho;InvPlanta;NombrePlanta;FSalidaConf;FEntregaConf;Proceso;InvBPT;Saldo BPT;Descripcion;Cuento;Genero;Tipo Tejido;pvp;TEMPLO DE LA MODA;BARRANCA;VALOR FACTURACION</code>
-            </div>
-          </div>
 
-          <input type="file" id="csv-file-input" accept=".csv" style="
-            width: 100%;
-            padding: 10px;
-            border: 2px dashed #cbd5e1;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s;
-          " onmouseover="this.style.borderColor='#3b82f6';" onmouseout="this.style.borderColor='#cbd5e1';">
-        </div>
+      <!-- Body -->
+      <div style="padding: 28px;">
 
-        <div id="csv-preview" style="display: none; margin-bottom: 20px;">
-          <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #334155; font-size: 0.875rem;">
-            Vista previa (primeras 5 filas):
-          </label>
-          <div style="
-            max-height: 200px;
-            overflow: auto;
+        <!-- Drop Zone -->
+        <label for="csv-file-input" id="csv-drop-zone" style="
+          display: block;
+          padding: 36px 30px;
+          border: 2px dashed #cbd5e1;
+          border-radius: 12px;
+          background: #f8fafc;
+          cursor: pointer;
+          transition: all 0.25s ease;
+          text-align: center;
+          margin-bottom: 16px;
+        "
+        onmouseover="this.style.borderColor='#3f51b5'; this.style.background='#eef0fb'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 20px rgba(63,81,181,0.1)';"
+        onmouseout="this.style.borderColor='#cbd5e1'; this.style.background='#f8fafc'; this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+          <input type="file" id="csv-file-input" accept=".csv" style="display:none;">
+          <div style="margin-bottom: 14px;">
+            <i class="fas fa-cloud-upload-alt" id="csv-drop-icon" style="font-size: 40px; color: #94a3b8;"></i>
+          </div>
+          <div style="margin-bottom: 14px;">
+            <strong style="display:block; font-size:15px; color:#1e293b; margin-bottom:8px; font-weight:600; text-transform:none;">
+              Arrastra tu archivo aquí
+            </strong>
+            <span style="display:block; font-size:13px; color:#64748b; text-transform:none; margin-bottom:6px;">o haz clic para seleccionar</span>
+          </div>
+          <div id="csv-badge-default" style="
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px;
+            background: white; border-radius: 6px;
+            font-size: 12px; color: #64748b;
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            padding: 12px;
-            background: #f8fafc;
           ">
-            <pre id="csv-preview-content" style="margin: 0; font-size: 0.75rem; color: #475569;"></pre>
+            <i class="fas fa-file-csv" style="color:#3f51b5; font-size:13px;"></i>
+            CSV UTF-8
           </div>
-          <div style="margin-top: 8px; font-size: 0.875rem; color: #64748b;">
-            <strong>Total de filas:</strong> <span id="csv-row-count">0</span>
+          <div id="csv-badge-file" style="display:none;"></div>
+        </label>
+
+        <!-- Link recurso -->
+        <div style="
+          padding: 12px 16px;
+          background: #f8fafc;
+          border-radius: 10px;
+          border: 1px solid #e2e8f0;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 20px;
+        ">
+          <i class="fas fa-link" style="color:#94a3b8; font-size:14px; flex-shrink:0;"></i>
+          <a href="http://bit.ly/4vMNEhY" target="_blank" style="
+            color: #475569; font-weight: 500; text-decoration: none; text-transform: none;
+          " onmouseover="this.style.color='#1e293b';" onmouseout="this.style.color='#475569';">
+            ¿No tienes el archivo?
+          </a>
+        </div>
+
+        <!-- Preview -->
+        <div id="csv-preview" style="display:none; margin-bottom:20px;">
+          <div style="
+            padding: 14px 18px;
+            background: #eef0fb;
+            border-radius: 10px;
+            border: 1px solid #c5cae9;
+            display: flex; align-items: center; gap: 12px;
+          ">
+            <i class="fas fa-file-csv" style="color:#3f51b5; font-size:20px; flex-shrink:0;"></i>
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:600; color:#1e293b; font-size:14px; text-transform:none;" id="csv-file-name-display">archivo.csv</div>
+              <div style="font-size:12px; color:#64748b; margin-top:2px; text-transform:none;">
+                <span id="csv-row-count">0</span> filas detectadas
+              </div>
+            </div>
+            <i class="fas fa-check-circle" style="color:#3f51b5; font-size:18px;"></i>
           </div>
         </div>
 
-        <div id="csv-upload-progress" style="display: none; margin-bottom: 20px;">
+        <!-- Progress -->
+        <div id="csv-upload-progress" style="display:none; margin-bottom:20px;">
           <div style="
-            background: #e2e8f0;
-            border-radius: 8px;
-            height: 32px;
-            overflow: hidden;
-            position: relative;
+            background: #e2e8f0; border-radius: 6px;
+            height: 8px; overflow: hidden; margin-bottom: 8px;
           ">
             <div id="csv-progress-bar" style="
-              background: linear-gradient(90deg, #3b82f6, #2563eb);
-              height: 100%;
-              width: 0%;
-              transition: width 0.3s;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              color: white;
-              font-weight: 700;
-              font-size: 0.875rem;
-            ">0%</div>
+              background: linear-gradient(90deg, #3f51b5, #303f9f);
+              height: 100%; width: 0%;
+              transition: width 0.3s ease;
+            "></div>
           </div>
-          <div style="margin-top: 8px; text-align: center; font-size: 0.875rem; color: #64748b;">
+          <div style="text-align:center; font-size:12px; font-weight:600; color:#64748b;">
             <span id="csv-progress-text">Procesando...</span>
           </div>
         </div>
 
-        <div id="csv-upload-result" style="display: none;"></div>
+        <!-- Result -->
+        <div id="csv-upload-result" style="display:none;"></div>
       </div>
-      
+
+      <!-- Footer -->
       <div style="
-        padding: 16px 24px;
+        padding: 16px 28px 20px;
         border-top: 1px solid #e2e8f0;
-        display: flex;
-        gap: 12px;
-        justify-content: flex-end;
+        display: flex; gap: 12px; justify-content: flex-end;
       ">
         <button onclick="closeCSVUploadModal()" style="
-          padding: 10px 20px;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
-          background: white;
-          color: #475569;
-          font-weight: 600;
-          font-size: 0.875rem;
-          cursor: pointer;
-          transition: all 0.2s;
+          padding: 9px 20px;
+          border: 1px solid #e2e8f0; border-radius: 8px;
+          background: white; color: #475569;
+          font-weight: 600; font-size: 14px; cursor: pointer;
+          text-transform: none;
         " onmouseover="this.style.background='#f8fafc';" onmouseout="this.style.background='white';">
           Cancelar
         </button>
         <button id="csv-upload-btn-submit" onclick="processCSVUpload()" disabled style="
-          padding: 10px 20px;
-          border: none;
-          border-radius: 8px;
-          background: #3b82f6;
-          color: white;
-          font-weight: 600;
-          font-size: 0.875rem;
-          cursor: pointer;
-          transition: all 0.2s;
-          opacity: 0.5;
+          padding: 9px 22px;
+          border: none; border-radius: 8px;
+          background: linear-gradient(135deg, #3f51b5, #303f9f);
+          color: white; font-weight: 600; font-size: 14px; cursor: pointer;
+          opacity: 0.45; text-transform: none;
+          display: flex; align-items: center; gap: 8px;
+          box-shadow: 0 4px 12px rgba(63,81,181,0.2);
         ">
-          <i class="fas fa-upload"></i> Subir a Supabase
+          <i class="fas fa-cloud-upload-alt"></i> Subir a Supabase
         </button>
       </div>
     </div>
@@ -286,10 +359,10 @@ function toggleCSVInfo() {
   
   if (panel.style.display === 'none') {
     panel.style.display = 'block';
-    btn.innerHTML = '<i class="fas fa-times"></i><span>Ocultar</span>';
+    btn.textContent = 'Ocultar';
   } else {
     panel.style.display = 'none';
-    btn.innerHTML = '<i class="fas fa-info-circle"></i><span>Ver formato</span>';
+    btn.textContent = 'Ver columnas';
   }
 }
 
@@ -529,23 +602,31 @@ function parseCSV(text) {
 
 function showCSVPreview() {
   const preview = document.getElementById('csv-preview');
-  const content = document.getElementById('csv-preview-content');
   const rowCount = document.getElementById('csv-row-count');
+  const fileNameDisplay = document.getElementById('csv-file-name-display');
+  const fileInput = document.getElementById('csv-file-input');
+  const badgeDefault = document.getElementById('csv-badge-default');
+  const badgeFile = document.getElementById('csv-badge-file');
+  const badgeFilename = document.getElementById('csv-badge-filename');
+
+  const fileName = fileInput && fileInput.files[0] ? fileInput.files[0].name : 'archivo.csv';
+
+  // Cambiar badge: ocultar "CSV UTF-8", mostrar nombre del archivo
+  if (badgeDefault) badgeDefault.style.display = 'none';
+  if (badgeFile) { badgeFile.style.display = 'inline-flex'; }
+  if (badgeFilename) badgeFilename.textContent = fileName;
 
   preview.style.display = 'block';
-  rowCount.textContent = csvData.length;
+  rowCount.textContent = csvData.length.toLocaleString();
+  if (fileNameDisplay) fileNameDisplay.textContent = fileName;
 
-  // Mostrar primeras 5 filas
-  const previewData = csvData.slice(0, 5);
-  content.textContent = JSON.stringify(previewData, null, 2);
-  
   // Habilitar botón de subida
   const submitBtn = document.getElementById('csv-upload-btn-submit');
   submitBtn.disabled = false;
   submitBtn.style.opacity = '1';
   submitBtn.style.cursor = 'pointer';
-  submitBtn.onmouseover = function() { this.style.background = '#2563eb'; };
-  submitBtn.onmouseout = function() { this.style.background = '#3b82f6'; };
+  submitBtn.onmouseover = function() { this.style.transform = 'translateY(-1px)'; this.style.boxShadow = '0 6px 16px rgba(82,166,117,0.3)'; };
+  submitBtn.onmouseout = function() { this.style.transform = 'translateY(0)'; this.style.boxShadow = '0 4px 12px rgba(82,166,117,0.2)'; };
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -569,45 +650,28 @@ async function processCSVUpload() {
   resultDiv.style.display = 'none';
 
   try {
-    const supabase = window.supabase.createClient(
-      'https://doqsurxxxaudnutsydlk.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THb9v8csluebALg'
-    );
+    // PASO 1: Enviar todo a la Edge Function (delete + insert con service_role)
+    progressText.textContent = 'Sincronizando con Supabase...';
+    progressBar.style.width = '10%';
 
-    // Subir en lotes de 100
-    const batchSize = 100;
-    let uploaded = 0;
-    let errors = 0;
-    let errorDetails = [];
+    const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ accion: 'SYNC_SISPRO', records: csvData })
+    });
 
-    for (let i = 0; i < csvData.length; i += batchSize) {
-      const batch = csvData.slice(i, i + batchSize);
-      
-      const { data, error } = await supabase
-        .from('SISPRO')
-        .upsert(batch, { onConflict: 'OP' });
-
-      if (error) {
-        errors += batch.length;
-        errorDetails.push({
-          batch: Math.floor(i/batchSize) + 1,
-          error: error.message,
-          code: error.code
-        });
-      } else {
-        uploaded += batch.length;
-      }
-
-      // Actualizar progreso
-      const progress = Math.round((i + batch.length) / csvData.length * 100);
-      progressBar.style.width = `${progress}%`;
-      progressBar.textContent = `${progress}%`;
-      progressText.textContent = `Subiendo: ${uploaded + errors} / ${csvData.length}`;
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || `HTTP ${response.status}`);
     }
 
-    if (errorDetails.length > 0) {
-      // Errores registrados
-    }
+    progressBar.style.width = '100%';
+    progressText.textContent = 'Completado';
+
+    const res = await response.json();
+    const uploaded = res.inserted || 0;
+    const errors = res.errors?.length || 0;
+    const errorDetails = res.errors || [];
 
     // Mostrar resultado
     progressDiv.style.display = 'none';
@@ -627,7 +691,7 @@ async function processCSVUpload() {
           <i class="fas fa-check-circle" style="color: #16a34a; font-size: 1.5rem; flex-shrink: 0;"></i>
           <div style="color: #166534; font-size: 0.875rem;">
             <strong style="display: block; margin-bottom: 4px;">¡Éxito!</strong>
-            Se subieron ${uploaded} lotes correctamente a Supabase.
+            SISPRO actualizado: ${uploaded} registros cargados.
           </div>
         </div>
       `;
@@ -693,3 +757,4 @@ window.closeCSVUploadModal = closeCSVUploadModal;
 window.toggleCSVInfo = toggleCSVInfo;
 window.processCSVUpload = processCSVUpload;
 window.createFloatingCSVButton = createFloatingCSVButton;
+window.toggleCSVMenu = toggleCSVMenu;

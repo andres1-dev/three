@@ -11,15 +11,18 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/mobile.css">
-
-    <!-- ── Supabase Realtime ── -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Escudo de Seguridad -->
     <script>
@@ -34,8 +37,29 @@
 
         .seg-wrapper {
             width: 96%;
-            max-width: 820px;
+            max-width: 1400px;
             margin: 80px auto 3rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+        }
+
+        @media (max-width: 767px) {
+            .seg-wrapper {
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                padding: 2rem;
+                margin-top: 60px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .seg-wrapper { padding: 3rem; }
         }
 
         /* ── Header ── */
@@ -234,12 +258,6 @@
 <div class="seg-wrapper">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h1 class="seg-page-title">
-                <i class="fas fa-shipping-fast" style="font-size:1.1rem;margin-right:8px;"></i>Seguimiento
-            </h1>
-            <p class="seg-subtitle">Estado actualizado de tus novedades registradas</p>
-        </div>
     </div>
 
     <div id="seg-count" class="seg-count" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"></div>
@@ -253,7 +271,8 @@
 </div>
 
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script src="js/config.js"></script>
 <script src="js/forms/gas.js"></script>
@@ -264,13 +283,11 @@
 <script src="js/notifications.js"></script>
 <script src="js/chat.js"></script>
 
-<!-- Sistema de Notificaciones Push Supabase -->
-<script src="js/push-supabase.js"></script>
 
 <script>
 /* ── Seguimiento — lógica de página ── */
 
-const TRACKING_POLL    = 5_000;
+const TRACKING_POLL    = 30_000;  // Supabase Realtime maneja cambios instantáneos; poll como fallback
 const PAGE_SIZE        = 3;      // novedades por página
 let _trackingTimer     = null;
 let _expandedIds       = new Set();
@@ -304,17 +321,19 @@ function _parseSheetDate(val) {
 
 /* ── Carga y render ── */
 
-async function loadTracking() {
+async function loadTracking(novedadesPromise) {
     try {
         if (!CONFIG.API_KEY) await fetchSecureConfig();
-        const novedades = await fetchNovedadesData();
+        // Si no se pasó promesa pre-iniciada, invalidar caché para datos frescos en el poll
+        if (!novedadesPromise && typeof invalidateCache === 'function') {
+            invalidateCache('NOVEDADES');
+        }
+        const novedades = await (novedadesPromise || fetchNovedadesData());
         renderTracking(novedades);
-        // Actualizar novedades en el chat GUEST
         if (typeof _guestNovedades !== 'undefined') _guestNovedades = novedades;
         return novedades;
     } catch (e) {
         console.error('[SEGUIMIENTO] Error:', e);
-        // Solo mostrar error si el contenedor está vacío (primera carga)
         const container = document.getElementById('tracking-container');
         if (!container.querySelector('.seg-card')) {
             container.innerHTML = `
@@ -732,6 +751,9 @@ function toggleCard(id) {
 /* ── Init ── */
 
 window.onload = async function() {
+    // Disparar fetch de novedades en paralelo con loadUsers
+    const novedadesPromise = fetchNovedadesData();
+
     await loadUsers();
 
     if (!currentUser || currentUser.ROL !== 'GUEST') {
@@ -739,7 +761,7 @@ window.onload = async function() {
         return;
     }
 
-    const novedades = await loadTracking();
+    const novedades = await loadTracking(novedadesPromise);
 
     // Auto-expandir desde hash (#idNovedad) o la primera activa
     const hashId = location.hash ? location.hash.replace('#', '') : null;
@@ -753,11 +775,17 @@ window.onload = async function() {
         }
     }
 
-    // Polling rápido
+    // Poll de respaldo (Supabase Realtime es el canal principal de tiempo real)
     _trackingTimer = setInterval(loadTracking, TRACKING_POLL);
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) { clearInterval(_trackingTimer); _trackingTimer = null; }
-        else { loadTracking(); _trackingTimer = setInterval(loadTracking, TRACKING_POLL); }
+        if (document.hidden) {
+            clearInterval(_trackingTimer);
+            _trackingTimer = null;
+        } else {
+            invalidateCache('NOVEDADES');
+            loadTracking();
+            _trackingTimer = setInterval(loadTracking, TRACKING_POLL);
+        }
     });
 
     // Notificaciones — reutiliza los datos ya cargados, sin fetch extra

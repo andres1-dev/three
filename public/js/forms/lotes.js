@@ -141,6 +141,12 @@ function verificarRegistroPlanta(plantaNombre) {
 function handleLoteInputReset() {
     DOM.plantaSelect().removeAttribute('disabled');
     DOM.lineaInput().removeAttribute('disabled');
+
+    // Si el input queda vacío, cerrar todos los formularios
+    const val = DOM.loteInput().value.trim();
+    if (!val) {
+        hideSections();
+    }
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

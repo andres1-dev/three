@@ -11,17 +11,16 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-  
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/mobile.css">
-  
-  <!-- Supabase Realtime -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
     :root {
@@ -44,64 +43,30 @@
 
     .wrapper-dashboard {
       width: 96%;
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 80px auto 2rem;
       padding: 2rem;
-      background: var(--glass-bg);
-      backdrop-filter: blur(12px) saturate(160%);
-      -webkit-backdrop-filter: blur(12px) saturate(160%);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
       position: relative;
       z-index: 10;
     }
 
-    .page-title {
-      font-size: 1.8rem;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      background: linear-gradient(135deg, var(--color-primary), #6366f1);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      margin-bottom: 0.5rem;
-    }
-
-    .page-subtitle {
-      color: #64748b;
-      font-size: 0.95rem;
-      font-weight: 500;
-      margin-bottom: 2rem;
-    }
-
-    .alert-info-custom {
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 2rem;
-      font-size: 0.9rem;
-      color: #1e40af;
-      display: flex;
-      align-items: start;
-      gap: 12px;
-    }
-
-    .alert-warning-custom {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 2rem;
-      font-size: 0.9rem;
-      color: #991b1b;
-      display: flex;
-      align-items: start;
-      gap: 12px;
-    }
-
-      /* Modal de Política de Datos */
+      @media (max-width: 767px) {
+        .wrapper-dashboard {
+          width: 100%;
+          margin: 60px 0 1rem;
+          padding: 2rem;
+          border-radius: 0;
+          border-left: none;
+          border-right: none;
+          box-shadow: none;
+        }
+        .policy-modal { padding: 0; }
+        .policy-modal-content { max-height: 100vh; border-radius: 0; }
+      }
       .policy-modal {
           display: none;
           position: fixed;
@@ -627,7 +592,7 @@
           <label for="ciudadPlanta" class="form-label">Ciudad: <span style="color:#ef4444;">*</span></label>
           <div class="input-with-icon">
             <i class="fas fa-city input-icon"></i>
-            <select id="ciudadPlanta" class="form-control" required>
+            <select id="ciudadPlanta" class="form-control">
               <option value="">Seleccione ciudad</option>
             </select>
           </div>
@@ -637,15 +602,10 @@
           <label for="barrioPlanta" class="form-label">Barrio: <span style="color:#ef4444;">*</span></label>
           <div class="input-with-icon">
             <i class="fas fa-home input-icon"></i>
+            <!-- Un solo campo que cambia entre select e input automáticamente -->
             <select id="barrioPlanta" class="form-control" required>
               <option value="">Seleccione barrio</option>
             </select>
-            <input type="text" id="barrioPlantaManual" class="form-control" placeholder="Escribe el nombre del barrio" style="display:none;">
-          </div>
-          <div id="barrioToggleLink" class="form-text small" style="display:none;">
-            <a href="#" onclick="toggleBarrioManual(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
-              <i class="codicon codicon-edit" style="font-size:0.75rem;"></i> ¿No encuentras tu barrio?
-            </a>
           </div>
         </div>
 
@@ -831,16 +791,17 @@
     })();
   </script>
   
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/forms/gas.js"></script>
-  <script src="js/data/colombia-locations.js"></script>
-  <script src="js/forms/plantas.js"></script>
-  <script src="js/particles-config.js"></script>
+  <script src="js/data/colombia-locations.js" defer></script>
+  <script src="js/forms/plantas.js" defer></script>
+  <script src="js/particles-config.js" defer></script>
   
   <script>
     // Variables globales
@@ -865,15 +826,7 @@
       if (!container) return;
       
       if (desdeLogin) {
-        container.innerHTML = `
-          <div class="alert-warning-custom">
-            <i class="fas fa-exclamation-triangle" style="font-size:1.2rem;flex-shrink:0;"></i>
-            <div>
-              <strong>Datos Incompletos</strong><br>
-              Debe completar todos los campos obligatorios (*) para poder acceder al sistema.
-            </div>
-          </div>
-        `;
+        container.innerHTML = '';
       } else if (currentUser && currentUser.ROL === 'ADMIN') {
         container.innerHTML = `
           <div class="mb-3">
@@ -888,33 +841,23 @@
     // Cargar datos de la planta
     async function cargarDatosPlanta(id) {
         try {
-            console.log('[FAST-LOAD] Buscando planta en memoria:', id);
             let planta = null;
 
-            // 1. PRIORIDAD MÁXIMA (Instantánea): Buscar en lo que ya cargó el Login/Dashboard
+            // 1. PRIORIDAD MÁXIMA: Buscar en memoria (allPlantas o currentUser)
             if (typeof allPlantas !== 'undefined' && allPlantas.length > 0) {
                 planta = allPlantas.find(p => String(p.ID_PLANTA || p.ID || '').trim() === String(id).trim());
             }
-
-            // 2. SEGUNDA PRIORIDAD: Si soy yo mismo (GUEST), usar mis datos de sesión
             if (!planta && typeof currentUser !== 'undefined' && currentUser) {
                 const cId = String(currentUser.ID_PLANTA || currentUser.ID_USUARIO || '').trim();
                 if (cId === String(id).trim()) planta = currentUser;
             }
 
-            // 3. ÚLTIMO RECURSO (Red): Solo ir a Supabase si no estaba en memoria (ej. tras F5 o planta nueva)
+            // 2. ÚLTIMO RECURSO: Usar la promesa pre-iniciada (o lanzar nueva si no existe)
             if (!planta) {
-                console.log('[FAST-LOAD] No está en memoria, consultando Supabase...');
-                try {
-                    const response = await fetchSupabaseData('PLANTAS', {
-                        filters: [{ type: 'eq', column: 'ID_PLANTA', value: id }]
-                    });
-                    if (response && response.length > 0) {
-                        planta = response[0];
-                    }
-                } catch (e) {
-                    console.error('[FAST-LOAD] Error en red:', e);
-                }
+                const response = await (_plantaDataPromise || fetchSupabaseData('PLANTAS', {
+                    filters: [{ type: 'eq', column: 'ID_PLANTA', value: id }]
+                }));
+                if (response && response.length > 0) planta = response[0];
             }
 
             if (!planta) {
@@ -953,28 +896,35 @@
                         const ciudadEl = document.getElementById('ciudadPlanta');
                         if (ciudadEl) {
                             ciudadEl.value = planta.CIUDAD;
-                            if (typeof populateBarrios === 'function') {
-                                populateBarrios(planta.DEPARTAMENTO, planta.CIUDAD);
-                            } else {
-                                ciudadEl.dispatchEvent(new Event('change'));
-                            }
+                            ciudadEl.dispatchEvent(new Event('change'));
 
-                            if (planta.BARRIO) {
-                                const bSel = document.getElementById('barrioPlanta');
-                                if (bSel) {
-                                  const ex = Array.from(bSel.options).some(o => o.value === planta.BARRIO);
-                                  if (ex) { 
-                                      bSel.value = planta.BARRIO; 
-                                  } else { 
-                                      const m = document.getElementById('barrioPlantaManual');
-                                      if (m) { 
-                                          m.value = planta.BARRIO; 
-                                          if (typeof toggleBarrioManual === 'function') toggleBarrioManual(); 
-                                      }
-                                  }
+                            // Esperar a que se cree el campo de barrio (select o input)
+                            setTimeout(() => {
+                                if (planta.BARRIO) {
+                                    const barrioField = document.getElementById('barrioPlanta');
+                                    if (barrioField) {
+                                        // Si es un select, verificar si el barrio existe en las opciones
+                                        if (barrioField.tagName === 'SELECT') {
+                                            const exists = Array.from(barrioField.options).some(o => o.value === planta.BARRIO);
+                                            if (exists) {
+                                                barrioField.value = planta.BARRIO;
+                                                barrioField.dispatchEvent(new Event('change'));
+                                            } else {
+                                                // Si no existe, convertir a input y poner el valor
+                                                if (typeof createBarrioInput === 'function') {
+                                                    createBarrioInput();
+                                                    const newInput = document.getElementById('barrioPlanta');
+                                                    if (newInput) newInput.value = planta.BARRIO;
+                                                }
+                                            }
+                                        } else {
+                                            // Si ya es un input, simplemente poner el valor
+                                            barrioField.value = planta.BARRIO;
+                                        }
+                                    }
                                 }
-                            }
-                            if (planta.COMUNA) setVal('comunaPlanta', planta.COMUNA);
+                                if (planta.COMUNA) setVal('comunaPlanta', planta.COMUNA);
+                            }, 300);
                         }
                     }
                 }
@@ -993,17 +943,20 @@
         }
     }
 
-    // Inicializar cuando el DOM esté listo
+    // Pre-iniciar fetch de datos de la planta en paralelo con auth
+    // para que cuando window.onload llegue, los datos ya estén listos
+    let _plantaDataPromise = null;
+    if (plantaId) {
+      document.addEventListener('DOMContentLoaded', function() {
+        // Disparar fetch inmediatamente — no esperar loadUsers
+        _plantaDataPromise = fetchSupabaseData('PLANTAS', {
+          filters: [{ type: 'eq', column: 'ID_PLANTA', value: plantaId }]
+        }).catch(() => null);
+      });
+    }
+
+    // Mostrar el formulario vacío inmediatamente (DOMContentLoaded)
     document.addEventListener('DOMContentLoaded', function() {
-      // Priorizar la visualización de la estructura
-      inicializarFormulario();
-    });
-    
-    // Función principal de inicialización
-    async function inicializarFormulario() {
-      // Limpiar cualquier borrador antiguo para evitar datos basura
-      localStorage.removeItem('planta_form_draft');
-      
       mostrarAlerta();
       if (currentUser && currentUser.ROL === 'ADMIN') {
         const ci = document.getElementById('cedulaPlanta');
@@ -1012,53 +965,30 @@
         if (ni) ni.removeAttribute('readonly');
         document.querySelectorAll('[required]').forEach(el => el.removeAttribute('required'));
       }
+    });
 
-      // Inicializar funciones del formulario de forma segura
+    // Inicializar formulario completo cuando scripts defer ya cargaron
+    window.onload = function() {
+      inicializarFormulario();
+    };
+    
+    // Función principal de inicialización (se ejecuta en window.onload, después de defer)
+    async function inicializarFormulario() {
+      localStorage.removeItem('planta_form_draft');
+
+      // Inicializar masks y filtros de ubicación (requieren colombia-locations.js)
       if (typeof initPlantasMasks === 'function') initPlantasMasks();
       if (typeof initLocationFilters === 'function') initLocationFilters();
       
-      // Manejar envío del formulario
+      // Manejar envío del formulario — delegar a handleActualizarDatosSubmit de plantas.js
       const form = document.getElementById('gestionPlantaForm');
       if (form) {
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const datos = {
-            id: document.getElementById('cedulaPlanta').value.trim(),
-            planta: document.getElementById('nombrePlanta').value.trim(),
-            direccion: document.getElementById('direccionPlanta').value.trim(),
-            telefono: document.getElementById('telefonoPlanta').value.replace(/\D/g, ''),
-            email: document.getElementById('emailPlanta').value.trim(),
-            pais: document.getElementById('paisPlanta').value,
-            departamento: document.getElementById('departamentoPlanta').value,
-            ciudad: document.getElementById('ciudadPlanta').value,
-            barrio: document.getElementById('barrioPlanta').value || document.getElementById('barrioPlantaManual').value,
-            comuna: document.getElementById('comunaPlanta').value,
-            contacto: document.getElementById('contactoPlanta').value.trim(),
-            localizacion: document.getElementById('localizacionPlanta').value,
-            notificaciones: document.getElementById('checkNotificaciones').checked,
-            rol: 'GUEST'
-          };
-          try {
-            Swal.fire({ title: 'Guardando...', didOpen: () => Swal.showLoading() });
-            const response = await sendToGAS({
-              accion: isEdit ? 'ACTUALIZAR_PLANTA' : 'CREAR_PLANTA',
-              ...datos
-            });
-            if (response.success) {
-              Swal.fire('✔ ¡Hecho!', 'Planta guardada correctamente', 'success').then(() => {
-                if (desdeLogin) {
-                  window.location.href = 'index.html';
-                } else {
-                  if (window.opener) window.opener.location.reload();
-                  window.close();
-                }
-              });
-            } else {
-              Swal.fire('Error', response.message || 'No se pudo guardar', 'error');
-            }
-          } catch (e) {
-            console.error('Error guardando:', e);
-            Swal.fire('Error', 'No se pudo conectar con el servidor', 'error');
+        form.addEventListener('submit', (e) => {
+          if (typeof handleActualizarDatosSubmit === 'function') {
+            handleActualizarDatosSubmit(e);
+          } else {
+            e.preventDefault();
+            console.error('handleActualizarDatosSubmit no disponible');
           }
         });
       }

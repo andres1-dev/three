@@ -2,14 +2,6 @@
    chat.js — Chat interno entre USER-P/ADMIN y GUEST por novedad
    ========================================================================== */
 
-/* ── Intervalos de polling adaptativos ── */
-const CHAT_POLL_ACTIVE = 2_000;  // chat abierto: 2s
-const CHAT_POLL_IDLE = 5_000;  // badges campana (pestaña visible): 5s
-const CHAT_POLL_HIDDEN = 30_000; // pestaña oculta: 30s
-const GUEST_POLL_ACTIVE = 2_000;
-const GUEST_POLL_IDLE = 5_000;  // chat cerrado pero pestaña visible: 5s
-const GUEST_POLL_HIDDEN = 30_000; // pestaña oculta: 30s
-
 let _chatTimer = null;
 let _chatChannel = null; // Supabase Realtime channel
 let _chatNovedadId = null;
@@ -20,7 +12,6 @@ let _chatArchived = false;
 let _chatReadReceipts = {};  // { GUEST: ts, OPERATOR: ts }
 let _chatMetaLoaded = false; // si ya cargamos meta (archived + readReceipts) al abrir
 let _markReadSent = false; // MARK_READ solo se envía una vez por apertura
-let _chatPollCounter = 0;
 
 /* ── Badge de mensajes no leídos (USER-P/ADMIN en resolucion.html) ── */
 const CHAT_BADGE_KEY = 'sispro_chat_seen';
@@ -57,78 +48,80 @@ async function _chatFetch(body) {
  * Si se pasa idNovedad (string o array), filtra por esas novedades.
  * Si no se pasa nada, devuelve TODOS los mensajes (para operadores).
  */
+/**
+ * Lee mensajes de chat desde Supabase usando la Edge Function /chat-realtime
+ * @param {string|Array|null} idNovedad - ID de novedad, array de IDs, o null para todos
+ * @returns {Promise<Array>} Array de mensajes mapeados
+ */
 async function _readChatSheet(idNovedad = null) {
     try {
-        // Si no hay filtro, traer TODOS los mensajes (para operadores)
-        if (!idNovedad) {
-            const options = { 
-                order: { column: 'TS', ascending: true }
-            };
-            const data = await fetchSupabaseData('CHAT', options);
-            return (data || []).map(_mapMsg);
+        let url;
+        
+        if (idNovedad) {
+            if (Array.isArray(idNovedad)) {
+                idNovedad = idNovedad[0];
+            }
+            
+            const trimmedId = String(idNovedad).trim();
+            url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_messages&id_novedad=${encodeURIComponent(trimmedId)}`;
+        } else {
+            url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_all`;
         }
         
-        // Si es un array de IDs, traer mensajes de todas esas novedades
-        if (Array.isArray(idNovedad)) {
-            const allMessages = [];
-            for (const id of idNovedad) {
-                const cleanId = String(id).trim();
-                if (!cleanId) continue;
-                
-                const options = { 
-                    order: { column: 'TS', ascending: true },
-                    filters: [{ type: 'eq', column: 'ID_NOVEDAD', value: cleanId }]
-                };
-                const data = await fetchSupabaseData('CHAT', options);
-                if (data && data.length > 0) {
-                    allMessages.push(...data.map(_mapMsg));
-                }
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
             }
-            return allMessages;
-        }
+        });
         
-        // Si es un solo ID, filtrar por ese ID
-        const cleanId = String(idNovedad).trim();
-        
-        const options = { 
-            order: { column: 'TS', ascending: true },
-            filters: [{ type: 'eq', column: 'ID_NOVEDAD', value: cleanId }]
-        };
-
-        const data = await fetchSupabaseData('CHAT', options);
-        
-        if (!data || data.length === 0) {
-            // Si falla la primera, probamos con la columna en minúsculas por si acaso
-            const data2 = await fetchSupabaseData('CHAT', { 
-                order: { column: 'ts', ascending: true },
-                filters: [{ type: 'eq', column: 'id_novedad', value: cleanId }]
-            });
-            if (data2 && data2.length > 0) {
-                console.log('[CHAT] Mensajes recibidos (minúsculas):', data2.length);
-                return data2.map(_mapMsg);
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
             return [];
         }
-
-        return data.map(_mapMsg);
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            return [];
+        }
+        
+        const data = result.messages || [];
+        
+        const mapped = data.map(_mapMsg);
+        
+        return mapped;
     } catch (e) {
         return [];
     }
 }
 
-// Función auxiliar para no repetir código de mapeo
+/**
+ * Mapea un registro de Supabase a formato interno
+ */
 function _mapMsg(r) {
     return {
-        id:      r.ID_MSG || r.id_msg || r.id || '',
-        idNov:   String(r.ID_NOVEDAD || r.id_novedad || r.id_nov || '').trim(),
-        autor:   String(r.AUTOR || r.autor || ''),     
-        rol:     String(r.ROL || r.rol || ''),         
+        id: r.ID_MSG || r.id_msg || '',
+        idNov: r.ID_NOVEDAD || r.id_novedad || '',
+        lote: r.LOTE || r.lote || '',
+        planta: r.PLANTA || r.planta || '',
+        autor: r.AUTOR || r.autor || '',
+        rol: r.ROL || r.rol || '',
+        ROL: r.ROL || r.rol || '', // Mantener ambos formatos
+        AUTOR: r.AUTOR || r.autor || '', // Mantener ambos formatos
+        MENSAJE: r.MENSAJE || r.mensaje || '',
         mensaje: r.MENSAJE || r.mensaje || '',
+        img: r.IMAGEN_URL || r.imagen_url || '',
+        IMAGEN_URL: r.IMAGEN_URL || r.imagen_url || '',
         imagen_url: r.IMAGEN_URL || r.imagen_url || '',
-        ts:      r.TIMESTAMP || r.TS || r.ts || new Date().toISOString()
+        ts: r.TS || r.ts || r.TIMESTAMP || '',
+        TS: r.TS || r.ts || r.TIMESTAMP || '', // Mantener ambos formatos
+        isRead: r.IS_READ || r.is_read || false,
+        IS_READ: r.IS_READ || r.is_read || false,
+        READ_AT: r.READ_AT || r.read_at || null,
+        read_at: r.READ_AT || r.read_at || null
     };
 }
-
 /**
  * Lee la columna CHAT de NOVEDADES para saber si un chat está archivado.
  * Devuelve { chatUrl, chatRead } para el idNovedad dado.
@@ -241,7 +234,7 @@ function openChat(idNovedad, planta, lote, isArchived) {
     _chatMetaLoaded = true;  // ya tenemos el estado archivado — no re-leer NOVEDADES
     _markReadSent = false;
     _buildChatModal(lote, planta);
-    _startChatPoll(CHAT_POLL_ACTIVE);
+    _startChatPoll(); // Inicia Realtime para este chat
 }
 
 /**
@@ -566,14 +559,12 @@ async function _submitChatMsg() {
     }, true);
 
     try {
-        console.log('[DEBUG] Iniciando proceso de envío...');
         const res = await _sendMsg(texto, imagenData);
 
         if (!res || !res.success) {
             throw new Error(res ? res.message : 'El servidor no devolvió una respuesta válida.');
         }
 
-        console.log('[DEBUG] Mensaje enviado con éxito');
         await _loadAndRender();
 
     } catch (e) {
@@ -599,38 +590,70 @@ async function _submitChatMsg() {
 function _startChatPoll() {
     _loadAndRender();
     if (_chatTimer) clearInterval(_chatTimer);
-    _chatTimer = setInterval(_loadAndRender, CHAT_POLL_ACTIVE || 3000); // Polling ultrarrápido de respaldo de 3 segundos
 
     const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
-    if (sb && !window._chatActiveChannel) {
-        window._chatActiveChannel = sb.channel('public:CHAT_active')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
-                if (payload.table.toLowerCase() === 'chat') {
-                    if (payload.new && String(payload.new.ID_NOVEDAD || payload.new.id_novedad || payload.new.ID_NOV || payload.new.id_nov) === String(_chatNovedadId)) {
-                        setTimeout(() => _loadAndRender(), 300);
+    if (!sb) { 
+        return; 
+    } 
+    
+    if (window._chatActiveChannel) { 
+        sb.removeChannel(window._chatActiveChannel); 
+        window._chatActiveChannel = null; 
+    } 
+    
+    const idNov = _chatNovedadId;
+    
+    if (!idNov) {
+        return;
+    }
+        
+    window._chatActiveChannel = sb.channel('chat-global-realtime')
+            .on('postgres_changes', { 
+                event: '*',
+                schema: 'public',
+                table: 'CHAT'
+            }, payload => {
+                const msgNovedadId = payload.new?.ID_NOVEDAD || payload.old?.ID_NOVEDAD;
+                
+                if (msgNovedadId === idNov) {
+                    if (typeof invalidateCache === 'function') {
+                        invalidateCache('CHAT');
                     }
+                    
+                    _loadAndRender();
                 }
             })
-            .subscribe();
-    }
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                } else if (status === 'CHANNEL_ERROR') {
+                } else if (status === 'CLOSED') {
+                } else if (status === 'TIMED_OUT') {
+                }
+            });
 }
 
 function _stopChatPoll() {
-    if (_chatTimer) { clearInterval(_chatTimer); _chatTimer = null; }
-    // Si queremos destruir la suscripción al cerrar:
-    /* if (window._chatActiveChannel) {
-        getSupabaseClient().removeChannel(window._chatActiveChannel);
+    if (_chatTimer) { 
+        clearInterval(_chatTimer); 
+        _chatTimer = null; 
+    }
+    
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (sb && window._chatActiveChannel) {
+        sb.removeChannel(window._chatActiveChannel);
         window._chatActiveChannel = null;
-    } */
+    }
 }
 
 async function _loadAndRender() {
     try {
         const id = _chatNovedadId;
-        if (!id) return;
+        if (!id) {
+            return;
+        }
 
-        if (!_chatMetaLoaded || (_chatPollCounter % 3 === 0)) {
-            // Cargar meta (incluye recibos de lectura) inicialmente y luego cada 3 ciclos de poll (~9s)
+        // Cargar meta solo si no está cargada
+        if (!_chatMetaLoaded) {
             const meta = await _readNovedadChatMeta(id);
             _chatMetaLoaded = true;
             _chatArchived = meta.chatUrl.startsWith('https://') || meta.chatUrl.startsWith('[');
@@ -641,7 +664,6 @@ async function _loadAndRender() {
 
         let msgs = [];
         if (_chatArchived) {
-            // Archivado: leer desde Drive via GAS (solo una vez — no hay polling)
             _stopChatPoll();
             const data = await _chatFetch({ accion: 'GET_CHAT_MSGS', idNovedad: id });
             msgs = data.msgs || [];
@@ -649,8 +671,8 @@ async function _loadAndRender() {
             _renderMessages(msgs);
             if (msgs.length) _markChatSeen(id, _lastSeenTs(msgs));
         } else {
-            // Activo: lectura directa desde Supabase — rápido y filtrado
             msgs = await _readChatSheet(id);
+            
             _renderMessages(msgs);
             if (msgs.length) _markChatSeen(id, _lastSeenTs(msgs));
         }
@@ -667,13 +689,15 @@ async function _loadAndRender() {
             _chatFetch({ accion: 'MARK_READ', idNovedad: id, rol }).catch(() => { });
         }
     } catch (e) { 
-        // Error silencioso
     }
 }
 
 function _renderMessages(msgs) {
     const container = document.getElementById('chat-messages');
-    if (!container) return;
+    if (!container) {
+        return;
+    }
+    
     document.getElementById('chat-loading')?.remove();
 
     if (msgs.length === 0) {
@@ -682,19 +706,19 @@ function _renderMessages(msgs) {
     }
 
     const lastTs = msgs[msgs.length - 1]?.ts;
-    if (lastTs === _chatLastTs && container.children.length > 0) return;
+    
     _chatLastTs = lastTs;
 
     const wasAtBottom = _isScrolledToBottom(container);
     container.innerHTML = '';
 
-    // Find the last message sent by the current user (for read receipt)
     const myRol = currentUser?.ROL || 'GUEST';
     let lastMyMsgIndex = -1;
     msgs.forEach((msg, i) => { if (msg.rol === myRol && !String(msg.id).startsWith('temp_')) lastMyMsgIndex = i; });
-
+    
     let lastDate = null;
     msgs.forEach((msg, i) => {
+        
         const msgDate = _formatDateLabel(msg.ts);
         if (msgDate !== lastDate) {
             lastDate = msgDate;
@@ -712,33 +736,79 @@ function _renderMessages(msgs) {
 
 function _appendBubble(msg, scrollDown = true, container = null, isLastMine = false) {
     const c = container || document.getElementById('chat-messages');
-    if (!c) return;
+    if (!c) {
+        return;
+    }
 
-    // --- LÓGICA DE IDENTIDAD Y SEGURIDAD ---
     const myName = currentUser?.USUARIO || currentUser?.NOMBRE || '';
     const myRol = currentUser?.ROL || 'GUEST';
 
     // msg.rol contiene el ROL (mapeado de r.AUTOR)
-    const isGuestMsg = (msg.rol === 'GUEST');
+    const isGuestMsg = (msg.rol === 'GUEST' || msg.ROL === 'GUEST');
 
-    // Bubble Styles
+    // Identificar si el mensaje es MÍO
+    // Primero intentar por nombre (para ADMIN/USER-P que pueden tener múltiples usuarios con mismo rol)
+    // Si no coincide el nombre, usar ROL (para GUEST donde cada planta tiene un solo usuario)
+    const msgAutor = String(msg.autor || msg.AUTOR || '').trim();
+    const msgRol = msg.rol || msg.ROL || '';
+    
+    let isMine = false;
+    if (myName && msgAutor) {
+        // Si ambos tienen nombre, comparar por nombre
+        isMine = msgAutor.toLowerCase() === myName.toLowerCase();
+    }
+    // Si no coincidió por nombre O no hay nombre, usar ROL
+    if (!isMine) {
+        isMine = (msgRol === myRol);
+    }
+
+    // Bubble Styles - Color basado en ROL del mensaje
     const bubbleBg = isGuestMsg ? 'linear-gradient(135deg,#3b82f6,#6366f1)' : 'white';
     const textColor = isGuestMsg ? 'white' : '#1e293b';
     const metaColor = isGuestMsg ? 'rgba(255,255,255,0.7)' : '#94a3b8';
-    const align = isGuestMsg ? 'flex-end' : 'flex-start';
-    const borderRadius = isGuestMsg ? '18px 18px 4px 18px' : '18px 18px 18px 4px';
-
-    // Identificar si el mensaje es MÍO (para mostrar checks y alineación)
-    // msg.autor contiene el Nombre Real (mapeado de r.AUTOR)
-    const isMine = String(msg.autor).trim().toLowerCase() === String(myName).trim().toLowerCase();
+    
+    // Alineación basada en si es MÍO o no (mis mensajes a la derecha)
+    const align = isMine ? 'flex-end' : 'flex-start';
+    const borderRadius = isMine ? '18px 18px 4px 18px' : '18px 18px 18px 4px';
+    
     let receiptHtml = '';
 
     const isTemp = String(msg.id).startsWith('temp_');
+    const isRead = msg.isRead || msg.IS_READ || false;
+    const readAt = msg.READ_AT || msg.read_at || null;
 
     if (isMine) {
-        // Reloj si está subiendo al servidor, doble check (oculto) si ya llegó.
-        receiptHtml = `<div style="font-size:0.55rem;color:${metaColor};margin-top:2px;text-align:right;display:flex;align-items:center;justify-content:flex-end;gap:3px;font-weight:600;">
-            <i class="fas ${isTemp ? 'fa-clock' : 'fa-check-double'}" style="font-size:0.68rem;color:${isGuestMsg ? 'rgba(255,255,255,0.4)' : '#cbd5e1'};"></i>
+        let statusHtml = '';
+        // El texto del estado siempre es gris oscuro porque está fuera de la burbuja
+        const statusTextColor = '#64748b';
+        const iconColorGray = '#94a3b8';
+        
+        if (isTemp) {
+            // Enviando - un solo check
+            statusHtml = `
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <i class="fas fa-check" style="font-size:0.7rem;color:${iconColorGray};"></i>
+                    <span style="font-size:0.6rem;color:${statusTextColor};">Enviando...</span>
+                </div>`;
+        } else if (isRead && readAt) {
+            // Leído - check doble azul con hora
+            const readTime = _formatTime(readAt);
+            statusHtml = `
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <i class="fas fa-check-double" style="font-size:0.7rem;color:#3b82f6;"></i>
+                    <span style="font-size:0.6rem;color:${statusTextColor};">Leído ${readTime}</span>
+                </div>`;
+        } else if (!isTemp) {
+            // Entregado - check doble gris
+            statusHtml = `
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <i class="fas fa-check-double" style="font-size:0.7rem;color:${iconColorGray};"></i>
+                    <span style="font-size:0.6rem;color:${statusTextColor};">Entregado</span>
+                </div>`;
+        }
+        
+        receiptHtml = `<div style="margin-top:3px;text-align:right;display:flex;align-items:center;justify-content:flex-end;font-weight:500;">
+            ${statusHtml}
         </div>`;
     }
 
@@ -783,6 +853,9 @@ function _appendBubble(msg, scrollDown = true, container = null, isLastMine = fa
    ══════════════════════════════════════════════════════════════════════════ */
 
 function initChatBadges() {
+    if (window._chatBadgesRealtimeActive) return;
+    window._chatBadgesRealtimeActive = true;
+
     const role = currentUser?.ROL;
     if (role !== 'ADMIN' && role !== 'USER-P') {
         return;
@@ -804,99 +877,108 @@ function initChatBadges() {
     });
 }
 
+/**
+ * Inicia suscripción Realtime para badges de chat (100% tiempo real)
+ */
 function _startBadgePoll() {
-    if (_chatBadgeTimer) clearInterval(_chatBadgeTimer);
-    const interval = document.hidden ? CHAT_POLL_HIDDEN : CHAT_POLL_IDLE;
-    _chatBadgeTimer = setInterval(_pollChatBadges, interval);
-    _pollChatBadges();
-    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
-    if (sb && !window._chatBadgeChannel) {
-        window._chatBadgeChannel = sb.channel('public:CHAT_badges')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
-                if (payload.table.toLowerCase() === 'chat') {
-                    setTimeout(() => _pollChatBadges(), 500);
-                }
-            })
-            .subscribe();
+    if (_chatBadgeTimer) {
+        clearInterval(_chatBadgeTimer);
+        _chatBadgeTimer = null;
     }
+    
+    _pollChatBadges(); // Carga inicial
+    
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!sb) return;
+    
+    if (window._chatBadgeChannel) {
+        window._chatBadgeChannel.unsubscribe();
+        window._chatBadgeChannel = null;
+    }
+    
+    window._chatBadgeChannel = sb
+        .channel('chat-badges-realtime')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public',
+            table: 'CHAT'
+        }, payload => {
+            _pollChatBadges();
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+            } else if (status === 'CHANNEL_ERROR') {
+            }
+        });
 }
 
 async function _pollChatBadges() {
     try {
-        // Leer hoja CHAT directamente via Sheets API v4
-        const allRows = await _readChatSheet();
-
-        // Construir mapa: último mensaje de GUEST por novedad (cualquier novedad, no solo las del DOM)
-        const latestGuestByNov = {};
-        allRows.forEach(r => {
-            const novId = String(r.idNov || '').trim();
-            const rol = String(r.rol || '').trim();
-            if (!novId) return;
-            if (rol === 'GUEST') {
-                // Guardar el más reciente (las filas vienen en orden cronológico)
-                latestGuestByNov[novId] = {
-                    id: r.id,
-                    rol,
-                    autor: r.autor,
-                    mensaje: r.mensaje,
-                    ts: r.ts
-                };
+        const url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_latest_by_novedad&rol=GUEST`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
             }
         });
+        
+        if (!response.ok) {
+            return;
+        }
+        
+        const result = await response.json();
+        const allMessages = result.messages || [];
 
-        // También construir mapa de metadatos (lote, planta) desde las filas de chat
-        const metaByNov = {};
-        allRows.forEach(r => {
-            const novId = String(r.idNov || '').trim();
-            if (novId && !metaByNov[novId]) {
-                metaByNov[novId] = { planta: String(r.planta || '').trim() };
-            }
+        const latestGuestByNov = {};
+        
+        (allMessages || []).forEach(r => {
+            const novId = String(r.ID_NOVEDAD || '').trim();
+            if (!novId) return;
+            
+            // Guardar siempre el más reciente (sobrescribe)
+            latestGuestByNov[novId] = {
+                id: r.ID_MSG,
+                rol: r.ROL,    // ROL contiene el rol (GUEST/ADMIN)
+                autor: r.AUTOR, // AUTOR contiene el nombre real
+                mensaje: r.MENSAJE,
+                ts: r.TS,
+                lote: r.LOTE || ''
+            };
         });
 
         for (const [id, lastMsg] of Object.entries(latestGuestByNov)) {
-            console.log(`[CHAT-OPERATOR] Novedad ${id}: ts=${lastMsg.ts}, visto=${_chatSeenTs[id]}`);
             if (lastMsg.ts !== _chatSeenTs[id]) {
-                console.log(`[CHAT-OPERATOR] ✅ Nuevo mensaje de GUEST detectado para novedad ${id}`);
-                // Mensaje nuevo de GUEST no visto aún
-                _markCardUnread(id); // no-op si no hay card en el DOM
-                // Obtener lote/planta: primero del DOM, luego del mapa de chat
+                _markCardUnread(id);
+                
                 const card = document.querySelector(`[data-novedad-id="${id}"]`);
-                const lote = card?.dataset.lote || id;
-                const planta = card?.dataset.planta || metaByNov[id]?.planta || '';
+                const lote = card?.dataset.lote || lastMsg.lote || id;
+                const planta = card?.dataset.planta || '';
+                
                 _addOperatorChatNotif(id, lastMsg, lote, planta);
             } else {
-                _markCardRead(id); // no-op si no hay card en el DOM
+                _markCardRead(id);
             }
         }
 
         _updateOperatorBellBadge();
     } catch (e) {
-        // Error silencioso
     }
 }
 
-/**
- * Agrega una notificación de mensaje GUEST al panel de campana del operador.
- * lote y planta son opcionales — si no se pasan se intenta leer del DOM.
- */
 function _addOperatorChatNotif(idNovedad, msg, lote, planta) {
-    console.log('[CHAT-OPERATOR] _addOperatorChatNotif llamada:', { idNovedad, msg, lote, planta });
     if (typeof _operatorChatNotifs === 'undefined') {
-        console.error('[CHAT-OPERATOR] ❌ _operatorChatNotifs no está definido');
         return;
     }
     const dedupKey = `${idNovedad}_${msg.ts}`;
     if (_operatorChatNotifs.some(n => n.id === dedupKey)) {
-        console.log('[CHAT-OPERATOR] Notificación duplicada, ignorando');
         return;
     }
-    // Fallback al DOM si no se pasaron
     if (!lote || !planta) {
         const card = document.querySelector(`[data-novedad-id="${idNovedad}"]`);
         lote = lote || card?.dataset.lote || idNovedad;
         planta = planta || card?.dataset.planta || '';
     }
-    console.log('[CHAT-OPERATOR] ✅ Agregando notificación de chat del operador');
     _operatorChatNotifs.unshift({ id: dedupKey, idNovedad, lote, planta, msg, ts: new Date(), read: false });
     if (_operatorChatNotifs.length > 30) _operatorChatNotifs = _operatorChatNotifs.slice(0, 30);
     _persistOperatorNotifs();
@@ -908,26 +990,11 @@ function _addOperatorChatNotif(idNovedad, msg, lote, planta) {
     }
 
     // Reproducir sonido y mostrar toast
-    console.log('[CHAT-OPERATOR] Reproduciendo sonido de chat...');
     if (typeof playChatSound === 'function') {
         playChatSound();
-    } else {
-        console.error('[CHAT-OPERATOR] ❌ playChatSound no está disponible');
     }
     if (typeof _showChatToast === 'function') {
         _showChatToast(lote, msg);
-    } else {
-        console.error('[CHAT-OPERATOR] ❌ _showChatToast no está disponible');
-    }
-
-    // Si el operador está en background, empujar alerta PWA nativa
-    if (document.hidden && typeof window.triggerPwaNotification === 'function') {
-        window.triggerPwaNotification(
-            `💬 Nuevo mensaje: Lote ${lote || idNovedad}`,
-            `${msg.autor || 'GUEST'}: ${msg.mensaje || 'Envió un archivo adjunto'}`,
-            `chat_${idNovedad}`,
-            `./seguimiento.html` // Operador abre en seguimiento.html o index.
-        );
     }
 }
 
@@ -1096,40 +1163,55 @@ function initGuestChat(novedades) {
     _guestNovedades = novedades || [];
     try { const s = localStorage.getItem(GUEST_CHAT_KEY); if (s) _guestChatSeen = JSON.parse(s); } catch (_) { }
     _startGuestPoll();
-    document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-            _pollGuestChats(); // Refrescar al volver a enfocar
-        }
-    });
+    // Eliminado: listener de visibilitychange (ya no es necesario con Realtime)
 }
 
+/**
+ * Inicia suscripción Realtime para chat de GUEST (100% tiempo real)
+ */
 function _startGuestPoll() {
-    if (_guestPollTimer) clearInterval(_guestPollTimer);
-    const interval = _chatNovedadId ? GUEST_POLL_ACTIVE : (document.hidden ? GUEST_POLL_HIDDEN : GUEST_POLL_IDLE);
-    _guestPollTimer = setInterval(_pollGuestChats, interval);
-
-    _pollGuestChats();
-    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
-    if (sb && !window._guestBadgeChannel) {
-        window._guestBadgeChannel = sb.channel('public:CHAT_guest')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public' }, payload => {
-                if (payload.table.toLowerCase() === 'chat') {
-                    setTimeout(() => _pollGuestChats(), 500);
-                }
-            })
-            .subscribe();
+    if (_guestPollTimer) {
+        clearInterval(_guestPollTimer);
+        _guestPollTimer = null;
     }
+
+    _pollGuestChats(); // Carga inicial
+    
+    const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
+    if (!sb) return;
+    
+    if (window._guestBadgeChannel) {
+        window._guestBadgeChannel.unsubscribe();
+        window._guestBadgeChannel = null;
+    }
+    
+    window._guestBadgeChannel = sb
+        .channel('chat-guest-realtime')
+        .on('postgres_changes', { 
+            event: 'INSERT', 
+            schema: 'public',
+            table: 'CHAT'
+        }, payload => {
+            _pollGuestChats();
+        })
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+            } else if (status === 'CHANNEL_ERROR') {
+            }
+        });
 }
 
 async function _pollGuestChats() {
-    // Si no tenemos novedades en memoria, intentar cargarlas (páginas sin app.js)
+    // Si no tenemos novedades en memoria, intentar cargarlas
     if (!_guestNovedades.length) {
         try {
             const novedades = await fetchNovedadesData();
             if (novedades && novedades.length) _guestNovedades = novedades;
         } catch (_) { }
     }
+    
     if (!_guestNovedades.length) {
+        console.log('[CHAT-GUEST] No hay novedades para consultar');
         return;
     }
 
@@ -1137,26 +1219,54 @@ async function _pollGuestChats() {
     if (!ids.length) return;
 
     try {
-        // OPTIMIZADO: Solo pide los mensajes de tus novedades, NO de toda la DB
-        const allRows = await _readChatSheet(ids);
+        // Obtener todos los mensajes y filtrar en memoria (más rápido que múltiples queries)
+        const url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_all`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
+            }
+        });
+        
+        if (!response.ok) {
+            return;
+        }
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+            return;
+        }
+        
+        const allMessages = result.messages || [];
+        
+        // Filtrar solo mensajes de las novedades del GUEST
+        const filteredMessages = allMessages.filter(r => ids.includes(r.ID_NOVEDAD));
+
+        // Construir mapa: último mensaje por novedad
         const latestByNov = {};
-        allRows.forEach(r => {
-            const novId = String(r.idNov || '').trim();
+        filteredMessages.forEach(r => {
+            const novId = String(r.ID_NOVEDAD || '').trim();
+            if (!novId) return;
+            
+            // Guardar siempre el más reciente (sobrescribe)
             latestByNov[novId] = {
-                id: r.id,
-                rol: r.rol,
-                autor: r.autor,
-                mensaje: r.mensaje,
-                ts: r.ts
+                id: r.ID_MSG,
+                rol: r.ROL,    // ROL contiene el rol (GUEST/ADMIN)
+                autor: r.AUTOR, // AUTOR contiene el nombre real
+                mensaje: r.MENSAJE,
+                ts: r.TS
             };
         });
+
         for (const id of ids) {
             const lastMsg = latestByNov[id];
-            if (!lastMsg) {
-                continue;
-            }
+            if (!lastMsg) continue;
+            
+            // Si el último mensaje NO es del GUEST y no lo hemos visto
             if (lastMsg.rol !== 'GUEST' && lastMsg.ts !== _guestChatSeen[id]) {
-                // Notificar via campana en lugar de toast flotante
+                // Notificar solo si no es el chat actualmente abierto
                 if (_chatNovedadId !== id) {
                     const nov = _guestNovedades.find(n => n.ID_NOVEDAD === id);
                     if (nov) {
@@ -1166,7 +1276,6 @@ async function _pollGuestChats() {
             }
         }
     } catch (e) {
-        // Error en polling de chats
     }
 }
 
@@ -1203,13 +1312,6 @@ function _addChatNotification(nov, msg) {
     _showChatToast(nov.LOTE || 'S/N', msg);
     if (typeof playChatSound === 'function') {
         playChatSound();
-    }
-
-    // Alerta PWA si la app está minimizada
-    if (document.hidden && typeof window.triggerPwaNotification === 'function') {
-        const title = `💬 Mensaje — Lote ${nov.LOTE || 'S/N'}`;
-        const body = `${msg.autor || 'Planta'}: ${(msg.mensaje || 'Adjunto').substring(0, 80)}`;
-        window.triggerPwaNotification(title, body, `chat_${nov.ID_NOVEDAD}`, `./index.html`);
     }
 }
 
@@ -1323,7 +1425,6 @@ async function _chatImageSelected(input) {
             previewImg.src = `data:${compressed.mimeType};base64,${compressed.base64}`;
         }
     } catch (e) {
-        console.error('[CHAT] Error procesando imagen:', e);
         Swal.fire('Error', 'No se pudo procesar la imagen seleccionada.', 'error');
         _chatClearImage();
     } finally {
@@ -1373,7 +1474,6 @@ async function _chatCorregirIA() {
         }
 
     } catch (err) {
-        console.error('[CHAT IA]', err);
         btn.style.borderColor = '#ef4444';
         btn.style.color = '#ef4444';
         setTimeout(() => {
@@ -1450,3 +1550,4 @@ document.addEventListener('click', function (e) {
         if (btn) { btn.style.borderColor = '#e2e8f0'; btn.style.color = '#94a3b8'; }
     }
 });
+

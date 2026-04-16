@@ -32,6 +32,95 @@ let currentUser = (() => {
 let allUsers = [];
 let allPlantas = [];
 
+// ── Render inmediato del nav desde localStorage (sin esperar red) ──
+(function _renderNavInstant() {
+    if (IS_LOGIN_PAGE) return;
+    if (!currentUser) return;
+
+    let avatarStyle = '';
+    let iconClass = 'fas fa-user-secret';
+    let profileType = 'user-guest';
+    try {
+        const prefs = JSON.parse(localStorage.getItem('sispro_avatar_prefs') || '{}');
+        if (prefs.image) avatarStyle = `background:url('${prefs.image}') center/cover no-repeat;width:28px;height:28px;`;
+        else if (prefs.color) avatarStyle = `background:${prefs.color};`;
+    } catch(_) {}
+
+    const rol = currentUser.ROL || '';
+    profileType = `role-${rol.toLowerCase()}`;
+    if (rol === 'ADMIN')          iconClass = 'fas fa-user-shield';
+    else if (rol === 'MODERATOR') iconClass = 'fas fa-user-tie';
+    else if (rol === 'USER-C')    iconClass = 'fas fa-user-check';
+    else if (rol === 'USER-P')    iconClass = 'fas fa-user';
+    else if (rol === 'GUEST')     iconClass = 'fas fa-user-secret';
+
+    // Obtener nombre del módulo actual desde el título de la página en mayúsculas
+    const pageTitle = (document.title.split(' - ')[0] || 'SISPRO').toUpperCase();
+    
+    // Descripciones de módulos
+    const moduleDescriptions = {
+        'REPORTES': 'Registro de eventos',
+        'SEGUIMIENTO': 'Estado de novedades',
+        'RUTERO': 'Agenda de visitas',
+        'USUARIOS': 'Gestión administrativa',
+        'CALIDAD': 'Reportes técnicos',
+        'NOVEDADES': 'Centro de soluciones',
+        'GESTIÓN DE PLANTA': 'Datos de planta',
+        'ACCESO': 'Inicio de sesión',
+        'RESTABLECER CONTRASEÑA': 'Recuperar acceso',
+        'CARGAR BARRAS': 'Carga de códigos de barras',
+        'CARGAR CURVAS': 'Carga de curvas de producción',
+        'EN PROCESO': 'Sincronización de lotes'
+    };
+    const moduleDesc = moduleDescriptions[pageTitle] || '';
+
+    const html = `
+        <div class="nav-brand-area">
+            <img src="icons/app.svg" alt="Logo TMD" class="nav-logo">
+            <span class="brand-tag">
+                <span style="display:block;font-weight:800;font-size:0.9rem;">${pageTitle}</span>
+                ${moduleDesc ? `<span style="display:block;font-size:0.65rem;color:#94a3b8;font-weight:500;margin-top:1px;">${moduleDesc}</span>` : ''}
+            </span>
+        </div>
+        <div class="nav-user-area" style="display:flex;align-items:center;gap:6px;">
+            <button class="btn-expand-view" id="btn-expand-view" onclick="toggleExpandView()" title="Contraer vista">
+                <i class="fas fa-compress-alt"></i>
+            </button>
+            <div style="position:relative;display:inline-flex;align-items:center;">
+                <button id="notif-bell-btn" onclick="if(typeof toggleNotifPanel==='function')toggleNotifPanel()" title="Notificaciones" style="
+                    background:none;border:none;cursor:pointer;padding:6px 10px;border-radius:50%;
+                    color:#64748b;font-size:1.1rem;transition:all 0.2s ease;position:relative;
+                " onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+                    <i class="fas fa-bell"></i>
+                    <span id="notif-badge" style="display:none;position:absolute;top:2px;right:2px;
+                        background:#ef4444;color:white;font-size:0.6rem;font-weight:800;
+                        min-width:16px;height:16px;border-radius:8px;padding:0 4px;line-height:16px;text-align:center;">0</span>
+                </button>
+            </div>
+            <button onclick="if(typeof toggleSidebar==='function')toggleSidebar()" class="btn-profile-toggle ${profileType}" id="profileToggle">
+                <span class="avatar-mini" style="${avatarStyle}"><i class="${iconClass}" style="color:white;"></i></span>
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>`;
+
+    function _inject() {
+        let nav = document.getElementById('app-top-nav');
+        if (!nav) {
+            nav = document.createElement('div');
+            nav.id = 'app-top-nav';
+            nav.className = 'app-header-bar';
+            document.body.prepend(nav);
+        }
+        nav.innerHTML = html;
+    }
+
+    if (document.body) {
+        _inject();
+    } else {
+        document.addEventListener('DOMContentLoaded', _inject);
+    }
+})();
+
 /* ── Avatar helpers — todo en localStorage, sin GAS ── */
 const AVATAR_PREFS_KEY = 'sispro_avatar_prefs';
 
@@ -104,39 +193,44 @@ function showLoginPrompt() {
 function _guestPerfilIncompleto() {
     if (!currentUser || currentUser.ROL !== 'GUEST') return false;
     
-    // Leer siempre desde localStorage para capturar datos recién guardados
-    // antes de que loadUsers() los sincronice con la DB
     try {
         const fresh = JSON.parse(localStorage.getItem('sispro_user') || '{}');
         
-        // Verificar campos obligatorios básicos
-        const tieneEmail = String(fresh.EMAIL || '').trim() !== '';
-        const tieneTelefono = String(fresh.TELEFONO || '').trim() !== '';
+        const tieneEmail     = String(fresh.EMAIL     || '').trim() !== '';
+        const tieneTelefono  = String(fresh.TELEFONO  || '').trim() !== '';
         const tieneDireccion = String(fresh.DIRECCION || '').trim() !== '';
-        
-        // Verificar campos de ubicación obligatorios desde currentPlantas
-        let tieneUbicacion = false;
-        if (typeof currentPlantas !== 'undefined' && currentPlantas && fresh.PLANTA) {
-            const plantaData = currentPlantas.find(p => 
+
+        // Verificar ubicación: primero en el propio objeto del usuario (guardado tras actualizar),
+        // luego como fallback en currentPlantas (sincronización desde DB)
+        let tieneDepartamento = String(fresh.DEPARTAMENTO || '').trim() !== '';
+        let tieneCiudad       = String(fresh.CIUDAD       || '').trim() !== '';
+        let tieneBarrio       = String(fresh.BARRIO       || '').trim() !== '';
+
+        // Fallback: buscar en currentPlantas si los campos no están en el localStorage
+        if ((!tieneDepartamento || !tieneCiudad || !tieneBarrio)
+            && typeof currentPlantas !== 'undefined' && currentPlantas && fresh.PLANTA) {
+            const plantaData = currentPlantas.find(p =>
                 (p.PLANTA || '').trim().toLowerCase() === String(fresh.PLANTA || '').trim().toLowerCase()
             );
-            
             if (plantaData) {
-                const tieneDepartamento = String(plantaData.DEPARTAMENTO || '').trim() !== '';
-                const tieneCiudad = String(plantaData.CIUDAD || '').trim() !== '';
-                const tieneBarrio = String(plantaData.BARRIO || '').trim() !== '';
-                
-                tieneUbicacion = tieneDepartamento && tieneCiudad && tieneBarrio;
+                if (!tieneDepartamento) tieneDepartamento = String(plantaData.DEPARTAMENTO || '').trim() !== '';
+                if (!tieneCiudad)       tieneCiudad       = String(plantaData.CIUDAD       || '').trim() !== '';
+                if (!tieneBarrio)       tieneBarrio       = String(plantaData.BARRIO        || '').trim() !== '';
             }
         }
-        
-        // Perfil completo solo si tiene todos los campos obligatorios
+
+        // El barrio es opcional si la ciudad no tiene barrios predefinidos en el sistema
+        const ciudadActual = String(fresh.CIUDAD || '').trim();
+        const barrioEsOpcional = ciudadActual !== '' &&
+            typeof getBarriosPorCiudad === 'function' &&
+            getBarriosPorCiudad(ciudadActual).length === 0;
+
+        const tieneUbicacion = tieneDepartamento && tieneCiudad && (tieneBarrio || barrioEsOpcional);
         return !(tieneEmail && tieneTelefono && tieneDireccion && tieneUbicacion);
-        
+
     } catch(e) {
-        // Fallback: verificar solo campos básicos si hay error
-        return !(String(currentUser.EMAIL || '').trim() &&
-                 String(currentUser.TELEFONO || '').trim() &&
+        return !(String(currentUser.EMAIL     || '').trim() &&
+                 String(currentUser.TELEFONO  || '').trim() &&
                  String(currentUser.DIRECCION || '').trim());
     }
 }
@@ -166,9 +260,22 @@ async function loadUsers() {
 
     try {
         // OPTIMIZACIÓN: Si ya tenemos datos en memoria, no volver a descargarlos 
-        // a menos que sea estrictamente necesario (ej. primer carga o F5)
-        if (allUsers.length === 0 || allPlantas.length === 0) {
-            console.log('[AUTH] Descargando base de datos inicial...');
+        // a menos que sea estrictamente necesario. 
+        // IMPORTANTE: NO intentar descargar datos si estamos en LOGIN para evitar errores de permisos.
+        if (!IS_LOGIN_PAGE && (allUsers.length === 0 || allPlantas.length === 0)) {
+            // Saltar descarga en páginas que no la necesitan (carga masiva, etc.)
+            if (window._SKIP_AUTH_FETCH) {
+                console.log('[AUTH] Skip fetch — página de carga masiva');
+                const saved = localStorage.getItem('sispro_user');
+                if (saved) {
+                    currentUser = JSON.parse(saved);
+                    document.body.classList.add('auth-shield-pass');
+                    applyAccessControl();
+                } else if (!IS_LOGIN_PAGE) {
+                    window.location.replace('login.html');
+                }
+                return;
+            }
             const [usersData, plantasData] = await Promise.all([
                 fetchUsuariosData(),
                 fetchPlantasData()
@@ -176,7 +283,7 @@ async function loadUsers() {
             allUsers = usersData;
             allPlantas = plantasData;
         } else {
-            console.log('[AUTH] Usando base de datos en memoria (Cache OK)');
+            console.log(IS_LOGIN_PAGE ? '[AUTH] Modo Login: Postergando descarga de datos' : '[AUTH] Usando base de datos en memoria (Cache OK)');
         }
 
         const savedUser = localStorage.getItem('sispro_user');
@@ -216,9 +323,12 @@ async function loadUsers() {
                 // preservarlos para no perderlos por latencia de la DB
                 try {
                     const stored = JSON.parse(localStorage.getItem('sispro_user') || '{}');
-                    if (String(stored.EMAIL    || '').trim()) realUser.EMAIL     = stored.EMAIL;
-                    if (String(stored.TELEFONO || '').trim()) realUser.TELEFONO  = stored.TELEFONO;
-                    if (String(stored.DIRECCION|| '').trim()) realUser.DIRECCION = stored.DIRECCION;
+                    if (String(stored.EMAIL        || '').trim()) realUser.EMAIL        = stored.EMAIL;
+                    if (String(stored.TELEFONO     || '').trim()) realUser.TELEFONO     = stored.TELEFONO;
+                    if (String(stored.DIRECCION    || '').trim()) realUser.DIRECCION    = stored.DIRECCION;
+                    if (String(stored.DEPARTAMENTO || '').trim()) realUser.DEPARTAMENTO = stored.DEPARTAMENTO;
+                    if (String(stored.CIUDAD       || '').trim()) realUser.CIUDAD       = stored.CIUDAD;
+                    if (String(stored.BARRIO       || '').trim()) realUser.BARRIO       = stored.BARRIO;
                     currentUser = realUser;
                 } catch(e) {}
 
@@ -237,13 +347,15 @@ async function loadUsers() {
                 if (currentUser.ROL === 'GUEST') {
                     // app.js llama initNotifications() con datos precargados en index.html;
                     // en otras páginas lo iniciamos aquí si aún no está corriendo.
-                    if (typeof initNotifications === 'function' && typeof _notifPollTimer !== 'undefined' && !_notifPollTimer) {
+                    if (typeof initNotifications === 'function' && !window._notifsInitializedGuest) {
+                        window._notifsInitializedGuest = true;
                         initNotifications();
                     }
                 } else if (currentUser.ROL === 'ADMIN' || currentUser.ROL === 'USER-P') {
                     // resolucion.js llama initChatBadges() con datos ya cargados;
                     // en otras páginas lo iniciamos aquí si aún no está corriendo.
-                    if (typeof initChatBadges === 'function' && typeof _chatBadgeTimer !== 'undefined' && !_chatBadgeTimer) {
+                    if (typeof initChatBadges === 'function' && !window._chatBadgesInitializedAdmin) {
+                        window._chatBadgesInitializedAdmin = true;
                         initChatBadges();
                     }
                 }
@@ -374,6 +486,11 @@ async function handleLogin(userId, password, isLoginPage = false, tipoAcceso = '
             // Si tiene datos completos o no es GUEST, ir a index
             window.location.href = 'index.html';
         } else {
+            // Reproducir sonido de bienvenida al entrar a index.html
+            if (typeof window.playInicioSound === 'function') {
+                window.playInicioSound();
+            }
+            
             Swal.fire({
                 icon: 'success',
                 title: '¡BIENVENIDO!',
@@ -540,6 +657,26 @@ function updateAuthUI() {
         else if (currentUser.ROL === 'GUEST') iconClass = 'fas fa-user-secret';
     }
 
+    // Obtener nombre del módulo actual desde el título de la página en mayúsculas
+    const pageTitle = (document.title.split(' - ')[0] || 'SISPRO').toUpperCase();
+    
+    // Descripciones de módulos
+    const moduleDescriptions = {
+        'REPORTES': 'Registro de eventos',
+        'SEGUIMIENTO': 'Estado de novedades',
+        'RUTERO': 'Agenda de visitas',
+        'USUARIOS': 'Gestión administrativa',
+        'CALIDAD': 'Reportes técnicos',
+        'NOVEDADES': 'Centro de soluciones',
+        'GESTIÓN DE PLANTA': 'Datos de planta',
+        'ACCESO': 'Inicio de sesión',
+        'RESTABLECER CONTRASEÑA': 'Recuperar acceso',
+        'CARGAR BARRAS': 'Carga de códigos de barras',
+        'CARGAR CURVAS': 'Carga de curvas de producción',
+        'EN PROCESO': 'Sincronización de lotes'
+    };
+    const moduleDesc = moduleDescriptions[pageTitle] || '';
+
     // Renderizar Header HTML
     const isGuest = currentUser && currentUser.ROL === 'GUEST';
     const showBell = !!currentUser; // campana en TODAS las páginas para cualquier usuario autenticado
@@ -548,9 +685,15 @@ function updateAuthUI() {
     navContainer.innerHTML = `
         <div class="nav-brand-area">
             <img src="icons/app.svg" alt="Logo TMD" class="nav-logo">
-            <span class="brand-tag">Grupo TDM</span>
+            <span class="brand-tag">
+                <span style="display:block;font-weight:800;font-size:0.9rem;">${pageTitle}</span>
+                ${moduleDesc ? `<span style="display:block;font-size:0.65rem;color:#94a3b8;font-weight:500;margin-top:1px;">${moduleDesc}</span>` : ''}
+            </span>
         </div>
         <div class="nav-user-area" style="display:flex;align-items:center;gap:6px;">
+            <button class="btn-expand-view" id="btn-expand-view" onclick="toggleExpandView()" title="Contraer vista">
+                <i class="fas fa-compress-alt"></i>
+            </button>
             ${showBell ? `
             <div style="position:relative;display:inline-flex;align-items:center;">
                 <button id="notif-bell-btn" onclick="toggleNotifPanel()" title="Notificaciones" style="
@@ -971,23 +1114,8 @@ async function togglePushNotifications(enable) {
 
         localStorage.removeItem('sispro_notif_soft_off');
 
+        // Sistema de notificaciones push eliminado
         let finalPerm = permission;
-        if (permission === 'granted') {
-            // Usar el nuevo sistema de Supabase
-            if (window.PushSupabase && typeof PushSupabase.requestPermission === 'function') {
-                const result = await PushSupabase.requestPermission();
-                finalPerm = result.success ? 'granted' : permission;
-            }
-        } else {
-            // Solicitar permisos con el nuevo sistema
-            if (window.activarNotificaciones && typeof activarNotificaciones === 'function') {
-                const success = await activarNotificaciones();
-                finalPerm = success ? 'granted' : 'default';
-            }
-            if (finalPerm !== 'granted') {
-                localStorage.setItem('sispro_notif_soft_off', '1');
-            }
-        }
 
         // Sincronizar con el permiso real que obtuvimos (no Notification.permission que puede ser buggy)
         _syncNotifToggleUI(finalPerm === 'granted' ? 'granted' : null);
@@ -1064,14 +1192,71 @@ function toggleSettingsPanel() {
 // INICIALIZACIÓN INMEDIATA DEL ECOSISTEMA
 // ══════════════════════════════════════════════════════════════════════════
 (function() {
-    const initUI = () => {
+    const startAuth = async () => {
+        // 1. Validar estado de sesión y cargar datos mínimos (sin bloquear login)
+        await loadUsers();
+
+        // 2. Si es LOGIN, activar el formulario de inmediato
+        if (typeof IS_LOGIN_PAGE !== 'undefined' && IS_LOGIN_PAGE) {
+            console.log('[AUTH] Modo Login: Activando formulario de acceso.');
+            if (typeof initLoginPage === 'function') initLoginPage();
+            return; // Detener aquí (no inyectar Header/Sidebar)
+        }
+
+        // 3. Si NO es login, inyectar el ecosistema de la app (Header/Sidebar)
         if (typeof updateAuthUI === 'function') updateAuthUI();
         if (typeof createSidebar === 'function') createSidebar();
     };
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initUI);
+        document.addEventListener('DOMContentLoaded', startAuth);
     } else {
-        initUI();
+        startAuth();
     }
+})();
+
+/* ── Expand View — cicla entre 3 tamaños: default(1400) → medio(900) → full(100%) ── */
+function toggleExpandView() {
+    const body = document.body;
+    const btn = document.getElementById('btn-expand-view');
+    const icon = btn?.querySelector('i');
+
+    const isMedium   = body.classList.contains('view-medium');
+    const isExpanded = body.classList.contains('view-expanded');
+
+    // Ciclar: default → medio → full → default
+    if (!isMedium && !isExpanded) {
+        // default (1400) → medio (900)
+        body.classList.add('view-medium');
+        if (icon) icon.className = 'fas fa-expand-alt';
+        if (btn)  { btn.title = 'Expandir vista'; btn.style.color = 'var(--color-primary)'; }
+        localStorage.setItem('sispro_view_state', 'medium');
+        localStorage.setItem('sispro_view_page', window.location.pathname.split('/').pop() || 'index.html');
+    } else if (isMedium) {
+        // medio (900) → full (100%)
+        body.classList.remove('view-medium');
+        body.classList.add('view-expanded');
+        if (icon) icon.className = 'fas fa-expand';
+        if (btn)  { btn.title = 'Vista completa'; btn.style.color = 'var(--color-primary)'; }
+        localStorage.setItem('sispro_view_state', 'expanded');
+        localStorage.setItem('sispro_view_page', window.location.pathname.split('/').pop() || 'index.html');
+    } else {
+        // full (100%) → default (1400)
+        body.classList.remove('view-expanded');
+        if (icon) icon.className = 'fas fa-compress-alt';
+        if (btn)  { btn.title = 'Contraer vista'; btn.style.color = ''; }
+        localStorage.setItem('sispro_view_state', 'default');
+        localStorage.setItem('sispro_view_page', window.location.pathname.split('/').pop() || 'index.html');
+    }
+}
+
+// Restaurar preferencia al cargar — siempre inicia en default (no persiste entre páginas)
+(function _restoreExpandState() {
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('btn-expand-view');
+        if (!btn) return;
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fas fa-compress-alt';
+        btn.title = 'Contraer vista';
+    });
 })();

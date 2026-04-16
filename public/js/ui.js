@@ -84,6 +84,24 @@ function hideSections() {
     DOM.ruteroSection()?.classList.add('hidden');
     DOM.errorMessage().classList.add('hidden');
 
+    // Limpiar campos del formulario de novedades
+    const area = document.getElementById('area');
+    const cantidadSolicitada = document.getElementById('cantidadSolicitada');
+    const observacionesNovedad = document.getElementById('observacionesNovedad');
+    const imagen = document.getElementById('imagen');
+    const imagenName = document.getElementById('imagenName');
+    const imagenDropzone = document.getElementById('imagenDropzone');
+    if (area) area.value = '';
+    if (cantidadSolicitada) cantidadSolicitada.value = '';
+    if (observacionesNovedad) observacionesNovedad.value = '';
+    if (imagen) imagen.value = '';
+    if (imagenName) imagenName.textContent = '';
+    if (imagenDropzone) imagenDropzone.classList.remove('has-file');
+
+    // Limpiar select de acciones
+    const acciones = DOM.accionesSelect();
+    if (acciones) acciones.value = '';
+
     // Asegurar que los datos del lote se contraigan
     const collapseHeader = document.getElementById('lotCollapseToggle');
     const collapseBody = document.getElementById('lotCollapseBody');
@@ -914,6 +932,8 @@ async function mejorarRedaccion(fieldId) {
             // Guardar el texto original en un atributo data
             textarea.setAttribute('data-original-text', textoOriginal);
             textarea.value = data.improvedText;
+            // Expandir el textarea al tamaño del contenido
+            _autoResizeTextarea(textarea);
 
             // Mostrar el botón de restaurar
             if (restoreBtn) {
@@ -1143,14 +1163,37 @@ function switchLoteView(view) {
         const loteInput = DOM.loteInput();
         if (loteInput && loteInput.value.trim()) {
             emptyState.classList.add('hidden');
+            // Si hay un lote seleccionado, mostrar sus secciones de nuevo
+            DOM.detailsSection().classList.remove('hidden');
+            // Restaurar la sección de acción que estaba activa
+            const prevAccion = cardsView?.dataset?.prevAccion || '';
+            if (prevAccion) {
+                toggleActionSections(prevAccion);
+            }
         } else {
             emptyState.classList.remove('hidden');
         }
+        
+        // Hacer focus en el input de búsqueda de lote
+        setTimeout(() => {
+            if (loteInput) loteInput.focus();
+        }, 100);
     } else {
-        // Mostrar tarjetas
+        // Mostrar tarjetas — ocultar formularios sin limpiarlos
         searchView.style.display = 'none';
         cardsView.style.display = 'block';
         emptyState.classList.add('hidden');
+
+        // Guardar qué acción estaba activa para restaurarla al volver
+        const accionActiva = DOM.accionesSelect()?.value || '';
+        cardsView.dataset.prevAccion = accionActiva;
+
+        // Ocultar secciones sin limpiar campos
+        DOM.detailsSection().classList.add('hidden');
+        DOM.novedadesSection().classList.add('hidden');
+        DOM.calidadSection().classList.add('hidden');
+        DOM.actualizarDatosSection().classList.add('hidden');
+        DOM.ruteroSection()?.classList.add('hidden');
         
         // Mostrar/ocultar mensajes según el rol
         const isGuest = currentUser && currentUser.ROL === 'GUEST';
@@ -1169,6 +1212,12 @@ function switchLoteView(view) {
             // Limpiar tarjetas
             const container = document.getElementById('lotesCards');
             if (container) container.innerHTML = '';
+            
+            // Hacer focus en el input de filtro de planta para ADMIN
+            setTimeout(() => {
+                const plantaInput = document.getElementById('plantaFilterInput');
+                if (plantaInput) plantaInput.focus();
+            }, 100);
         }
     }
 }
@@ -1380,6 +1429,25 @@ function selectLoteFromCard(loteNum) {
 // Exponer funciones globalmente
 window.switchLoteView = switchLoteView;
 window.selectLoteFromCard = selectLoteFromCard;
+
+/* ── Auto-resize textarea ── */
+function _autoResizeTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = el.scrollHeight + 'px';
+}
+
+// Aplicar auto-resize a los textareas de la app al escribir
+document.addEventListener('DOMContentLoaded', () => {
+    ['observacionesNovedad', 'observacionesCalidad'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.overflow = 'hidden';
+            el.style.resize = 'none';
+            el.addEventListener('input', () => _autoResizeTextarea(el));
+        }
+    });
+});
 
 
 /**

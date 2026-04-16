@@ -12,11 +12,19 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
-        rel="stylesheet">
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/mobile.css">
@@ -43,201 +51,26 @@
 
         .wrapper-dashboard {
             width: 96%;
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 80px auto 2rem;
             padding: 2rem;
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px) saturate(160%);
-            -webkit-backdrop-filter: blur(12px) saturate(160%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
             position: relative;
             z-index: 10;
         }
 
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, var(--color-primary), #6366f1);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* ── Improved Mini-Stats Box (Compact & Technical) ── */
-        .stat-card-mini {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: white;
-            padding: 8px 16px;
-            border-radius: 12px;
-            border: 1px solid #f1f5f9;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-            min-width: 170px;
-            transition: all 0.2s ease;
-        }
-
-        .stat-icon {
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            font-size: 0.95rem;
-        }
-
-        .stat-icon.pending {
-            background: #fffbeb;
-            color: #f59e0b;
-        }
-
-        .stat-icon.active {
-            background: #ecfdf5;
-            color: #10b981;
-        }
-
-        .stat-info {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .stat-val-container {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .stat-val {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: #0f172a;
-            line-height: 1;
-            letter-spacing: -0.5px;
-        }
-
-        .stat-lab {
-            font-size: 0.6rem;
-            color: #94a3b8;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-top: 2px;
-            letter-spacing: 0.5px;
-        }
-
-        .divider-v {
-            width: 1px;
-            height: 30px;
-            background: #f1f5f9;
-            margin: 0 10px;
-        }
-
-        /* ── Seamless Unified Search Bar ── */
-        .unified-tool-bar {
-            background: #ffffff;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            padding: 6px 20px;
-            margin: 20px 0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-            transition: all 0.2s ease;
-        }
-
-        .unified-tool-bar:focus-within {
-            border-color: #cbd5e1;
-            box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.08);
-            transform: translateY(-1px);
-        }
-
-        .search-input-clean {
-            border: none;
-            background: transparent;
-            flex: 1;
-            font-size: 0.9rem;
-            color: #1e293b;
-            padding: 12px 0;
-            font-weight: 500;
-        }
-
-        .search-input-clean:focus {
-            outline: none;
-        }
-
-        .search-input-clean::placeholder {
-            color: #94a3b8;
-            font-weight: 400;
-        }
-
-        /* ── Aesthetics for the Table ── */
-        .table-users th {
-            font-weight: 700;
-            color: #475569;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 12px;
-            background: #f8fafc;
-        }
-
-        .table-users td {
-            font-weight: 500;
-            color: #1e293b;
-            font-size: 0.9rem;
-            padding: 12px;
-            vertical-align: middle;
-        }
-
-        .badge-rol {
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 700;
-        }
-
-        .role-actions select {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            padding: 4px 24px 4px 12px;
-            background-color: white;
-            color: #475569;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .role-actions select:focus {
-            outline: none;
-            border-color: #3f51b5;
-        }
-
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
             .wrapper-dashboard {
-                padding: 1rem;
+                padding: 2rem;
                 width: 100%;
                 border-radius: 0;
-            }
-
-            .unified-tool-bar {
-                flex-direction: column;
-                align-items: stretch;
-                border-radius: 12px;
-                padding: 12px;
-            }
-
-            .search-input-clean {
-                padding: 10px 0;
-            }
-
-            .btn-create-lux {
-                margin: 10px 0 0 0 !important;
-                justify-content: center;
-                width: 100%;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 60px;
             }
         }
 
@@ -297,82 +130,41 @@
 
     <div class="wrapper-dashboard">
 
-        <!-- ── Header & KPI Row ── -->
-        <div class="row align-items-center mb-4">
-            <div class="col-xl-5 col-lg-5 col-md-12 mb-3 mb-lg-0 text-center text-lg-start">
-                <h1 class="page-title mb-1">Centro de Control</h1>
-                <p class="text-muted fw-semibold mb-0" style="font-size: 0.85rem;">Módulo Administrativo</p>
+        <!-- ── KPI Chips ── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <button onclick="toggleUsuariosKPIs()" id="usuariosKpiBtn" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
+                <span>Indicadores</span>
+                <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="usuariosKpiChevron"></i>
+            </button>
+        </div>
+
+        <div id="usuariosKpiContainer" style="display:none;grid-template-columns:repeat(2,1fr);gap:1px;margin-bottom:12px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                <span style="font-size:1.1rem;font-weight:800;color:#f59e0b;" id="stat-pending">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;" id="stat-label-pending">Pendientes</span>
             </div>
-
-            <div class="col-xl-7 col-lg-7 col-md-12">
-                <div class="d-flex gx-3 justify-content-center justify-content-lg-end stats-container-main"
-                    style="gap: 12px;">
-
-                    <div class="stat-card-mini">
-                        <div class="stat-icon pending"><i class="fas fa-user-clock"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-val-container">
-                                <span class="stat-val" id="stat-pending">0</span>
-                            </div>
-                            <span class="stat-lab">Pendientes</span>
-                        </div>
-                    </div>
-
-                    <div class="divider-v d-none d-sm-block"></div>
-
-                    <div class="stat-card-mini">
-                        <div class="stat-icon active"><i class="fas fa-user-check"></i></div>
-                        <div class="stat-info">
-                            <div class="stat-val-container">
-                                <span class="stat-val" id="stat-active">0</span>
-                            </div>
-                            <span class="stat-lab">Activos</span>
-                        </div>
-                    </div>
-                </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
+                <span style="font-size:1.1rem;font-weight:800;color:#3f51b5;" id="stat-active">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;" id="stat-label-active">Total</span>
             </div>
         </div>
 
-        <!-- ── Unified Tool Bar ── -->
-        <div class="unified-tool-bar">
-            <!-- Ícono + input en un grupo que NUNCA se rompe -->
-            <div style="display:flex; align-items:center; flex:1; min-width:0;">
-                <i class="fas fa-search text-muted" style="font-size:0.85rem; flex-shrink:0; margin-right:10px;"></i>
-                <input type="text" id="userSearchInput" class="search-input-clean"
-                    placeholder="Filtrar por nombre, ID o correo..." oninput="handleUserFilter()">
-            </div>
-            
+        <!-- ── Toggle de vistas ── -->
+        <div class="view-toggle" style="margin-bottom:10px;">
+            <button type="button" class="view-toggle-btn active" id="tab-users" onclick="switchAdminMode('USERS')" title="Empleados">
+                <i class="codicon codicon-account"></i>
+            </button>
+            <button type="button" class="view-toggle-btn" id="tab-plants" onclick="switchAdminMode('PLANTS')" title="Plantas">
+                <i class="codicon codicon-organization"></i>
+            </button>
+        </div>
 
-
-            <style>
-                .btn-create-lux {
-                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-                    color: white;
-                    border: none;
-                    border-radius: 14px;
-                    padding: 10px 20px;
-                    font-size: 0.85rem;
-                    font-weight: 800;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-                    white-space: nowrap;
-                }
-                .btn-create-lux:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.35);
-                    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                }
-                @media (max-width: 768px) {
-                    .btn-create-lux {
-                        padding: 8px 16px;
-                        font-size: 0.75rem;
-                    }
-                }
-            </style>
+        <!-- ── Input de búsqueda ── -->
+        <div class="input-with-icon mb-3">
+            <i class="codicon codicon-search input-icon"></i>
+            <input type="text" id="userSearchInput" class="form-control"
+                placeholder="Filtrar empleados por nombre, ID o correo..."
+                oninput="handleUserFilter()">
         </div>
 
         <!-- ── Módulo Principal ── -->
@@ -383,13 +175,37 @@
 
         <div id="dataSection" style="display: none;">
             <div id="userTableBody"></div>
-            <!-- Paginación Aesthetic -->
             <div id="paginationUsers"></div>
         </div>
     </div>
 
+    <!-- ── FAB: Nuevo usuario/planta ── -->
+    <button id="btnCreateUser" onclick="openCreateModal()" title="Nuevo" style="
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3f51b5, #6366f1);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 16px rgba(63,81,181,0.4);
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <i class="fas fa-plus"></i>
+    </button>
+
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script src="js/config.js"></script>
     <script src="js/api.js"></script>
@@ -404,9 +220,7 @@
     <script src="js/forms/plantas.js"></script>
     <script src="js/forms/plantas-modal.js"></script>
     <script src="js/admin/usuarios.js"></script>
-    
-    <!-- Sistema de Notificaciones Push Supabase -->
-    <script src="js/push-supabase.js"></script>
+
 </body>
 
 </html>

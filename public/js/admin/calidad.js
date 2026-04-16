@@ -14,13 +14,12 @@ let selectedDateRange = null;
  * Se inicializa cuando carga la página calidad.html
  */
 window.onload = async function() {
+    // Disparar fetch de reportes en paralelo con loadUsers para no esperar auth
+    const reportesPromise = fetchReportesData();
 
-    
-    // loadUsers() en auth.js ejecuta fetchSecureConfig() y extrae la data de todos los usuarios
-    await loadUsers(); 
-    
-    // Cargar datos de calidad usando la configuración ya precargada
-    await cargarDatosCalidadLocal();
+    await loadUsers();
+
+    await cargarDatosCalidadLocal(reportesPromise);
     setupInfiniteScroll();
     initDateRangePicker();
 };
@@ -30,27 +29,22 @@ window.onload = async function() {
  */
 function toggleKPIs() {
     const container = document.getElementById('kpiContainer');
-    const icon = document.getElementById('kpiToggleIcon');
-    
-    if (container && icon) {
-        container.classList.toggle('open');
-        icon.classList.toggle('open');
-    }
+    const btn = document.getElementById('kpiToggleBtn');
+    if (container) container.classList.toggle('open');
+    if (btn) btn.classList.toggle('open');
 }
 
 /**
  * Carga inicial de datos desde Sheets con optimización de velocidad
  */
-async function cargarDatosCalidadLocal() {
+async function cargarDatosCalidadLocal(reportesPromise) {
     const loader = document.getElementById('initialLoader');
     const dataSection = document.getElementById('qualityFeed');
     
     if (loader) loader.style.display = 'block';
 
     try {
-        // La configuración ya está cargada por loadUsers(), no necesitamos esperar
-        // Carga de datos directamente desde Sheets API para máxima velocidad
-        gsReportes = await fetchReportesData();
+        gsReportes = await (reportesPromise || fetchReportesData());
         
         if (!gsReportes || gsReportes.length === 0) {
             if (loader) {
@@ -111,6 +105,7 @@ async function recargarDatosCalidad() {
     if (dataSection) dataSection.style.display = 'none';
     
     try {
+        if (typeof invalidateCache === 'function') invalidateCache('REPORTES');
         gsReportes = await fetchReportesData();
         
         if (!gsReportes || gsReportes.length === 0) {

@@ -161,6 +161,10 @@ async function sendToSupabase(payload) {
  */
 const sendToGAS = sendToSupabase;
 
+// Exportar globalmente para que esté disponible en otros módulos
+window.sendToSupabase = sendToSupabase;
+window.sendToGAS = sendToGAS;
+
 /**
  * Sube una imagen en background a Supabase Storage via Edge Function.
  * Mejorado con mejor manejo de errores y compatibilidad móvil

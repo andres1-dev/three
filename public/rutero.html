@@ -14,9 +14,14 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="preconnect" href="https://stackpath.bootstrapcdn.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/footer.css">
@@ -24,19 +29,33 @@
         body { opacity: 0; visibility: hidden; transition: opacity 0.2s; }
         body.auth-shield-pass { opacity: 1; visibility: visible; }
 
-        .rutero-header {
-            background: linear-gradient(135deg, #3F51B5, #5c6bc0);
-            color: white;
-            padding: 18px 20px;
-            border-radius: 14px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
         }
-        .rutero-header h1 { font-size: 1.2rem; font-weight: 800; margin: 0; }
-        .rutero-header p  { font-size: 0.75rem; margin: 2px 0 0; opacity: 0.8; }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                padding: 2rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .wrapper-dashboard { padding: 3rem; }
+        }
+
+        .rutero-header { display: none; }
 
         .day-tabs {
             display: flex;
@@ -432,108 +451,35 @@
 
 <div id="rutero-saving"><i class="fas fa-circle-notch fa-spin"></i> Guardando orden...</div>
 
-<div class="container-fluid">
-  <main class="content-wrapper px-2">
-
-    <div class="rutero-header">
-        <div>
-            <h1><i class="fas fa-route" style="margin-right:8px;"></i>Rutero de Visitas</h1>
-            <p id="rutero-subtitle">Cargando agenda...</p>
-        </div>
-        <div style="display:flex;align-items:center;gap:6px;">
-
-            <!-- Toggle de vista (solo admin/mod) -->
-            <div class="view-toggle" id="view-toggle-wrap">
-                <button class="view-toggle-btn" id="btn-vista-cards" onclick="setVista('cards')" title="Vista consolidada">
-                    <i class="fas fa-th-list"></i>
-                </button>
-                <button class="view-toggle-btn active" id="btn-vista-progreso" onclick="setVista('progreso')" title="Vista progreso">
-                    <i class="fas fa-stream"></i>
-                </button>
-            </div>
-
-            <!-- Botones de acción — desktop: visibles, móvil: dentro del menú -->
-            <div id="header-actions" style="display:flex;align-items:center;gap:6px;">
-                <!-- Correo -->
-                <button id="btn-enviar-correo" onclick="enviarResumenPorCorreo()" title="Enviar resumen por correo"
-                    class="hdr-btn" style="display:none;">
-                    <i class="fas fa-envelope"></i>
-                </button>
-                <!-- WA inicio -->
-                <button id="btn-wa-inicio" onclick="enviarResumenWhatsApp('inicio')" title="Programacion de ruta (WhatsApp)"
-                    class="hdr-btn" style="display:none;">
-                    <i class="fab fa-whatsapp"></i>
-                </button>
-                <!-- WA cierre -->
-                <button id="btn-wa-cierre" onclick="enviarResumenWhatsApp('cierre')" title="Cierre de jornada (WhatsApp)"
-                    class="hdr-btn" style="display:none;">
-                    <i class="fas fa-flag-checkered"></i>
-                </button>
-                <!-- Actualizar -->
-                <button onclick="cargarRutero()" title="Actualizar" class="hdr-btn">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-
-            <!-- Botón de acciones móvil (solo en pantallas pequeñas) -->
-            <div id="header-actions-mobile" style="display:none;position:relative;">
-                <button onclick="_toggleAccionesMenu()" title="Acciones" class="hdr-btn">
-                    <i class="fas fa-ellipsis-v"></i>
-                </button>
-                <!-- Dropdown -->
-                <div id="acciones-menu" style="display:none;position:absolute;right:0;top:40px;
-                     background:white;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.15);
-                     border:1.5px solid #e2e8f0;min-width:190px;z-index:9999;overflow:hidden;">
-                    <button onclick="cargarRutero();_toggleAccionesMenu()"
-                        style="width:100%;padding:11px 16px;border:none;background:white;text-align:left;
-                               font-size:0.78rem;font-weight:700;color:#1e293b;cursor:pointer;
-                               display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
-                        <i class="fas fa-sync-alt" style="width:14px;color:#3F51B5;"></i> Actualizar
-                    </button>
-                    <div id="mob-admin-actions" style="display:none;">
-                        <button onclick="setVista('progreso');_toggleAccionesMenu()"
-                            style="width:100%;padding:11px 16px;border:none;background:white;text-align:left;
-                                   font-size:0.78rem;font-weight:700;color:#1e293b;cursor:pointer;
-                                   display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
-                            <i class="fas fa-stream" style="width:14px;color:#3F51B5;"></i> Vista progreso
-                        </button>
-                        <button onclick="setVista('cards');_toggleAccionesMenu()"
-                            style="width:100%;padding:11px 16px;border:none;background:white;text-align:left;
-                                   font-size:0.78rem;font-weight:700;color:#1e293b;cursor:pointer;
-                                   display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
-                            <i class="fas fa-th-list" style="width:14px;color:#3F51B5;"></i> Vista consolidada
-                        </button>
-                        <button onclick="enviarResumenPorCorreo();_toggleAccionesMenu()"
-                            style="width:100%;padding:11px 16px;border:none;background:white;text-align:left;
-                                   font-size:0.78rem;font-weight:700;color:#1e293b;cursor:pointer;
-                                   display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
-                            <i class="fas fa-envelope" style="width:14px;color:#3F51B5;"></i> Enviar por correo
-                        </button>
-                        <button onclick="enviarResumenWhatsApp('inicio');_toggleAccionesMenu()"
-                            style="width:100%;padding:11px 16px;border:none;background:white;text-align:left;
-                                   font-size:0.78rem;font-weight:700;color:#1e293b;cursor:pointer;
-                                   display:flex;align-items:center;gap:10px;border-bottom:1px solid #f1f5f9;">
-                            <i class="fab fa-whatsapp" style="width:14px;color:#25D366;"></i> Programacion de ruta
-                        </button>
-                        <button onclick="enviarResumenWhatsApp('cierre');_toggleAccionesMenu()"
-                            style="width:100%;padding:11px 16px;border:none;background:white;text-align:left;
-                                   font-size:0.78rem;font-weight:700;color:#1e293b;cursor:pointer;
-                                   display:flex;align-items:center;gap:10px;">
-                            <i class="fas fa-flag-checkered" style="width:14px;color:#3F51B5;"></i> Cierre de jornada
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
+<div class="wrapper-dashboard">
 
     <div class="day-tabs" id="dayTabs"></div>
     <div id="ruteroList"><div class="rutero-loader"><i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem;"></i></div></div>
 
-  </main>
+</div><!-- /.wrapper-dashboard -->
+
+<!-- FAB de acciones del rutero -->
+<div id="rutero-fab-wrap" style="position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <div id="rutero-fab-menu" style="display:none;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button id="btn-enviar-correo" onclick="enviarResumenPorCorreo();_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fas fa-envelope" style="color:#3F51B5;"></i> Correo
+        </button>
+        <button id="btn-wa-inicio" onclick="enviarResumenWhatsApp('inicio');_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fab fa-whatsapp" style="color:#25D366;"></i> Programación
+        </button>
+        <button id="btn-wa-cierre" onclick="enviarResumenWhatsApp('cierre');_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fas fa-flag-checkered" style="color:#3F51B5;"></i> Cierre
+        </button>
+        <button onclick="cargarRutero();_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fas fa-sync-alt" style="color:#3F51B5;"></i> Actualizar
+        </button>
+    </div>
+    <button id="rutero-fab-btn" onclick="_toggleFabMenu()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3f51b5,#6366f1);color:white;border:none;box-shadow:0 4px 16px rgba(63,81,181,0.4);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;-webkit-tap-highlight-color:transparent;outline:none;">
+        <i class="fas fa-ellipsis-v" id="rutero-fab-icon"></i>
+    </button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 <script src="js/config.js"></script>
 <script src="js/forms/gas.js"></script>
@@ -543,8 +489,6 @@
 <script src="js/notifications.js"></script>
 <script src="js/chat.js"></script>
 
-<!-- Sistema de Notificaciones Push Supabase -->
-<script src="js/push-supabase.js"></script>
 <script>
 document.body.classList.add('auth-shield-pass');
 
@@ -559,18 +503,39 @@ let _vista        = 'progreso'; // 'cards' | 'progreso'
 /* ══════════════════════════════════════════════════════════════════════
    CARGA
    ══════════════════════════════════════════════════════════════════════ */
-async function cargarRutero() {
+
+// Índice de reportes pre-computado: key → true (para O(1) lookup en calcularEstado)
+let _reportesIndex = new Set();
+// Caché de estados calculados: ID_VISITA → estado (evita recalcular en cada render)
+let _estadoCache = new Map();
+
+function _buildReportesIndex() {
+    _reportesIndex = new Set();
+    const norm = s => (s || '').toString().trim().toLowerCase();
+    for (const r of _reportesData) {
+        // r.FECHA ya está normalizada a YYYY-MM-DD
+        const key = `${r.FECHA}|${norm(r.PLANTA)}|${norm(r.LOTE)}|${norm(r.REFERENCIA)}|${norm(r.PROCESO)}|${norm(r.TIPO_VISITA)}`;
+        _reportesIndex.add(key);
+    }
+}
+
+async function cargarRutero(ruteroPromise, reportesPromise) {
     document.getElementById('ruteroList').innerHTML = '<div class="rutero-loader"><i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem;"></i></div>';
     try {
         await fetchSecureConfig();
 
-        // Cargar rutero y reportes en paralelo desde Supabase
+        // Usar promesas pre-iniciadas si se pasaron, o iniciar nuevas (ej: recarga manual)
         const [ruteroRows, reportesRows] = await Promise.all([
-            fetchSupabaseData(SHEET_RUTERO.name),
-            fetchSupabaseData(SHEET_REPORTES.name)
+            ruteroPromise || fetchSupabaseData(SHEET_RUTERO.name),
+            reportesPromise || fetchSupabaseData(SHEET_REPORTES.name)
         ]);
 
-        _reportesData = reportesRows;
+        _reportesData = reportesRows.map(r => ({
+            ...r,
+            FECHA: parsarFechaUniversal(r.FECHA)
+        }));
+        _buildReportesIndex();
+        _estadoCache.clear();
 
         // Filtrar por auditor
         const rol     = currentUser?.ROL || '';
@@ -578,7 +543,7 @@ async function cargarRutero() {
         const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
 
         const allRutero = esAdmin
-            ? ruteroRows  // ven todo
+            ? ruteroRows
             : ruteroRows.filter(r => (r.AUDITOR || '').trim().toLowerCase() === auditor.trim().toLowerCase());
 
         // Normalizar FECHA_VISITA a YYYY-MM-DD en todos los registros
@@ -594,15 +559,17 @@ async function cargarRutero() {
             return parseInt(a.PRIORIDAD || 99) - parseInt(b.PRIORIDAD || 99);
         });
 
+        // Pre-calcular estados una sola vez para todos los registros
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        for (const r of _ruteroData) {
+            _estadoCache.set(r, _calcularEstadoRaw(r, hoy));
+        }
+
         // Aplicar visibilidad de controles según rol
         _aplicarRolUI();
 
         renderTabs();
         renderList();
-
-        const pendientes = _ruteroData.filter(r => calcularEstado(r) !== 'VISITADO').length;
-        document.getElementById('rutero-subtitle').textContent =
-            `${pendientes} visita${pendientes !== 1 ? 's' : ''} pendiente${pendientes !== 1 ? 's' : ''}`;
 
     } catch(e) {
         console.error('[rutero]', e);
@@ -674,31 +641,31 @@ function getCantidadSispro(visita) {
    Criterios: PLANTA + LOTE + REFERENCIA + PROCESO + TIPO_VISITA
               y la fecha del reporte (FECHA) debe coincidir con FECHA_VISITA
    ══════════════════════════════════════════════════════════════════════ */
-function calcularEstado(visita) {
-    const norm = s => (s || '').toString().trim().toLowerCase();
 
-    // REPROGRAMADO viene directo de la hoja
+// Cálculo real — solo se llama una vez por visita al cargar
+function _calcularEstadoRaw(visita, hoy) {
+    const norm = s => (s || '').toString().trim().toLowerCase();
     if (norm(visita.ESTADO) === 'reprogramado') return 'REPROGRAMADO';
 
     const fechaVisita = (visita.FECHA_VISITA || '').trim();
+    const key = `${fechaVisita}|${norm(visita.PLANTA)}|${norm(visita.LOTE)}|${norm(visita.REFERENCIA)}|${norm(visita.PROCESO)}|${norm(visita.TIPO_VISITA)}`;
 
-    const match = _reportesData.some(r => {
-        const fechaReporte = parsarFechaUniversal(r.FECHA);
-        return fechaReporte === fechaVisita
-            && norm(r.PLANTA)      === norm(visita.PLANTA)
-            && norm(r.LOTE)        === norm(visita.LOTE)
-            && norm(r.REFERENCIA)  === norm(visita.REFERENCIA)
-            && norm(r.PROCESO)     === norm(visita.PROCESO)
-            && norm(r.TIPO_VISITA) === norm(visita.TIPO_VISITA);
-    });
+    if (_reportesIndex.has(key)) return 'VISITADO';
 
-    if (match) return 'VISITADO';
-
-    const hoy = new Date(); hoy.setHours(0,0,0,0);
     const dVisita = new Date(fechaVisita + 'T00:00:00');
     if (!isNaN(dVisita) && dVisita < hoy) return 'VENCIDO';
 
     return 'PENDIENTE';
+}
+
+// Lookup O(1) desde caché — usar en todos los renders
+function calcularEstado(visita) {
+    if (_estadoCache.has(visita)) return _estadoCache.get(visita);
+    // Fallback para visitas no pre-calculadas (ej: después de actualizar estado)
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const estado = _calcularEstadoRaw(visita, hoy);
+    _estadoCache.set(visita, estado);
+    return estado;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -743,51 +710,50 @@ function selectDay(dia) {
    TOGGLE DE VISTA
    ══════════════════════════════════════════════════════════════════════ */
 function setVista(v) {
-    const rol = currentUser?.ROL || '';
-    const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
-    // USER-C siempre en progreso
-    if (!esAdmin) v = 'progreso';
-    _vista = v;
-    const btnCards = document.getElementById('btn-vista-cards');
-    const btnProg  = document.getElementById('btn-vista-progreso');
-    if (btnCards) btnCards.classList.toggle('active', v === 'cards');
-    if (btnProg)  btnProg.classList.toggle('active', v === 'progreso');
+    // Solo vista progreso
+    _vista = 'progreso';
     renderList();
 }
 
 function _aplicarRolUI() {
     const rol = currentUser?.ROL || '';
     const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
-    const toggle    = document.getElementById('view-toggle-wrap');
     const btnCorreo = document.getElementById('btn-enviar-correo');
     const btnWAi    = document.getElementById('btn-wa-inicio');
     const btnWAc    = document.getElementById('btn-wa-cierre');
-    const mobAdmin  = document.getElementById('mob-admin-actions');
-    if (toggle)    toggle.style.display    = esAdmin ? '' : 'none';
     if (btnCorreo) btnCorreo.style.display = esAdmin ? 'flex' : 'none';
     if (btnWAi)    btnWAi.style.display    = esAdmin ? 'flex' : 'none';
     if (btnWAc)    btnWAc.style.display    = esAdmin ? 'flex' : 'none';
-    if (mobAdmin)  mobAdmin.style.display  = esAdmin ? 'block' : 'none';
-    if (!esAdmin) _vista = 'progreso';
+    _vista = 'progreso';
 }
 
-function _toggleAccionesMenu() {
-    const menu = document.getElementById('acciones-menu');
+function _toggleFabMenu() {
+    const menu = document.getElementById('rutero-fab-menu');
+    const icon = document.getElementById('rutero-fab-icon');
     if (!menu) return;
     const open = menu.style.display === 'none' || menu.style.display === '';
-    menu.style.display = open ? 'block' : 'none';
+    menu.style.display = open ? 'flex' : 'none';
+    if (icon) icon.className = open ? 'fas fa-times' : 'fas fa-ellipsis-v';
     if (open) {
-        // Cerrar al tocar fuera
         setTimeout(() => {
             document.addEventListener('click', function _close(e) {
-                if (!e.target.closest('#header-actions-mobile')) {
-                    menu.style.display = 'none';
+                if (!e.target.closest('#rutero-fab-wrap')) {
+                    _closeFabMenu();
                     document.removeEventListener('click', _close);
                 }
             });
         }, 10);
     }
 }
+
+function _closeFabMenu() {
+    const menu = document.getElementById('rutero-fab-menu');
+    const icon = document.getElementById('rutero-fab-icon');
+    if (menu) menu.style.display = 'none';
+    if (icon) icon.className = 'fas fa-ellipsis-v';
+}
+
+function _toggleAccionesMenu() { _toggleFabMenu(); }
 
 function _onAuditorChange(val) {
     _auditorFiltro = val || null;
@@ -1085,16 +1051,16 @@ function renderListProgreso() {
         const norm = s => (s || '').toString().trim().toLowerCase();
         const fechaVisita = (v.FECHA_VISITA || '').trim();
         const match = _reportesData.find(r =>
-            parsarFechaUniversal(r.FECHA) === fechaVisita
+            r.FECHA === fechaVisita   // r.FECHA ya normalizada a YYYY-MM-DD
             && norm(r.PLANTA)      === norm(v.PLANTA)
             && norm(r.LOTE)        === norm(v.LOTE)
             && norm(r.REFERENCIA)  === norm(v.REFERENCIA)
             && norm(r.PROCESO)     === norm(v.PROCESO)
             && norm(r.TIPO_VISITA) === norm(v.TIPO_VISITA)
         );
-        if (!match || !match.FECHA) return null;
-        // FECHA formato: "14/3/2026 12:05:44"
-        const parts = match.FECHA.split(/[, ]/);
+        if (!match || !match.TIMESTAMP) return null;
+        // TIMESTAMP formato: "14/3/2026 12:05:44"
+        const parts = String(match.TIMESTAMP).split(/[, ]/);
         if (parts.length >= 2) {
             const [d, m, y] = parts[0].split('/');
             const timePart = parts[1] || '00:00:00';
@@ -1545,15 +1511,20 @@ function renderList() {
 
 function contarMatches(visita) {
     const norm = s => (s || '').toString().trim().toLowerCase();
-    const fechaVisita = (visita.FECHA_VISITA || '').trim(); // ya normalizada
-    return _reportesData.filter(r =>
-        parsarFechaUniversal(r.FECHA) === fechaVisita
-        && norm(r.PLANTA)      === norm(visita.PLANTA)
-        && norm(r.LOTE)        === norm(visita.LOTE)
-        && norm(r.REFERENCIA)  === norm(visita.REFERENCIA)
-        && norm(r.PROCESO)     === norm(visita.PROCESO)
-        && norm(r.TIPO_VISITA) === norm(visita.TIPO_VISITA)
-    ).length;
+    const fechaVisita = (visita.FECHA_VISITA || '').trim();
+    let count = 0;
+    for (const r of _reportesData) {
+        // r.FECHA ya está normalizada
+        if (r.FECHA === fechaVisita
+            && norm(r.PLANTA)      === norm(visita.PLANTA)
+            && norm(r.LOTE)        === norm(visita.LOTE)
+            && norm(r.REFERENCIA)  === norm(visita.REFERENCIA)
+            && norm(r.PROCESO)     === norm(visita.PROCESO)
+            && norm(r.TIPO_VISITA) === norm(visita.TIPO_VISITA)) {
+            count++;
+        }
+    }
+    return count;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1771,9 +1742,17 @@ async function guardarPrioridades(visitas) {
    INIT
    ══════════════════════════════════════════════════════════════════════ */
 window.onload = async function() {
+    // Disparar los fetches de datos en paralelo con la autenticación
+    // para no desperdiciar tiempo esperando loadUsers antes de ir a la red
+    const ruteroPromise = fetchSupabaseData(SHEET_RUTERO.name);
+    const reportesPromise = fetchSupabaseData(SHEET_REPORTES.name);
+
+    // Esperar auth (necesitamos currentUser para filtrar por auditor)
     await loadUsers();
     updateAuthUI();
-    cargarRutero();
+
+    // Los datos ya están llegando (o llegaron) — procesar
+    await cargarRutero(ruteroPromise, reportesPromise);
 };
 </script>
 </body>

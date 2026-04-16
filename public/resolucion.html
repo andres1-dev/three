@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
   <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
-    <title>Resolución - Grupo TDM</title>
+    <title>Novedades - Grupo TDM</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3b82f6">
@@ -12,17 +12,20 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
-        rel="stylesheet">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/mobile.css">
-    
-    <!-- ── Supabase Realtime ── -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
     <script>
@@ -46,27 +49,27 @@
 
         .wrapper-dashboard {
             width: 96%;
-            max-width: 1600px;
+            max-width: 1400px;
             margin: 80px auto 2rem;
             padding: 2rem;
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px) saturate(160%);
-            -webkit-backdrop-filter: blur(12px) saturate(160%);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.06);
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
             position: relative;
             z-index: 10;
         }
 
-        .page-title {
-            font-size: 1.8rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            background: linear-gradient(135deg, var(--color-primary), #6366f1);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                padding: 2rem;
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 60px;
+            }
         }
 
         /* ── Improved Mini-Stats Box (Compact & Technical) ── */
@@ -1225,101 +1228,51 @@
 <body>
 
 
-    <div class="container-fluid wrapper-dashboard">
-        <!-- ── Top Header (Centered Stats, No New Button) ── -->
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-            <h2 class="page-title"><i class="fas fa-layer-group me-2"></i>Centro de Resolución</h2>
-            
-            <!-- ── unified-stats-mobile (SOLO MÓVIL) ── -->
-            <div class="unified-stats-mobile d-md-none">
-                <div class="m-stat-item">
-                    <div class="m-stat-icon pending"><i class="fas fa-clock"></i></div>
-                    <div class="m-stat-data">
-                        <span class="m-stat-val" id="m-stat-pending">0</span>
-                        <span class="m-stat-lab">Pend.</span>
-                    </div>
-                </div>
-                <div class="m-stat-divider"></div>
-                <div class="m-stat-item">
-                    <div class="m-stat-icon process"><i class="fas fa-sync-alt"></i></div>
-                    <div class="m-stat-data">
-                        <span class="m-stat-val" id="m-stat-process">0</span>
-                        <span class="m-stat-lab">Proc.</span>
-                    </div>
-                </div>
-                <div class="m-stat-divider"></div>
-                <div class="m-stat-item">
-                    <div class="m-stat-icon done"><i class="fas fa-check-circle"></i></div>
-                    <div class="m-stat-data">
-                        <span class="m-stat-val" id="m-stat-done">0</span>
-                        <span class="m-stat-lab">Cerr.</span>
-                    </div>
-                </div>
-            </div>
+    <div class="wrapper-dashboard">
+        <!-- ── KPI Chips ── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
+                <span>Indicadores</span>
+                <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="kpiChevron"></i>
+            </button>
+            <button onclick="gsCurrentPage=1;_toggleFinalizados()" id="btn-toggle-cerradas" title="Ver cerradas" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;-webkit-tap-highlight-color:transparent;">
+                <i class="fas fa-eye" id="icon-toggle-cerradas"></i>
+                <span id="label-toggle-cerradas">Cerradas</span>
+            </button>
+        </div>
 
-            <!-- ── stats-container-main (OCULTO EN MÓVIL AHORA) ── -->
-            <div class="d-none d-md-flex align-items-center stats-container-main">
-                <div class="stat-card-mini">
-                    <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-val-container">
-                            <span class="stat-val" id="stat-pending">0</span>
-                            <span class="stat-qty-badge" id="stat-pending-qty">0 UND</span>
-                        </div>
-                        <span class="stat-lab">Pendientes</span>
-                    </div>
-                </div>
-                <div class="divider-v"></div>
-                <div class="stat-card-mini">
-                    <div class="stat-icon process"><i class="fas fa-sync-alt"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-val-container">
-                            <span class="stat-val" id="stat-process">0</span>
-                            <span class="stat-qty-badge" id="stat-process-qty"
-                                style="color: #d97706; background: #fffbeb;">0 UND</span>
-                        </div>
-                        <span class="stat-lab">ELABORACIÓN</span>
-                    </div>
-                </div>
-                <div class="divider-v"></div>
-                <div class="stat-card-mini">
-                    <div class="stat-icon done"><i class="fas fa-check-circle"></i></div>
-                    <div class="stat-info">
-                        <div class="stat-val-container">
-                            <span class="stat-val" id="stat-done">0</span>
-                            <span class="stat-qty-badge" id="stat-done-qty"
-                                style="color: #059669; background: #ecfdf5;">0 UND</span>
-                        </div>
-                        <span class="stat-lab">Cerradas</span>
-                    </div>
-                </div>
+        <div id="kpiContainer" style="display:none;grid-template-columns:repeat(3,1fr);gap:1px;margin-bottom:20px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                <span style="font-size:1.1rem;font-weight:800;color:#f59e0b;" id="stat-pending">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Pendientes</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                <span style="font-size:1.1rem;font-weight:800;color:#3b82f6;" id="stat-process">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Elaboración</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
+                <span style="font-size:1.1rem;font-weight:800;color:#10b981;" id="stat-done">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Cerradas</span>
             </div>
         </div>
 
-        <!-- ── Modern Controls Row ── -->
-        <div class="controls-row-lux">
-            <!-- Search Area -->
-            <div class="search-area-lux">
-                <i class="fas fa-search text-muted me-3" style="font-size: 0.85rem;"></i>
-                <input type="text" id="searchInput" class="search-input-clean"
-                    placeholder="Filtrar por lote, planta, radicado o descripción..." oninput="handleFilter()">
-            </div>
+        <!-- IDs de compatibilidad ocultos para el JS existente -->
+        <span id="stat-pending-qty" style="display:none;">0</span>
+        <span id="stat-process-qty" style="display:none;">0</span>
+        <span id="stat-done-qty" style="display:none;">0</span>
+        <span id="m-stat-pending" style="display:none;">0</span>
+        <span id="m-stat-process" style="display:none;">0</span>
+        <span id="m-stat-done" style="display:none;">0</span>
 
-            <!-- Actions Area -->
-            <div class="actions-group-lux">
-                <div class="integrated-switch">
-                    <label class="switch-label-lux" for="toggleFinalizados">Ver Cerradas</label>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="toggleFinalizados"
-                            onchange="gsCurrentPage=1; renderTabla()">
-                    </div>
-                </div>
-
-                <button class="view-btn-lux" id="toggleViewMode" onclick="toggleCompactView()" title="Cambiar modo de vista">
-                    <i class="fas fa-table-cells-large"></i>
-                </button>
-            </div>
+        <!-- ── Search ── -->
+        <div class="input-with-icon mb-3">
+            <i class="codicon codicon-search input-icon"></i>
+            <input type="text" id="searchInput" class="form-control" style="border-radius:20px;"
+                placeholder="Filtrar por lote, planta, radicado o descripción..." oninput="handleFilter()">
         </div>
+
+        <!-- input oculto para compatibilidad con JS -->
+        <input type="checkbox" id="toggleFinalizados" style="display:none;" onchange="gsCurrentPage=1; renderTabla()">
 
         <!-- ── Main Feed ── -->
         <div id="loader" class="text-center py-5">
@@ -1402,7 +1355,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script src="js/config.js"></script>
     <script src="js/forms/gas.js"></script>
@@ -1415,9 +1369,7 @@
     <script src="js/notifications.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/resolucion.js"></script>
-    
-    <!-- Sistema de Notificaciones Push Supabase -->
-    <script src="js/push-supabase.js"></script>
+
 </body>
 
 </html>

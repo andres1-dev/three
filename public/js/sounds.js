@@ -1,19 +1,21 @@
 /* ==========================================================================
    sounds.js — Sistema de sonidos para notificaciones SISPRO
-   - Reproduce archivos MP3 sin abrir reproductor visible
-   - Sistema de desbloqueo de audio por interacción del usuario
-   - Toggle para activar/desactivar sonidos
+   - Usa HTMLAudioElement con configuración para evitar reproductores nativos
+   - Compatible con iOS y Android
+   - Desbloqueo por interacción del usuario
    ========================================================================== */
 
 const SOUND_PREFS_KEY = 'sispro_sound_prefs';
 
-// Instancias de Audio (se crean una vez y se reutilizan)
+// Objetos de audio
+let inicioAudio = null;
 let chatAudio = null;
 let stateAudio = null;
-let audioUnlocked = false;
 
-// Preferencias de sonido
+// Estados
+let audioUnlocked = false;
 let soundEnabled = true;
+let inicioPlayed = false;
 
 /* ══════════════════════════════════════════════════════════════════════════
    Inicialización
@@ -28,68 +30,103 @@ function initSounds() {
     } catch (e) {}
   }
 
-  // Crear instancias de Audio
-  chatAudio = new Audio('sounds/chat.mp3');
-  stateAudio = new Audio('sounds/estado.mp3');
+  // Crear objetos de audio (sin cargar aún)
+  inicioAudio = createAudio('sounds/inicio.mp3');
+  chatAudio = createAudio('sounds/chat.mp3');
+  stateAudio = createAudio('sounds/estado.mp3');
 
-  // Precargar audios
-  chatAudio.load();
-  stateAudio.load();
-
-  // Desbloquear audio en primera interacción
+  // Desbloqueo requerido - cargar en primera interacción
   document.addEventListener('click', unlockAudio, { once: true });
   document.addEventListener('touchstart', unlockAudio, { once: true });
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Desbloquear audio (requerido en iOS/Safari)
+   Crear objeto de audio configurado
+   ══════════════════════════════════════════════════════════════════════════ */
+function createAudio(src) {
+  const audio = new Audio();
+  audio.src = src;
+  audio.preload = 'auto';
+  
+  // Configuración para evitar reproductores nativos en iOS
+  audio.setAttribute('playsinline', 'true');
+  audio.setAttribute('webkit-playsinline', 'true');
+  
+  // Volumen
+  audio.volume = 1.0;
+  
+  return audio;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Desbloquear audio (iOS/Android)
    ══════════════════════════════════════════════════════════════════════════ */
 function unlockAudio() {
   if (audioUnlocked) return;
-  
+
+  // Precargar todos los audios en la primera interacción
   try {
-    // Reproducir y pausar inmediatamente para desbloquear
-    chatAudio.play().then(() => {
-      chatAudio.pause();
-      chatAudio.currentTime = 0;
-    }).catch(() => {});
-    
-    stateAudio.play().then(() => {
-      stateAudio.pause();
-      stateAudio.currentTime = 0;
-    }).catch(() => {});
-    
-    audioUnlocked = true;
-  } catch (e) {}
+    if (inicioAudio) inicioAudio.load();
+    if (chatAudio) chatAudio.load();
+    if (stateAudio) stateAudio.load();
+  } catch (e) {
+    console.warn('Error precargando sonidos:', e);
+  }
+
+  audioUnlocked = true;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Reproducir sonidos
+   Reproducir sonido
    ══════════════════════════════════════════════════════════════════════════ */
-function playChatSound() {
-  if (!soundEnabled || !chatAudio) return;
-  
+function playSound(audio) {
+  if (!soundEnabled || !audio) return;
+
   try {
-    chatAudio.currentTime = 0;
-    chatAudio.play().catch(() => {});
-  } catch (e) {}
+    // Reiniciar el audio si ya se estaba reproduciendo
+    audio.currentTime = 0;
+    
+    // Reproducir
+    const playPromise = audio.play();
+    
+    // Manejar promesa (requerido en navegadores modernos)
+    if (playPromise !== undefined) {
+      playPromise.catch(error => {
+        console.warn('Error reproduciendo sonido:', error);
+      });
+    }
+  } catch (e) {
+    console.warn('Error reproduciendo sonido:', e);
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Sonidos específicos
+   ══════════════════════════════════════════════════════════════════════════ */
+function playInicioSound() {
+  if (!inicioPlayed) {
+    playSound(inicioAudio);
+    inicioPlayed = true;
+  }
+}
+
+function playChatSound() {
+  playSound(chatAudio);
 }
 
 function playStateSound() {
-  if (!soundEnabled || !stateAudio) return;
-  
-  try {
-    stateAudio.currentTime = 0;
-    stateAudio.play().catch(() => {});
-  } catch (e) {}
+  playSound(stateAudio);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Toggle de sonidos
+   Preferencias
    ══════════════════════════════════════════════════════════════════════════ */
 function toggleSound(enabled) {
   soundEnabled = enabled !== false;
-  localStorage.setItem(SOUND_PREFS_KEY, JSON.stringify({ enabled: soundEnabled }));
+  localStorage.setItem(
+    SOUND_PREFS_KEY,
+    JSON.stringify({ enabled: soundEnabled })
+  );
 }
 
 function isSoundEnabled() {
@@ -97,15 +134,16 @@ function isSoundEnabled() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Exponer funciones globalmente
+   Exponer globalmente
    ══════════════════════════════════════════════════════════════════════════ */
+window.playInicioSound = playInicioSound;
 window.playChatSound = playChatSound;
 window.playStateSound = playStateSound;
 window.toggleSound = toggleSound;
 window.isSoundEnabled = isSoundEnabled;
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Auto-inicialización
+   Auto-init
    ══════════════════════════════════════════════════════════════════════════ */
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initSounds);
