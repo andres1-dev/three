@@ -4,16 +4,15 @@
    ========================================================================== */
 
 const NOTIF_STORAGE_KEY       = 'sispro_notif_seen';
-const NOTIF_LIST_KEY          = 'sispro_notif_list';   // persistencia de notificaciones
-const NOTIF_POLL_ACTIVE       = 5_000;   // pestaña visible: 5s
-const NOTIF_POLL_HIDDEN       = 30_000;  // pestaña oculta: 30s
-let _notifPollTimer = null;
-let _lastKnownStates = {}; // { ID_NOVEDAD: ESTADO }
+const NOTIF_LIST_KEY          = 'sispro_notif_list';
+let _lastKnownStates = {};
 let _initialLoadDone = false;
-let _notifications = []; // { id, nov, estadoAnterior, estadoActual, ts, read }
+let _notifications = [];
 let _storedNovedades = [];
 let _notifChannel = null;
+let _notifChatChannel = null; // Renombrado para evitar conflicto con chat.js
 let _guestChatInitialized = false;
+let _soundsReady = false; // Flag para verificar si los sonidos están listos
 
 /* ── Inicialización ── */
 
@@ -51,9 +50,7 @@ function initNotifications(preloadedNovedades) {
 
     _ensureNotifPanel();
 
-    if (_notifPollTimer) clearInterval(_notifPollTimer);
-
-    // Si ya tenemos datos del primer fetch, procesarlos directamente sin re-fetch
+    // Carga inicial de datos
     if (preloadedNovedades && preloadedNovedades.length) {
         _storedNovedades = preloadedNovedades;
         _processUpdates(preloadedNovedades);
@@ -61,40 +58,137 @@ function initNotifications(preloadedNovedades) {
             _guestChatInitialized = true;
             initGuestChat(preloadedNovedades);
         }
-    } else {
-        _pollNovedades();
+    } else if (!window._notifsRealtimeActive) {
+        _fetchNovedades();
     }
 
-    _startNotifPoll();
+    if (window._notifsRealtimeActive) return;
+    window._notifsRealtimeActive = true;
 
-    // Polling adaptativo: más rápido cuando la pestaña está visible
-    document.addEventListener('visibilitychange', _onVisibilityChange);
+    // Iniciar Realtime (sin polling)
+    _startRealtimeSubscriptions();
 }
 
-function _startNotifPoll() {
-    if (_notifPollTimer) clearInterval(_notifPollTimer);
-    const interval = document.hidden ? NOTIF_POLL_HIDDEN : NOTIF_POLL_ACTIVE;
-    _notifPollTimer = setInterval(_pollNovedades, interval);
-
-    _pollNovedades(); // Carga inicial
+/**
+ * Configura las suscripciones de Supabase Realtime.
+ * Sistema 100% en tiempo real, sin polling.
+ */
+function _startRealtimeSubscriptions() {
     const sb = window.getSupabaseClient ? window.getSupabaseClient() : null;
-    if (sb && !window._novedadesChannel) {
-        window._novedadesChannel = sb.channel('public:NOVEDADES')
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public' }, payload => {
-                if (payload.table.toLowerCase() === 'novedades') {
-                    // Invalidar caché para que el poll traiga datos frescos
-                    if (typeof invalidateCache === 'function') invalidateCache('NOVEDADES');
-                    setTimeout(() => _pollNovedades(), 300);
-                }
-            })
-            .subscribe();
+    
+    if (!sb) {
+        console.error('[NOTIF] ❌ Supabase client no disponible');
+        return;
     }
+
+    console.log('[NOTIF] 🔴 Iniciando suscripciones Realtime...');
+    
+    // ═══════════════════════════════════════════════════════════════
+    // Canal 1: NOVEDADES (cambios de estado)
+    // ═══════════════════════════════════════════════════════════════
+    _notifChannel = sb
+        .channel('novedades-realtime')
+        .on(
+            'postgres_changes',
+            { 
+                event: '*', // INSERT, UPDATE, DELETE
+                schema: 'public',
+                table: 'NOVEDADES'
+            },
+            (payload) => {
+                console.log('[NOTIF] 🔴 Cambio en NOVEDADES:', payload.eventType, payload.new?.ID_NOVEDAD);
+                
+                // Invalidar caché
+                if (typeof invalidateCache === 'function') {
+                    invalidateCache('NOVEDADES');
+                }
+                
+                // Actualizar datos inmediatamente
+                _fetchNovedades();
+            }
+        )
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('[NOTIF] ✅ Realtime NOVEDADES conectado');
+            } else if (status === 'CHANNEL_ERROR') {
+                console.error('[NOTIF] ❌ Error en Realtime NOVEDADES');
+            } else if (status === 'TIMED_OUT') {
+                console.warn('[NOTIF] ⚠️ Realtime NOVEDADES timeout - Reintentando...');
+            } else if (status === 'CLOSED') {
+                console.warn('[NOTIF] ⚠️ Realtime NOVEDADES cerrado - Reconectando...');
+                setTimeout(_startRealtimeSubscriptions, 2000);
+            }
+        });
+    
+    // ═══════════════════════════════════════════════════════════════
+    // Canal 2: CHAT (mensajes nuevos)
+    // ═══════════════════════════════════════════════════════════════
+    _notifChatChannel = sb
+        .channel('chat-realtime-notif')
+        .on(
+            'postgres_changes',
+            { 
+                event: 'INSERT',
+                schema: 'public',
+                table: 'CHAT'
+            },
+            (payload) => {
+                console.log('[NOTIF] 💬 Nuevo mensaje en CHAT:', payload.new?.ID_MSG);
+                
+                // Invalidar caché de chat
+                if (typeof invalidateCache === 'function') {
+                    invalidateCache('CHAT');
+                }
+                
+                // Reproducir sonido de chat
+                if (typeof playChatSound === 'function') {
+                    playChatSound();
+                }
+                
+                // Actualizar UI de chat si está abierto
+                if (typeof _onNewChatMessage === 'function') {
+                    _onNewChatMessage(payload.new);
+                }
+            }
+        )
+        .subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+                console.log('[NOTIF] ✅ Realtime CHAT conectado');
+            } else if (status === 'CHANNEL_ERROR') {
+                console.error('[NOTIF] ❌ Error en Realtime CHAT');
+            } else if (status === 'CLOSED') {
+                console.warn('[NOTIF] ⚠️ Realtime CHAT cerrado - Reconectando...');
+                setTimeout(_startRealtimeSubscriptions, 2000);
+            }
+        });
 }
 
-function _onVisibilityChange() {
-    if (!currentUser || currentUser.ROL !== 'GUEST') return;
-    if (!document.hidden) {
-        _pollNovedades(); // Refrescar al volver a enfocar la pestaña
+/**
+ * Obtiene las novedades desde Supabase.
+ * Reemplaza el antiguo polling.
+ */
+async function _fetchNovedades() {
+    try {
+        const novedades = await fetchNovedadesData();
+        _storedNovedades = novedades;
+        _processUpdates(novedades);
+        
+        // Pasar novedades al módulo de chat GUEST
+        if (currentUser?.ROL === 'GUEST' && typeof initGuestChat === 'function') {
+            if (!_guestChatInitialized) {
+                _guestChatInitialized = true;
+                initGuestChat(novedades);
+            } else if (typeof _guestNovedades !== 'undefined') {
+                _guestNovedades = novedades;
+            }
+        }
+        
+        // Actualizar vista de seguimiento si está activa
+        if (typeof renderTracking === 'function') {
+            renderTracking(novedades);
+        }
+    } catch (e) {
+        console.error('[NOTIF] Error al consultar novedades:', e);
     }
 }
 
@@ -210,9 +304,9 @@ function _handleOutsideClick(e) {
     }
 }
 
-/* ── Polling ── */
+/* ── Obtención de datos ── */
 
-async function _pollNovedades() {
+async function _fetchNovedades() {
     try {
         // No necesitamos fetchSecureConfig()
         const novedades = await fetchNovedadesData();
@@ -323,11 +417,7 @@ function _addNotifications(items) {
     
     // Reproducir sonido de cambio de estado si hay notificaciones nuevas
     if (hasNewNotifs) {
-        if (typeof playStateSound === 'function') {
-            playStateSound();
-        } else {
-            console.error('[NOTIF] playStateSound no está disponible');
-        }
+        _playNotificationSound();
     }
 }
 
@@ -336,6 +426,17 @@ function _persistNotifications() {
     try {
         localStorage.setItem(NOTIF_LIST_KEY, JSON.stringify(_notifications));
     } catch (_) {}
+}
+
+/**
+ * Reproduce el sonido de cambio de estado con reintentos
+ */
+function _playNotificationSound() {
+    if (typeof playStateSound === 'function') {
+        playStateSound();
+    } else {
+        console.warn('[NOTIF] playStateSound no disponible');
+    }
 }
 
 /* ── Badge ── */

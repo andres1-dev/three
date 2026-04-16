@@ -347,13 +347,15 @@ async function loadUsers() {
                 if (currentUser.ROL === 'GUEST') {
                     // app.js llama initNotifications() con datos precargados en index.html;
                     // en otras páginas lo iniciamos aquí si aún no está corriendo.
-                    if (typeof initNotifications === 'function' && typeof _notifPollTimer !== 'undefined' && !_notifPollTimer) {
+                    if (typeof initNotifications === 'function' && !window._notifsInitializedGuest) {
+                        window._notifsInitializedGuest = true;
                         initNotifications();
                     }
                 } else if (currentUser.ROL === 'ADMIN' || currentUser.ROL === 'USER-P') {
                     // resolucion.js llama initChatBadges() con datos ya cargados;
                     // en otras páginas lo iniciamos aquí si aún no está corriendo.
-                    if (typeof initChatBadges === 'function' && typeof _chatBadgeTimer !== 'undefined' && !_chatBadgeTimer) {
+                    if (typeof initChatBadges === 'function' && !window._chatBadgesInitializedAdmin) {
+                        window._chatBadgesInitializedAdmin = true;
                         initChatBadges();
                     }
                 }
