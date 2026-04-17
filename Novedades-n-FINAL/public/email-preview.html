@@ -1,0 +1,426 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview — Correos de Notificación · Grupo TDM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 14px 32px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .topbar-title { font-size: .85rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; }
+    .topbar-title span { color: #6366f1; }
+    .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tab {
+      padding: 7px 16px; border-radius: 6px;
+      border: 1px solid #334155; background: transparent;
+      color: #94a3b8; font-size: .78rem; font-weight: 600;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
+    }
+    .tab:hover { background: #1e293b; color: #e2e8f0; border-color: #475569; }
+    .tab.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+    /* ── Stage ── */
+    .stage { padding: 40px 24px 80px; display: flex; flex-direction: column; align-items: center; }
+
+    /* ── Email card ── */
+    .email-wrap { display: none; width: 100%; max-width: 680px; flex-direction: column; }
+    .email-wrap.visible { display: flex; }
+
+    .email-chrome {
+      background: #1e293b; border: 1px solid #334155;
+      border-bottom: none; border-radius: 12px 12px 0 0;
+      padding: 18px 24px;
+    }
+    .email-chrome .subject { font-size: .95rem; font-weight: 700; color: #f1f5f9; margin-bottom: 10px; }
+    .email-chrome .meta { display: flex; flex-direction: column; gap: 4px; font-size: .75rem; color: #64748b; }
+    .email-chrome .meta span { color: #94a3b8; }
+    .email-chrome .badge {
+      display: inline-block; margin-top: 10px;
+      padding: 3px 10px; border-radius: 20px;
+      font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .05em;
+    }
+    .badge-chat-start { background: #0ea5e920; color: #38bdf8; border: 1px solid #0ea5e940; }
+    .badge-chat-end   { background: #64748b20; color: #94a3b8; border: 1px solid #64748b40; }
+    .badge-resolved   { background: #22c55e20; color: #4ade80; border: 1px solid #22c55e40; }
+    .badge-state      { background: #6366f120; color: #a5b4fc; border: 1px solid #6366f140; }
+    .badge-nueva      { background: #f59e0b20; color: #fbbf24; border: 1px solid #f59e0b40; }
+
+    .email-body {
+      border: 1px solid #334155; border-radius: 0 0 12px 12px;
+      overflow: hidden; background: #fff;
+    }
+
+    /* ── Email template ── */
+    .em-container { max-width: 600px; margin: 0 auto; background: #fff; overflow: hidden; }
+    .em-header { padding: 24px 30px; text-align: center; }
+    .em-body   { padding: 0 48px 40px; text-align: center; position: relative; }
+
+    .em-title { font-size: 22px; font-weight: 700; color: #94A3B8; margin: 0 0 24px; text-align: center; }
+
+    .em-body-text {
+      font-size: 14px; line-height: 1.75; color: #94A3B8;
+      margin: 0 0 36px; text-align: left;
+    }
+    .em-body-text strong { color: #94A3B8; }
+    .em-body-text .highlight {
+      font-weight: 600; color: #94A3B8; font-size: 14px;
+    }
+    .em-body-text .estado-badge {
+      font-weight: 600; color: #94A3B8; font-size: 14px;
+    }
+    .em-body-text .highlight {
+      display: inline-block;
+      background: #F1F5F9; border: 1px solid #E2E8F0;
+      border-radius: 4px; padding: 1px 7px;
+      font-weight: 600; color: #1E293B; font-size: 14px;
+    }
+    .em-body-text .estado-badge {
+      display: inline-block;
+      background: #F1F5F9; border: 1px solid #E2E8F0;
+      border-radius: 4px; padding: 1px 7px;
+      font-weight: 600; color: #1E293B; font-size: 14px;
+    }
+    .em-greeting-inline { font-weight: 700; color: #94A3B8; }
+
+    .em-divider { border: none; border-top: 1px solid #F1F5F9; margin: 0 0 32px; }
+
+    .em-btn {
+      display: inline-block; padding: 14px 36px;
+      background: #1E293B; color: #fff !important;
+      text-decoration: none; border-radius: 6px;
+      font-weight: 600; font-size: 14px;
+      text-transform: uppercase; letter-spacing: .5px;
+      cursor: pointer; border: none;
+    }
+    .em-btn-wrap { text-align: center; }
+
+    /* ── Redes sociales ── */
+    .em-social {
+      padding: 16px 48px; text-align: center;
+      border-top: 1px solid #F1F5F9; background: #fff;
+    }
+    .em-social-text { font-size: 12px; color: #64748B; margin: 0 0 10px; }
+    .em-social-text strong { color: #1E293B; }
+    .em-social-icons { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; }
+    .em-social-link {
+      display: inline-flex; flex-direction: column; align-items: center; gap: 6px;
+      text-decoration: none;
+    }
+    .em-social-link span {
+      font-size: 11px; font-weight: 600; color: #64748B;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    .em-footer {
+      padding: 20px 24px; background: #fff;
+      font-size: 12px; color: #94A3B8;
+      text-align: center; border-top: 1px solid #F1F5F9;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-title">Preview · <span>Correos de Notificación</span></div>
+  <div class="tabs">
+    <button class="tab active"  onclick="showEmail('chat-start', this)">💬 Chat Iniciado</button>
+    <button class="tab"         onclick="showEmail('chat-end',   this)">🔒 Conversación Finalizada</button>
+    <button class="tab"         onclick="showEmail('resolved',   this)">✅ Novedad Resuelta</button>
+    <button class="tab"         onclick="showEmail('state',      this)">🔄 Cambio de Estado</button>
+    <button class="tab"         onclick="showEmail('nueva',      this)">📋 Nueva Novedad</button>
+  </div>
+</div>
+
+<!-- Bloque de redes reutilizable — se inyecta por JS en cada correo -->
+<template id="tpl-social">
+  <div class="em-footer">
+    © 2026 Grupo TDM<br>
+    ¿Ya nos sigues en redes? ¡Siempre tenemos cosas nuevas!
+    <div style="margin-top:10px;">
+      <table cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
+        <tr>
+          <td style="padding:0 8px; text-align:center; vertical-align:top;">
+            <a href="https://www.instagram.com/eltemplodelamoda/" style="text-decoration:none;" target="_blank">
+              <img src="https://img.icons8.com/ios/50/9CA3AF/instagram-new.png" width="20" height="20" alt="Instagram" style="display:block;margin:0 auto;">
+              <span style="display:block;font-size:10px;font-weight:500;color:#9CA3AF;margin-top:4px;font-family:'Segoe UI',Arial,sans-serif;">Instagram</span>
+            </a>
+          </td>
+          <td style="padding:0 8px; text-align:center; vertical-align:top;">
+            <a href="https://www.facebook.com/templodelamodaoficial/" style="text-decoration:none;" target="_blank">
+              <img src="https://img.icons8.com/ios/50/9CA3AF/facebook-new.png" width="20" height="20" alt="Facebook" style="display:block;margin:0 auto;">
+              <span style="display:block;font-size:10px;font-weight:500;color:#9CA3AF;margin-top:4px;font-family:'Segoe UI',Arial,sans-serif;">Facebook</span>
+            </a>
+          </td>
+          <td style="padding:0 8px; text-align:center; vertical-align:top;">
+            <a href="https://www.eltemplodelamoda.com/" style="text-decoration:none;" target="_blank">
+              <img src="https://img.icons8.com/ios/50/9CA3AF/shopping-bag.png" width="20" height="20" alt="Tienda" style="display:block;margin:0 auto;">
+              <span style="display:block;font-size:10px;font-weight:500;color:#9CA3AF;margin-top:4px;font-family:'Segoe UI',Arial,sans-serif;">Tienda</span>
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+  </div>
+</template>
+
+<div class="stage">
+
+  <!-- ══════════════════════════════════════════
+       1. CHAT INICIADO
+  ══════════════════════════════════════════ -->
+  <div class="email-wrap visible" id="email-chat-start">
+    <div class="email-chrome">
+      <div class="subject">Conversación Iniciada — NOV-2026-0041</div>
+      <div class="meta">
+        <div><strong>De:</strong>   <span>Grupo TDM - Notificaciones &lt;notificaciones@grupotdm.com&gt;</span></div>
+        <div><strong>Para:</strong> <span>Planta El Rosal &lt;planta.rosal@ejemplo.com&gt;</span></div>
+      </div>
+      <span class="badge badge-chat-start">💬 Chat Iniciado</span>
+    </div>
+    <div class="email-body">
+      <div class="em-container">
+        <div class="em-header">
+          <img src="https://lh3.googleusercontent.com/d/1ut0pgWZJ1nGr2EaS2-gtJwCftVILMJO4" alt="Grupo TDM" width="180" onerror="this.style.display='none'">
+        </div>
+        <div class="em-body">
+          <div class="em-title">Conversación Iniciada</div>
+          <p class="em-body-text">
+            Hola, <span class="em-greeting-inline">Planta El Rosal,</span>
+            un agente del Grupo TDM ha iniciado una conversación el día
+            <strong id="cs-dt"></strong> para atender y resolver las dudas
+            relacionadas con la novedad
+            <span class="highlight">NOV-2026-0041</span>
+            correspondiente a la Orden de Producción <strong>2026-A-1183</strong>,
+            Referencia <strong>REF-CAMISETA-001</strong>.
+            Le invitamos a ingresar al sistema y atender esta conversación a la brevedad posible,
+            su respuesta es fundamental para darle continuidad al proceso.
+          </p>
+          <hr class="em-divider">
+          <div class="em-btn-wrap"><a href="#" class="em-btn">IR AL CHAT</a></div>
+        </div>
+        <div class="em-social-slot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       2. CHAT FINALIZADO
+  ══════════════════════════════════════════ -->
+  <div class="email-wrap" id="email-chat-end">
+    <div class="email-chrome">
+      <div class="subject">Conversación Finalizada — NOV-2026-0041</div>
+      <div class="meta">
+        <div><strong>De:</strong>   <span>Grupo TDM - Notificaciones &lt;notificaciones@grupotdm.com&gt;</span></div>
+        <div><strong>Para:</strong> <span>Planta El Rosal &lt;planta.rosal@ejemplo.com&gt;</span></div>
+      </div>
+      <span class="badge badge-chat-end">🔒 Conversación Finalizada</span>
+    </div>
+    <div class="email-body">
+      <div class="em-container">
+        <div class="em-header">
+          <img src="https://lh3.googleusercontent.com/d/1ut0pgWZJ1nGr2EaS2-gtJwCftVILMJO4" alt="Grupo TDM" width="180" onerror="this.style.display='none'">
+        </div>
+        <div class="em-body">
+          <div class="em-title">Conversación Finalizada</div>
+          <p class="em-body-text">
+            Hola, <span class="em-greeting-inline">Planta El Rosal,</span>
+            el día <strong id="ce-dt"></strong> fue cerrada y archivada la conversación
+            que se mantenía activa para la novedad
+            <span class="highlight">NOV-2026-0041</span>
+            correspondiente a la Orden de Producción <strong>2026-A-1183</strong>,
+            Referencia <strong>REF-CAMISETA-001</strong>.
+            Si en algún momento surge una nueva inquietud, le invitamos a reportarla
+            directamente en el sistema.
+          </p>
+          <hr class="em-divider">
+          <div class="em-btn-wrap"><a href="#" class="em-btn">VER REPORTE</a></div>
+        </div>
+        <div class="em-social-slot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       3. NOVEDAD RESUELTA
+  ══════════════════════════════════════════ -->
+  <div class="email-wrap" id="email-resolved">
+    <div class="email-chrome">
+      <div class="subject">Novedad Resuelta — NOV-2026-0041</div>
+      <div class="meta">
+        <div><strong>De:</strong>   <span>Grupo TDM - Notificaciones &lt;notificaciones@grupotdm.com&gt;</span></div>
+        <div><strong>Para:</strong> <span>Planta El Rosal &lt;planta.rosal@ejemplo.com&gt;</span></div>
+      </div>
+      <span class="badge badge-resolved">✅ Novedad Resuelta</span>
+    </div>
+    <div class="email-body">
+      <div class="em-container">
+        <div class="em-header">
+          <img src="https://lh3.googleusercontent.com/d/1ut0pgWZJ1nGr2EaS2-gtJwCftVILMJO4" alt="Grupo TDM" width="180" onerror="this.style.display='none'">
+        </div>
+        <div class="em-body">
+          <div class="em-title">Novedad Resuelta</div>
+          <p class="em-body-text">
+            Hola, <span class="em-greeting-inline">Planta El Rosal,</span>
+            nos complace informarle que el día <strong id="rv-dt"></strong>
+            nuestro equipo de calidad y producción dio por resuelta la novedad
+            <span class="highlight">NOV-2026-0041</span>
+            correspondiente a la Orden de Producción <strong>2026-A-1183</strong>,
+            Referencia <strong>REF-CAMISETA-001</strong>.
+            El reporte ha sido procesado exitosamente y puede consultar el detalle
+            completo ingresando al sistema en cualquier momento.
+          </p>
+          <hr class="em-divider">
+          <div class="em-btn-wrap"><a href="#" class="em-btn">VER DETALLES</a></div>
+        </div>
+        <div class="em-social-slot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       4. CAMBIO DE ESTADO
+  ══════════════════════════════════════════ -->
+  <div class="email-wrap" id="email-state">
+    <div class="email-chrome">
+      <div class="subject">Actualización de Estado — NOV-2026-0041</div>
+      <div class="meta">
+        <div><strong>De:</strong>   <span>Grupo TDM - Notificaciones &lt;notificaciones@grupotdm.com&gt;</span></div>
+        <div><strong>Para:</strong> <span>Planta El Rosal &lt;planta.rosal@ejemplo.com&gt;</span></div>
+      </div>
+      <span class="badge badge-state">🔄 Cambio de Estado</span>
+    </div>
+    <div class="email-body">
+      <div class="em-container">
+        <div class="em-header">
+          <img src="https://lh3.googleusercontent.com/d/1ut0pgWZJ1nGr2EaS2-gtJwCftVILMJO4" alt="Grupo TDM" width="180" onerror="this.style.display='none'">
+        </div>
+        <div class="em-body">
+          <div class="em-title">Actualización de Estado</div>
+          <p class="em-body-text">
+            Hola, <span class="em-greeting-inline">Planta El Rosal,</span>
+            le informamos que el día <strong id="st-dt"></strong>
+            la novedad <span class="highlight">NOV-2026-0041</span>
+            correspondiente a la Orden de Producción <strong>2026-A-1183</strong>,
+            Referencia <strong>REF-CAMISETA-001</strong>,
+            registró un cambio de estado y se encuentra actualmente en
+            <span class="estado-badge">ELABORACION</span>
+            Continuaremos notificándole puntualmente sobre cada avance hasta alcanzar
+            la resolución final.
+          </p>
+          <hr class="em-divider">
+          <div class="em-btn-wrap"><a href="#" class="em-btn">VER SEGUIMIENTO</a></div>
+        </div>
+        <div class="em-social-slot"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       5. NUEVA NOVEDAD
+  ══════════════════════════════════════════ -->
+  <div class="email-wrap" id="email-nueva">
+    <div class="email-chrome">
+      <div class="subject">Novedad Registrada — NOV-2026-0041</div>
+      <div class="meta">
+        <div><strong>De:</strong>   <span>Grupo TDM - Notificaciones &lt;notificaciones@grupotdm.com&gt;</span></div>
+        <div><strong>Para:</strong> <span>Planta El Rosal &lt;planta.rosal@ejemplo.com&gt;</span></div>
+      </div>
+      <span class="badge badge-nueva">📋 Nueva Novedad</span>
+    </div>
+    <div class="email-body">
+      <div class="em-container">
+        <div class="em-header">
+          <img src="https://lh3.googleusercontent.com/d/1ut0pgWZJ1nGr2EaS2-gtJwCftVILMJO4" alt="Grupo TDM" width="180" onerror="this.style.display='none'">
+        </div>
+        <div class="em-body">
+          <div class="em-title">Novedad Registrada</div>
+
+          <p class="em-body-text">
+            Hola, <span class="em-greeting-inline">Planta El Rosal,</span>
+            el día <strong id="nv-dt"></strong> fue registrada en nuestro sistema una nueva novedad
+            identificada con el radicado <span class="highlight">NOV-2026-0041</span>
+            correspondiente a la Orden de Producción <strong>2026-A-1183</strong>,
+            Referencia <strong>REF-CAMISETA-001</strong>.
+            Nuestro equipo ya fue notificado y dará inicio al proceso de seguimiento
+            y atención a la brevedad posible.
+          </p>
+
+          <p class="em-body-text">
+            De acuerdo con nuestras políticas operativas, el Grupo TDM otorga un plazo máximo
+            de <strong>24 horas o dos días hábiles</strong> a partir del despacho
+            para reportar cualquier faltante o inconsistencia en el material recibido.
+            Transcurrido dicho plazo sin notificación, la entrega se considerará recibida
+            a conformidad y cualquier reclamación posterior podrá generar un cobro proporcional
+            al valor de los artículos involucrados.
+          </p>
+
+          <p class="em-body-text">
+            Si este registro no fue realizado por usted, si considera que se trata de un error
+            o si tiene alguna duda sobre esta novedad, le invitamos a comunicarse de inmediato
+            con nuestro equipo a través del <strong>chat de seguimiento</strong> disponible en
+            el sistema. Estamos disponibles para brindarle toda la orientación necesaria
+            dentro de nuestros horarios de atención de lunes a viernes de <strong>7:10 a.m. a 4:43 p.m.</strong>
+          </p>
+
+          <hr class="em-divider">
+          <div class="em-btn-wrap"><a href="#" class="em-btn">VER NOVEDAD</a></div>
+        </div>
+        <div class="em-social-slot"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+  /* ── Inyectar bloque de redes en cada correo desde el template ── */
+  document.querySelectorAll('.em-social-slot').forEach(slot => {
+    slot.replaceWith(document.getElementById('tpl-social').content.cloneNode(true));
+  });
+
+  /* ── Tab switching ── */
+  function showEmail(id, btn) {
+    document.querySelectorAll('.email-wrap').forEach(el => el.classList.remove('visible'));
+    document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+    document.getElementById('email-' + id).classList.add('visible');
+    btn.classList.add('active');
+  }
+
+  /* ── Formatter: "16 de abril de 2026 a las 7:39 a.m." ── */
+  function fmtDT(date) {
+    const M = ['enero','febrero','marzo','abril','mayo','junio',
+               'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const d = date.getDate(), mo = M[date.getMonth()], y = date.getFullYear();
+    let h = date.getHours();
+    const min  = String(date.getMinutes()).padStart(2, '0');
+    const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+    h = h % 12 || 12;
+    const art = h === 1 ? 'la' : 'las';
+    return `${d} de ${mo} de ${y} a ${art} ${h}:${min} ${ampm}`;
+  }
+
+  const dt = fmtDT(new Date());
+  document.getElementById('cs-dt').textContent = dt;
+  document.getElementById('ce-dt').textContent = dt;
+  document.getElementById('rv-dt').textContent = dt;
+  document.getElementById('st-dt').textContent = dt;
+  document.getElementById('nv-dt').textContent = dt;
+</script>
+</body>
+</html>

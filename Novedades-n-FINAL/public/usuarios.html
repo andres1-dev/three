@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Usuarios - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    
+    <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
+    <script>
+      (function(){
+        const s = localStorage.getItem('sispro_user');
+        if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
+      })();
+    </script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.88);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            padding-top: 0;
+            background-attachment: fixed;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                padding: 2rem;
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 60px;
+            }
+        }
+
+        /* ── Pagination Luxury ── */
+        .pagination-container-lux {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f1f5f9;
+        }
+
+        .page-btn-lux {
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-btn-lux:hover:not(:disabled) {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        .page-btn-lux:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+
+        .page-info-lux {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ── Particles Background ── -->
+
+
+    <div class="wrapper-dashboard">
+
+        <!-- ── KPI Chips ── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <button onclick="toggleUsuariosKPIs()" id="usuariosKpiBtn" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
+                <span>Indicadores</span>
+                <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="usuariosKpiChevron"></i>
+            </button>
+        </div>
+
+        <div id="usuariosKpiContainer" style="display:none;grid-template-columns:repeat(2,1fr);gap:1px;margin-bottom:12px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                <span style="font-size:1.1rem;font-weight:800;color:#f59e0b;" id="stat-pending">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;" id="stat-label-pending">Pendientes</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
+                <span style="font-size:1.1rem;font-weight:800;color:#3f51b5;" id="stat-active">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;" id="stat-label-active">Total</span>
+            </div>
+        </div>
+
+        <!-- ── Toggle de vistas ── -->
+        <div class="view-toggle" style="margin-bottom:10px;">
+            <button type="button" class="view-toggle-btn active" id="tab-users" onclick="switchAdminMode('USERS')" title="Empleados">
+                <i class="codicon codicon-account"></i>
+            </button>
+            <button type="button" class="view-toggle-btn" id="tab-plants" onclick="switchAdminMode('PLANTS')" title="Plantas">
+                <i class="codicon codicon-organization"></i>
+            </button>
+        </div>
+
+        <!-- ── Input de búsqueda ── -->
+        <div class="input-with-icon mb-3">
+            <i class="codicon codicon-search input-icon"></i>
+            <input type="text" id="userSearchInput" class="form-control"
+                placeholder="Filtrar empleados por nombre, ID o correo..."
+                oninput="handleUserFilter()">
+        </div>
+
+        <!-- ── Módulo Principal ── -->
+        <div id="loader" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted fw-bold">SINCRONIZANDO USUARIOS...</p>
+        </div>
+
+        <div id="dataSection" style="display: none;">
+            <div id="userTableBody"></div>
+            <div id="paginationUsers"></div>
+        </div>
+    </div>
+
+    <!-- ── FAB: Nuevo usuario/planta ── -->
+    <button id="btnCreateUser" onclick="openCreateModal()" title="Nuevo" style="
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #3f51b5, #6366f1);
+        color: white;
+        border: none;
+        box-shadow: 0 4px 16px rgba(63,81,181,0.4);
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        transition: all 0.2s ease;
+        -webkit-tap-highlight-color: transparent;
+    " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/data/colombia-locations.js"></script>
+    <script src="js/forms/plantas.js"></script>
+    <script src="js/forms/plantas-modal.js"></script>
+    <script src="js/admin/usuarios.js"></script>
+
+</body>
+
+</html>
