@@ -215,7 +215,14 @@ function _normalizeSupabaseData(records, tableName) {
             const obj = {};
             for (const key in r) {
                 const val = r[key];
-                obj[key.toUpperCase()] = (val === null || val === undefined) ? '' : String(val);
+                const keyUpper = key.toUpperCase();
+                
+                // Preservar objetos JSONB (no convertir a string)
+                if (val !== null && val !== undefined && typeof val === 'object') {
+                    obj[keyUpper] = val;
+                } else {
+                    obj[keyUpper] = (val === null || val === undefined) ? '' : String(val);
+                }
             }
             return obj;
         }
@@ -251,10 +258,21 @@ async function fetchAllData() {
 }
 
 /**
- * Obtiene el listado completo de novedades.
+ * Obtiene el listado de novedades con filtro opcional por estado.
+ * @param {boolean} soloFinalizados - Si es true, trae solo FINALIZADOS. Si es false, trae todo excepto FINALIZADOS.
  */
-async function fetchNovedadesData() {
-    return fetchSupabaseData('NOVEDADES');
+async function fetchNovedadesData(soloFinalizados = false) {
+    const filters = [];
+    
+    if (soloFinalizados) {
+        // Traer solo los finalizados
+        filters.push({ type: 'eq', column: 'ESTADO', value: 'FINALIZADO' });
+    } else {
+        // Traer todo excepto finalizados (PENDIENTE y ELABORACION)
+        filters.push({ type: 'neq', column: 'ESTADO', value: 'FINALIZADO' });
+    }
+    
+    return fetchSupabaseData('NOVEDADES', { filters, noCache: true });
 }
 
 /**

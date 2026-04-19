@@ -528,7 +528,15 @@ function applyAccessControl() {
         }
     }
 
-    // 2. Acciones de Calidad: ADMIN, MODERATOR y USER-C tienen acceso. USER-P y GUEST no.
+    // 2. Ocultar botones de AI para usuarios GUEST
+    if (role === 'GUEST') {
+        const aiButtonsNovedad = document.getElementById('aiButtonsNovedad');
+        const aiButtonsCalidad = document.getElementById('aiButtonsCalidad');
+        if (aiButtonsNovedad) aiButtonsNovedad.style.display = 'none';
+        if (aiButtonsCalidad) aiButtonsCalidad.style.display = 'none';
+    }
+
+    // 3. Acciones de Calidad: ADMIN, MODERATOR y USER-C tienen acceso. USER-P y GUEST no.
     const accionesSelect = document.getElementById('acciones');
     if (accionesSelect) {
         let calidadOption = accionesSelect.querySelector('option[value="CALIDAD"]');

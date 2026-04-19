@@ -279,42 +279,9 @@
             overflow: hidden;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
             transition: all 0.2s ease;
-            min-height: 130px;
+            min-height: 160px;
             height: auto;
             position: relative;
-        }
-
-        /* Pseudo-elemento para efecto de relleno desde los botones de acción (derecha) */
-        .novedad-card-ultra::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 220px;
-            width: 0;
-            height: 100%;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 0;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        /* Colores del pseudo-elemento con gradiente que termina en blanco rápidamente */
-        .novedad-card-ultra.status-pendiente::before {
-            background: linear-gradient(to left, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.02) 30%, rgba(255, 255, 255, 1) 60%);
-        }
-
-        .novedad-card-ultra.status-elaboracion::before {
-            background: linear-gradient(to left, rgba(251, 191, 36, 0.1) 0%, rgba(251, 191, 36, 0.03) 30%, rgba(255, 255, 255, 1) 60%);
-        }
-
-        .novedad-card-ultra.status-finalizado::before {
-            background: linear-gradient(to left, rgba(34, 197, 94, 0.05) 0%, rgba(34, 197, 94, 0.02) 30%, rgba(255, 255, 255, 1) 60%);
-        }
-
-        /* Al hacer hover, el pseudo-elemento se expande con efecto de derrame */
-        .novedad-card-ultra:hover::before {
-            width: calc(100% - 220px);
-            opacity: 1;
         }
 
         .novedad-card-ultra:hover {
@@ -323,7 +290,7 @@
             border-color: #cbd5e1;
         }
 
-        /* Asegurar que el contenido esté por encima del pseudo-elemento */
+        /* Asegurar que el contenido esté por encima */
         .novedad-card-ultra > * {
             position: relative;
             z-index: 1;
@@ -387,6 +354,16 @@
         .card-visual-ultra:hover::after {
             opacity: 1;
             transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Estilo para cuando NO hay imagen */
+        .card-visual-ultra .no-image-placeholder {
+            transition: all 0.3s ease;
+        }
+
+        .card-visual-ultra:hover .no-image-placeholder i {
+            transform: scale(1.1);
+            color: #94a3b8;
         }
 
         .card-body-ultra {
@@ -458,15 +435,72 @@
             color: #94a3b8;
         }
 
+        /* ── Pestaña de Datos Técnicos (Sin línea divisoria) ── */
+        .tech-divider-container {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tech-badge-container {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            color: #64748b;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            max-width: 100%;
+        }
+
+        .tech-badge-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+
+        .tech-badge-item i {
+            font-size: 0.6rem;
+        }
+
+        .tech-badge-separator {
+            color: #cbd5e1;
+            margin: 0 2px;
+        }
+
+        /* Para pantallas móviles pequeñas, ajustar tamaño */
+        @media (max-width: 480px) {
+            .tech-badge-container {
+                font-size: 0.55rem;
+                padding: 5px 8px;
+                gap: 3px;
+            }
+
+            .tech-badge-item i {
+                font-size: 0.5rem;
+            }
+        }
+
         .card-desc-ultra {
             font-size: 0.85rem;
-            line-height: 1.5;
+            line-height: 1.6;
             color: #1e293b;
             font-weight: 500;
-            margin: 12px 0;
+            margin: 0;
+            padding: 12px 0;
             text-align: left;
             width: 100%;
-            white-space: pre-wrap;
+        }
+        
+        /* Estilos para el contenido JSONB dentro de card-desc-ultra */
+        .card-desc-ultra > div {
+            white-space: normal;
         }
 
         .card-meta-ultra {
@@ -476,19 +510,18 @@
             font-size: 0.65rem;
             color: #64748b;
             font-weight: 600;
-            border-top: 1px solid #f1f5f9;
-            padding-top: 8px;
+            padding-top: 12px;
             width: 100%;
+            border-top: 1px solid #f1f5f9;
         }
 
         .planta-label-lux {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             color: #0f172a;
             font-weight: 800;
             font-size: 0.75rem;
-            margin-bottom: 2px;
             text-transform: uppercase;
         }
 
@@ -521,25 +554,33 @@
         .date-row-lux {
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
-            font-size: 0.65rem;
-            line-height: 1.3;
+            gap: 12px;
+            font-size: 0.7rem;
+            line-height: 1.4;
             color: #64748b;
+            font-weight: 600;
+        }
+        
+        .date-row-lux span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .days-badge-lux {
             background: #f8fafc;
             border: 1px solid #e2e8f0;
             color: #475569;
-            padding: 4px 10px;
-            border-radius: 6px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-weight: 800;
-            font-size: 0.65rem;
-            letter-spacing: 0.5px;
+            font-size: 0.7rem;
+            letter-spacing: 0.3px;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         /* 0-2 días: A tiempo (verde) */
@@ -660,7 +701,8 @@
 
         .btn-print-ultra,
         .btn-notify-ultra,
-        .btn-chat-print-ultra {
+        .btn-chat-print-ultra,
+        .btn-edit-ultra {
             height: auto;
             border-radius: 10px;
             color: white;
@@ -677,6 +719,17 @@
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-edit-ultra {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        .btn-edit-ultra:hover {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
         }
 
         .btn-print-ultra {
@@ -709,11 +762,11 @@
         }
 
         .btn-chat-print-ultra {
-            background: #6366f1;
+            background: #10b981;
         }
 
         .btn-chat-print-ultra:not(:disabled):hover {
-            background: #4f46e5;
+            background: #059669;
             transform: translateY(-1px);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
         }
@@ -722,6 +775,54 @@
             background: #cbd5e1;
             color: #94a3b8;
             cursor: not-allowed;
+        }
+
+        /* Botones de Tipo de Cobro */
+        .cobro-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            width: 100%;
+        }
+
+        .cobro-option-btn:hover {
+            border-color: #06b6d4;
+            color: #06b6d4;
+            background: #ecfeff;
+            transform: translateY(-2px);
+        }
+
+        .cobro-option-btn.selected {
+            border-color: #06b6d4;
+            background: #06b6d4;
+            color: white;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .cobro-option-btn i {
+            font-size: 1.2rem;
+        }
+
+        .cobro-option-btn span {
+            font-weight: 700;
+            text-align: center;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            opacity: 1;
         }
 
         .btn-print-ultra i,
@@ -1092,15 +1193,6 @@
             height: 100%;
         }
 
-        /* En vista compacta: desactivar el efecto de hover completamente */
-        .is-compact .novedad-card-ultra::before {
-            display: none;
-        }
-
-        .is-compact .novedad-card-ultra:hover::before {
-            width: 0;
-        }
-
         .is-compact .card-visual-ultra {
             width: 100% !important;
             height: 120px !important;
@@ -1349,6 +1441,231 @@
                 </button>
                 <button class="notify-btn notify-btn-send" onclick="enviarNotificacion()" id="btnEnviarNotify">
                     <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Novedad -->
+    <div id="modalEditNovedad" class="modal-overlay-notify" style="display: none;">
+        <div class="modal-notify-container" style="max-width: 900px;">
+            <div class="modal-notify-body">
+                <h2 class="notify-title">Editar Novedad</h2>
+                <p class="notify-subtitle" id="editNovedadSubtitle">Modifica los datos de la novedad</p>
+
+                <form id="editNovedadForm" style="max-height: 65vh; overflow-y: auto; padding-right: 8px;">
+                    <!-- Info de contexto (solo lectura) -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 3px solid #3b82f6;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.8rem;">
+                            <div><strong>ID:</strong> <span id="editNovedadId">-</span></div>
+                            <div><strong>Lote:</strong> <span id="editNovedadLote">-</span></div>
+                            <div><strong>Planta:</strong> <span id="editNovedadPlanta">-</span></div>
+                            <div><strong>Referencia:</strong> <span id="editNovedadRef">-</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 1: Área de Servicios | Tipo de Novedad o Cantidad -->
+                    <div class="row-pc-grid mt-2" id="editAreaNovedadRow" style="grid-template-columns: 1fr;">
+                        <div class="mb-3">
+                            <label for="editArea" class="form-label">Área de Servicios: <span style="color:#ef4444;">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-building input-icon"></i>
+                                <select id="editArea" class="form-control" required onchange="handleEditAreaChange()">
+                                    <option value="">Seleccione un área...</option>
+                                    <option value="INSUMOS">INSUMOS</option>
+                                    <option value="CORTE">CORTE</option>
+                                    <option value="CODIGOS">CÓDIGOS</option>
+                                    <option value="DISEÑO">DISEÑO</option>
+                                    <option value="TELAS">TELAS</option>
+                                    <option value="OTROS">OTROS</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 hidden" id="editTipoNovedadGroup">
+                            <label for="editTipoNovedad" class="form-label">Tipo de Novedad: <span style="color:#ef4444;">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-exclamation-circle input-icon"></i>
+                                <select id="editTipoNovedad" class="form-control">
+                                    <option value="">Seleccione tipo...</option>
+                                    <option value="FALTANTE">FALTANTE</option>
+                                    <option value="IMPERFECTO">IMPERFECTO</option>
+                                    <option value="PERDIDA">PERDIDA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 hidden" id="editCantidadDisenoGroup">
+                            <label for="editCantidadSolicitada" class="form-label">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-hashtag input-icon"></i>
+                                <input type="number" class="form-control" id="editCantidadSolicitada">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Cantidad simple (para áreas normales) -->
+                    <div class="mb-3 hidden" id="editCantidadNormalGroup">
+                        <label for="editCantidadNormal" class="form-label">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-hashtag input-icon"></i>
+                            <input type="number" class="form-control" id="editCantidadNormal">
+                        </div>
+                    </div>
+
+                    <!-- Lista de tipos de tela -->
+                    <div class="mb-3 hidden" id="editTipoTelasGroup">
+                        <div class="row-pc-grid mb-2">
+                            <label class="form-label mb-0">Tipo de Imperfección: <span style="color:#ef4444;">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                                <button type="button" class="btn-action-muted" onclick="agregarFilaEditTela()" title="Agregar otro tipo">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editTelasList"></div>
+                    </div>
+
+                    <!-- Lista dinámica de insumos -->
+                    <div class="mb-3 hidden" id="editTipoInsumoGroup">
+                        <div class="row-pc-grid mb-2">
+                            <label class="form-label mb-0">Tipo de Insumo: <span style="color:#ef4444;">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                                <button type="button" class="btn-action-muted" onclick="agregarFilaEditInsumo()" title="Agregar otro insumo">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editInsumosList"></div>
+                    </div>
+
+                    <!-- Lista dinámica de corte -->
+                    <div class="mb-3 hidden" id="editTipoCorteGroup">
+                        <div class="row-pc-grid mb-2">
+                            <label class="form-label mb-0">Tipo de Corte: <span style="color:#ef4444;">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                                <button type="button" class="btn-action-muted" onclick="agregarFilaEditCorte()" title="Agregar otro tipo">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editCorteList"></div>
+                    </div>
+
+                    <!-- Lista dinámica de códigos -->
+                    <div class="mb-3 hidden" id="editTipoCodigosGroup">
+                        <div class="row-pc-grid mb-3" id="editCodigosRowGrid" style="grid-template-columns: 1fr;">
+                            <div>
+                                <label class="form-label">Tipo de Solicitud: <span style="color:#ef4444;">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-layer-group input-icon"></i>
+                                    <select id="editCodigosTipoSolicitud" class="form-control" onchange="handleEditCodigosTipoChange()">
+                                        <option value="">Seleccione...</option>
+                                        <option value="LOTE_COMPLETO">LOTE COMPLETO</option>
+                                        <option value="UNIDADES">UNIDADES ESPECÍFICAS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="hidden" id="editCodigosLoteCompletoGroup">
+                                <label class="form-label">Cantidad Total del Lote: <span style="color:#ef4444;">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-hashtag input-icon"></i>
+                                    <input type="number" id="editCodigosCantidadTotal" class="form-control" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hidden" id="editCodigosUnidadesGroup">
+                            <div class="row-pc-grid mb-2" style="grid-template-columns: 1fr 1fr 1fr;">
+                                <label class="form-label mb-0">Talla: <span style="color:#ef4444;">*</span></label>
+                                <label class="form-label mb-0">Color: <span style="color:#ef4444;">*</span></label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Cantidad: <span style="color:#ef4444;">*</span></label>
+                                    <button type="button" class="btn-action-muted" onclick="agregarFilaCodigoEdit()" title="Agregar otro código">
+                                        <i class="fas fa-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="editCodigosList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="editDescripcion" class="form-label mb-0">Descripción detallada:</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('editDescripcion')"
+                                    title="Mejorar redacción y ortografía">
+                                    <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                                </button>
+                                <button type="button" class="btn-restore-text" onclick="restaurarTextoOriginal('editDescripcion')"
+                                    title="Restaurar texto original" style="display: none;">
+                                    <i class="fas fa-undo"></i> Restaurar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ai-textarea-wrapper">
+                            <textarea id="editDescripcion" class="form-control" rows="4" placeholder="Escribe aquí los detalles de la novedad..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Cobro -->
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Cobro:</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+                            <button type="button" class="cobro-option-btn" data-cobro="TALLER" onclick="seleccionarCobroYPlantilla('TALLER')">
+                                <i class="fas fa-industry"></i>
+                                <span>Taller</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="MANO_A_MANO" onclick="seleccionarCobroYPlantilla('MANO_A_MANO')">
+                                <i class="fas fa-handshake"></i>
+                                <span>Mano a Mano</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="LINEA" onclick="seleccionarCobroYPlantilla('LINEA')">
+                                <i class="fas fa-route"></i>
+                                <span>Línea</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="REFERENCIA" onclick="seleccionarCobroYPlantilla('REFERENCIA')">
+                                <i class="fas fa-tag"></i>
+                                <span>Referencia</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="FICHA" onclick="seleccionarCobroYPlantilla('FICHA')">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Ficha</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="ENTREGA" onclick="seleccionarCobroYPlantilla('ENTREGA')">
+                                <i class="fas fa-truck"></i>
+                                <span>Entrega</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="PERSONALIZADO" onclick="seleccionarCobroYPlantilla('PERSONALIZADO')" style="border: 2px dashed #cbd5e1;">
+                                <i class="fas fa-pen"></i>
+                                <span>Personalizado</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="editCobro" value="">
+                    </div>
+
+                    <!-- Comentarios (oculto inicialmente) -->
+                    <div class="mb-3" id="editComentariosContainer" style="display: none;">
+                        <label for="editComentarios" class="form-label">Comentarios:</label>
+                        <div class="ai-textarea-wrapper">
+                            <textarea id="editComentarios" class="form-control" rows="3" placeholder="Comentarios sobre la resolución de la novedad..." readonly></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-notify-footer">
+                <button class="notify-btn notify-btn-cancel" onclick="cerrarModalEditNovedad()">
+                    Cancelar
+                </button>
+                <button class="notify-btn notify-btn-send" onclick="guardarEdicionNovedad()" id="btnGuardarEdit">
+                    <i class="fas fa-save"></i> Guardar Cambios
                 </button>
             </div>
         </div>
