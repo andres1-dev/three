@@ -265,7 +265,6 @@ async function loadUsers() {
         if (!IS_LOGIN_PAGE && (allUsers.length === 0 || allPlantas.length === 0)) {
             // Saltar descarga en páginas que no la necesitan (carga masiva, etc.)
             if (window._SKIP_AUTH_FETCH) {
-                console.log('[AUTH] Skip fetch — página de carga masiva');
                 const saved = localStorage.getItem('sispro_user');
                 if (saved) {
                     currentUser = JSON.parse(saved);
@@ -283,7 +282,6 @@ async function loadUsers() {
             allUsers = usersData;
             allPlantas = plantasData;
         } else {
-            console.log(IS_LOGIN_PAGE ? '[AUTH] Modo Login: Postergando descarga de datos' : '[AUTH] Usando base de datos en memoria (Cache OK)');
         }
 
         const savedUser = localStorage.getItem('sispro_user');
@@ -1206,7 +1204,6 @@ function toggleSettingsPanel() {
 
         // 2. Si es LOGIN, activar el formulario de inmediato
         if (typeof IS_LOGIN_PAGE !== 'undefined' && IS_LOGIN_PAGE) {
-            console.log('[AUTH] Modo Login: Activando formulario de acceso.');
             if (typeof initLoginPage === 'function') initLoginPage();
             return; // Detener aquí (no inyectar Header/Sidebar)
         }

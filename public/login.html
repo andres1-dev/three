@@ -210,28 +210,7 @@
                 </div>
             </div>
 
-            <!-- ── SECCIÓN: VALIDAR TOKEN ── -->
-            <div id="token-section" class="auth-section hidden">
-                <div class="section-title">Validar Token</div>
-                <p class="section-hint">Hemos enviado un código a su correo. (Caduca en 5 minutos)</p>
-                <div class="form-floating-group">
-                    <i class="fas fa-key input-icon"></i>
-                    <input type="text" id="reset-token" placeholder="Código de 6 dígitos" maxlength="6"
-                        style="text-align:center; font-size:1.2rem; letter-spacing:4px; text-transform:uppercase;">
-                </div>
-                <div class="form-floating-group">
-                    <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="reset-new-pass" placeholder="Nueva Contraseña">
-                    <i class="fas fa-eye toggle-pass" onclick="togglePassword('reset-new-pass')"></i>
-                </div>
-                <button class="btn-auth-primary" id="validateTokenBtn" onclick="validateResetToken()">
-                    <span class="btn-text">RESTAURAR CONTRASEÑA</span>
-                    <i class="fas fa-check-circle"></i>
-                </button>
-                <div class="auth-footer-links">
-                    <a href="javascript:void(0)" onclick="switchAuth('login')">Cancelar</a>
-                </div>
-            </div>
+
         </div>
 
         <!-- ── Modal Biometría ── -->
@@ -431,19 +410,12 @@
             const manualLink = document.getElementById('biometricManualLink');
             const manualFields = document.getElementById('manual-fields');
 
-            console.log('[BIOMETRIC] Iniciando detección...');
-            console.log('[BIOMETRIC] Origen:', location.origin);
-            console.log('[BIOMETRIC] PublicKeyCredential disponible:', !!window.PublicKeyCredential);
-            console.log('[BIOMETRIC] PasswordCredential disponible:', !!window.PasswordCredential);
-
             // ── Vía 1: WebAuthn (HTTPS + credencial guardada en sispro_biometric_ids) ──
             if (window.PublicKeyCredential) {
                 const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
-                console.log('[BIOMETRIC] Platform authenticator disponible:', available);
                 if (available) {
                     const map  = getBiometricMap();
                     const keys = Object.keys(map);
-                    console.log('[BIOMETRIC] Credenciales WebAuthn guardadas:', keys);
                     if (keys.length > 0) {
                         iconEl.innerHTML        = getBiometricSVG();
                         labelEl.textContent     = getBiometricLabel();
@@ -452,7 +424,6 @@
                         manualFields.style.display = 'none';
                         window._biometricUserId = keys[0];
                         window._biometricMode   = 'webauthn';
-                        console.log('[BIOMETRIC] Modo WebAuthn activado para:', keys[0]);
                         setTimeout(() => loginWithBiometric(), 400);
                         return;
                     }
@@ -461,13 +432,11 @@
 
             // ── Vía 2: Credential Management API — llavero del navegador (Safari/Chrome) ──
             if (window.PasswordCredential && navigator.credentials && navigator.credentials.get) {
-                console.log('[BIOMETRIC] Intentando Credential Management API...');
                 try {
                     const cred = await navigator.credentials.get({
                         password: true,
                         mediation: 'silent'
                     });
-                    console.log('[BIOMETRIC] Credencial del llavero:', cred ? cred.id : 'ninguna');
                     if (cred && cred.id && cred.password) {
                         iconEl.innerHTML        = getBiometricSVG();
                         labelEl.textContent     = getBiometricLabel();
@@ -476,16 +445,11 @@
                         manualFields.style.display = 'none';
                         window._savedCred       = cred;
                         window._biometricMode   = 'password-credential';
-                        console.log('[BIOMETRIC] Modo llavero activado para:', cred.id);
                         setTimeout(() => loginWithBiometric(), 400);
                         return;
                     }
-                } catch(e) {
-                    console.log('[BIOMETRIC] Credential Management falló:', e.message);
-                }
+                } catch(_) {}
             }
-
-            console.log('[BIOMETRIC] Sin credenciales guardadas — mostrando login normal');
         }
 
         /** Muestra los campos manuales y oculta el botón biométrico */
@@ -969,8 +933,6 @@
                 // Normalizar entrada para búsqueda
                 const cleanInput = opInput.trim().toUpperCase();
 
-                console.log("[LOGIN] Iniciando búsqueda de OP:", cleanInput);
-
                 const allMatching = window.allLots.filter(l => {
                     const dbLote = String(l.LOTE || '').trim().toUpperCase();
                     return dbLote === cleanInput;
@@ -1135,128 +1097,79 @@
 
             try {
                 if (allUsers.length === 0 || allPlantas.length === 0) {
-                    await loadUsers(); // Asegurar datos cargados
+                    const [usersData, plantasData] = await Promise.all([
+                        fetchUsuariosData(),
+                        fetchPlantasData()
+                    ]);
+                    allUsers = usersData || [];
+                    allPlantas = plantasData || [];
                 }
 
-                // Buscar en Empleados
-                let existingUser = allUsers.find(u => {
-                    const dbId = String(u.ID_USUARIO || u.ID || '').trim();
-                    return dbId === String(idInput);
-                });
-
+                // Buscar en USUARIOS primero, luego en PLANTAS
+                let existingUser = allUsers.find(u =>
+                    String(u.ID_USUARIO || u.ID || '').trim() === String(idInput)
+                );
                 let sheetType = 'USUARIOS';
 
-                // Si no está en empleados, buscar en Plantas
                 if (!existingUser) {
-                    existingUser = allPlantas.find(u => {
-                        const dbId = String(u.ID_PLANTA || u.id || u.cedula || '').trim();
-                        return dbId === String(idInput);
-                    });
+                    existingUser = allPlantas.find(u =>
+                        String(u.ID_PLANTA || u.id || u.cedula || '').trim() === String(idInput)
+                    );
                     if (existingUser) sheetType = 'PLANTAS';
                 }
 
                 if (!existingUser) {
-                    throw new Error("No se encontró una cuenta con esta identificación.");
+                    throw new Error('No se encontró una cuenta con esta identificación.');
                 }
 
                 const dbEmail = String(existingUser.CORREO || existingUser.EMAIL || '').trim();
                 if (!dbEmail) {
-                    throw new Error("Esta cuenta no tiene un correo electrónico asociado.");
+                    throw new Error('Esta cuenta no tiene un correo electrónico asociado.');
                 }
+
+                // Guardar datos para el paso de confirmación
+                window.resetTempData = { id: idInput, hoja: sheetType };
 
                 // Ofuscar correo para mostrar
-                let obscuredEmail = dbEmail;
-                const emailParts = dbEmail.split('@');
-                if (emailParts.length === 2) {
-                    const name = emailParts[0];
-                    const domain = emailParts[1];
-                    if (name.length > 3) {
-                        obscuredEmail = name.substring(0, 3) + '***@' + domain;
-                    } else if (name.length > 0) {
-                        obscuredEmail = name.substring(0, 1) + '***@' + domain;
-                    }
-                }
+                const [name, domain] = dbEmail.split('@');
+                const obscuredEmail = (name.length > 3 ? name.substring(0, 3) : name.substring(0, 1)) + '***@' + domain;
 
-                // Llamar a GAS usando iframe para evitar CORS en desarrollo
+                // Llamar al GAS via fetch con no-cors (fire & forget)
                 const GAS_PASSWORD_RESET_URL = 'https://script.google.com/macros/s/AKfycby-HNqqjMARfpqkSQEZL4bbliJp30NeqTNZQAxXoO85qB0MKjhzwtShhocZVaMKMv1Z/exec';
-                
-                // Crear formulario temporal
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = GAS_PASSWORD_RESET_URL;
-                form.target = 'gas-iframe';
-                form.style.display = 'none';
-                
-                const actionInput = document.createElement('input');
-                actionInput.name = 'action';
-                actionInput.value = 'SOLICITAR_RESETEO';
-                form.appendChild(actionInput);
-                
-                const hojaInput = document.createElement('input');
-                hojaInput.name = 'hoja';
-                hojaInput.value = sheetType;
-                form.appendChild(hojaInput);
-                
-                const idInputField = document.createElement('input');
-                idInputField.name = 'id';
-                idInputField.value = idInput;
-                form.appendChild(idInputField);
-                
-                // Crear iframe oculto
-                let iframe = document.getElementById('gas-iframe');
-                if (!iframe) {
-                    iframe = document.createElement('iframe');
-                    iframe.id = 'gas-iframe';
-                    iframe.name = 'gas-iframe';
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
-                }
-                
-                document.body.appendChild(form);
-                
-                // Esperar respuesta del iframe
-                const result = await new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Timeout esperando respuesta'));
-                    }, 30000);
-                    
-                    iframe.onload = () => {
-                        clearTimeout(timeout);
-                        try {
-                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-                            const responseText = iframeDoc.body.textContent;
-                            const data = JSON.parse(responseText);
-                            resolve(data);
-                        } catch (e) {
-                            // Si no podemos leer el iframe (CORS), asumimos éxito después de 2 segundos
-                            setTimeout(() => {
-                                resolve({ success: true, message: 'Solicitud enviada' });
-                            }, 2000);
-                        }
-                    };
-                    
-                    form.submit();
-                });
-                
-                document.body.removeChild(form);
 
-                if (!result.success) {
-                    throw new Error(result.message || "Error al solicitar el token desde el servidor.");
-                }
-                if (result.success) {
-                    Swal.fire({
-                        title: '¡Enlace Enviado!',
-                        html: `Hemos enviado un enlace de recuperación a tu correo electrónico.<br><span style="font-size:0.9rem;">Revisa tu bandeja de entrada o SPAM. El enlace expira en 5 minutos.</span>`,
-                        icon: 'success',
-                        confirmButtonColor: '#3F51B5'
-                    }).then(() => {
-                        switchAuth('login');
+                const body = new URLSearchParams({
+                    action: 'SOLICITAR_RESETEO',
+                    hoja: sheetType,
+                    id: idInput
+                });
+
+                // Intentar con fetch normal primero, fallback a no-cors
+                try {
+                    const res = await fetch(GAS_PASSWORD_RESET_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body.toString()
                     });
-                } else {
-                    throw new Error(result.message || "Error al solicitar el token desde el servidor.");
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.message);
+                } catch (fetchErr) {
+                    // CORS en desarrollo — usar no-cors (fire & forget, asumimos éxito)
+                    fetch(GAS_PASSWORD_RESET_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body.toString()
+                    }).catch(() => {});
                 }
+
+                Swal.fire({
+                    title: '¡Enlace Enviado!',
+                    html: `Hemos enviado un enlace de recuperación a <b>${obscuredEmail}</b>.<br><span style="font-size:0.85rem;color:#64748b;">Revisa tu bandeja de entrada o SPAM. El enlace expira en 5 minutos.</span>`,
+                    icon: 'success',
+                    confirmButtonColor: '#3F51B5'
+                }).then(() => switchAuth('login'));
+
             } catch (error) {
-                console.error("Error en requestReset:", error);
                 Swal.fire('Error', error.message || 'Error al procesar la solicitud.', 'error');
             } finally {
                 btn.disabled = false;
@@ -1270,12 +1183,12 @@
             const btn = document.getElementById('validateTokenBtn');
 
             if (!token || !newPass) {
-                Swal.fire('Atención', 'Debe ingresar el código de recuperación y su nueva contraseña.', 'warning');
+                Swal.fire('Atención', 'Debe ingresar el código y su nueva contraseña.', 'warning');
                 return;
             }
 
             if (!window.resetTempData || !window.resetTempData.id) {
-                Swal.fire('Error', 'Sesión de recuperación inválida o expirada. Vuelva a solicitar el token.', 'error');
+                Swal.fire('Error', 'Sesión expirada. Vuelva a solicitar el enlace.', 'error');
                 switchAuth('reset');
                 return;
             }
@@ -1284,41 +1197,51 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ACTUALIZANDO...';
 
             try {
-                const supabase = window.getSupabaseClient();
-                const { data: result, error } = await supabase.functions.invoke('password-reset', {
-                    body: {
-                        action: 'CONFIRMAR_RESETEO',
-                        hoja: window.resetTempData.hoja || 'USUARIOS',
-                        id: window.resetTempData.id,
-                        token: token,
-                        newPassword: newPass
-                    }
+                const GAS_PASSWORD_RESET_URL = 'https://script.google.com/macros/s/AKfycby-HNqqjMARfpqkSQEZL4bbliJp30NeqTNZQAxXoO85qB0MKjhzwtShhocZVaMKMv1Z/exec';
+
+                const body = new URLSearchParams({
+                    action: 'CONFIRMAR_RESETEO',
+                    token: token,
+                    newPassword: newPass
                 });
 
-                if (error) throw new Error(error.message);
-
-                if (result.success) {
-                    Swal.fire({
-                        title: '¡Contraseña Actualizada!',
-                        text: 'Su contraseña ha sido restaurada correctamente. Ya puede iniciar sesión.',
-                        icon: 'success',
-                        confirmButtonColor: '#3F51B5'
-                    }).then(() => {
-                        // Cleanup
-                        window.resetTempData = null;
-                        document.getElementById('reset-id').value = '';
-                        document.getElementById('reset-token').value = '';
-                        document.getElementById('reset-new-pass').value = '';
-
-                        // Silenciosamente recargar usuarios locales con la nueva contraseña
-                        loadUsers();
-                        switchAuth('login');
+                let result;
+                try {
+                    const res = await fetch(GAS_PASSWORD_RESET_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: body.toString()
                     });
-                } else {
-                    throw new Error(result.message || "El código es incorrecto o ha expirado.");
+                    result = await res.json();
+                } catch (corsErr) {
+                    // Fallback: Edge Function de Supabase
+                    const supabase = window.getSupabaseClient();
+                    const { data, error } = await supabase.functions.invoke('password-reset', {
+                        body: {
+                            action: 'CONFIRMAR_RESETEO',
+                            token: token,
+                            newPassword: newPass
+                        }
+                    });
+                    if (error) throw new Error(error.message);
+                    result = data;
                 }
+
+                if (!result.success) throw new Error(result.message || 'El código es incorrecto o ha expirado.');
+
+                Swal.fire({
+                    title: '¡Contraseña Actualizada!',
+                    text: 'Su contraseña ha sido restaurada. Ya puede iniciar sesión.',
+                    icon: 'success',
+                    confirmButtonColor: '#3F51B5'
+                }).then(() => {
+                    window.resetTempData = null;
+                    document.getElementById('reset-token').value = '';
+                    document.getElementById('reset-new-pass').value = '';
+                    switchAuth('login');
+                });
+
             } catch (error) {
-                console.error("Error en validateResetToken:", error);
                 Swal.fire('Error', error.message || 'Error al validar el código.', 'error');
             } finally {
                 btn.disabled = false;
