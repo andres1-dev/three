@@ -35,22 +35,20 @@
             <div class="login-header">
                 <img src="icons/app.svg" alt="Logo TMD" class="login-logo">
                 <div class="brand-divider"></div>
-                <p class="login-subtitle">EMPLEADOS</p>
+                <p class="login-subtitle">INGRESO</p>
             </div>
 
             <!-- ── SECCIÓN: INICIO DE SESIÓN ── -->
             <div id="login-section" class="auth-section">
 
-                <div class="auth-tabs"
-                    style="display:flex; margin-bottom: 25px; background: #eaecf5; border-radius: 12px; padding: 5px;">
-                    <div id="tab-interno" onclick="setLoginType('interno')"
-                        style="flex:1; text-align:center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #3F51B5; transition: 0.3s; background: #ffffff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                        Interno</div>
-                    <div id="tab-planta" onclick="setLoginType('planta')"
-                        style="flex:1; text-align:center; padding: 12px; cursor: pointer; border-radius: 8px; font-weight: bold; color: #7986cb; transition: 0.3s; background: transparent; box-shadow: none;">
-                        Planta</div>
-                </div>
+                <!-- ── Botón Biometría (se muestra solo si hay credencial guardada) ── -->
+                <button class="btn-biometric hidden" id="biometricBtn" onclick="loginWithBiometric()" type="button">
+                    <div id="biometric-icon"></div>
+                    <span id="biometric-label">Usar biometría</span>
+                </button>
+                <a class="biometric-manual-link hidden" id="biometricManualLink" href="javascript:void(0)" onclick="showManualLogin()">Usar contraseña</a>
 
+                <div id="manual-fields">
                 <div class="form-floating-group">
                     <i class="fas fa-id-card input-icon"></i>
                     <input type="text" id="login-user" placeholder="Identificación o Cédula" required
@@ -72,6 +70,7 @@
                     <a href="javascript:void(0)" onclick="switchAuth('reset')">¿Olvidó su contraseña?</a>
                     <span class="dot-separator">•</span>
                     <a href="javascript:void(0)" onclick="routeRegistration()">Crear cuenta</a>
+                </div>
                 </div>
             </div>
 
@@ -235,6 +234,18 @@
             </div>
         </div>
 
+        <!-- ── Modal Biometría ── -->
+        <div id="biometric-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.35); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+            <div class="biometric-modal-card">
+                <div class="bm-icon-wrap" id="bm-icon-wrap"></div>
+                <h3 class="bm-title" id="bm-title">Activar Touch ID</h3>
+                <p class="bm-desc" id="bm-desc">Ingresa más rápido la próxima vez sin escribir tu contraseña.</p>
+                <div class="bm-actions">
+                    <button class="bm-btn-skip"    id="bm-skip">Ahora no</button>
+                    <button class="bm-btn-activate" id="bm-activate">Activar</button>
+                </div>
+            </div>
+        </div>
         <div class="login-footer-credits">
             <p>Developed by Andrés Mendoza © 2026</p>
             <p class="system-version">v2.4.0 • Enterprise Edition</p>
@@ -252,7 +263,7 @@
     <script src="js/forms/gas.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/particles-config.js"></script>
-
+    <script src="js/core/biometry.js"></script>
 
     <script>
         // Inicialización al cargar
@@ -269,6 +280,9 @@
                     return;
                 }
 
+                // Inicializar botón biométrico si hay credencial guardada
+                await initBiometricButton();
+
                 // Cargar llaves y usuarios en segundo plano
                 await fetchSecureConfig();
                 await loadUsers();
@@ -281,39 +295,10 @@
 
         function setLoginType(type) {
             currentLoginType = type;
-            const tabInterno = document.getElementById('tab-interno');
-            const tabPlanta = document.getElementById('tab-planta');
-            const title = document.querySelector('.login-subtitle');
-
-            if (type === 'interno') {
-                tabInterno.style.background = '#ffffff';
-                tabInterno.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-                tabInterno.style.color = '#3F51B5';
-
-                tabPlanta.style.background = 'transparent';
-                tabPlanta.style.boxShadow = 'none';
-                tabPlanta.style.color = '#7986cb';
-
-                title.textContent = 'EMPLEADOS';
-            } else {
-                tabPlanta.style.background = '#ffffff';
-                tabPlanta.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-                tabPlanta.style.color = '#3F51B5';
-
-                tabInterno.style.background = 'transparent';
-                tabInterno.style.boxShadow = 'none';
-                tabInterno.style.color = '#7986cb';
-
-                title.textContent = 'PLANTAS';
-            }
         }
 
         function routeRegistration() {
-            if (currentLoginType === 'interno') {
-                switchAuth('register');
-            } else {
-                switchAuth('register-planta');
-            }
+            switchAuth('register');
         }
 
         function switchAuth(target) {
@@ -357,6 +342,441 @@
             }
         }
 
+        // ══════════════════════════════════════════════════════
+        // BIOMETRÍA — WebAuthn / Passkeys
+        // ══════════════════════════════════════════════════════
+        const BIOMETRIC_KEY = 'sispro_biometric_ids'; // localStorage: { userId: credentialId (base64) }
+
+        /** Detecta el tipo de autenticador disponible y devuelve { supported, icon, label } */
+        async function detectBiometricType() {
+            if (!window.PublicKeyCredential) return { supported: false };
+
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+            if (!available) return { supported: false };
+
+            const ua = navigator.userAgent.toLowerCase();
+            const platform = navigator.platform ? navigator.platform.toLowerCase() : '';
+
+            // Face ID — iPhone X+ o iPad con Face ID
+            if (/iphone|ipad/.test(ua) && !/iphone os [1-9]_/.test(ua)) {
+                return { supported: true, icon: 'fas fa-face-smile', label: 'Face ID' };
+            }
+            // Touch ID — Mac con Touch ID o iPhone/iPad más antiguos
+            if (/mac/.test(platform) || /macintosh/.test(ua)) {
+                return { supported: true, icon: 'fas fa-fingerprint', label: 'Touch ID' };
+            }
+            // Android — huella o reconocimiento facial
+            if (/android/.test(ua)) {
+                return { supported: true, icon: 'fas fa-fingerprint', label: 'Huella dactilar' };
+            }
+            // Windows Hello
+            if (/windows/.test(ua)) {
+                return { supported: true, icon: 'fas fa-eye', label: 'Windows Hello' };
+            }
+            // Genérico
+            return { supported: true, icon: 'fas fa-fingerprint', label: 'Biometría' };
+        }
+
+        /** Obtiene el mapa de credenciales guardadas */
+        function getBiometricMap() {
+            try { return JSON.parse(localStorage.getItem(BIOMETRIC_KEY) || '{}'); } catch { return {}; }
+        }
+
+        /** Guarda una credencial para un userId */
+        function saveBiometricCredential(userId, credentialId) {
+            const map = getBiometricMap();
+            map[userId.trim().toLowerCase()] = credentialId;
+            localStorage.setItem(BIOMETRIC_KEY, JSON.stringify(map));
+        }
+
+        /** Elimina la credencial de un userId */
+        function removeBiometricCredential(userId) {
+            const map = getBiometricMap();
+            delete map[userId.trim().toLowerCase()];
+            localStorage.setItem(BIOMETRIC_KEY, JSON.stringify(map));
+        }
+
+        /** Convierte ArrayBuffer a base64url */
+        function bufToB64(buf) {
+            return btoa(String.fromCharCode(...new Uint8Array(buf)))
+                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
+        /** Convierte base64url a Uint8Array */
+        function b64ToBuf(b64) {
+            const s = b64.replace(/-/g, '+').replace(/_/g, '/');
+            return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+        }
+
+        /** Obtiene el SVG según el tipo de dispositivo usando BIOMETRY de income */
+        function getBiometricSVG() {
+            if (typeof BIOMETRY !== 'undefined') return BIOMETRY.getSVGForType();
+            // Fallback genérico
+            return `<svg width="52" height="52" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm9 14H6V10h12v10zm-6-3c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/>
+            </svg>`;
+        }
+
+        /** Obtiene la etiqueta según el tipo */
+        function getBiometricLabel() {
+            if (typeof BIOMETRY !== 'undefined') return BIOMETRY.getLabelForType();
+            return 'Biometría';
+        }
+
+        /** Inicializa el botón biométrico al cargar la página */
+        async function initBiometricButton() {
+            const btn        = document.getElementById('biometricBtn');
+            const iconEl     = document.getElementById('biometric-icon');
+            const labelEl    = document.getElementById('biometric-label');
+            const manualLink = document.getElementById('biometricManualLink');
+            const manualFields = document.getElementById('manual-fields');
+
+            console.log('[BIOMETRIC] Iniciando detección...');
+            console.log('[BIOMETRIC] Origen:', location.origin);
+            console.log('[BIOMETRIC] PublicKeyCredential disponible:', !!window.PublicKeyCredential);
+            console.log('[BIOMETRIC] PasswordCredential disponible:', !!window.PasswordCredential);
+
+            // ── Vía 1: WebAuthn (HTTPS + credencial guardada en sispro_biometric_ids) ──
+            if (window.PublicKeyCredential) {
+                const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+                console.log('[BIOMETRIC] Platform authenticator disponible:', available);
+                if (available) {
+                    const map  = getBiometricMap();
+                    const keys = Object.keys(map);
+                    console.log('[BIOMETRIC] Credenciales WebAuthn guardadas:', keys);
+                    if (keys.length > 0) {
+                        iconEl.innerHTML        = getBiometricSVG();
+                        labelEl.textContent     = getBiometricLabel();
+                        btn.classList.remove('hidden');
+                        manualLink.classList.remove('hidden');
+                        manualFields.style.display = 'none';
+                        window._biometricUserId = keys[0];
+                        window._biometricMode   = 'webauthn';
+                        console.log('[BIOMETRIC] Modo WebAuthn activado para:', keys[0]);
+                        setTimeout(() => loginWithBiometric(), 400);
+                        return;
+                    }
+                }
+            }
+
+            // ── Vía 2: Credential Management API — llavero del navegador (Safari/Chrome) ──
+            if (window.PasswordCredential && navigator.credentials && navigator.credentials.get) {
+                console.log('[BIOMETRIC] Intentando Credential Management API...');
+                try {
+                    const cred = await navigator.credentials.get({
+                        password: true,
+                        mediation: 'silent'
+                    });
+                    console.log('[BIOMETRIC] Credencial del llavero:', cred ? cred.id : 'ninguna');
+                    if (cred && cred.id && cred.password) {
+                        iconEl.innerHTML        = getBiometricSVG();
+                        labelEl.textContent     = getBiometricLabel();
+                        btn.classList.remove('hidden');
+                        manualLink.classList.remove('hidden');
+                        manualFields.style.display = 'none';
+                        window._savedCred       = cred;
+                        window._biometricMode   = 'password-credential';
+                        console.log('[BIOMETRIC] Modo llavero activado para:', cred.id);
+                        setTimeout(() => loginWithBiometric(), 400);
+                        return;
+                    }
+                } catch(e) {
+                    console.log('[BIOMETRIC] Credential Management falló:', e.message);
+                }
+            }
+
+            console.log('[BIOMETRIC] Sin credenciales guardadas — mostrando login normal');
+        }
+
+        /** Muestra los campos manuales y oculta el botón biométrico */
+        function showManualLogin() {
+            document.getElementById('biometricBtn').classList.add('hidden');
+            document.getElementById('biometricManualLink').classList.add('hidden');
+            document.getElementById('manual-fields').style.display = 'block';
+        }
+
+        /** Actualiza el botón biométrico según el userId ingresado (ya no se usa para mostrar, pero se mantiene por compatibilidad) */
+        async function onUserIdInput() {}
+
+        /** Muestra el modal propio de biometría y devuelve una promesa con la decisión */
+        function showBiometricModal(label, svg) {
+            return new Promise(resolve => {
+                const modal    = document.getElementById('biometric-modal');
+                const iconWrap = document.getElementById('bm-icon-wrap');
+                const title    = document.getElementById('bm-title');
+                const desc     = document.getElementById('bm-desc');
+                const btnSkip  = document.getElementById('bm-skip');
+                const btnAct   = document.getElementById('bm-activate');
+
+                iconWrap.innerHTML  = svg;
+                title.textContent   = `Activar ${label}`;
+                desc.textContent    = `Ingresa más rápido la próxima vez sin escribir tu contraseña.`;
+                btnAct.textContent  = 'Activar';
+                btnAct.disabled     = false;
+
+                modal.style.display = 'flex';
+
+                const cleanup = (result) => {
+                    modal.style.display = 'none';
+                    btnSkip.removeEventListener('click', onSkip);
+                    btnAct.removeEventListener('click', onActivate);
+                    resolve(result);
+                };
+
+                const onSkip     = () => cleanup(false);
+                const onActivate = () => cleanup(true);
+
+                btnSkip.addEventListener('click', onSkip);
+                btnAct.addEventListener('click', onActivate);
+
+                // Cerrar al hacer clic en el fondo
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) cleanup(false);
+                }, { once: true });
+            });
+        }
+
+        /** Registra la biometría tras un login exitoso con contraseña */
+        async function offerBiometricEnrollment(userId) {
+            if (!window.PublicKeyCredential) return;
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+            if (!available) return;
+
+            const map = getBiometricMap();
+            if (map[userId.trim().toLowerCase()]) return;
+
+            const label     = getBiometricLabel();
+            const svg       = getBiometricSVG();
+            const confirmed = await showBiometricModal(label, svg);
+            if (!confirmed) return;
+
+            const btnAct = document.getElementById('bm-activate');
+            btnAct.disabled    = true;
+            btnAct.textContent = '...';
+
+            try {
+                const challenge   = crypto.getRandomValues(new Uint8Array(32));
+                const userIdBytes = new TextEncoder().encode(userId);
+
+                const credential = await navigator.credentials.create({
+                    publicKey: {
+                        challenge,
+                        rp: { name: 'Grupo TDM', id: location.hostname },
+                        user: { id: userIdBytes, name: userId, displayName: userId },
+                        pubKeyCredParams: [
+                            { type: 'public-key', alg: -7 },
+                            { type: 'public-key', alg: -257 }
+                        ],
+                        authenticatorSelection: {
+                            authenticatorAttachment: 'platform',
+                            userVerification: 'required',
+                            residentKey: 'preferred'
+                        },
+                        timeout: 60000
+                    }
+                });
+
+                saveBiometricCredential(userId, bufToB64(credential.rawId));
+
+                // Toast de éxito discreto en lugar de Swal
+                showBiometricToast(`${label} activado ✓`);
+
+            } catch (err) {
+                console.warn('[BIOMETRIC] Registro cancelado o fallido:', err.message);
+            }
+        }
+
+        /** Toast minimalista de confirmación */
+        function showBiometricToast(msg) {
+            const t = document.createElement('div');
+            t.textContent = msg;
+            Object.assign(t.style, {
+                position: 'fixed', bottom: '28px', left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#1e293b', color: '#f1f5f9',
+                padding: '10px 20px', borderRadius: '10px',
+                fontSize: '13px', fontWeight: '600',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+                zIndex: '99999', opacity: '0',
+                transition: 'opacity 0.2s ease',
+                fontFamily: 'inherit'
+            });
+            document.body.appendChild(t);
+            requestAnimationFrame(() => { t.style.opacity = '1'; });
+            setTimeout(() => {
+                t.style.opacity = '0';
+                setTimeout(() => t.remove(), 300);
+            }, 2200);
+        }
+
+        /** Login con biometría */
+        async function loginWithBiometric() {
+            // ── Modo: Credential Management (llavero Safari/Chrome) ──
+            if (window._biometricMode === 'password-credential' && window._savedCred) {
+                const cred = window._savedCred;
+                const btn  = document.getElementById('biometricBtn');
+                btn.disabled = true;
+                const prevHTML = btn.innerHTML;
+                btn.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#3f51b5;"></i><span>Verificando...</span>`;
+                try {
+                    if (allUsers.length === 0 || typeof allPlantas === 'undefined' || allPlantas.length === 0) {
+                        const [usersData, plantasData] = await Promise.all([fetchUsuariosData(), fetchPlantasData()]);
+                        allUsers = usersData || [];
+                        allPlantas = plantasData || [];
+                    }
+                    const enInternos = allUsers.find(u =>
+                        String(u.ID_USUARIO || u.ID || u.USUARIO || u.CEDULA || '').trim().toLowerCase() === cred.id.toLowerCase()
+                    );
+                    const tipo = enInternos ? 'interno' : 'planta';
+                    await handleLoginWithBiometricOffer(cred.id, cred.password, tipo);
+                } catch(err) {
+                    console.warn('[BIOMETRIC] Error credential:', err.message);
+                    btn.disabled  = false;
+                    btn.innerHTML = prevHTML;
+                    showManualLogin();
+                }
+                return;
+            }
+
+            // ── Modo: WebAuthn ──
+            const map    = getBiometricMap();
+            const userId = window._biometricUserId || Object.keys(map)[0];
+            if (!userId) return;
+
+            const credId = map[userId.toLowerCase()];
+            if (!credId) return;
+
+            const btn = document.getElementById('biometricBtn');
+            btn.disabled = true;
+            const prevHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#3f51b5;"></i><span>Verificando...</span>`;
+
+            try {
+                const challenge = crypto.getRandomValues(new Uint8Array(32));
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge,
+                        allowCredentials: [{ type: 'public-key', id: b64ToBuf(credId) }],
+                        userVerification: 'required',
+                        timeout: 60000
+                    }
+                });
+
+                if (!assertion) throw new Error('Sin respuesta del autenticador');
+
+                if (allUsers.length === 0 || typeof allPlantas === 'undefined' || allPlantas.length === 0) {
+                    const [usersData, plantasData] = await Promise.all([fetchUsuariosData(), fetchPlantasData()]);
+                    allUsers = usersData || [];
+                    allPlantas = plantasData || [];
+                }
+
+                const enInternos = allUsers.find(u =>
+                    String(u.ID_USUARIO || u.ID || u.USUARIO || u.CEDULA || '').trim().toLowerCase() === userId.toLowerCase()
+                );
+
+                const tipo = enInternos ? 'interno' : 'planta';
+                const targetArray = tipo === 'interno' ? allUsers : allPlantas;
+
+                let userFound = targetArray.find(u =>
+                    String(u.ID_USUARIO || u.ID_PLANTA || u.ID || u.USUARIO || u.CEDULA || '').trim().toLowerCase() === userId.toLowerCase()
+                );
+
+                if (!userFound && tipo === 'planta') {
+                    const directSearch = await fetchSupabaseData('PLANTAS', {
+                        filters: [{ type: 'eq', column: 'ID_PLANTA', value: userId }]
+                    }).catch(() => null);
+                    if (directSearch && directSearch.length > 0) userFound = directSearch[0];
+                }
+
+                if (!userFound) {
+                    removeBiometricCredential(userId);
+                    showManualLogin();
+                    Swal.fire('Error', 'No se encontró el usuario. Ingrese con contraseña.', 'error');
+                    return;
+                }
+
+                if (userFound.ROL === 'PENDIENTE') {
+                    Swal.fire({ icon: 'warning', title: 'Acceso Restringido', text: 'Su solicitud está PENDIENTE de aprobación.', confirmButtonColor: '#3F51B5' });
+                    return;
+                }
+                if (userFound.ROL === 'DESHABILITADO') {
+                    Swal.fire({ icon: 'error', title: 'Cuenta Deshabilitada', text: 'Contacte al administrador.', confirmButtonColor: '#3F51B5' });
+                    return;
+                }
+
+                currentUser = userFound;
+                localStorage.setItem('sispro_user', JSON.stringify(currentUser));
+
+                if (userFound.ROL === 'GUEST') {
+                    const datosCompletos = typeof validarDatosCompletos === 'function' ? validarDatosCompletos(userFound) : true;
+                    if (!datosCompletos) {
+                        window.location.href = 'gestion-planta.html?id=' + (userFound.ID_PLANTA || userFound.ID);
+                        return;
+                    }
+                }
+                window.location.href = 'index.html';
+
+            } catch (err) {
+                console.warn('[BIOMETRIC] Autenticación fallida:', err.message);
+                btn.disabled = false;
+                btn.innerHTML = prevHTML;
+                if (err.name !== 'NotAllowedError') {
+                    Swal.fire('Error', 'No se pudo verificar la biometría. Use su contraseña.', 'warning');
+                }
+            }
+        }
+
+        // ══════════════════════════════════════════════════════
+
+        /** Login con contraseña + oferta de biometría si es exitoso */
+        async function handleLoginWithBiometricOffer(userId, pass, tipo) {
+            const targetArray = tipo === 'interno' ? allUsers : allPlantas;
+
+            let userFound = targetArray.find(u => {
+                const dbId = String(u.ID_USUARIO || u.ID_PLANTA || u.ID || u.USUARIO || u.CEDULA || '').trim();
+                const dbPass = String(u.PASSWORD || u.CONTRASEÑA || u.PASS || u.CLAVE || '').trim();
+                return dbId.toLowerCase() === userId.trim().toLowerCase() && dbPass === pass.trim();
+            });
+
+            // Fallback Supabase para plantas
+            if (!userFound && tipo === 'planta') {
+                try {
+                    const directSearch = await fetchSupabaseData('PLANTAS', {
+                        filters: [{ type: 'eq', column: 'ID_PLANTA', value: userId }]
+                    });
+                    if (directSearch && directSearch.length > 0) {
+                        const p = directSearch[0];
+                        const dbPass = String(p.PASSWORD || p.CONTRASEÑA || '').trim();
+                        if (dbPass === pass.trim()) {
+                            userFound = p;
+                            allPlantas.push(p);
+                        }
+                    }
+                } catch (err) { console.error('[LOGIN] Fallback Supabase:', err); }
+            }
+
+            if (!userFound) {
+                // Si no encontró con contraseña, delegar a handleLogin para mostrar el error estándar
+                handleLogin(userId, pass, true, tipo);
+                return;
+            }
+
+            // Guardar en llavero del navegador (Safari/Chrome lo usa para Touch ID / biometría nativa)
+            if (window.PasswordCredential && navigator.credentials && navigator.credentials.store) {
+                try {
+                    const cred = new PasswordCredential({ id: userId, password: pass });
+                    await navigator.credentials.store(cred);
+                } catch(_) {}
+            }
+
+            // Credenciales correctas — ofrecer WebAuthn si está disponible
+            await offerBiometricEnrollment(userId);
+
+            // Ahora completar el login normal
+            handleLogin(userId, pass, true, tipo);
+        }
+
         async function processMultiLogin() {
             const userId = document.getElementById('login-user').value;
             const pass = document.getElementById('login-pass').value;
@@ -386,8 +806,23 @@
                     allPlantas = plantasData || [];
                 }
 
-                // Llamar a la lógica central pasando el tipo actual
-                handleLogin(userId, pass, true, currentLoginType);
+                // Buscar primero en internos, luego en plantas
+                const enInternos = allUsers.find(u => {
+                    const dbId = String(u.ID_USUARIO || u.ID || u.USUARIO || u.CEDULA || '').trim();
+                    return dbId.toLowerCase() === String(userId).trim().toLowerCase();
+                });
+
+                const enPlantas = allPlantas.find(u => {
+                    const dbId = String(u.ID_PLANTA || u.ID || u.CEDULA || '').trim();
+                    return dbId.toLowerCase() === String(userId).trim().toLowerCase();
+                });
+
+                if (enInternos) {
+                    await handleLoginWithBiometricOffer(userId, pass, 'interno');
+                } else {
+                    // Buscar en plantas (incluyendo búsqueda directa en Supabase si no está en caché)
+                    await handleLoginWithBiometricOffer(userId, pass, 'planta');
+                }
 
             } catch (error) {
                 console.error('[LOGIN] Error:', error);
@@ -395,7 +830,7 @@
             } finally {
                 setTimeout(() => {
                     btn.disabled = false;
-                    btn.innerHTML = '<span class="btn-text">INGRESAR AL SISTEMA</span><i class="fas fa-chevron-right"></i>';
+                    btn.innerHTML = '<span class="btn-text">INGRESAR</span><i class="fas fa-right-to-bracket"></i>';
                 }, 2000);
             }
         }

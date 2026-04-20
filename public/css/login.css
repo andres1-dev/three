@@ -275,3 +275,191 @@
 }
 
 .hidden { display: none !important; }
+
+/* ── Botón Biometría ── */
+.btn-biometric {
+    width: 100%;
+    background: var(--card-bg, rgba(255,255,255,0.04));
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 28px 20px;
+    color: #3f51b5;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    transition: all 0.25s ease;
+    margin: 0 0 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-biometric:hover:not(:disabled) {
+    border-color: #3f51b5;
+    background: rgba(63, 81, 181, 0.04);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(63, 81, 181, 0.15);
+}
+
+.btn-biometric:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-biometric:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-biometric svg {
+    width: 52px;
+    height: 52px;
+    color: #3f51b5;
+    opacity: 0.85;
+    animation: biometricPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes biometricPulse {
+    0%, 100% { transform: scale(1); opacity: 0.85; }
+    50%       { transform: scale(1.06); opacity: 1; }
+}
+
+.btn-biometric span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #3f51b5;
+    letter-spacing: 0.02em;
+}
+
+/* ── Link volver a contraseña ── */
+.biometric-manual-link {
+    display: block;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #94a3b8;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.biometric-manual-link:hover {
+    color: #3f51b5;
+}
+
+/* ── Modal Biometría ── */
+#biometric-modal {
+    animation: bmFadeIn 0.2s ease;
+}
+
+@keyframes bmFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.biometric-modal-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 40px 36px 32px;
+    width: 100%;
+    max-width: 360px;
+    margin: 16px;
+    text-align: center;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.18);
+    animation: bmSlideUp 0.25s cubic-bezier(0.16,1,0.3,1);
+}
+
+@keyframes bmSlideUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+.bm-icon-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    background: rgba(63,81,181,0.07);
+    margin: 0 auto 20px;
+    color: #3f51b5;
+}
+
+.bm-icon-wrap svg {
+    width: 38px;
+    height: 38px;
+    color: #3f51b5;
+}
+
+.bm-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #1e293b;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+.bm-desc {
+    font-size: 0.875rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 28px;
+}
+
+.bm-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.bm-btn-skip {
+    flex: 1;
+    height: 46px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.bm-btn-skip:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.bm-btn-activate {
+    flex: 1;
+    height: 46px;
+    background: #3f51b5;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+}
+
+.bm-btn-activate:hover {
+    background: #3949ab;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(63,81,181,0.3);
+}
+
+.bm-btn-activate:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
