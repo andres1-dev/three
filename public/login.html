@@ -68,8 +68,6 @@
 
                 <div class="auth-footer-links">
                     <a href="javascript:void(0)" onclick="switchAuth('reset')">¿Olvidó su contraseña?</a>
-                    <span class="dot-separator">•</span>
-                    <a href="javascript:void(0)" onclick="routeRegistration()">Crear cuenta</a>
                 </div>
                 </div>
             </div>
@@ -1123,6 +1121,32 @@
                 }
 
                 const dbEmail = String(existingUser.CORREO || existingUser.EMAIL || '').trim();
+                
+                // Si es una PLANTA sin correo, mostrar mensaje especial
+                if (!dbEmail && sheetType === 'PLANTAS') {
+                    const nombrePlanta = String(existingUser.PLANTA || existingUser.planta || 'su taller').trim();
+                    Swal.fire({
+                        title: 'Recordatorio de Acceso',
+                        html: `
+                            <div style="text-align:left; padding:0 1.5rem; line-height:1.8; color:#334155;">
+                                <p style="margin-bottom:1.5rem; font-size:0.95rem;">
+                                    Hola, <strong style="color:#1e293b;">${nombrePlanta}</strong>. Su contraseña predeterminada es su <strong>número de identificación</strong> (NIT o Cédula) registrada en el sistema.
+                                </p>
+                                <div style="background:#f8fafc; border-left:3px solid #3b82f6; padding:1rem; border-radius:6px; margin-top:1.5rem;">
+                                    <p style="margin:0; font-size:0.9rem; color:#475569;">
+                                        Por razones de seguridad, le recomendamos cambiar su contraseña desde el módulo <strong>"Gestión de Planta"</strong> una vez ingrese al sistema.
+                                    </p>
+                                </div>
+                            </div>
+                        `,
+                        icon: 'info',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3F51B5',
+                        width: '500px'
+                    }).then(() => switchAuth('login'));
+                    return;
+                }
+                
                 if (!dbEmail) {
                     throw new Error('Esta cuenta no tiene un correo electrónico asociado.');
                 }
