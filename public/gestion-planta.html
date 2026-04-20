@@ -392,7 +392,7 @@
                 <div class="col-md-3">
                   <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo de vía</label>
                   <select id="tipoVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
-                    <option value="">Seleccionar</option>
+                    <option value="" disabled selected>Seleccionar</option>
                     <option value="CL">CALLE</option>
                     <option value="AC">AVENIDA CALLE</option>
                     <option value="CR">CARRERA</option>
@@ -583,7 +583,7 @@
           <div class="input-with-icon">
             <i class="fas fa-map input-icon"></i>
             <select id="departamentoPlanta" class="form-control" required>
-              <option value="">Seleccione departamento</option>
+              <option value="" disabled selected>Seleccione departamento</option>
             </select>
           </div>
         </div>
@@ -593,7 +593,7 @@
           <div class="input-with-icon">
             <i class="fas fa-city input-icon"></i>
             <select id="ciudadPlanta" class="form-control">
-              <option value="">Seleccione ciudad</option>
+              <option value="" disabled selected>Seleccione ciudad</option>
             </select>
           </div>
         </div>
@@ -604,21 +604,39 @@
             <i class="fas fa-home input-icon"></i>
             <!-- Un solo campo que cambia entre select e input automáticamente -->
             <select id="barrioPlanta" class="form-control" required>
-              <option value="">Seleccione barrio</option>
+              <option value="" disabled selected>Seleccione barrio</option>
             </select>
           </div>
         </div>
 
         <div class="mb-3" id="comunaContainer" style="display:none;">
-          <label for="comunaPlanta" class="form-label"><span id="comunaLabel">Comuna</span>: <span id="comunaAsterisk" style="color:#ef4444; display:none;">*</span></label>
-          <div class="input-with-icon">
-            <i class="fas fa-map-pin input-icon"></i>
-            <input type="text" id="comunaPlanta" class="form-control" placeholder="Se llena automáticamente" readonly>
+          <label for="comunaPlanta" class="form-label">
+            <span id="comunaLabel">Comuna</span>: 
+            <span id="comunaAsterisk" style="color:#ef4444; display:none;">*</span>
+          </label>
+          <div style="position:relative;">
+            <div class="input-with-icon">
+              <i class="fas fa-map-pin input-icon"></i>
+              <input type="text" id="comunaPlanta" class="form-control" placeholder="Se llena automáticamente" readonly style="padding-right:45px;">
+            </div>
+            <button type="button" onclick="habilitarEdicionComuna()" 
+              id="btnEditarComuna" 
+              title="Editar comuna"
+              style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#3b82f6; cursor:pointer; padding:4px 8px; font-size:0.9rem; display:none;">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+          <div class="form-text" style="font-size:0.75rem; margin-top:4px; color:#64748b;">
+            <i class="fas fa-info-circle me-1"></i>
+            Se completa automáticamente al seleccionar el barrio. Si necesitas corregirla, haz clic en el ícono de editar.
           </div>
         </div>
 
         <div class="mb-3">
-          <label for="contactoPlanta" class="form-label">Nombre de Contacto:</label>
+          <label for="contactoPlanta" class="form-label">
+            <span>Nombre de Contacto</span>
+            <span style="background:#eff6ff; color:#3b82f6; font-size:0.7rem; padding:2px 8px; border-radius:4px; font-weight:600; margin-left:8px;">OPCIONAL</span>
+          </label>
           <div class="input-with-icon">
             <i class="fas fa-user input-icon"></i>
             <input type="text" id="contactoPlanta" class="form-control" placeholder="Ej: Juan Pérez">
@@ -661,7 +679,10 @@
         </div>
 
         <div class="mb-3">
-          <label for="localizacionPlanta" class="form-label">Localización GPS:</label>
+          <label for="localizacionPlanta" class="form-label">
+            <span>Localización GPS</span>
+            <span style="background:#eff6ff; color:#3b82f6; font-size:0.7rem; padding:2px 8px; border-radius:4px; font-weight:600; margin-left:8px;">OPCIONAL</span>
+          </label>
           
           <!-- Pregunta inicial con diseño sutil -->
           <div id="gps-pregunta-card" style="background:white; border:1px solid #e2e8f0; border-radius:8px; padding:1.25rem; margin-bottom:12px;">
@@ -741,6 +762,67 @@
             font-size:0.9rem;
           }
         </style>
+
+        <!-- Sección de Cambio de Contraseña (Opcional) -->
+        <div class="mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+            <i class="fas fa-lock" style="color:#3b82f6; font-size:1.2rem;"></i>
+            <h5 style="margin:0; font-size:1rem; font-weight:700; color:#1e293b;">Cambiar Contraseña</h5>
+            <span style="background:#eff6ff; color:#3b82f6; font-size:0.7rem; padding:2px 8px; border-radius:4px; font-weight:600;">OPCIONAL</span>
+          </div>
+          
+          <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:12px; border-radius:4px; margin-bottom:16px;">
+            <p style="margin:0; font-size:0.8rem; line-height:1.5; color:#78350f;">
+              <i class="fas fa-shield-alt me-1"></i>
+              <strong>Recomendación de seguridad:</strong> Usa una contraseña segura con al menos 8 caracteres, combinando letras mayúsculas, minúsculas, números y símbolos.
+            </p>
+          </div>
+
+          <div class="mb-3">
+            <label for="nuevaPassword" class="form-label">Nueva Contraseña:</label>
+            <div style="position:relative;">
+              <div class="input-with-icon">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="nuevaPassword" class="form-control" placeholder="Dejar vacío para mantener la actual" style="padding-right:45px;" oninput="validarSeguridadPassword()">
+              </div>
+              <button type="button" onclick="togglePasswordVisibility('nuevaPassword', 'toggleNuevaPassword')" 
+                id="toggleNuevaPassword" 
+                style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; padding:4px 8px; font-size:1rem;">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <!-- Indicador de seguridad de contraseña -->
+            <div id="passwordStrengthIndicator" style="display:none; margin-top:8px; padding:8px 12px; border-radius:6px; font-size:0.8rem; font-weight:600;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i id="strengthIcon" class="fas"></i>
+                <span id="strengthText"></span>
+              </div>
+              <div id="strengthDetails" style="margin-top:6px; font-size:0.75rem; font-weight:400; line-height:1.4;"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="confirmarPassword" class="form-label">Confirmar Nueva Contraseña:</label>
+            <div style="position:relative;">
+              <div class="input-with-icon">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="confirmarPassword" class="form-control" placeholder="Confirma la nueva contraseña" style="padding-right:45px;" oninput="validarCoincidenciaPassword()">
+              </div>
+              <button type="button" onclick="togglePasswordVisibility('confirmarPassword', 'toggleConfirmarPassword')" 
+                id="toggleConfirmarPassword" 
+                style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; padding:4px 8px; font-size:1rem;">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <!-- Indicador de coincidencia -->
+            <div id="passwordMatchIndicator" style="display:none; margin-top:8px; padding:8px 12px; border-radius:6px; font-size:0.8rem; font-weight:600;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i id="matchIcon" class="fas"></i>
+                <span id="matchText"></span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Checkboxes de Consentimiento -->
         <div class="mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
@@ -876,7 +958,69 @@
             setVal('telefonoPlanta', planta.TELEFONO);
             setVal('emailPlanta', planta.EMAIL || planta.CORREO);
             setVal('contactoPlanta', planta.CONTACTO);
-            setVal('localizacionPlanta', planta.LOCALIZACION);
+            
+            // Manejar localización GPS si existe
+            if (planta.LOCALIZACION && planta.LOCALIZACION.trim() !== '') {
+                setVal('localizacionPlanta', planta.LOCALIZACION);
+                
+                // Ocultar pregunta y mostrar el mapa con la ubicación guardada
+                const preguntaCard = document.getElementById('gps-pregunta-card');
+                const mapaCard = document.getElementById('gps-planta-card');
+                const locInputContainer = document.getElementById('localizacionInputContainer');
+                
+                if (preguntaCard) preguntaCard.style.display = 'none';
+                if (locInputContainer) locInputContainer.style.display = 'block';
+                
+                if (mapaCard) {
+                    mapaCard.style.display = 'block';
+                    
+                    // Parsear coordenadas (formato: "lat, lng")
+                    const coords = planta.LOCALIZACION.split(',').map(c => c.trim());
+                    if (coords.length === 2) {
+                        const lat = coords[0];
+                        const lng = coords[1];
+                        
+                        // Calcular bbox para el mapa
+                        const delta = 0.0045;
+                        const minLng = (parseFloat(lng) - delta).toFixed(6);
+                        const minLat = (parseFloat(lat) - delta).toFixed(6);
+                        const maxLng = (parseFloat(lng) + delta).toFixed(6);
+                        const maxLat = (parseFloat(lat) + delta).toFixed(6);
+                        
+                        // Renderizar mapa con ubicación guardada
+                        mapaCard.innerHTML = `
+                            <div style="text-align:center;">
+                                <div style="margin-bottom:8px;">
+                                    <i class="fas fa-map-marked-alt" style="color:#10b981; font-size:1.5rem;"></i>
+                                    <p style="margin:4px 0 0; color:#10b981; font-weight:600; font-size:0.85rem;">Ubicación registrada</p>
+                                </div>
+                                <div style="border-radius:8px; overflow:hidden; border:2px solid #e2e8f0;">
+                                    <iframe 
+                                        width="100%" 
+                                        height="200" 
+                                        frameborder="0" 
+                                        style="border:0; display:block;" 
+                                        src="https://www.openstreetmap.org/export/embed.html?bbox=${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=mapnik&marker=${lat}%2C${lng}" 
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>
+                                <p style="margin:8px 0 0; font-size:0.72rem; color:#64748b;">
+                                    <i class="fas fa-map-marker-alt me-1"></i> ${lat}, ${lng}
+                                </p>
+                                <button type="button" onclick="activarGpsPlanta()" style="
+                                    margin-top:8px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;
+                                    padding:6px 16px; border-radius:6px; font-size:0.75rem; cursor:pointer;
+                                ">
+                                    <i class="fas fa-sync-alt me-1"></i> Actualizar ubicación
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            } else {
+                // No hay localización guardada, dejar la pregunta visible
+                setVal('localizacionPlanta', '');
+            }
 
             // 4. Ubicación Geográfica (Optimizado sin delays excesivos)
             if (planta.PAIS) setVal('paisPlanta', planta.PAIS);
@@ -923,7 +1067,11 @@
                                         }
                                     }
                                 }
-                                if (planta.COMUNA) setVal('comunaPlanta', planta.COMUNA);
+                                if (planta.COMUNA) {
+                                    setVal('comunaPlanta', planta.COMUNA);
+                                    // Mostrar botón de editar si hay comuna
+                                    setTimeout(() => mostrarBotonEditarComuna(), 100);
+                                }
                             }, 300);
                         }
                     }
@@ -935,7 +1083,14 @@
                 notif.checked = (planta.NOTIFICACIONES === true || planta.NOTIFICACIONES === 'true');
             }
             const dataPol = document.getElementById('checkPoliticaDatos');
-            if (dataPol) dataPol.checked = true;
+            if (dataPol) {
+                // Cargar el valor guardado si existe, sino marcar por defecto
+                if (planta.ACEPTA_POLITICA_DATOS !== undefined) {
+                    dataPol.checked = (planta.ACEPTA_POLITICA_DATOS === true || planta.ACEPTA_POLITICA_DATOS === 'true');
+                } else {
+                    dataPol.checked = true; // Por defecto marcado para usuarios existentes
+                }
+            }
 
             console.log('[FAST-LOAD] Formulario listo.');
         } catch (e) {
@@ -1025,6 +1180,323 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') cerrarPoliticaDatos();
     });
+
+    /**
+     * Toggle de visibilidad de contraseña
+     */
+    function togglePasswordVisibility(inputId, buttonId) {
+      const input = document.getElementById(inputId);
+      const button = document.getElementById(buttonId);
+      
+      if (!input || !button) return;
+      
+      const icon = button.querySelector('i');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.style.color = '#3b82f6';
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.style.color = '#94a3b8';
+      }
+    }
+
+    /**
+     * Valida la seguridad de la contraseña en tiempo real (NO restrictiva, solo informativa)
+     */
+    function validarSeguridadPassword() {
+      const password = document.getElementById('nuevaPassword').value;
+      const indicator = document.getElementById('passwordStrengthIndicator');
+      const icon = document.getElementById('strengthIcon');
+      const text = document.getElementById('strengthText');
+      const details = document.getElementById('strengthDetails');
+      
+      if (!password || password.trim() === '') {
+        indicator.style.display = 'none';
+        return;
+      }
+      
+      indicator.style.display = 'block';
+      
+      // Criterios de seguridad
+      const length = password.length;
+      const hasLower = /[a-z]/.test(password);
+      const hasUpper = /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+      
+      // Calcular puntuación
+      let score = 0;
+      let criteriosCumplidos = [];
+      let criteriosFaltantes = [];
+      
+      if (length >= 8) {
+        score++;
+        criteriosCumplidos.push('8+ caracteres');
+      } else {
+        criteriosFaltantes.push('8+ caracteres');
+      }
+      
+      if (hasLower) {
+        score++;
+        criteriosCumplidos.push('minúsculas');
+      } else {
+        criteriosFaltantes.push('minúsculas');
+      }
+      
+      if (hasUpper) {
+        score++;
+        criteriosCumplidos.push('MAYÚSCULAS');
+      } else {
+        criteriosFaltantes.push('MAYÚSCULAS');
+      }
+      
+      if (hasNumber) {
+        score++;
+        criteriosCumplidos.push('números');
+      } else {
+        criteriosFaltantes.push('números');
+      }
+      
+      if (hasSymbol) {
+        score++;
+        criteriosCumplidos.push('símbolos');
+      } else {
+        criteriosFaltantes.push('símbolos');
+      }
+      
+      // Mostrar nivel de seguridad
+      if (score <= 2) {
+        // Débil
+        indicator.style.background = '#fef2f2';
+        indicator.style.border = '1px solid #fecaca';
+        indicator.style.color = '#991b1b';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña débil';
+        details.innerHTML = `<strong>Cumple:</strong> ${criteriosCumplidos.join(', ') || 'ninguno'}<br><strong>Falta:</strong> ${criteriosFaltantes.join(', ')}`;
+      } else if (score <= 3) {
+        // Media
+        indicator.style.background = '#fef3c7';
+        indicator.style.border = '1px solid #fde68a';
+        indicator.style.color = '#92400e';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña media';
+        details.innerHTML = `<strong>Cumple:</strong> ${criteriosCumplidos.join(', ')}<br><strong>Sugerencia:</strong> Agrega ${criteriosFaltantes.join(' y ')} para mayor seguridad`;
+      } else if (score <= 4) {
+        // Fuerte
+        indicator.style.background = '#dbeafe';
+        indicator.style.border = '1px solid #93c5fd';
+        indicator.style.color = '#1e40af';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña fuerte';
+        details.innerHTML = `<strong>Cumple:</strong> ${criteriosCumplidos.join(', ')}<br><strong>Sugerencia:</strong> ${criteriosFaltantes.length > 0 ? 'Agrega ' + criteriosFaltantes.join(' y ') + ' para máxima seguridad' : '¡Excelente!'}`;
+      } else {
+        // Muy fuerte
+        indicator.style.background = '#d1fae5';
+        indicator.style.border = '1px solid #6ee7b7';
+        indicator.style.color = '#065f46';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña muy fuerte';
+        details.innerHTML = `<strong>✓ Cumple todos los criterios:</strong> ${criteriosCumplidos.join(', ')}`;
+      }
+      
+      // También validar coincidencia si ya hay algo en confirmar
+      validarCoincidenciaPassword();
+    }
+
+    /**
+     * Valida que las contraseñas coincidan en tiempo real
+     */
+    function validarCoincidenciaPassword() {
+      const password = document.getElementById('nuevaPassword').value;
+      const confirm = document.getElementById('confirmarPassword').value;
+      const indicator = document.getElementById('passwordMatchIndicator');
+      const icon = document.getElementById('matchIcon');
+      const text = document.getElementById('matchText');
+      
+      // Solo mostrar si hay algo en el campo de confirmación
+      if (!confirm || confirm.trim() === '') {
+        indicator.style.display = 'none';
+        return;
+      }
+      
+      indicator.style.display = 'block';
+      
+      if (password === confirm) {
+        // Coinciden
+        indicator.style.background = '#d1fae5';
+        indicator.style.border = '1px solid #6ee7b7';
+        indicator.style.color = '#065f46';
+        icon.className = 'fas fa-check-circle';
+        text.textContent = 'Las contraseñas coinciden';
+      } else {
+        // No coinciden
+        indicator.style.background = '#fef2f2';
+        indicator.style.border = '1px solid #fecaca';
+        indicator.style.color = '#991b1b';
+        icon.className = 'fas fa-times-circle';
+        text.textContent = 'Las contraseñas no coinciden';
+      }
+    }
+
+    /**
+     * Habilita la edición manual del campo de comuna
+     */
+    function habilitarEdicionComuna() {
+      const comunaInput = document.getElementById('comunaPlanta');
+      const btnEditar = document.getElementById('btnEditarComuna');
+      const container = comunaInput?.parentElement;
+      
+      if (!comunaInput || !btnEditar || !container) return;
+      
+      if (comunaInput.tagName === 'INPUT') {
+        // Guardar valor actual (puede ser solo número o "Comuna X")
+        let valorActual = comunaInput.value;
+        // Extraer solo el número si viene como "Comuna X"
+        const match = valorActual.match(/\d+/);
+        const numeroActual = match ? match[0] : '';
+        
+        // Obtener el icono
+        const icon = container.querySelector('.fas');
+        
+        // Limpiar contenedor
+        container.innerHTML = '';
+        if (icon) container.appendChild(icon);
+        
+        // Crear select con comunas del 1 al 22
+        const select = document.createElement('select');
+        select.id = 'comunaPlanta';
+        select.className = 'form-control';
+        select.style.paddingRight = '45px';
+        
+        // Opción por defecto (deshabilitada)
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Seleccione comuna';
+        defaultOption.disabled = true;
+        defaultOption.selected = !numeroActual; // Solo seleccionada si no hay valor actual
+        select.appendChild(defaultOption);
+        
+        // Agregar comunas del 1 al 22
+        for (let i = 1; i <= 22; i++) {
+          const option = document.createElement('option');
+          option.value = i.toString(); // Guardar solo el número
+          option.textContent = i.toString(); // Mostrar solo el número
+          if (numeroActual === i.toString()) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        }
+        
+        // Insertar select
+        container.appendChild(select);
+        
+        // Cambiar icono a guardar
+        btnEditar.innerHTML = '<i class="fas fa-check"></i>';
+        btnEditar.style.color = '#10b981';
+        btnEditar.title = 'Confirmar cambio';
+        btnEditar.onclick = function() { confirmarEdicionComuna(); };
+        
+        // Focus en el select
+        select.focus();
+      }
+    }
+
+    /**
+     * Confirma la edición manual de la comuna
+     */
+    function confirmarEdicionComuna() {
+      const comunaSelect = document.getElementById('comunaPlanta');
+      const btnEditar = document.getElementById('btnEditarComuna');
+      const container = comunaSelect?.parentElement;
+      
+      if (!comunaSelect || !btnEditar || !container) return;
+      
+      if (comunaSelect.tagName === 'SELECT') {
+        // Guardar valor seleccionado (solo el número)
+        const numeroSeleccionado = comunaSelect.value;
+        
+        if (!numeroSeleccionado || numeroSeleccionado.trim() === '') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona una comuna',
+            text: 'Debes seleccionar una comuna antes de confirmar.',
+            confirmButtonColor: '#3F51B5',
+            toast: true,
+            position: 'top-end',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          return;
+        }
+        
+        // Obtener el icono
+        const icon = container.querySelector('.fas');
+        
+        // Limpiar contenedor
+        container.innerHTML = '';
+        if (icon) container.appendChild(icon);
+        
+        // Crear input readonly con el número (se guardará solo el número)
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'comunaPlanta';
+        input.className = 'form-control';
+        input.value = numeroSeleccionado; // Solo el número
+        input.readOnly = true;
+        input.placeholder = 'Se llena automáticamente';
+        input.style.paddingRight = '45px';
+        
+        // Insertar input
+        container.appendChild(input);
+        
+        // Restaurar icono a editar
+        btnEditar.innerHTML = '<i class="fas fa-edit"></i>';
+        btnEditar.style.color = '#3b82f6';
+        btnEditar.title = 'Editar comuna';
+        btnEditar.onclick = function() { habilitarEdicionComuna(); };
+        
+        // Mostrar confirmación visual
+        Swal.fire({
+          icon: 'success',
+          title: 'Comuna actualizada',
+          text: `Se guardará: ${numeroSeleccionado}`,
+          timer: 1500,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    }
+
+    /**
+     * Muestra el botón de editar comuna cuando hay un valor
+     */
+    function mostrarBotonEditarComuna() {
+      const comunaInput = document.getElementById('comunaPlanta');
+      const btnEditar = document.getElementById('btnEditarComuna');
+      
+      if (!comunaInput || !btnEditar) return;
+      
+      // Mostrar botón solo si hay un valor en la comuna
+      if (comunaInput.value && comunaInput.value.trim() !== '') {
+        btnEditar.style.display = 'block';
+      } else {
+        btnEditar.style.display = 'none';
+      }
+    }
+
+    // Exponer funciones globalmente
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    window.validarSeguridadPassword = validarSeguridadPassword;
+    window.validarCoincidenciaPassword = validarCoincidenciaPassword;
+    window.habilitarEdicionComuna = habilitarEdicionComuna;
+    window.confirmarEdicionComuna = confirmarEdicionComuna;
+    window.mostrarBotonEditarComuna = mostrarBotonEditarComuna;
   </script>
 </body>
 </html>

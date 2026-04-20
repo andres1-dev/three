@@ -75,7 +75,7 @@ function initLocationFilters() {
         const departamento = this.value;
         
         // Reset y ocultar campos siguientes
-        ciudadSelect.innerHTML = '<option value="">Seleccione ciudad</option>';
+        ciudadSelect.innerHTML = '<option value="" disabled selected>Seleccione ciudad</option>';
         resetBarrioField();
         if (comunaInput) comunaInput.value = '';
         
@@ -191,7 +191,7 @@ function resetBarrioField() {
     select.id = 'barrioPlanta';
     select.className = 'form-control';
     select.required = true;
-    select.innerHTML = '<option value="">Seleccione barrio</option>';
+    select.innerHTML = '<option value="" disabled selected>Seleccione barrio</option>';
     container.appendChild(select);
 }
 
@@ -214,6 +214,8 @@ function createBarrioSelect(barrios) {
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
     defaultOption.textContent = 'Seleccione barrio';
+    defaultOption.disabled = true;
+    defaultOption.selected = true;
     select.appendChild(defaultOption);
     
     barrios.forEach(barrio => {
@@ -237,6 +239,10 @@ function createBarrioSelect(barrios) {
                 const comuna = getComunaPorBarrio(barrio);
                 if (comuna) {
                     comunaInput.value = comuna;
+                    // Mostrar botón de editar cuando se auto-llena
+                    if (typeof mostrarBotonEditarComuna === 'function') {
+                        mostrarBotonEditarComuna();
+                    }
                 }
             }
         }
@@ -850,6 +856,51 @@ async function handleActualizarDatosSubmit(e) {
     
     // Capturar preferencias de consentimiento
     const aceptaNotificaciones = document.getElementById('checkNotificaciones')?.checked || false;
+    const aceptaPoliticaDatos = document.getElementById('checkPoliticaDatos')?.checked || false;
+
+    // Capturar y validar contraseña (opcional)
+    const nuevaPassword = document.getElementById('nuevaPassword')?.value.trim() || '';
+    const confirmarPassword = document.getElementById('confirmarPassword')?.value.trim() || '';
+    
+    // Si se ingresó una nueva contraseña, validarla
+    if (nuevaPassword || confirmarPassword) {
+        // VALIDACIÓN OBLIGATORIA: Las contraseñas deben coincidir
+        if (nuevaPassword !== confirmarPassword) {
+            console.log('[handleActualizarDatosSubmit] Las contraseñas no coinciden');
+            Swal.fire({
+                icon: 'error',
+                title: 'Las contraseñas no coinciden',
+                text: 'La nueva contraseña y su confirmación deben ser iguales.',
+                confirmButtonColor: '#3F51B5',
+                confirmButtonText: 'Entendido'
+            });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Datos';
+            document.getElementById('confirmarPassword')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        
+        // VALIDACIÓN INFORMATIVA: Advertir si la contraseña es muy débil (pero permitir guardar)
+        if (nuevaPassword.length < 6) {
+            const confirmar = await Swal.fire({
+                icon: 'warning',
+                title: 'Contraseña muy corta',
+                text: 'La contraseña tiene menos de 6 caracteres. Se recomienda usar al menos 8 caracteres para mayor seguridad. ¿Deseas continuar de todos modos?',
+                showCancelButton: true,
+                confirmButtonColor: '#3F51B5',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'No, cambiarla'
+            });
+            
+            if (!confirmar.isConfirmed) {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Guardar Datos';
+                document.getElementById('nuevaPassword')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+    }
 
     btn.disabled  = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
@@ -880,7 +931,8 @@ async function handleActualizarDatosSubmit(e) {
         COMUNA: comuna,
         CONTACTO: contacto,
         LOCALIZACION: localizacion,
-        NOTIFICACIONES: aceptaNotificaciones
+        NOTIFICACIONES: aceptaNotificaciones,
+        ACEPTA_POLITICA_DATOS: aceptaPoliticaDatos
     };
     // Actualizar currentPlantas si está disponible (solo en index.html)
     if (typeof currentPlantas !== 'undefined' && Array.isArray(currentPlantas)) {
@@ -904,8 +956,14 @@ async function handleActualizarDatosSubmit(e) {
         comuna: comuna,
         contacto: contacto,
         localizacion: localizacion,
-        notificaciones: aceptaNotificaciones
+        notificaciones: aceptaNotificaciones,
+        aceptaPoliticaDatos: aceptaPoliticaDatos
     };
+    
+    // Agregar contraseña solo si se ingresó una nueva
+    if (nuevaPassword) {
+        payload.password = nuevaPassword;
+    }
     
     console.log('[handleActualizarDatosSubmit] Payload a enviar:', payload);
     
