@@ -455,20 +455,37 @@ function confirmarDireccion() {
     }
     
     // Ocultar constructor
-    if (constructor) constructor.style.display = 'none';
-    if (iconConstructor) iconConstructor.style.display = 'block';
+    cerrarConstructor();
 }
 
 /**
  * Cancela la construcción de dirección y oculta el constructor
  */
 function cancelarConstructor() {
+    cerrarConstructor();
+}
+
+/**
+ * Cierra el constructor de dirección (función auxiliar)
+ */
+function cerrarConstructor() {
     const constructor = document.getElementById('constructorDireccion');
     const iconConstructor = document.getElementById('iconConstructor');
     
-    // Ocultar constructor
     if (constructor) constructor.style.display = 'none';
     if (iconConstructor) iconConstructor.style.display = 'block';
+}
+
+/**
+ * Cierra el constructor automáticamente al cambiar de campo
+ */
+function cerrarConstructorAlCambiarCampo() {
+    const constructor = document.getElementById('constructorDireccion');
+    if (constructor && constructor.style.display === 'block') {
+        // Construir dirección con lo que haya antes de cerrar
+        construirDireccion();
+        cerrarConstructor();
+    }
 }
 
 /**
@@ -703,6 +720,55 @@ window.mostrarConstructorDireccion = mostrarConstructorDireccion;
 window.confirmarDireccion = confirmarDireccion;
 window.cancelarConstructor = cancelarConstructor;
 window.handleActualizarDatosSubmit = handleActualizarDatosSubmit;
+window.cerrarConstructorAlCambiarCampo = cerrarConstructorAlCambiarCampo;
+
+// Agregar listeners para cerrar el constructor al cambiar de campo
+document.addEventListener('DOMContentLoaded', function() {
+    // Lista de campos que al recibir focus deben cerrar el constructor
+    const camposFormulario = [
+        'cedulaPlanta',
+        'nombrePlanta',
+        'paisPlanta',
+        'departamentoPlanta',
+        'ciudadPlanta',
+        'barrioPlanta',
+        'comunaPlanta',
+        'contactoPlanta',
+        'telefonoPlanta',
+        'emailPlanta',
+        'nuevaPassword',
+        'confirmarPassword',
+        'checkPoliticaDatos',
+        'checkNotificaciones'
+    ];
+    
+    camposFormulario.forEach(campoId => {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.addEventListener('focus', cerrarConstructorAlCambiarCampo);
+            // También agregar listener para click en checkboxes
+            if (campo.type === 'checkbox') {
+                campo.addEventListener('click', cerrarConstructorAlCambiarCampo);
+            }
+        }
+    });
+    
+    // Agregar listener al botón de submit para cerrar el constructor antes de validar
+    const form = document.getElementById('gestionPlantaForm');
+    if (form) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.addEventListener('click', function() {
+                const constructor = document.getElementById('constructorDireccion');
+                if (constructor && constructor.style.display === 'block') {
+                    console.log('[Submit Button] Constructor abierto, cerrando automáticamente...');
+                    construirDireccion(); // Construir dirección con lo que haya
+                    cerrarConstructor(); // Cerrar el constructor
+                }
+            });
+        }
+    }
+});
 
 /**
  * Maneja el envío del formulario de Actualizar Datos de Planta.
@@ -724,19 +790,12 @@ async function handleActualizarDatosSubmit(e) {
     }
     console.log('[handleActualizarDatosSubmit] sendToSupabase está disponible:', typeof sendToSupabase);
 
-    // Verificar si el constructor está abierto ANTES de validar
+    // NUEVO: Cerrar el constructor automáticamente si está abierto
     const constructor = document.getElementById('constructorDireccion');
     if (constructor && constructor.style.display === 'block') {
-        console.log('[handleActualizarDatosSubmit] Constructor de dirección está abierto');
-        constructor.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        Swal.fire({
-            icon: 'info',
-            title: 'Constructor abierto',
-            text: 'Confirma o cancela el constructor de dirección antes de guardar.',
-            confirmButtonColor: '#3F51B5',
-            confirmButtonText: 'Entendido'
-        });
-        return;
+        console.log('[handleActualizarDatosSubmit] Constructor abierto, cerrando automáticamente...');
+        construirDireccion(); // Construir dirección con lo que haya
+        cerrarConstructor(); // Cerrar el constructor
     }
     
     // Validar checkboxes obligatorios

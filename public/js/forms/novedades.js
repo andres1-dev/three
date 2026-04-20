@@ -32,27 +32,58 @@ function _buildOptions(lista) {
 function _crearFila(opciones, listId, removeFn, prefix = '') {
     const lista = document.getElementById(listId);
     const fila  = document.createElement('div');
-    fila.className = 'insumo-fila row-pc-grid mb-3';
+    fila.className = 'insumo-fila mb-3 fila-2-cols'; // Clase para 2 columnas
+    // NO usar inline styles, dejar que CSS maneje el responsive
+    
+    // Determinar los labels según el tipo de lista
+    let labelTipo = 'Tipo:';
+    let labelCantidad = 'Cantidad:';
+    let iconoTipo = 'fa-tags';
+    
+    if (listId.includes('corte') || listId.includes('Corte')) {
+        labelTipo = 'Tipo de Corte:';
+    } else if (listId.includes('tela') || listId.includes('Tela')) {
+        labelTipo = 'Tipo de Imperfección:';
+    } else if (listId.includes('insumo') || listId.includes('Insumo')) {
+        labelTipo = 'Tipo de Insumo:';
+    }
+    
     fila.innerHTML = `
-        <div class="input-with-icon">
-            <i class="fas fa-tags input-icon"></i>
-            <select class="form-control insumo-tipo">
-                ${_buildOptions(opciones)}
-            </select>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <div class="input-with-icon" style="flex:1;">
-                <i class="fas fa-hashtag input-icon"></i>
-                <input type="number" class="form-control insumo-cantidad" min="1">
+        <div class="campo-dinamico">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label-inline">${labelTipo} <span style="color:#ef4444;">*</span></label>
+                <button type="button" class="btn-eliminar-insumo btn-eliminar-mobile"
+                    onclick="${removeFn}(this${prefix ? ", '" + prefix + "'" : ''})" title="Eliminar"
+                    style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:6px;
+                           color:#ef4444; width:28px; height:28px; cursor:pointer; font-size:0.75rem;
+                           display:none; align-items:center; justify-content:center; transition:all 0.15s; padding:0;"
+                    onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <button type="button" class="btn-eliminar-insumo"
-                onclick="${removeFn}(this${prefix ? ", '" + prefix + "'" : ''})" title="Eliminar"
-                style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:8px;
-                       color:#ef4444; width:40px; height:40px; cursor:pointer; font-size:0.9rem;
-                       display:flex; align-items:center; justify-content:center; transition:all 0.15s;"
-                onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="input-with-icon">
+                <i class="fas ${iconoTipo} input-icon"></i>
+                <select class="form-control form-control-sm insumo-tipo">
+                    ${_buildOptions(opciones)}
+                </select>
+            </div>
+        </div>
+        <div class="campo-dinamico">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label-inline">${labelCantidad} <span style="color:#ef4444;">*</span></label>
+                <button type="button" class="btn-eliminar-insumo btn-eliminar-desktop"
+                    onclick="${removeFn}(this${prefix ? ", '" + prefix + "'" : ''})" title="Eliminar"
+                    style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:6px;
+                           color:#ef4444; width:28px; height:28px; cursor:pointer; font-size:0.75rem;
+                           display:none; align-items:center; justify-content:center; transition:all 0.15s; padding:0;"
+                    onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="number" class="form-control form-control-sm insumo-cantidad" min="1" placeholder="Cantidad">
+            </div>
         </div>`;
     lista.appendChild(fila);
     _actualizarBotonesEliminar(listId);
@@ -300,8 +331,8 @@ function handleCodigosTipoChange() {
 function agregarFilaCodigo(tallaVal = '', colorVal = '', cantVal = '') {
     const lista = document.getElementById('codigosList');
     const fila  = document.createElement('div');
-    fila.className = 'insumo-fila mb-3';
-    fila.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center;';
+    fila.className = 'insumo-fila mb-3 fila-3-cols'; // Clase para 3 columnas
+    // NO usar inline styles, dejar que CSS maneje el responsive
     
     // Opciones de tallas
     const tallasOpts = (window.CODIGOS_TALLAS || []).map(t => 
@@ -314,33 +345,52 @@ function agregarFilaCodigo(tallaVal = '', colorVal = '', cantVal = '') {
     ).join('');
     
     fila.innerHTML = `
-        <div class="input-with-icon">
-            <i class="fas fa-ruler input-icon"></i>
-            <select class="form-control codigo-talla" onchange="actualizarMaximoCodigo(this)">
-                <option value="">Talla...</option>
-                ${tallasOpts}
-            </select>
-        </div>
-        <div class="input-with-icon">
-            <i class="fas fa-palette input-icon"></i>
-            <select class="form-control codigo-color" onchange="actualizarMaximoCodigo(this)">
-                <option value="">Color...</option>
-                ${coloresOpts}
-            </select>
-        </div>
-        <div style="display:flex; gap:8px; align-items:center;">
-            <div class="input-with-icon" style="flex:1;">
-                <i class="fas fa-hashtag input-icon"></i>
-                <input type="number" class="form-control codigo-cantidad" value="${cantVal}" min="1" placeholder="Máx: -">
+        <div class="campo-dinamico">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label-inline">Talla: <span style="color:#ef4444;">*</span></label>
+                <button type="button" class="btn-eliminar-insumo btn-eliminar-mobile"
+                    onclick="eliminarFilaCodigo(this)" title="Eliminar"
+                    style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:6px;
+                           color:#ef4444; width:28px; height:28px; cursor:pointer; font-size:0.75rem;
+                           display:none; align-items:center; justify-content:center; transition:all 0.15s; padding:0;"
+                    onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <button type="button" class="btn-eliminar-insumo"
-                onclick="eliminarFilaCodigo(this)" title="Eliminar"
-                style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:8px;
-                       color:#ef4444; width:40px; height:40px; cursor:pointer; font-size:0.9rem;
-                       display:flex; align-items:center; justify-content:center; transition:all 0.15s;"
-                onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
-                <i class="fas fa-times"></i>
-            </button>
+            <div class="input-with-icon">
+                <i class="fas fa-ruler input-icon"></i>
+                <select class="form-control form-control-sm codigo-talla" onchange="actualizarMaximoCodigo(this)">
+                    <option value="">Seleccione...</option>
+                    ${tallasOpts}
+                </select>
+            </div>
+        </div>
+        <div class="campo-dinamico">
+            <label class="form-label-inline">Color: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+                <i class="fas fa-palette input-icon"></i>
+                <select class="form-control form-control-sm codigo-color" onchange="actualizarMaximoCodigo(this)">
+                    <option value="">Seleccione...</option>
+                    ${coloresOpts}
+                </select>
+            </div>
+        </div>
+        <div class="campo-dinamico">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label-inline">Cantidad: <span style="color:#ef4444;">*</span></label>
+                <button type="button" class="btn-eliminar-insumo btn-eliminar-desktop"
+                    onclick="eliminarFilaCodigo(this)" title="Eliminar"
+                    style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:6px;
+                           color:#ef4444; width:28px; height:28px; cursor:pointer; font-size:0.75rem;
+                           display:none; align-items:center; justify-content:center; transition:all 0.15s; padding:0;"
+                    onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="number" class="form-control form-control-sm codigo-cantidad" value="${cantVal}" min="1" placeholder="Máx: -">
+            </div>
         </div>`;
     lista.appendChild(fila);
     _actualizarBotonesEliminar('codigosList');
@@ -540,12 +590,89 @@ function _recolectarCodigos() {
     return valido ? datos : null;
 }
 
+/* ── Helpers de validación visual ────────────────────────────────────────── */
+
+function _marcarCampoError(elemento, mensaje) {
+    // Agregar borde rojo
+    elemento.style.border = '2px solid #ef4444';
+    elemento.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.1)';
+    
+    // Hacer scroll al campo
+    elemento.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Focus en el campo después del scroll
+    setTimeout(() => {
+        elemento.focus();
+        
+        // Mostrar mensaje de error
+        Swal.fire({
+            title: 'Campo requerido',
+            text: mensaje,
+            icon: 'warning',
+            confirmButtonColor: '#3F51B5',
+            confirmButtonText: 'Entendido'
+        });
+    }, 300);
+    
+    // Remover el borde rojo cuando el usuario interactúe con el campo
+    const removerError = () => {
+        elemento.style.border = '';
+        elemento.style.boxShadow = '';
+        elemento.removeEventListener('input', removerError);
+        elemento.removeEventListener('change', removerError);
+        elemento.removeEventListener('focus', removerError);
+    };
+    
+    elemento.addEventListener('input', removerError);
+    elemento.addEventListener('change', removerError);
+    elemento.addEventListener('focus', removerError);
+}
+
+function _validarCampoRequerido(id, nombreCampo) {
+    const elemento = document.getElementById(id);
+    if (!elemento) return true;
+    
+    const valor = elemento.value?.trim();
+    if (!valor || valor === '') {
+        _marcarCampoError(elemento, `Por favor completa el campo: ${nombreCampo}`);
+        return false;
+    }
+    return true;
+}
+
 /* ── Submit ──────────────────────────────────────────────────────────────── */
 
 async function handleNovedadesSubmit(e) {
     e.preventDefault();
 
     const btn = e.target.querySelector('button[type="submit"]');
+    
+    // Validar campos básicos del lote ANTES de deshabilitar el botón
+    if (!_validarCampoRequerido('lote', 'Lote (OP)')) {
+        return;
+    }
+    if (!_validarCampoRequerido('referencia', 'Referencia')) {
+        return;
+    }
+    if (!_validarCampoRequerido('color', 'Color')) {
+        return;
+    }
+    if (!_validarCampoRequerido('cantidad', 'Cantidad')) {
+        return;
+    }
+    if (!_validarCampoRequerido('area', 'Área de Servicios')) {
+        return;
+    }
+    
+    // Validar tipo de novedad si es visible y requerido
+    const tipoNovedadGroup = document.getElementById('tipoNovedadGroup');
+    const tipoNovedadSelect = document.getElementById('tipoNovedad');
+    if (tipoNovedadGroup && !tipoNovedadGroup.classList.contains('hidden') && tipoNovedadSelect.required) {
+        if (!_validarCampoRequerido('tipoNovedad', 'Tipo de Novedad')) {
+            return;
+        }
+    }
+    
     btn.disabled = true;
     btn.textContent = 'Enviando...';
 
@@ -562,12 +689,34 @@ async function handleNovedadesSubmit(e) {
         // Construir TIPO_DETALLE según el área
         if (area === 'DISEÑO') {
             // DISEÑO: cantidad total del lote, sin tipo_novedad ni tipo_detalle
-            cantidadSolicitada = Number(document.getElementById('cantidadSolicitada').value);
+            const cantidadInput = document.getElementById('cantidadSolicitada');
+            if (!cantidadInput.value || Number(cantidadInput.value) <= 0) {
+                btn.disabled = false;
+                btn.textContent = 'Enviar Reporte';
+                _marcarCampoError(cantidadInput, 'Por favor ingresa la cantidad solicitada');
+                return;
+            }
+            cantidadSolicitada = Number(cantidadInput.value);
             tipoDetalle = null;
 
         } else if (area === 'TELAS') {
             const datos = _recolectarFilas('telasList');
-            if (!datos) throw new Error('Complete el tipo y cantidad de todas las imperfecciones de tela.');
+            if (!datos) {
+                btn.disabled = false;
+                btn.textContent = 'Enviar Reporte';
+                // Buscar el primer campo vacío en la lista de telas
+                const primeraFilaIncompleta = document.querySelector('#telasList .insumo-fila');
+                if (primeraFilaIncompleta) {
+                    const tipoVacio = primeraFilaIncompleta.querySelector('.insumo-tipo');
+                    const cantVacia = primeraFilaIncompleta.querySelector('.insumo-cantidad');
+                    if (!tipoVacio.value) {
+                        _marcarCampoError(tipoVacio, 'Por favor selecciona el tipo de imperfección de tela');
+                    } else if (!cantVacia.value) {
+                        _marcarCampoError(cantVacia, 'Por favor ingresa la cantidad');
+                    }
+                }
+                return;
+            }
             
             tipoDetalle = {
                 items: datos.map(i => ({
@@ -579,7 +728,22 @@ async function handleNovedadesSubmit(e) {
 
         } else if (area === 'INSUMOS') {
             const datos = _recolectarFilas('insumosList');
-            if (!datos) throw new Error('Complete el tipo y cantidad de todos los insumos.');
+            if (!datos) {
+                btn.disabled = false;
+                btn.textContent = 'Enviar Reporte';
+                // Buscar el primer campo vacío en la lista de insumos
+                const primeraFilaIncompleta = document.querySelector('#insumosList .insumo-fila');
+                if (primeraFilaIncompleta) {
+                    const tipoVacio = primeraFilaIncompleta.querySelector('.insumo-tipo');
+                    const cantVacia = primeraFilaIncompleta.querySelector('.insumo-cantidad');
+                    if (!tipoVacio.value) {
+                        _marcarCampoError(tipoVacio, 'Por favor selecciona el tipo de insumo');
+                    } else if (!cantVacia.value) {
+                        _marcarCampoError(cantVacia, 'Por favor ingresa la cantidad');
+                    }
+                }
+                return;
+            }
             
             tipoDetalle = {
                 items: datos.map(i => ({
@@ -591,7 +755,22 @@ async function handleNovedadesSubmit(e) {
 
         } else if (area === 'CORTE') {
             const datos = _recolectarFilas('corteList');
-            if (!datos) throw new Error('Complete el tipo y cantidad de todas las piezas de corte.');
+            if (!datos) {
+                btn.disabled = false;
+                btn.textContent = 'Enviar Reporte';
+                // Buscar el primer campo vacío en la lista de corte
+                const primeraFilaIncompleta = document.querySelector('#corteList .insumo-fila');
+                if (primeraFilaIncompleta) {
+                    const tipoVacio = primeraFilaIncompleta.querySelector('.insumo-tipo');
+                    const cantVacia = primeraFilaIncompleta.querySelector('.insumo-cantidad');
+                    if (!tipoVacio.value) {
+                        _marcarCampoError(tipoVacio, 'Por favor selecciona el tipo de pieza de corte');
+                    } else if (!cantVacia.value) {
+                        _marcarCampoError(cantVacia, 'Por favor ingresa la cantidad');
+                    }
+                }
+                return;
+            }
             
             tipoDetalle = {
                 items: datos.map(i => ({
@@ -605,18 +784,47 @@ async function handleNovedadesSubmit(e) {
             const tipoSolicitud = document.getElementById('codigosTipoSolicitud').value;
             
             if (!tipoSolicitud) {
-                throw new Error('Seleccione el tipo de solicitud (Lote completo o Unidades específicas).');
+                btn.disabled = false;
+                btn.textContent = 'Enviar Reporte';
+                const tipoSolicitudSelect = document.getElementById('codigosTipoSolicitud');
+                _marcarCampoError(tipoSolicitudSelect, 'Por favor selecciona el tipo de solicitud (Lote completo o Unidades específicas)');
+                return;
             }
             
             if (tipoSolicitud === 'LOTE_COMPLETO') {
-                cantidadSolicitada = Number(document.getElementById('codigosCantidadTotal').value);
+                const cantidadInput = document.getElementById('codigosCantidadTotal');
+                if (!cantidadInput.value || Number(cantidadInput.value) <= 0) {
+                    btn.disabled = false;
+                    btn.textContent = 'Enviar Reporte';
+                    _marcarCampoError(cantidadInput, 'Por favor verifica la cantidad total del lote');
+                    return;
+                }
+                cantidadSolicitada = Number(cantidadInput.value);
                 tipoDetalle = {
                     tipo_solicitud: 'LOTE_COMPLETO',
                     cantidad_total: cantidadSolicitada
                 };
             } else {
                 const datos = _recolectarCodigos();
-                if (!datos) throw new Error('Complete talla, color y cantidad de todos los códigos.');
+                if (!datos) {
+                    btn.disabled = false;
+                    btn.textContent = 'Enviar Reporte';
+                    // Buscar el primer campo vacío en la lista de códigos
+                    const primeraFilaIncompleta = document.querySelector('#codigosList .insumo-fila');
+                    if (primeraFilaIncompleta) {
+                        const tallaVacia = primeraFilaIncompleta.querySelector('.codigo-talla');
+                        const colorVacio = primeraFilaIncompleta.querySelector('.codigo-color');
+                        const cantVacia = primeraFilaIncompleta.querySelector('.codigo-cantidad');
+                        if (!tallaVacia.value) {
+                            _marcarCampoError(tallaVacia, 'Por favor selecciona la talla');
+                        } else if (!colorVacio.value) {
+                            _marcarCampoError(colorVacio, 'Por favor selecciona el color');
+                        } else if (!cantVacia.value) {
+                            _marcarCampoError(cantVacia, 'Por favor ingresa la cantidad');
+                        }
+                    }
+                    return;
+                }
                 
                 tipoDetalle = {
                     tipo_solicitud: 'UNIDADES',
@@ -631,8 +839,17 @@ async function handleNovedadesSubmit(e) {
 
         } else {
             // OTROS: cantidad simple sin detalle
-            cantidadSolicitada = Number(document.getElementById('cantidadSolicitada').value || 
-                                 document.getElementById('cantidadNormal').value);
+            const cantidadInput = document.getElementById('cantidadSolicitada') || 
+                                  document.getElementById('cantidadNormal');
+            if (!cantidadInput || !cantidadInput.value || Number(cantidadInput.value) <= 0) {
+                btn.disabled = false;
+                btn.textContent = 'Enviar Reporte';
+                if (cantidadInput) {
+                    _marcarCampoError(cantidadInput, 'Por favor ingresa la cantidad solicitada');
+                }
+                return;
+            }
+            cantidadSolicitada = Number(cantidadInput.value);
             tipoDetalle = null;
         }
 

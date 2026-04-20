@@ -133,6 +133,48 @@
         .policy-modal { padding: 0; }
         .policy-modal-content { max-height: 100vh; border-radius: 0; }
       }
+      
+      /* Estilos para autocompletado */
+      .autocomplete-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      
+      .autocomplete-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #475569;
+        transition: all 0.15s ease;
+      }
+      
+      .autocomplete-item:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+      
+      .autocomplete-item.selected {
+        background: #eff6ff;
+        color: #3b82f6;
+        font-weight: 600;
+      }
+      
+      .autocomplete-no-results {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-style: italic;
+      }
     </style>
 </head>
 
@@ -580,32 +622,54 @@
 
         <div class="mb-3">
           <label for="departamentoPlanta" class="form-label">Departamento: <span style="color:#ef4444;">*</span></label>
-          <div class="input-with-icon">
+          <div class="input-with-icon" style="position:relative;">
             <i class="fas fa-map input-icon"></i>
-            <select id="departamentoPlanta" class="form-control" required>
-              <option value="" disabled selected>Seleccione departamento</option>
-            </select>
+            <input 
+              type="text" 
+              id="departamentoPlanta" 
+              class="form-control" 
+              placeholder="Escribe para buscar departamento..." 
+              autocomplete="off"
+              required
+              oninput="filtrarDepartamentos(this.value)"
+              onfocus="mostrarListaDepartamentos()"
+              onblur="setTimeout(() => ocultarListaDepartamentos(), 200)">
+            <div id="listaDepartamentos" class="autocomplete-list" style="display:none;"></div>
           </div>
         </div>
 
         <div class="mb-3" id="ciudadContainer" style="display:none;">
           <label for="ciudadPlanta" class="form-label">Ciudad: <span style="color:#ef4444;">*</span></label>
-          <div class="input-with-icon">
+          <div class="input-with-icon" style="position:relative;">
             <i class="fas fa-city input-icon"></i>
-            <select id="ciudadPlanta" class="form-control">
-              <option value="" disabled selected>Seleccione ciudad</option>
-            </select>
+            <input 
+              type="text" 
+              id="ciudadPlanta" 
+              class="form-control" 
+              placeholder="Escribe para buscar ciudad..." 
+              autocomplete="off"
+              oninput="filtrarCiudades(this.value)"
+              onfocus="mostrarListaCiudades()"
+              onblur="setTimeout(() => ocultarListaCiudades(), 200)">
+            <div id="listaCiudades" class="autocomplete-list" style="display:none;"></div>
           </div>
         </div>
 
         <div class="mb-3" id="barrioContainer" style="display:none;">
           <label for="barrioPlanta" class="form-label">Barrio: <span style="color:#ef4444;">*</span></label>
-          <div class="input-with-icon">
+          <div class="input-with-icon" style="position:relative;">
             <i class="fas fa-home input-icon"></i>
-            <!-- Un solo campo que cambia entre select e input automáticamente -->
-            <select id="barrioPlanta" class="form-control" required>
-              <option value="" disabled selected>Seleccione barrio</option>
-            </select>
+            <input 
+              type="text" 
+              id="barrioPlanta" 
+              class="form-control" 
+              placeholder="Escribe para buscar barrio..." 
+              autocomplete="off"
+              required
+              oninput="filtrarBarrios(this.value)"
+              onfocus="mostrarListaBarrios()"
+              onblur="setTimeout(() => ocultarListaBarrios(), 200)">
+            <div id="listaBarrios" class="autocomplete-list" style="display:none;"></div>
           </div>
         </div>
 
@@ -1026,45 +1090,40 @@
             if (planta.PAIS) setVal('paisPlanta', planta.PAIS);
             
             if (planta.DEPARTAMENTO) {
-                const deptEl = document.getElementById('departamentoPlanta');
-                if (deptEl) {
-                    deptEl.value = planta.DEPARTAMENTO;
-                    // Forzar el llenado de ciudades síncronamente si existe la función
-                    if (typeof populateCiudades === 'function') {
-                        populateCiudades(planta.DEPARTAMENTO);
-                    } else {
-                        deptEl.dispatchEvent(new Event('change'));
+                const deptInput = document.getElementById('departamentoPlanta');
+                if (deptInput) {
+                    deptInput.value = planta.DEPARTAMENTO;
+                    departamentoSeleccionado = planta.DEPARTAMENTO;
+                    
+                    // Cargar ciudades del departamento
+                    if (typeof getCiudadesPorDepartamento === 'function') {
+                        ciudadesDisponibles = getCiudadesPorDepartamento(planta.DEPARTAMENTO);
+                        document.getElementById('ciudadContainer').style.display = 'block';
                     }
 
                     if (planta.CIUDAD) {
-                        const ciudadEl = document.getElementById('ciudadPlanta');
-                        if (ciudadEl) {
-                            ciudadEl.value = planta.CIUDAD;
-                            ciudadEl.dispatchEvent(new Event('change'));
+                        const ciudadInput = document.getElementById('ciudadPlanta');
+                        if (ciudadInput) {
+                            ciudadInput.value = planta.CIUDAD;
+                            ciudadSeleccionada = planta.CIUDAD;
+                            
+                            // Cargar barrios de la ciudad
+                            if (typeof getBarriosPorCiudad === 'function') {
+                                barriosDisponibles = getBarriosPorCiudad(planta.CIUDAD);
+                                document.getElementById('barrioContainer').style.display = 'block';
+                                
+                                // Mostrar comuna si la ciudad la maneja
+                                if (typeof ciudadTieneComunas === 'function' && ciudadTieneComunas(planta.CIUDAD)) {
+                                    document.getElementById('comunaContainer').style.display = 'block';
+                                }
+                            }
 
-                            // Esperar a que se cree el campo de barrio (select o input)
+                            // Esperar a que se cree el campo de barrio
                             setTimeout(() => {
                                 if (planta.BARRIO) {
-                                    const barrioField = document.getElementById('barrioPlanta');
-                                    if (barrioField) {
-                                        // Si es un select, verificar si el barrio existe en las opciones
-                                        if (barrioField.tagName === 'SELECT') {
-                                            const exists = Array.from(barrioField.options).some(o => o.value === planta.BARRIO);
-                                            if (exists) {
-                                                barrioField.value = planta.BARRIO;
-                                                barrioField.dispatchEvent(new Event('change'));
-                                            } else {
-                                                // Si no existe, convertir a input y poner el valor
-                                                if (typeof createBarrioInput === 'function') {
-                                                    createBarrioInput();
-                                                    const newInput = document.getElementById('barrioPlanta');
-                                                    if (newInput) newInput.value = planta.BARRIO;
-                                                }
-                                            }
-                                        } else {
-                                            // Si ya es un input, simplemente poner el valor
-                                            barrioField.value = planta.BARRIO;
-                                        }
+                                    const barrioInput = document.getElementById('barrioPlanta');
+                                    if (barrioInput) {
+                                        barrioInput.value = planta.BARRIO;
                                     }
                                 }
                                 if (planta.COMUNA) {
@@ -1497,6 +1556,278 @@
     window.habilitarEdicionComuna = habilitarEdicionComuna;
     window.confirmarEdicionComuna = confirmarEdicionComuna;
     window.mostrarBotonEditarComuna = mostrarBotonEditarComuna;
+    
+    // ═══════════════════════════════════════════════════════════════════
+    // AUTOCOMPLETADO INTELIGENTE PARA DEPARTAMENTOS, CIUDADES Y BARRIOS
+    // ═══════════════════════════════════════════════════════════════════
+    
+    let departamentosDisponibles = [];
+    let ciudadesDisponibles = [];
+    let barriosDisponibles = [];
+    let departamentoSeleccionado = '';
+    let ciudadSeleccionada = '';
+    
+    // Funciones para Departamentos
+    window.filtrarDepartamentos = function(texto) {
+      const lista = document.getElementById('listaDepartamentos');
+      const input = document.getElementById('departamentoPlanta');
+      
+      if (!texto || texto.trim() === '') {
+        mostrarListaDepartamentos();
+        return;
+      }
+      
+      const textoLower = texto.toLowerCase();
+      const filtrados = departamentosDisponibles.filter(dept => 
+        dept.toLowerCase().includes(textoLower)
+      );
+      
+      renderizarLista(lista, filtrados, (item) => seleccionarDepartamento(item));
+    };
+    
+    window.mostrarListaDepartamentos = function() {
+      const lista = document.getElementById('listaDepartamentos');
+      renderizarLista(lista, departamentosDisponibles, (item) => seleccionarDepartamento(item));
+      lista.style.display = 'block';
+    };
+    
+    window.ocultarListaDepartamentos = function() {
+      document.getElementById('listaDepartamentos').style.display = 'none';
+    };
+    
+    function seleccionarDepartamento(departamento) {
+      const input = document.getElementById('departamentoPlanta');
+      input.value = departamento;
+      departamentoSeleccionado = departamento;
+      ocultarListaDepartamentos();
+      
+      // Cargar ciudades del departamento
+      if (typeof getCiudadesPorDepartamento === 'function') {
+        ciudadesDisponibles = getCiudadesPorDepartamento(departamento);
+        document.getElementById('ciudadContainer').style.display = 'block';
+        document.getElementById('ciudadPlanta').value = '';
+        document.getElementById('barrioContainer').style.display = 'none';
+        document.getElementById('comunaContainer').style.display = 'none';
+      }
+    }
+    
+    // Funciones para Ciudades
+    window.filtrarCiudades = function(texto) {
+      const lista = document.getElementById('listaCiudades');
+      
+      if (!texto || texto.trim() === '') {
+        mostrarListaCiudades();
+        return;
+      }
+      
+      const textoLower = texto.toLowerCase();
+      const filtrados = ciudadesDisponibles.filter(ciudad => 
+        ciudad.toLowerCase().includes(textoLower)
+      );
+      
+      renderizarLista(lista, filtrados, (item) => seleccionarCiudad(item));
+    };
+    
+    window.mostrarListaCiudades = function() {
+      const lista = document.getElementById('listaCiudades');
+      renderizarLista(lista, ciudadesDisponibles, (item) => seleccionarCiudad(item));
+      lista.style.display = 'block';
+    };
+    
+    window.ocultarListaCiudades = function() {
+      document.getElementById('listaCiudades').style.display = 'none';
+    };
+    
+    function seleccionarCiudad(ciudad) {
+      const input = document.getElementById('ciudadPlanta');
+      input.value = ciudad;
+      ciudadSeleccionada = ciudad;
+      ocultarListaCiudades();
+      
+      console.log('[Ciudad] Seleccionada:', ciudad);
+      
+      // Cargar barrios de la ciudad
+      if (typeof getBarriosPorCiudad === 'function') {
+        barriosDisponibles = getBarriosPorCiudad(ciudad);
+        console.log('[Barrios] Disponibles:', barriosDisponibles.length);
+        document.getElementById('barrioContainer').style.display = 'block';
+        document.getElementById('barrioPlanta').value = '';
+        
+        // Mostrar comuna si la ciudad la maneja
+        if (typeof ciudadTieneComunas === 'function' && ciudadTieneComunas(ciudad)) {
+          console.log('[Comuna] Ciudad tiene comunas:', ciudad);
+          const comunaContainer = document.getElementById('comunaContainer');
+          const comunaInput = document.getElementById('comunaPlanta');
+          
+          comunaContainer.style.display = 'block';
+          if (comunaInput) {
+            comunaInput.value = '';
+            // Asegurar que el botón de editar esté oculto inicialmente
+            const btnEditar = document.getElementById('btnEditarComuna');
+            if (btnEditar) btnEditar.style.display = 'none';
+          }
+        } else {
+          document.getElementById('comunaContainer').style.display = 'none';
+        }
+      }
+    }
+    
+    // Funciones para Barrios
+    window.filtrarBarrios = function(texto) {
+      const lista = document.getElementById('listaBarrios');
+      const input = document.getElementById('barrioPlanta');
+      
+      if (!texto || texto.trim() === '') {
+        if (barriosDisponibles.length > 0) {
+          mostrarListaBarrios();
+        }
+        return;
+      }
+      
+      const textoLower = texto.toLowerCase();
+      const filtrados = barriosDisponibles.filter(barrio => 
+        barrio.toLowerCase().includes(textoLower)
+      );
+      
+      if (filtrados.length > 0) {
+        renderizarLista(lista, filtrados, (item) => seleccionarBarrio(item));
+      } else {
+        // Si no hay coincidencias y es Cali, permitir escribir barrio libre y habilitar comuna
+        if (ciudadSeleccionada === 'Cali') {
+          lista.innerHTML = '<div class="autocomplete-no-results">No se encontró el barrio. Puedes escribirlo manualmente y seleccionar la comuna.</div>';
+          lista.style.display = 'block';
+          habilitarSeleccionComunaManual();
+        } else {
+          lista.innerHTML = '<div class="autocomplete-no-results">No se encontraron resultados</div>';
+          lista.style.display = 'block';
+        }
+      }
+    };
+    
+    window.mostrarListaBarrios = function() {
+      const lista = document.getElementById('listaBarrios');
+      if (barriosDisponibles.length > 0) {
+        renderizarLista(lista, barriosDisponibles, (item) => seleccionarBarrio(item));
+        lista.style.display = 'block';
+      }
+    };
+    
+    window.ocultarListaBarrios = function() {
+      document.getElementById('listaBarrios').style.display = 'none';
+    };
+    
+    function seleccionarBarrio(barrio) {
+      const input = document.getElementById('barrioPlanta');
+      input.value = barrio;
+      ocultarListaBarrios();
+      
+      // Auto-llenar comuna si es Cali
+      if (ciudadSeleccionada === 'Cali' && typeof getComunaPorBarrio === 'function') {
+        const comuna = getComunaPorBarrio(barrio);
+        console.log('[Barrio] Seleccionado:', barrio, '→ Comuna retornada:', comuna, 'Tipo:', typeof comuna);
+        
+        if (comuna !== null && comuna !== undefined) {
+          const comunaInput = document.getElementById('comunaPlanta');
+          const comunaContainer = document.getElementById('comunaContainer');
+          
+          console.log('[Comuna] Input encontrado:', !!comunaInput, 'Container visible:', comunaContainer?.style.display);
+          
+          if (comunaInput && comunaContainer) {
+            // Asegurar que el contenedor esté visible
+            comunaContainer.style.display = 'block';
+            
+            // Convertir a string el número
+            const numeroComuna = String(comuna);
+            
+            console.log('[Comuna] Asignando valor:', numeroComuna, 'al campo tipo:', comunaInput.tagName);
+            
+            // Si el campo es un select, convertirlo a input primero
+            if (comunaInput.tagName === 'SELECT') {
+              console.log('[Comuna] Convirtiendo SELECT a INPUT');
+              const container = comunaInput.parentElement;
+              const icon = container.querySelector('.fas');
+              container.innerHTML = '';
+              if (icon) container.appendChild(icon);
+              
+              const newInput = document.createElement('input');
+              newInput.type = 'text';
+              newInput.id = 'comunaPlanta';
+              newInput.className = 'form-control';
+              newInput.value = numeroComuna;
+              newInput.readOnly = true;
+              newInput.placeholder = 'Se llena automáticamente';
+              newInput.style.paddingRight = '45px';
+              container.appendChild(newInput);
+              
+              console.log('[Comuna] INPUT creado con valor:', newInput.value);
+            } else {
+              // Si ya es input, solo asignar el valor
+              comunaInput.value = numeroComuna;
+              console.log('[Comuna] Valor asignado a INPUT existente:', comunaInput.value);
+            }
+            
+            // Mostrar botón de editar
+            setTimeout(() => {
+              if (typeof mostrarBotonEditarComuna === 'function') {
+                mostrarBotonEditarComuna();
+                console.log('[Comuna] Botón de editar mostrado');
+              }
+            }, 100);
+          } else {
+            console.error('[Comuna] No se encontró el input o container');
+          }
+        } else {
+          console.warn('[Barrio] No se encontró comuna para:', barrio);
+        }
+      } else {
+        console.log('[Barrio] No es Cali o función no disponible. Ciudad:', ciudadSeleccionada);
+      }
+    }
+    
+    function habilitarSeleccionComunaManual() {
+      // Si el usuario escribe un barrio que no está en la lista y es Cali,
+      // habilitar la edición de comuna automáticamente
+      if (ciudadSeleccionada === 'Cali') {
+        setTimeout(() => {
+          const btnEditar = document.getElementById('btnEditarComuna');
+          if (btnEditar) {
+            btnEditar.style.display = 'block';
+            // Simular click en editar para mostrar el select de comunas
+            if (typeof habilitarEdicionComuna === 'function') {
+              habilitarEdicionComuna();
+            }
+          }
+        }, 300);
+      }
+    }
+    
+    // Función auxiliar para renderizar listas
+    function renderizarLista(contenedor, items, onSelect) {
+      if (!contenedor) return;
+      
+      if (items.length === 0) {
+        contenedor.innerHTML = '<div class="autocomplete-no-results">No hay opciones disponibles</div>';
+        contenedor.style.display = 'block';
+        return;
+      }
+      
+      contenedor.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.textContent = item;
+        div.onclick = () => onSelect(item);
+        contenedor.appendChild(div);
+      });
+      contenedor.style.display = 'block';
+    }
+    
+    // Inicializar departamentos cuando cargue la página
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof DEPARTAMENTOS_COLOMBIA !== 'undefined') {
+        departamentosDisponibles = DEPARTAMENTOS_COLOMBIA;
+      }
+    });
   </script>
 </body>
 </html>
