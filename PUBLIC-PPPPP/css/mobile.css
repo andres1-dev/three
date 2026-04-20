@@ -1,0 +1,368 @@
+/* ==========================================================================
+   mobile.css — Responsive adaptations for Resolución & Usuarios modules
+   DESKTOP layout is UNTOUCHED. Rules apply max-width: 768px only.
+   ========================================================================== */
+
+/* ── 1. SHARED WRAPPER ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+
+    .wrapper-dashboard {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 60px 0 0 !important;
+        padding: 2rem !important;
+        border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        box-shadow: none !important;
+    }
+
+    /* ── 2. PAGE HEADER ───────────────────────────────────────────────── */
+    .page-title {
+        font-size: 1.25rem !important;
+    }
+
+    /* Header row: stack vertically */
+    .d-flex.justify-content-between.align-items-center.mb-4,
+    .row.align-items-center.mb-4 {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px;
+    }
+
+    /* ── 3. UNIFIED STATS BAR (MÓVIL) ────────────────────────────────── */
+    .unified-stats-mobile {
+        width: 100% !important;
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        padding: 10px 14px !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between !important;
+        gap: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    .m-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .m-stat-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+    }
+
+    .m-stat-icon.pending { background: #fee2e2; color: #ef4444; }
+    .m-stat-icon.process { background: #fffbeb; color: #f59e0b; }
+    .m-stat-icon.done    { background: #ecfdf5; color: #10b981; }
+
+    .m-stat-data {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.1;
+    }
+
+    .m-stat-val {
+        font-size: 1.05rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.5px;
+    }
+
+    .m-stat-lab {
+        font-size: 0.58rem;
+        color: #94a3b8;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .m-stat-divider {
+        width: 1px;
+        height: 24px;
+        background: #e2e8f0;
+        margin: 0 5px;
+    }
+
+    /* ── 4. SEARCH BAR ────────────────────────────────────────────────── */
+    .unified-tool-bar {
+        flex-wrap: wrap !important;   /* allows integrated-switch to drop below */
+        border-radius: 14px !important;
+        padding: 0 14px !important;
+        margin: 1rem 0 !important;
+        gap: 0;
+        align-items: center;
+    }
+
+    /* Icon + input stay on ONE row — icon must never wrap */
+    .unified-tool-bar > i {
+        flex-shrink: 0 !important;
+        font-size: 0.85rem !important;
+        padding: 12px 10px 12px 0;
+    }
+
+    .search-input-clean {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;      /* prevents text from overflowing */
+        padding: 12px 0 !important;
+        font-size: 0.88rem !important;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Switch drops below on its own full row */
+    .integrated-switch {
+        flex: 0 0 100% !important;   /* full width, forces new row */
+        margin-left: 0 !important;
+        margin-top: 2px !important;
+        margin-bottom: 8px !important;
+        justify-content: space-between !important;
+        border-radius: 10px !important;
+    }
+
+    /* ── 5. RESOLUCIÓN › NOVEDAD CARDS ───────────────────────────────── */
+    .novedad-card-ultra {
+        flex-direction: column !important;
+        min-height: unset !important;
+        border-radius: 14px !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    /* Image strip at top */
+    .card-visual-ultra {
+        width: 100% !important;
+        min-width: unset !important;
+        height: 140px !important;
+        border-right: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+    }
+
+    /* Body section */
+    .card-body-ultra {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .card-top-info {
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .tech-pills-container {
+        gap: 4px;
+    }
+
+    .card-desc-ultra {
+        font-size: 0.82rem !important;
+        margin: 8px 0 !important;
+    }
+
+    .card-meta-ultra {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 6px;
+    }
+
+    .date-row-lux {
+        gap: 8px !important;
+    }
+
+    /* Actions tower → horizontal strip at the bottom */
+    .actions-tower-ultra {
+        width: 100% !important;
+        border-left: none !important;
+        border-top: 1px solid #f1f5f9 !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        padding: 0.75rem 1rem !important;
+        gap: 8px !important;
+        justify-content: flex-start;
+    }
+
+    .actions-tower-ultra .status-btn-lux {
+        flex: 1 1 auto;
+        min-width: 120px;
+        font-size: 0.6rem !important;
+        padding: 7px 8px !important;
+    }
+
+    .actions-tower-ultra .btn-print-ultra {
+        flex: 0 0 auto;
+        min-width: 80px;
+    }
+
+    /* ── 6. PAGINATION ────────────────────────────────────────────────── */
+    .pagination-container-lux {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        padding: 0.75rem !important;
+    }
+
+    .page-btn-lux {
+        padding: 5px 10px !important;
+        font-size: 0.72rem !important;
+    }
+
+    .page-info-lux {
+        width: 100%;
+        text-align: center;
+        order: -1;
+    }
+
+}
+
+
+/* ── Very small screens (< 400px) ──────────────────────────────────────── */
+@media (max-width: 400px) {
+    .page-title {
+        font-size: 1.1rem !important;
+    }
+
+    .actions-tower-ultra .status-btn-lux {
+        min-width: 90px;
+        font-size: 0.55rem !important;
+    }
+
+    .stat-card-mini {
+        min-width: 100px !important;
+        padding: 5px 8px !important;
+    }
+}
+
+/* ── 7. FORMULARIO DE NOVEDADES (MÓVIL) ──────────────────────────────── */
+
+/* Label inline para filas dinámicas */
+.form-label-inline {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    margin-bottom: 0.35rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Mostrar encabezados solo en desktop */
+@media (min-width: 768px) {
+    .encabezados-desktop {
+        display: grid !important;
+    }
+    
+    /* En desktop, botón agregar abajo */
+    .btn-agregar-top {
+        order: 10;
+        margin-top: 0.5rem !important;
+        margin-bottom: 0 !important;
+    }
+}
+
+@media (max-width: 767px) {
+    /* Ocultar los encabezados generales en móvil */
+    #tipoInsumoGroup .encabezados-desktop,
+    #tipoCorteGroup .encabezados-desktop,
+    #tipoTelasGroup .encabezados-desktop,
+    #tipoCodigosGroup .encabezados-desktop,
+    .encabezados-desktop {
+        display: none !important;
+    }
+    
+    /* Botón agregar arriba en móvil */
+    .btn-agregar-top {
+        width: 100%;
+        justify-content: center;
+        padding: 0.65rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem !important;
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    }
+    
+    /* CRÍTICO: Estilos visuales para las filas dinámicas en móvil */
+    #insumosList .insumo-fila,
+    #corteList .insumo-fila,
+    #telasList .insumo-fila,
+    #codigosList .insumo-fila {
+        background: #f8fafc;
+        padding: 0.85rem;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        margin-bottom: 0.75rem;
+    }
+    
+    /* Cada campo ocupa el 100% del ancho */
+    .insumo-fila > div,
+    .campo-dinamico {
+        width: 100% !important;
+    }
+    
+    /* Inputs y selects más compactos en móvil */
+    .insumo-fila .form-control-sm,
+    .insumo-fila .form-control {
+        padding: 0.5rem 0.75rem !important;
+        padding-left: 2.5rem !important;
+        font-size: 0.85rem !important;
+        height: auto !important;
+        min-height: 38px;
+    }
+    
+    /* Iconos más pequeños */
+    .insumo-fila .input-icon {
+        font-size: 0.8rem !important;
+        left: 0.75rem !important;
+    }
+    
+    /* Labels más compactos */
+    .insumo-fila .form-label-inline {
+        font-size: 0.65rem !important;
+        margin-bottom: 0.3rem !important;
+        letter-spacing: 0.3px;
+    }
+    
+    /* Botón eliminar más pequeño */
+    .insumo-fila .btn-eliminar-insumo {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 0.7rem !important;
+    }
+}
+
+
+/* ── Botones de eliminar dinámicos según viewport ──────────────────────── */
+
+/* Desktop: mostrar botón en el campo de cantidad (último campo) */
+@media (min-width: 768px) {
+    .btn-eliminar-mobile {
+        display: none !important;
+    }
+    
+    .btn-eliminar-desktop {
+        display: flex !important;
+    }
+}
+
+/* Móvil: mostrar botón en el primer campo (tipo/talla) */
+@media (max-width: 767px) {
+    .btn-eliminar-mobile {
+        display: flex !important;
+    }
+    
+    .btn-eliminar-desktop {
+        display: none !important;
+    }
+}
