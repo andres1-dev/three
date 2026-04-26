@@ -131,7 +131,6 @@ function renderTable(dataToRender) {
         'MODERATOR':      { color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', icon: 'fa-user-tie'       },
         'USER-P':         { color: '#2563eb', bg: '#eff6ff', border: '#bfdbfe', icon: 'fa-industry'       },
         'USER-C':         { color: '#06b6d4', bg: '#ecfeff', border: '#a5f3fc', icon: 'fa-magnifying-glass' },
-        'USER-I':         { color: '#059669', bg: '#ecfdf5', border: '#a7f3d0', icon: 'fa-sign-in-alt'     },
         'GUEST':          { color: '#64748b', bg: '#f8fafc', border: '#e2e8f0', icon: 'fa-user-secret'    },
         'PENDIENTE':      { color: '#d97706', bg: '#fffbeb', border: '#fde68a', icon: 'fa-user-clock'      },
         'DESHABILITADO':  { color: '#94a3b8', bg: '#f1f5f9', border: '#cbd5e1', icon: 'fa-user-slash'      },
@@ -405,7 +404,6 @@ async function openEditModal(targetId) {
                             <option value="MODERATOR" ${entry.ROL === 'MODERATOR' ? 'selected' : ''}>MODERATOR</option>
                             <option value="USER-P" ${entry.ROL === 'USER-P' ? 'selected' : ''}>USER-P</option>
                             <option value="USER-C" ${entry.ROL === 'USER-C' ? 'selected' : ''}>USER-C</option>
-                            <option value="USER-I" ${entry.ROL === 'USER-I' ? 'selected' : ''}>USER-I</option>
                             <option value="GUEST" ${entry.ROL === 'GUEST' ? 'selected' : ''}>GUEST</option>
                             <option value="PENDIENTE" ${entry.ROL === 'PENDIENTE' ? 'selected' : ''}>PENDIENTE</option>
                             <option value="DESHABILITADO" ${entry.ROL === 'DESHABILITADO' ? 'selected' : ''}>DESHABILITADO</option>
@@ -689,7 +687,6 @@ async function openCreateModal() {
                                 <option value="GUEST">GUEST (Invitado)</option>
                                 <option value="USER-P" selected>USER-P (Producción)</option>
                                 <option value="USER-C">USER-C (Calidad)</option>
-                                <option value="USER-I">USER-I (Ingreso)</option>
                                 <option value="MODERATOR">MODERATOR</option>
                                 <option value="ADMIN">ADMIN</option>
                             `}

@@ -51,7 +51,6 @@ let allPlantas = [];
     if (rol === 'ADMIN')          iconClass = 'fas fa-user-shield';
     else if (rol === 'MODERATOR') iconClass = 'fas fa-user-tie';
     else if (rol === 'USER-C')    iconClass = 'fas fa-user-check';
-    else if (rol === 'USER-I')    iconClass = 'fas fa-sign-in-alt';
     else if (rol === 'USER-P')    iconClass = 'fas fa-user';
     else if (rol === 'GUEST')     iconClass = 'fas fa-user-secret';
 
@@ -64,7 +63,6 @@ let allPlantas = [];
         'SEGUIMIENTO': 'Estado de novedades',
         'RUTERO': 'Agenda de visitas',
         'USUARIOS': 'Gestión administrativa',
-        'INGRESO': 'Control de ingreso',
         'CALIDAD': 'Reportes técnicos',
         'NOVEDADES': 'Centro de soluciones',
         'GESTIÓN DE PLANTA': 'Datos de planta',
@@ -615,8 +613,6 @@ function checkRouteAccess(role) {
         if (role !== 'ADMIN' && role !== 'MODERATOR') isAuthorized = false;
     } else if (path.includes('usuarios.html')) {
         if (role !== 'ADMIN') isAuthorized = false;
-    } else if (path.includes('ingreso.html')) {
-        if (role !== 'ADMIN' && role !== 'USER-I') isAuthorized = false;
     } else if (path.includes('seguimiento.html')) {
         if (role !== 'GUEST') isAuthorized = false;
     }
@@ -663,7 +659,6 @@ function updateAuthUI() {
         if (currentUser.ROL === 'ADMIN') iconClass = 'fas fa-user-shield';
         else if (currentUser.ROL === 'MODERATOR') iconClass = 'fas fa-user-tie';
         else if (currentUser.ROL === 'USER-C') iconClass = 'fas fa-user-check';
-        else if (currentUser.ROL === 'USER-I') iconClass = 'fas fa-sign-in-alt';
         else if (currentUser.ROL === 'USER-P') iconClass = 'fas fa-user';
         else if (currentUser.ROL === 'GUEST') iconClass = 'fas fa-user-secret';
     }
@@ -677,7 +672,6 @@ function updateAuthUI() {
         'SEGUIMIENTO': 'Estado de novedades',
         'RUTERO': 'Agenda de visitas',
         'USUARIOS': 'Gestión administrativa',
-        'INGRESO': 'Control de ingreso',
         'CALIDAD': 'Reportes técnicos',
         'NOVEDADES': 'Centro de soluciones',
         'GESTIÓN DE PLANTA': 'Datos de planta',
@@ -771,7 +765,6 @@ function createSidebar() {
         if (currentUser.ROL === 'ADMIN') roleIcon = 'fas fa-user-shield';
         else if (currentUser.ROL === 'MODERATOR') roleIcon = 'fas fa-user-tie';
         else if (currentUser.ROL === 'USER-C') roleIcon = 'fas fa-user-check';
-        else if (currentUser.ROL === 'USER-I') roleIcon = 'fas fa-sign-in-alt';
         else if (currentUser.ROL === 'USER-P') roleIcon = 'fas fa-user';
         else if (currentUser.ROL === 'GUEST') roleIcon = 'fas fa-user-secret';
 
@@ -903,11 +896,6 @@ function createSidebar() {
                 ${currentUser.ROL === 'ADMIN' ? `
                     <a href="usuarios.html" class="sidebar-link ${isUsersPage ? 'active' : ''}">
                         <i class="fas fa-users-cog"></i> Usuarios
-                    </a>
-                ` : ''}
-                ${(currentUser.ROL === 'ADMIN' || currentUser.ROL === 'USER-I') ? `
-                    <a href="ingreso.html" class="sidebar-link ${path.includes('ingreso.html') ? 'active' : ''}">
-                        <i class="fas fa-sign-in-alt"></i> Ingreso
                     </a>
                 ` : ''}
 

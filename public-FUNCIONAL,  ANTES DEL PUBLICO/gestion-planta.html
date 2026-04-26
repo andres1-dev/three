@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Gestión de Planta - Grupo TDM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  
+  <style>
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.9);
+      --glass-border: rgba(255, 255, 255, 0.3);
+      --color-primary: #3f51b5;
+    }
+
+    /* Override temporal del escudo de seguridad para poder ver la página */
+    body {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      user-select: auto !important;
+      padding-top: 0;
+      background-attachment: fixed;
+      color: #1e293b;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .wrapper-dashboard {
+      width: 96%;
+      max-width: 1400px;
+      margin: 80px auto 2rem;
+      padding: 2rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      z-index: 10;
+    }
+
+      @media (max-width: 767px) {
+        .wrapper-dashboard {
+          width: 100%;
+          margin: 60px 0 1rem;
+          padding: 2rem;
+          border-radius: 0;
+          border-left: none;
+          border-right: none;
+          box-shadow: none;
+        }
+        .policy-modal { padding: 0; }
+        .policy-modal-content { max-height: 100vh; border-radius: 0; }
+      }
+      .policy-modal {
+          display: none;
+          position: fixed;
+          top: 0; left: 0;
+          width: 100%; height: 100%;
+          background: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          z-index: 9999;
+          padding: 20px;
+          align-items: center; justify-content: center;
+      }
+      .policy-modal.active { display: flex; animation: fadeInCustom 0.3s ease; }
+      @keyframes fadeInCustom { from { opacity: 0; } to { opacity: 1; } }
+
+      .policy-modal-content {
+          background: #ffffff;
+          width: 100%;
+          max-width: 800px;
+          max-height: 90vh;
+          border-radius: 24px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+      }
+      .policy-modal-header {
+          padding: 1.5rem 2rem;
+          border-bottom: 1px solid #f1f5f9;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: #fff;
+      }
+      .policy-modal-body {
+          padding: 2rem;
+          overflow-y: auto;
+          color: #475569;
+          font-size: 0.95rem;
+          line-height: 1.6;
+      }
+      .policy-modal-footer {
+          padding: 1.5rem 2rem;
+          border-top: 1px solid #f1f5f9;
+          display: flex;
+          justify-content: flex-end;
+          background: #f8fafc;
+      }
+      .policy-section { margin-bottom: 2rem; }
+      .policy-section h3 { 
+          font-size: 1.1rem; font-weight: 700; color: #1e293b; 
+          margin-bottom: 0.75rem; display: flex; align-items: center; gap: 10px;
+      }
+      .policy-section h3 i { color: var(--color-primary); }
+
+      @media (max-width: 768px) {
+        .wrapper-dashboard {
+          width: 100%;
+          margin: 60px 0 1rem;
+          padding: 1rem;
+          border-radius: 0;
+        }
+        .policy-modal { padding: 0; }
+        .policy-modal-content { max-height: 100vh; border-radius: 0; }
+      }
+      
+      /* Estilos para autocompletado */
+      .autocomplete-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      
+      .autocomplete-item {
+        padding: 10px 12px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        color: #475569;
+        transition: all 0.15s ease;
+      }
+      
+      .autocomplete-item:hover {
+        background: #f1f5f9;
+        color: #1e293b;
+      }
+      
+      .autocomplete-item.selected {
+        background: #eff6ff;
+        color: #3b82f6;
+        font-weight: 600;
+      }
+      
+      .autocomplete-no-results {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-style: italic;
+      }
+    </style>
+</head>
+
+<body>
+  <!-- Particles Background -->
+  <div id="particles-js"></div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       MODAL DE POLÍTICA DE DATOS (Completa y Extensa)
+       ══════════════════════════════════════════════════════════════════ -->
+  <div id="modalPoliticaDatos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; backdrop-filter:blur(4px); overflow-y:auto; align-items:center; justify-content:center;">
+    <div style="display:flex; align-items:center; justify-content:center; min-height:100%; padding:40px 20px; width:100%;">
+      <div style="background:white; border-radius:12px; max-width:800px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.4); overflow:hidden; display:flex; flex-direction:column; margin:auto; position:relative;">
+        
+        <!-- Header -->
+        <div style="padding:20px; border-bottom:2px solid #e2e8f0; background:linear-gradient(135deg, #f8fafc, #ffffff);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="icons/app.svg" alt="Logo" style="width:40px; height:40px; object-fit:contain;">
+              <div>
+                <h3 style="margin:0; font-size:1rem; font-weight:700; color:#1e293b;">Política de Datos</h3>
+                <p style="margin:0; font-size:0.7rem; color:#64748b;">Ley 1581 de 2012</p>
+              </div>
+            </div>
+            <button onclick="cerrarPoliticaDatos()" style="background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body (Scrollable) -->
+        <div style="padding:16px; overflow-y:auto; max-height:60vh;">
+          
+          <!-- Introducción -->
+          <div style="background:#eff6ff; border-left:3px solid #3b82f6; padding:10px; border-radius:4px; margin-bottom:16px;">
+            <p style="margin:0; font-size:0.7rem; line-height:1.5; color:#1e40af;">
+              <strong>Grupo TDM</strong> se compromete a proteger la privacidad y seguridad de sus datos personales. Esta política describe cómo recopilamos, usamos, almacenamos y protegemos su información de acuerdo con la legislación colombiana vigente.
+            </p>
+          </div>
+
+          <!-- Sección 1 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-user-shield" style="color:#3b82f6; font-size:0.75rem;"></i>
+              1. Responsable del Tratamiento
+            </h4>
+            <p style="margin:0 0 6px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <strong>Razón Social:</strong> TEXTILES Y CREACIONES EL UNIVERSO S.A.S.<br>
+              <strong>NIT:</strong> 900.616.124-4<br>
+              <strong>Domicilio:</strong> Calle 26 # 7-21 B/ Jorge Isaacs, Cali, Valle del Cauca, Colombia<br>
+              <strong>Correo Electrónico:</strong> coordinadorlogistico@eltemplodelamoda.com.co<br>
+              <strong>Teléfono:</strong> +57 (316) 800-7979
+            </p>
+          </div>
+
+          <!-- Sección 2 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-database" style="color:#3b82f6; font-size:0.75rem;"></i>
+              2. Datos Personales Recopilados
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Recopilamos los siguientes tipos de datos personales:
+            </p>
+            <ul style="margin:0; padding-left:16px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <li><strong>Datos de identificación:</strong> Nombre completo, NIT, Cédula de Ciudadanía</li>
+              <li><strong>Datos de contacto:</strong> Dirección física, correo electrónico, número telefónico</li>
+              <li><strong>Datos de ubicación:</strong> País, departamento, ciudad, barrio, comuna, coordenadas GPS</li>
+              <li><strong>Datos de la planta:</strong> Razón social, información de contacto, ubicación geográfica</li>
+              <li><strong>Datos operacionales:</strong> Información relacionada con procesos productivos, lotes, calidad</li>
+            </ul>
+          </div>
+
+          <!-- Sección 3 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-bullseye" style="color:#3b82f6; font-size:0.75rem;"></i>
+              3. Finalidades del Tratamiento
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Sus datos personales serán utilizados para las siguientes finalidades:
+            </p>
+            <ul style="margin:0; padding-left:16px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <li>Gestión y administración de información de plantas de producción</li>
+              <li>Programación, optimización y seguimiento de rutas logísticas</li>
+              <li>Mapeo geográfico y geolocalización de instalaciones productivas</li>
+              <li>Comunicación relacionada con operaciones, novedades y actualizaciones</li>
+              <li>Envío de notificaciones operativas sobre confirmaciones de novedades registradas</li>
+              <li>Interacciones y comunicaciones con Grupo TDM relacionadas con procesos productivos</li>
+              <li>Cumplimiento de obligaciones contractuales y legales</li>
+              <li>Generación de reportes, estadísticas y análisis operacionales</li>
+              <li>Mejora continua de procesos y servicios</li>
+              <li>Atención de solicitudes, quejas y reclamos</li>
+              <li>Auditorías internas y externas de calidad</li>
+            </ul>
+            <div style="background:#fef3c7; border-left:2px solid #f59e0b; padding:8px; border-radius:4px; margin-top:8px;">
+              <p style="margin:0; font-size:0.65rem; line-height:1.4; color:#78350f;">
+                <strong><i class="fas fa-info-circle me-1"></i> Nota importante:</strong> Las notificaciones del sistema son de carácter operativo y necesarias para el funcionamiento del servicio. No incluyen publicidad ni comunicaciones comerciales no solicitadas.
+              </p>
+            </div>
+          </div>
+
+          <!-- Sección 4 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-balance-scale" style="color:#3b82f6; font-size:0.75rem;"></i>
+              4. Derechos del Titular
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Como titular de los datos personales, usted tiene derecho a:
+            </p>
+            <ul style="margin:0; padding-left:16px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <li><strong>Conocer, actualizar y rectificar</strong> sus datos personales</li>
+              <li><strong>Solicitar prueba</strong> de la autorización otorgada</li>
+              <li><strong>Ser informado</strong> sobre el uso que se ha dado a sus datos</li>
+              <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio</li>
+              <li><strong>Revocar la autorización</strong> y/o solicitar la supresión de datos cuando sea procedente</li>
+              <li><strong>Acceder gratuitamente</strong> a sus datos personales objeto de tratamiento</li>
+            </ul>
+          </div>
+
+          <!-- Sección 5 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-lock" style="color:#3b82f6; font-size:0.75rem;"></i>
+              5. Seguridad de la Información
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Grupo TDM implementa medidas técnicas, humanas y administrativas necesarias para proteger sus datos personales y evitar su adulteración, pérdida, consulta, uso o acceso no autorizado o fraudulento. Utilizamos protocolos de seguridad como cifrado SSL/TLS, autenticación de usuarios, respaldos periódicos y controles de acceso.
+            </p>
+          </div>
+
+          <!-- Sección 6 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-clock" style="color:#3b82f6; font-size:0.75rem;"></i>
+              6. Tiempo de Conservación
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Los datos personales serán conservados durante el tiempo que sea necesario para cumplir con las finalidades descritas, y posteriormente durante el tiempo que exijan las normas legales aplicables. Una vez cumplida la finalidad y los términos legales, los datos serán eliminados de forma segura.
+            </p>
+          </div>
+
+          <!-- Sección 7 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-share-nodes" style="color:#3b82f6; font-size:0.75rem;"></i>
+              7. Transferencia y Transmisión de Datos
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Grupo TDM podrá transferir o transmitir sus datos personales a terceros únicamente cuando sea necesario para el cumplimiento de las finalidades autorizadas, garantizando que dichos terceros cumplan con las obligaciones de protección de datos establecidas en la ley colombiana.
+            </p>
+          </div>
+
+          <!-- Sección 8 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-envelope" style="color:#3b82f6; font-size:0.75rem;"></i>
+              8. Ejercicio de Derechos
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Para ejercer sus derechos o presentar consultas o reclamos relacionados con el tratamiento de sus datos personales, puede contactarnos a través de:
+            </p>
+            <div style="background:#f8fafc; border-radius:4px; padding:8px; margin-top:8px;">
+              <p style="margin:0; font-size:0.65rem; color:#475569;">
+                <strong>Correo:</strong> coordinadorlogistico@eltemplodelamoda.com.co<br>
+                <strong>Teléfono:</strong> +57 (316) 800-7979<br>
+                <strong>Horario:</strong> Lunes a Viernes, 7:10 AM - 4:43 PM
+              </p>
+            </div>
+          </div>
+
+          <!-- Marco Legal -->
+          <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:10px; border-radius:4px;">
+            <h5 style="margin:0 0 6px; font-size:0.75rem; font-weight:700; color:#92400e; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-gavel" style="font-size:0.7rem;"></i>
+              Marco Legal
+            </h5>
+            <p style="margin:0; font-size:0.65rem; line-height:1.4; color:#78350f;">
+              Esta política se rige por la <strong>Ley 1581 de 2012</strong>, el <strong>Decreto 1377 de 2013</strong>, y demás normas concordantes que regulan la protección de datos personales en Colombia.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:14px 16px; border-top:2px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+          <p style="margin:0; font-size:0.65rem; color:#64748b;">
+            <i class="fas fa-calendar-alt me-1"></i>
+            Última actualización: Abril 2026
+          </p>
+          <button onclick="cerrarPoliticaDatos()" style="
+            background:linear-gradient(135deg, #3b82f6, #6366f1); color:white; border:none;
+            padding:8px 20px; border-radius:6px; font-weight:600; font-size:0.75rem;
+            cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); transition:all 0.2s;
+          ">
+            <i class="fas fa-check me-2"></i>
+            Entendido
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="wrapper-dashboard">
+    <div id="alertContainer"></div>
+    <!-- Formulario -->
+    <form id="gestionPlantaForm">
+      <div>
+        <div class="mb-3">
+          <label for="cedulaPlanta" class="form-label">NIT o Cédula de Ciudadanía: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon">
+            <i class="fas fa-id-card input-icon"></i>
+            <input type="text" id="cedulaPlanta" class="form-control" readonly
+              placeholder="Se carga automáticamente" required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="nombrePlanta" class="form-label">RAZON SOCIAL: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon">
+            <i class="fas fa-industry input-icon"></i>
+            <input type="text" id="nombrePlanta" class="form-control" readonly required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="direccionPlanta" class="form-label">Dirección: <span style="color:#ef4444;">*</span></label>
+          
+          <!-- Campo de dirección -->
+          <div class="input-with-icon">
+            <i class="fas fa-map-marker-alt input-icon"></i>
+            <input type="text" id="direccionPlanta" class="form-control" placeholder="Escribe la dirección o usa el constructor" required>
+          </div>
+          <div class="form-text" style="font-size:0.75rem; margin-top:4px;">
+            <a href="#" onclick="mostrarConstructorDireccion(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
+              <i class="codicon codicon-edit" style="font-size:0.75rem;"></i> Puedes escribir directamente o usar el constructor
+            </a>
+          </div>
+          
+          <!-- Constructor de dirección (oculto por defecto) -->
+          <div id="constructorDireccion" style="display:none; margin-top:16px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+            
+            <!-- Instrucciones sutiles -->
+            <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 16px 0; line-height:1.5;">
+              Ingresa cada uno de los datos que conforman tu dirección. Ten en cuenta que no todos los campos aplican, registra solo la información que se requiera.
+            </p>
+            
+            <!-- Sección: Vía Principal -->
+            <div style="margin-bottom:20px;">
+              <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                <i class="fas fa-road" style="color:#94a3b8; margin-right:6px;"></i>
+                Vía principal
+              </h6>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo de vía</label>
+                  <select id="tipoVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value="" disabled selected>Seleccionar</option>
+                    <option value="CL">CALLE</option>
+                    <option value="AC">AVENIDA CALLE</option>
+                    <option value="CR">CARRERA</option>
+                    <option value="AK">AVENIDA CARRERA</option>
+                    <option value="TV">TRANSVERSAL</option>
+                    <option value="DG">DIAGONAL</option>
+                    <option value="AV">AVENIDA</option>
+                    <option value="AUTOPISTA">AUTOPISTA</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                  <input type="text" id="numPrincipal" class="form-control form-control-sm" placeholder="" oninput="this.value=this.value.replace(/[^0-9]/g,'');construirDireccion()" style="font-size:0.85rem;">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Letra</label>
+                  <select id="letraVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                    <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                    <option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                    <option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option>
+                    <option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
+                    <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                    <option value="Y">Y</option><option value="Z">Z</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Bis</label>
+                  <select id="bisVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="BIS">Bis</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                  <select id="sectorVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="NORTE">NORTE</option>
+                    <option value="SUR">SUR</option>
+                    <option value="ESTE">ESTE</option>
+                    <option value="OESTE">OESTE</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sección: Cruce -->
+            <div style="margin-bottom:20px;">
+              <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                <i class="fas fa-hashtag" style="color:#94a3b8; margin-right:6px;"></i>
+                Cruce (#)
+              </h6>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                  <input type="text" id="numCruce" class="form-control form-control-sm" placeholder="" oninput="this.value=this.value.replace(/[^0-9]/g,'');construirDireccion()" style="font-size:0.85rem;">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Letra</label>
+                  <select id="letraCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                    <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                    <option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                    <option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option>
+                    <option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
+                    <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                    <option value="Y">Y</option><option value="Z">Z</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Bis</label>
+                  <select id="bisCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="BIS">Bis</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                  <select id="sectorCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="NORTE">NORTE</option>
+                    <option value="SUR">SUR</option>
+                    <option value="ESTE">ESTE</option>
+                    <option value="OESTE">OESTE</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sección: Placa -->
+            <div style="margin-bottom:20px;">
+              <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                <i class="fas fa-minus" style="color:#94a3b8; margin-right:6px;"></i>
+                Placa (-)
+              </h6>
+              <div class="row g-2">
+                <div class="col-md-3">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                  <input type="text" id="numPlaca" class="form-control form-control-sm" placeholder="" oninput="this.value=this.value.replace(/[^0-9]/g,'');construirDireccion()" style="font-size:0.85rem;">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                  <select id="sectorPlaca" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="NORTE">NORTE</option>
+                    <option value="SUR">SUR</option>
+                    <option value="ESTE">ESTE</option>
+                    <option value="OESTE">OESTE</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Sección: Información Adicional -->
+            <div>
+              <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:8px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                <i class="fas fa-home" style="color:#94a3b8; margin-right:6px;"></i>
+                Información adicional
+              </h6>
+              <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
+                Especifica indicaciones adicionales como apartamento, torre, etc.
+              </p>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo</label>
+                  <select id="tipoComplemento" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                    <option value=""></option>
+                    <option value="APARTAMENTO">APARTAMENTO</option>
+                    <option value="BLOQUE">BLOQUE</option>
+                    <option value="BODEGA">BODEGA</option>
+                    <option value="CASA">CASA</option>
+                    <option value="CONJUNTO">CONJUNTO</option>
+                    <option value="EDIFICIO">EDIFICIO</option>
+                    <option value="ESQUINA">ESQUINA</option>
+                    <option value="ETAPA">ETAPA</option>
+                    <option value="INTERIOR">INTERIOR</option>
+                    <option value="LOCAL">LOCAL</option>
+                    <option value="LOTE">LOTE</option>
+                    <option value="MANZANA">MANZANA</option>
+                    <option value="PISO">PISO</option>
+                    <option value="PLANTA">PLANTA</option>
+                    <option value="TORRE">TORRE</option>
+                    <option value="UNIDAD">UNIDAD</option>
+                    <option value="UNIDAD RESIDENCIAL">UNIDAD RESIDENCIAL</option>
+                  </select>
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Complemento</label>
+                  <input type="text" id="complementoDireccion" class="form-control form-control-sm" placeholder="Ej: 201, Torre 3, Conjunto Los Pinos" oninput="construirDireccion()" style="font-size:0.85rem;">
+                </div>
+              </div>
+            </div>
+            
+            <!-- Botón para confirmar dirección -->
+            <div style="text-align:right; margin-top:16px; padding-top:16px; border-top:1px solid #e2e8f0;">
+              <button type="button" onclick="confirmarDireccion()" style="
+                background:#10b981; color:#fff; border:none; padding:10px 24px;
+                border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:600;
+                box-shadow:0 2px 6px rgba(16,185,129,0.25);
+              ">
+                <i class="fas fa-check me-2"></i> Confirmar dirección
+              </button>
+              <button type="button" onclick="cancelarConstructor()" style="
+                background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:10px 24px;
+                border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:600;
+                margin-left:8px;
+              ">
+                <i class="fas fa-times me-2"></i> Cancelar
+              </button>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- Nuevos campos de ubicación -->
+        <div class="mb-3">
+          <label for="paisPlanta" class="form-label">País: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon">
+            <i class="fas fa-globe input-icon"></i>
+            <input type="text" id="paisPlanta" class="form-control" value="Colombia" readonly required>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="departamentoPlanta" class="form-label">Departamento: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon" style="position:relative;">
+            <i class="fas fa-map input-icon"></i>
+            <input 
+              type="text" 
+              id="departamentoPlanta" 
+              class="form-control" 
+              placeholder="Escribe para buscar departamento..." 
+              autocomplete="off"
+              required
+              oninput="filtrarDepartamentos(this.value)"
+              onfocus="mostrarListaDepartamentos()"
+              onblur="setTimeout(() => ocultarListaDepartamentos(), 200)">
+            <div id="listaDepartamentos" class="autocomplete-list" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3" id="ciudadContainer" style="display:none;">
+          <label for="ciudadPlanta" class="form-label">Ciudad: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon" style="position:relative;">
+            <i class="fas fa-city input-icon"></i>
+            <input 
+              type="text" 
+              id="ciudadPlanta" 
+              class="form-control" 
+              placeholder="Escribe para buscar ciudad..." 
+              autocomplete="off"
+              oninput="filtrarCiudades(this.value)"
+              onfocus="mostrarListaCiudades()"
+              onblur="setTimeout(() => ocultarListaCiudades(), 200)">
+            <div id="listaCiudades" class="autocomplete-list" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3" id="barrioContainer" style="display:none;">
+          <label for="barrioPlanta" class="form-label">Barrio: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon" style="position:relative;">
+            <i class="fas fa-home input-icon"></i>
+            <input 
+              type="text" 
+              id="barrioPlanta" 
+              class="form-control" 
+              placeholder="Escribe para buscar barrio..." 
+              autocomplete="off"
+              required
+              oninput="filtrarBarrios(this.value)"
+              onfocus="mostrarListaBarrios()"
+              onblur="setTimeout(() => ocultarListaBarrios(), 200)">
+            <div id="listaBarrios" class="autocomplete-list" style="display:none;"></div>
+          </div>
+        </div>
+
+        <div class="mb-3" id="comunaContainer" style="display:none;">
+          <label for="comunaPlanta" class="form-label">
+            <span id="comunaLabel">Comuna</span>: 
+            <span id="comunaAsterisk" style="color:#ef4444; display:none;">*</span>
+          </label>
+          <div style="position:relative;">
+            <div class="input-with-icon">
+              <i class="fas fa-map-pin input-icon"></i>
+              <input type="text" id="comunaPlanta" class="form-control" placeholder="Se llena automáticamente" readonly style="padding-right:45px;">
+            </div>
+            <button type="button" onclick="habilitarEdicionComuna()" 
+              id="btnEditarComuna" 
+              title="Editar comuna"
+              style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#3b82f6; cursor:pointer; padding:4px 8px; font-size:0.9rem; display:none;">
+              <i class="fas fa-edit"></i>
+            </button>
+          </div>
+          <div class="form-text" style="font-size:0.75rem; margin-top:4px; color:#64748b;">
+            <i class="fas fa-info-circle me-1"></i>
+            Se completa automáticamente al seleccionar el barrio. Si necesitas corregirla, haz clic en el ícono de editar.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="contactoPlanta" class="form-label">
+            <span>Nombre de Contacto</span>
+            <span style="background:#eff6ff; color:#3b82f6; font-size:0.7rem; padding:2px 8px; border-radius:4px; font-weight:600; margin-left:8px;">OPCIONAL</span>
+          </label>
+          <div class="input-with-icon">
+            <i class="fas fa-user input-icon"></i>
+            <input type="text" id="contactoPlanta" class="form-control" placeholder="Ej: Juan Pérez">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="telefonoPlanta" class="form-label">Teléfono: <span style="color:#ef4444;">*</span></label>
+          <div class="phone-input-integrated">
+            <div class="phone-prefix-area">
+              <img src="https://flagcdn.com/w20/co.png" srcset="https://flagcdn.com/w40/co.png 2x" width="20"
+                alt="Colombia">
+              <span class="phone-prefix-text">+57</span>
+            </div>
+            <input type="tel" id="telefonoPlanta" class="form-control" placeholder="(316) 800-7979" required
+              maxlength="15">
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="emailPlanta" class="form-label">Correo Electrónico: <span style="color:#ef4444;">*</span></label>
+          <div class="input-with-icon">
+            <i class="fas fa-envelope input-icon"></i>
+            <input type="email" id="emailPlanta" class="form-control" list="emailOptions"
+              placeholder="Ej: planta@empresa.com" required>
+          </div>
+          <datalist id="emailOptions">
+            <option value="@gmail.com">
+            <option value="@outlook.com">
+            <option value="@hotmail.com">
+            <option value="@yahoo.com">
+            <option value="@icloud.com">
+            <option value="@live.com">
+            <option value="@msn.com">
+            <option value="@me.com">
+            <option value="@aol.com">
+            <option value="@protonmail.com">
+            <option value="@zoho.com">
+          </datalist>
+        </div>
+
+        <div class="mb-3">
+          <label for="localizacionPlanta" class="form-label">
+            <span>Localización GPS</span>
+            <span style="background:#eff6ff; color:#3b82f6; font-size:0.7rem; padding:2px 8px; border-radius:4px; font-weight:600; margin-left:8px;">OPCIONAL</span>
+          </label>
+          
+          <!-- Pregunta inicial con diseño sutil -->
+          <div id="gps-pregunta-card" style="background:white; border:1px solid #e2e8f0; border-radius:8px; padding:1.25rem; margin-bottom:12px;">
+            <div style="display:flex; align-items:flex-start; gap:12px;">
+              <div style="flex-shrink:0; width:40px; height:40px; background:#eff6ff; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                <i class="fas fa-map-marker-alt" style="font-size:18px; color:#3b82f6;"></i>
+              </div>
+              <div style="flex:1;">
+                <h5 style="margin:0 0 6px; color:#1e293b; font-size:0.95rem; font-weight:600;">
+                  Ubicación del taller
+                </h5>
+                <p style="margin:0 0 12px; color:#64748b; font-size:0.85rem; line-height:1.5;">
+                  Si te encuentras físicamente en el taller, podemos capturar las coordenadas GPS automáticamente. Esto nos ayuda a optimizar la programación de rutas y mantener un mapeo geográfico preciso de nuestras plantas de producción. Es opcional y solo toma unos segundos.
+                </p>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" onclick="respuestaUbicacionTaller(true)" class="btn-gps-option btn-gps-si">
+                    <i class="fas fa-check"></i>
+                    <span>Estoy en el taller</span>
+                  </button>
+                  <button type="button" onclick="respuestaUbicacionTaller(false)" class="btn-gps-option btn-gps-no">
+                    <i class="fas fa-times"></i>
+                    <span>Omitir ubicación</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Contenedor del mapa (oculto inicialmente) -->
+          <div id="gps-planta-card" style="display:none; background:#f8f9fc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; margin-bottom:12px;"></div>
+          
+          <!-- Input de coordenadas (oculto inicialmente) -->
+          <div style="display:none; position:relative;" id="localizacionInputContainer">
+            <i class="fas fa-location-dot" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; z-index:10;"></i>
+            <input type="text" id="localizacionPlanta" class="form-control" placeholder="Coordenadas GPS" readonly style="padding-left:40px;">
+          </div>
+        </div>
+        
+        <style>
+          .btn-gps-option {
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            padding:8px 16px;
+            border:1px solid #e2e8f0;
+            border-radius:6px;
+            font-weight:500;
+            font-size:0.85rem;
+            cursor:pointer;
+            transition:all 0.2s ease;
+            background:white;
+          }
+          
+          .btn-gps-si {
+            color:#059669;
+            border-color:#d1fae5;
+          }
+          
+          .btn-gps-si:hover {
+            background:#ecfdf5;
+            border-color:#10b981;
+            transform:translateY(-1px);
+          }
+          
+          .btn-gps-no {
+            color:#64748b;
+            border-color:#e2e8f0;
+          }
+          
+          .btn-gps-no:hover {
+            background:#f8fafc;
+            border-color:#cbd5e1;
+            transform:translateY(-1px);
+          }
+          
+          .btn-gps-option i {
+            font-size:0.9rem;
+          }
+        </style>
+
+        <!-- Sección de Cambio de Contraseña (Opcional) -->
+        <div class="mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+            <i class="fas fa-lock" style="color:#3b82f6; font-size:1.2rem;"></i>
+            <h5 style="margin:0; font-size:1rem; font-weight:700; color:#1e293b;">Cambiar Contraseña</h5>
+            <span style="background:#eff6ff; color:#3b82f6; font-size:0.7rem; padding:2px 8px; border-radius:4px; font-weight:600;">OPCIONAL</span>
+          </div>
+          
+          <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:12px; border-radius:4px; margin-bottom:16px;">
+            <p style="margin:0; font-size:0.8rem; line-height:1.5; color:#78350f;">
+              <i class="fas fa-shield-alt me-1"></i>
+              <strong>Recomendación de seguridad:</strong> Usa una contraseña segura con al menos 8 caracteres, combinando letras mayúsculas, minúsculas, números y símbolos.
+            </p>
+          </div>
+
+          <div class="mb-3">
+            <label for="nuevaPassword" class="form-label">Nueva Contraseña:</label>
+            <div style="position:relative;">
+              <div class="input-with-icon">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="nuevaPassword" class="form-control" placeholder="Dejar vacío para mantener la actual" style="padding-right:45px;" oninput="validarSeguridadPassword()">
+              </div>
+              <button type="button" onclick="togglePasswordVisibility('nuevaPassword', 'toggleNuevaPassword')" 
+                id="toggleNuevaPassword" 
+                style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; padding:4px 8px; font-size:1rem;">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <!-- Indicador de seguridad de contraseña -->
+            <div id="passwordStrengthIndicator" style="display:none; margin-top:8px; padding:8px 12px; border-radius:6px; font-size:0.8rem; font-weight:600;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i id="strengthIcon" class="fas"></i>
+                <span id="strengthText"></span>
+              </div>
+              <div id="strengthDetails" style="margin-top:6px; font-size:0.75rem; font-weight:400; line-height:1.4;"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="confirmarPassword" class="form-label">Confirmar Nueva Contraseña:</label>
+            <div style="position:relative;">
+              <div class="input-with-icon">
+                <i class="fas fa-key input-icon"></i>
+                <input type="password" id="confirmarPassword" class="form-control" placeholder="Confirma la nueva contraseña" style="padding-right:45px;" oninput="validarCoincidenciaPassword()">
+              </div>
+              <button type="button" onclick="togglePasswordVisibility('confirmarPassword', 'toggleConfirmarPassword')" 
+                id="toggleConfirmarPassword" 
+                style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#94a3b8; cursor:pointer; padding:4px 8px; font-size:1rem;">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <!-- Indicador de coincidencia -->
+            <div id="passwordMatchIndicator" style="display:none; margin-top:8px; padding:8px 12px; border-radius:6px; font-size:0.8rem; font-weight:600;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i id="matchIcon" class="fas"></i>
+                <span id="matchText"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Checkboxes de Consentimiento -->
+        <div class="mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+          
+          <!-- Checkbox 1: Política de Datos -->
+          <div class="mb-3" style="display:flex; align-items:start; gap:12px;">
+            <input type="checkbox" id="checkPoliticaDatos" required style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+            <label for="checkPoliticaDatos" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
+              Acepto la 
+              <a href="javascript:void(0)" onclick="mostrarPoliticaDatos()" style="color:#3b82f6; font-weight:600; text-decoration:none; border-bottom:1px dashed #3b82f6; text-transform:none !important;">
+                política de tratamiento de datos personales
+              </a>
+              <span style="color:#ef4444; margin-left:4px; font-weight:700;">*</span>
+            </label>
+          </div>
+
+          <!-- Checkbox 2: Notificaciones (Obligatorio) -->
+          <div style="display:flex; align-items:start; gap:12px;">
+            <input type="checkbox" id="checkNotificaciones" required style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+            <label for="checkNotificaciones" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
+              Acepto recibir notificaciones operativas del sistema
+              <span style="color:#ef4444; margin-left:4px; font-weight:700;">*</span>
+            </label>
+          </div>
+
+        </div>
+
+        <div class="mb-3 text-center">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save"></i> Guardar Datos
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Scripts -->
+  <!-- Escudo de Seguridad -->
+  <script>
+    (function(){
+      const s = localStorage.getItem('sispro_user');
+      if(!s || s==='undefined' || s==='null') {
+        window.location.replace('login.html');
+      } else {
+        // Mostrar el body después de validar
+        document.body.classList.add('auth-shield-pass');
+      }
+    })();
+  </script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/forms/gas.js"></script>
+  <script src="js/data/colombia-locations.js" defer></script>
+  <script src="js/forms/plantas.js" defer></script>
+  <script src="js/particles-config.js" defer></script>
+  
+  <script>
+    // Variables globales
+    const urlParams = new URLSearchParams(window.location.search);
+    const plantaId = urlParams.get('id');
+    const isEdit = !!plantaId;
+    const desdeLogin = !window.opener;
+    // Cargar usuario actual (ya viene declarado en js/auth.js)
+    if (typeof currentUser === 'undefined') {
+      window.currentUser = null;
+      try {
+        const userStr = localStorage.getItem('sispro_user');
+        if (userStr) window.currentUser = JSON.parse(userStr);
+      } catch (e) {
+        console.error('Error cargando usuario fallback:', e);
+      }
+    }
+
+    // Mostrar alerta según contexto
+    function mostrarAlerta() {
+      const container = document.getElementById('alertContainer');
+      if (!container) return;
+      
+      if (desdeLogin) {
+        container.innerHTML = '';
+      } else if (currentUser && currentUser.ROL === 'ADMIN') {
+        container.innerHTML = `
+          <div class="mb-3">
+            <button onclick="history.back()" class="btn btn-light" style="border-radius:10px; font-weight:700; font-size:0.8rem; color:#64748b; border:1px solid #e2e8f0; padding:8px 16px;">
+              <i class="fas fa-arrow-left me-2"></i> Regresar
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Cargar datos de la planta
+    async function cargarDatosPlanta(id) {
+        try {
+            let planta = null;
+
+            // 1. PRIORIDAD MÁXIMA: Buscar en memoria (allPlantas o currentUser)
+            if (typeof allPlantas !== 'undefined' && allPlantas.length > 0) {
+                planta = allPlantas.find(p => String(p.ID_PLANTA || p.ID || '').trim() === String(id).trim());
+            }
+            if (!planta && typeof currentUser !== 'undefined' && currentUser) {
+                const cId = String(currentUser.ID_PLANTA || currentUser.ID_USUARIO || '').trim();
+                if (cId === String(id).trim()) planta = currentUser;
+            }
+
+            // 2. ÚLTIMO RECURSO: Usar la promesa pre-iniciada (o lanzar nueva si no existe)
+            if (!planta) {
+                const response = await (_plantaDataPromise || fetchSupabaseData('PLANTAS', {
+                    filters: [{ type: 'eq', column: 'ID_PLANTA', value: id }]
+                }));
+                if (response && response.length > 0) planta = response[0];
+            }
+
+            if (!planta) {
+                console.warn('[FAST-LOAD] No se encontró la planta');
+                const cedulaInput = document.getElementById('cedulaPlanta');
+                if (cedulaInput && !cedulaInput.value) cedulaInput.value = id;
+                return;
+            }
+
+            // 3. Población inmediata del formulario
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+            
+            setVal('cedulaPlanta', planta.ID_PLANTA || planta.ID || id);
+            setVal('nombrePlanta', planta.PLANTA);
+            setVal('direccionPlanta', planta.DIRECCION);
+            setVal('telefonoPlanta', planta.TELEFONO);
+            setVal('emailPlanta', planta.EMAIL || planta.CORREO);
+            setVal('contactoPlanta', planta.CONTACTO);
+            
+            // Manejar localización GPS si existe
+            if (planta.LOCALIZACION && planta.LOCALIZACION.trim() !== '') {
+                setVal('localizacionPlanta', planta.LOCALIZACION);
+                
+                // Ocultar pregunta y mostrar el mapa con la ubicación guardada
+                const preguntaCard = document.getElementById('gps-pregunta-card');
+                const mapaCard = document.getElementById('gps-planta-card');
+                const locInputContainer = document.getElementById('localizacionInputContainer');
+                
+                if (preguntaCard) preguntaCard.style.display = 'none';
+                if (locInputContainer) locInputContainer.style.display = 'block';
+                
+                if (mapaCard) {
+                    mapaCard.style.display = 'block';
+                    
+                    // Parsear coordenadas (formato: "lat, lng")
+                    const coords = planta.LOCALIZACION.split(',').map(c => c.trim());
+                    if (coords.length === 2) {
+                        const lat = coords[0];
+                        const lng = coords[1];
+                        
+                        // Calcular bbox para el mapa
+                        const delta = 0.0045;
+                        const minLng = (parseFloat(lng) - delta).toFixed(6);
+                        const minLat = (parseFloat(lat) - delta).toFixed(6);
+                        const maxLng = (parseFloat(lng) + delta).toFixed(6);
+                        const maxLat = (parseFloat(lat) + delta).toFixed(6);
+                        
+                        // Renderizar mapa con ubicación guardada
+                        mapaCard.innerHTML = `
+                            <div style="text-align:center;">
+                                <div style="margin-bottom:8px;">
+                                    <i class="fas fa-map-marked-alt" style="color:#10b981; font-size:1.5rem;"></i>
+                                    <p style="margin:4px 0 0; color:#10b981; font-weight:600; font-size:0.85rem;">Ubicación registrada</p>
+                                </div>
+                                <div style="border-radius:8px; overflow:hidden; border:2px solid #e2e8f0;">
+                                    <iframe 
+                                        width="100%" 
+                                        height="200" 
+                                        frameborder="0" 
+                                        style="border:0; display:block;" 
+                                        src="https://www.openstreetmap.org/export/embed.html?bbox=${minLng}%2C${minLat}%2C${maxLng}%2C${maxLat}&layer=mapnik&marker=${lat}%2C${lng}" 
+                                        allowfullscreen>
+                                    </iframe>
+                                </div>
+                                <p style="margin:8px 0 0; font-size:0.72rem; color:#64748b;">
+                                    <i class="fas fa-map-marker-alt me-1"></i> ${lat}, ${lng}
+                                </p>
+                                <button type="button" onclick="activarGpsPlanta()" style="
+                                    margin-top:8px; background:#f1f5f9; color:#475569; border:1px solid #cbd5e1;
+                                    padding:6px 16px; border-radius:6px; font-size:0.75rem; cursor:pointer;
+                                ">
+                                    <i class="fas fa-sync-alt me-1"></i> Actualizar ubicación
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+            } else {
+                // No hay localización guardada, dejar la pregunta visible
+                setVal('localizacionPlanta', '');
+            }
+
+            // 4. Ubicación Geográfica (Optimizado sin delays excesivos)
+            if (planta.PAIS) setVal('paisPlanta', planta.PAIS);
+            
+            if (planta.DEPARTAMENTO) {
+                const deptInput = document.getElementById('departamentoPlanta');
+                if (deptInput) {
+                    deptInput.value = planta.DEPARTAMENTO;
+                    departamentoSeleccionado = planta.DEPARTAMENTO;
+                    
+                    // Cargar ciudades del departamento
+                    if (typeof getCiudadesPorDepartamento === 'function') {
+                        ciudadesDisponibles = getCiudadesPorDepartamento(planta.DEPARTAMENTO);
+                        document.getElementById('ciudadContainer').style.display = 'block';
+                    }
+
+                    if (planta.CIUDAD) {
+                        const ciudadInput = document.getElementById('ciudadPlanta');
+                        if (ciudadInput) {
+                            ciudadInput.value = planta.CIUDAD;
+                            ciudadSeleccionada = planta.CIUDAD;
+                            
+                            // Cargar barrios de la ciudad
+                            if (typeof getBarriosPorCiudad === 'function') {
+                                barriosDisponibles = getBarriosPorCiudad(planta.CIUDAD);
+                                document.getElementById('barrioContainer').style.display = 'block';
+                                
+                                // Mostrar comuna si la ciudad la maneja
+                                if (typeof ciudadTieneComunas === 'function' && ciudadTieneComunas(planta.CIUDAD)) {
+                                    document.getElementById('comunaContainer').style.display = 'block';
+                                }
+                            }
+
+                            // Esperar a que se cree el campo de barrio
+                            setTimeout(() => {
+                                if (planta.BARRIO) {
+                                    const barrioInput = document.getElementById('barrioPlanta');
+                                    if (barrioInput) {
+                                        barrioInput.value = planta.BARRIO;
+                                    }
+                                }
+                                if (planta.COMUNA) {
+                                    setVal('comunaPlanta', planta.COMUNA);
+                                    // Mostrar botón de editar si hay comuna
+                                    setTimeout(() => mostrarBotonEditarComuna(), 100);
+                                }
+                            }, 300);
+                        }
+                    }
+                }
+            }
+
+            const notif = document.getElementById('checkNotificaciones');
+            if (notif && planta.NOTIFICACIONES !== undefined) {
+                notif.checked = (planta.NOTIFICACIONES === true || planta.NOTIFICACIONES === 'true');
+            }
+            const dataPol = document.getElementById('checkPoliticaDatos');
+            if (dataPol) {
+                // Cargar el valor guardado si existe, sino marcar por defecto
+                if (planta.ACEPTA_POLITICA_DATOS !== undefined) {
+                    dataPol.checked = (planta.ACEPTA_POLITICA_DATOS === true || planta.ACEPTA_POLITICA_DATOS === 'true');
+                } else {
+                    dataPol.checked = true; // Por defecto marcado para usuarios existentes
+                }
+            }
+
+            console.log('[FAST-LOAD] Formulario listo.');
+        } catch (e) {
+            console.error('[FAST-LOAD] Error crítico:', e);
+        }
+    }
+
+    // Pre-iniciar fetch de datos de la planta en paralelo con auth
+    // para que cuando window.onload llegue, los datos ya estén listos
+    let _plantaDataPromise = null;
+    if (plantaId) {
+      document.addEventListener('DOMContentLoaded', function() {
+        // Disparar fetch inmediatamente — no esperar loadUsers
+        _plantaDataPromise = fetchSupabaseData('PLANTAS', {
+          filters: [{ type: 'eq', column: 'ID_PLANTA', value: plantaId }]
+        }).catch(() => null);
+      });
+    }
+
+    // Mostrar el formulario vacío inmediatamente (DOMContentLoaded)
+    document.addEventListener('DOMContentLoaded', function() {
+      mostrarAlerta();
+      if (currentUser && currentUser.ROL === 'ADMIN') {
+        const ci = document.getElementById('cedulaPlanta');
+        const ni = document.getElementById('nombrePlanta');
+        if (ci) ci.removeAttribute('readonly');
+        if (ni) ni.removeAttribute('readonly');
+        document.querySelectorAll('[required]').forEach(el => el.removeAttribute('required'));
+      }
+    });
+
+    // Inicializar formulario completo cuando scripts defer ya cargaron
+    window.onload = function() {
+      inicializarFormulario();
+    };
+    
+    // Función principal de inicialización (se ejecuta en window.onload, después de defer)
+    async function inicializarFormulario() {
+      localStorage.removeItem('planta_form_draft');
+
+      // Inicializar masks y filtros de ubicación (requieren colombia-locations.js)
+      if (typeof initPlantasMasks === 'function') initPlantasMasks();
+      if (typeof initLocationFilters === 'function') initLocationFilters();
+      
+      // Manejar envío del formulario — delegar a handleActualizarDatosSubmit de plantas.js
+      const form = document.getElementById('gestionPlantaForm');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          if (typeof handleActualizarDatosSubmit === 'function') {
+            handleActualizarDatosSubmit(e);
+          } else {
+            e.preventDefault();
+            console.error('handleActualizarDatosSubmit no disponible');
+          }
+        });
+      }
+
+      // Cargar datos en background (No bloquea la aparición de la página)
+      if (isEdit && plantaId) {
+          cargarDatosPlanta(plantaId);
+      }
+    }
+
+    /** Control del Modal de Política (Versión Extensa) */
+    function mostrarPoliticaDatos() {
+      const modal = document.getElementById('modalPoliticaDatos');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+      }
+    }
+
+    function cerrarPoliticaDatos() {
+      const modal = document.getElementById('modalPoliticaDatos');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restaurar scroll del body
+      }
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modalPoliticaDatos')?.addEventListener('click', function(e) {
+      if (e.target === this) cerrarPoliticaDatos();
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') cerrarPoliticaDatos();
+    });
+
+    /**
+     * Toggle de visibilidad de contraseña
+     */
+    function togglePasswordVisibility(inputId, buttonId) {
+      const input = document.getElementById(inputId);
+      const button = document.getElementById(buttonId);
+      
+      if (!input || !button) return;
+      
+      const icon = button.querySelector('i');
+      
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+        button.style.color = '#3b82f6';
+      } else {
+        input.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+        button.style.color = '#94a3b8';
+      }
+    }
+
+    /**
+     * Valida la seguridad de la contraseña en tiempo real (NO restrictiva, solo informativa)
+     */
+    function validarSeguridadPassword() {
+      const password = document.getElementById('nuevaPassword').value;
+      const indicator = document.getElementById('passwordStrengthIndicator');
+      const icon = document.getElementById('strengthIcon');
+      const text = document.getElementById('strengthText');
+      const details = document.getElementById('strengthDetails');
+      
+      if (!password || password.trim() === '') {
+        indicator.style.display = 'none';
+        return;
+      }
+      
+      indicator.style.display = 'block';
+      
+      // Criterios de seguridad
+      const length = password.length;
+      const hasLower = /[a-z]/.test(password);
+      const hasUpper = /[A-Z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSymbol = /[^a-zA-Z0-9]/.test(password);
+      
+      // Calcular puntuación
+      let score = 0;
+      let criteriosCumplidos = [];
+      let criteriosFaltantes = [];
+      
+      if (length >= 8) {
+        score++;
+        criteriosCumplidos.push('8+ caracteres');
+      } else {
+        criteriosFaltantes.push('8+ caracteres');
+      }
+      
+      if (hasLower) {
+        score++;
+        criteriosCumplidos.push('minúsculas');
+      } else {
+        criteriosFaltantes.push('minúsculas');
+      }
+      
+      if (hasUpper) {
+        score++;
+        criteriosCumplidos.push('MAYÚSCULAS');
+      } else {
+        criteriosFaltantes.push('MAYÚSCULAS');
+      }
+      
+      if (hasNumber) {
+        score++;
+        criteriosCumplidos.push('números');
+      } else {
+        criteriosFaltantes.push('números');
+      }
+      
+      if (hasSymbol) {
+        score++;
+        criteriosCumplidos.push('símbolos');
+      } else {
+        criteriosFaltantes.push('símbolos');
+      }
+      
+      // Mostrar nivel de seguridad
+      if (score <= 2) {
+        // Débil
+        indicator.style.background = '#fef2f2';
+        indicator.style.border = '1px solid #fecaca';
+        indicator.style.color = '#991b1b';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña débil';
+        details.innerHTML = `<strong>Cumple:</strong> ${criteriosCumplidos.join(', ') || 'ninguno'}<br><strong>Falta:</strong> ${criteriosFaltantes.join(', ')}`;
+      } else if (score <= 3) {
+        // Media
+        indicator.style.background = '#fef3c7';
+        indicator.style.border = '1px solid #fde68a';
+        indicator.style.color = '#92400e';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña media';
+        details.innerHTML = `<strong>Cumple:</strong> ${criteriosCumplidos.join(', ')}<br><strong>Sugerencia:</strong> Agrega ${criteriosFaltantes.join(' y ')} para mayor seguridad`;
+      } else if (score <= 4) {
+        // Fuerte
+        indicator.style.background = '#dbeafe';
+        indicator.style.border = '1px solid #93c5fd';
+        indicator.style.color = '#1e40af';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña fuerte';
+        details.innerHTML = `<strong>Cumple:</strong> ${criteriosCumplidos.join(', ')}<br><strong>Sugerencia:</strong> ${criteriosFaltantes.length > 0 ? 'Agrega ' + criteriosFaltantes.join(' y ') + ' para máxima seguridad' : '¡Excelente!'}`;
+      } else {
+        // Muy fuerte
+        indicator.style.background = '#d1fae5';
+        indicator.style.border = '1px solid #6ee7b7';
+        indicator.style.color = '#065f46';
+        icon.className = 'fas fa-shield-alt';
+        text.textContent = 'Contraseña muy fuerte';
+        details.innerHTML = `<strong>✓ Cumple todos los criterios:</strong> ${criteriosCumplidos.join(', ')}`;
+      }
+      
+      // También validar coincidencia si ya hay algo en confirmar
+      validarCoincidenciaPassword();
+    }
+
+    /**
+     * Valida que las contraseñas coincidan en tiempo real
+     */
+    function validarCoincidenciaPassword() {
+      const password = document.getElementById('nuevaPassword').value;
+      const confirm = document.getElementById('confirmarPassword').value;
+      const indicator = document.getElementById('passwordMatchIndicator');
+      const icon = document.getElementById('matchIcon');
+      const text = document.getElementById('matchText');
+      
+      // Solo mostrar si hay algo en el campo de confirmación
+      if (!confirm || confirm.trim() === '') {
+        indicator.style.display = 'none';
+        return;
+      }
+      
+      indicator.style.display = 'block';
+      
+      if (password === confirm) {
+        // Coinciden
+        indicator.style.background = '#d1fae5';
+        indicator.style.border = '1px solid #6ee7b7';
+        indicator.style.color = '#065f46';
+        icon.className = 'fas fa-check-circle';
+        text.textContent = 'Las contraseñas coinciden';
+      } else {
+        // No coinciden
+        indicator.style.background = '#fef2f2';
+        indicator.style.border = '1px solid #fecaca';
+        indicator.style.color = '#991b1b';
+        icon.className = 'fas fa-times-circle';
+        text.textContent = 'Las contraseñas no coinciden';
+      }
+    }
+
+    /**
+     * Habilita la edición manual del campo de comuna
+     */
+    function habilitarEdicionComuna() {
+      const comunaInput = document.getElementById('comunaPlanta');
+      const btnEditar = document.getElementById('btnEditarComuna');
+      const container = comunaInput?.parentElement;
+      
+      if (!comunaInput || !btnEditar || !container) return;
+      
+      if (comunaInput.tagName === 'INPUT') {
+        // Guardar valor actual (puede ser solo número o "Comuna X")
+        let valorActual = comunaInput.value;
+        // Extraer solo el número si viene como "Comuna X"
+        const match = valorActual.match(/\d+/);
+        const numeroActual = match ? match[0] : '';
+        
+        // Obtener el icono
+        const icon = container.querySelector('.fas');
+        
+        // Limpiar contenedor
+        container.innerHTML = '';
+        if (icon) container.appendChild(icon);
+        
+        // Crear select con comunas del 1 al 22
+        const select = document.createElement('select');
+        select.id = 'comunaPlanta';
+        select.className = 'form-control';
+        select.style.paddingRight = '45px';
+        
+        // Opción por defecto (deshabilitada)
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Seleccione comuna';
+        defaultOption.disabled = true;
+        defaultOption.selected = !numeroActual; // Solo seleccionada si no hay valor actual
+        select.appendChild(defaultOption);
+        
+        // Agregar comunas del 1 al 22
+        for (let i = 1; i <= 22; i++) {
+          const option = document.createElement('option');
+          option.value = i.toString(); // Guardar solo el número
+          option.textContent = i.toString(); // Mostrar solo el número
+          if (numeroActual === i.toString()) {
+            option.selected = true;
+          }
+          select.appendChild(option);
+        }
+        
+        // Insertar select
+        container.appendChild(select);
+        
+        // Cambiar icono a guardar
+        btnEditar.innerHTML = '<i class="fas fa-check"></i>';
+        btnEditar.style.color = '#10b981';
+        btnEditar.title = 'Confirmar cambio';
+        btnEditar.onclick = function() { confirmarEdicionComuna(); };
+        
+        // Focus en el select
+        select.focus();
+      }
+    }
+
+    /**
+     * Confirma la edición manual de la comuna
+     */
+    function confirmarEdicionComuna() {
+      const comunaSelect = document.getElementById('comunaPlanta');
+      const btnEditar = document.getElementById('btnEditarComuna');
+      const container = comunaSelect?.parentElement;
+      
+      if (!comunaSelect || !btnEditar || !container) return;
+      
+      if (comunaSelect.tagName === 'SELECT') {
+        // Guardar valor seleccionado (solo el número)
+        const numeroSeleccionado = comunaSelect.value;
+        
+        if (!numeroSeleccionado || numeroSeleccionado.trim() === '') {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Selecciona una comuna',
+            text: 'Debes seleccionar una comuna antes de confirmar.',
+            confirmButtonColor: '#3F51B5',
+            toast: true,
+            position: 'top-end',
+            timer: 2000,
+            showConfirmButton: false
+          });
+          return;
+        }
+        
+        // Obtener el icono
+        const icon = container.querySelector('.fas');
+        
+        // Limpiar contenedor
+        container.innerHTML = '';
+        if (icon) container.appendChild(icon);
+        
+        // Crear input readonly con el número (se guardará solo el número)
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'comunaPlanta';
+        input.className = 'form-control';
+        input.value = numeroSeleccionado; // Solo el número
+        input.readOnly = true;
+        input.placeholder = 'Se llena automáticamente';
+        input.style.paddingRight = '45px';
+        
+        // Insertar input
+        container.appendChild(input);
+        
+        // Restaurar icono a editar
+        btnEditar.innerHTML = '<i class="fas fa-edit"></i>';
+        btnEditar.style.color = '#3b82f6';
+        btnEditar.title = 'Editar comuna';
+        btnEditar.onclick = function() { habilitarEdicionComuna(); };
+        
+        // Mostrar confirmación visual
+        Swal.fire({
+          icon: 'success',
+          title: 'Comuna actualizada',
+          text: `Se guardará: ${numeroSeleccionado}`,
+          timer: 1500,
+          showConfirmButton: false,
+          toast: true,
+          position: 'top-end'
+        });
+      }
+    }
+
+    /**
+     * Muestra el botón de editar comuna cuando hay un valor
+     */
+    function mostrarBotonEditarComuna() {
+      const comunaInput = document.getElementById('comunaPlanta');
+      const btnEditar = document.getElementById('btnEditarComuna');
+      
+      if (!comunaInput || !btnEditar) return;
+      
+      // Mostrar botón solo si hay un valor en la comuna
+      if (comunaInput.value && comunaInput.value.trim() !== '') {
+        btnEditar.style.display = 'block';
+      } else {
+        btnEditar.style.display = 'none';
+      }
+    }
+
+    // Exponer funciones globalmente
+    window.togglePasswordVisibility = togglePasswordVisibility;
+    window.validarSeguridadPassword = validarSeguridadPassword;
+    window.validarCoincidenciaPassword = validarCoincidenciaPassword;
+    window.habilitarEdicionComuna = habilitarEdicionComuna;
+    window.confirmarEdicionComuna = confirmarEdicionComuna;
+    window.mostrarBotonEditarComuna = mostrarBotonEditarComuna;
+    
+    // ═══════════════════════════════════════════════════════════════════
+    // AUTOCOMPLETADO INTELIGENTE PARA DEPARTAMENTOS, CIUDADES Y BARRIOS
+    // ═══════════════════════════════════════════════════════════════════
+    
+    let departamentosDisponibles = [];
+    let ciudadesDisponibles = [];
+    let barriosDisponibles = [];
+    let departamentoSeleccionado = '';
+    let ciudadSeleccionada = '';
+    
+    // Funciones para Departamentos
+    window.filtrarDepartamentos = function(texto) {
+      const lista = document.getElementById('listaDepartamentos');
+      const input = document.getElementById('departamentoPlanta');
+      
+      if (!texto || texto.trim() === '') {
+        mostrarListaDepartamentos();
+        return;
+      }
+      
+      const textoLower = texto.toLowerCase();
+      const filtrados = departamentosDisponibles.filter(dept => 
+        dept.toLowerCase().includes(textoLower)
+      );
+      
+      renderizarLista(lista, filtrados, (item) => seleccionarDepartamento(item));
+    };
+    
+    window.mostrarListaDepartamentos = function() {
+      const lista = document.getElementById('listaDepartamentos');
+      renderizarLista(lista, departamentosDisponibles, (item) => seleccionarDepartamento(item));
+      lista.style.display = 'block';
+    };
+    
+    window.ocultarListaDepartamentos = function() {
+      document.getElementById('listaDepartamentos').style.display = 'none';
+    };
+    
+    function seleccionarDepartamento(departamento) {
+      const input = document.getElementById('departamentoPlanta');
+      input.value = departamento;
+      departamentoSeleccionado = departamento;
+      ocultarListaDepartamentos();
+      
+      // Cargar ciudades del departamento
+      if (typeof getCiudadesPorDepartamento === 'function') {
+        ciudadesDisponibles = getCiudadesPorDepartamento(departamento);
+        document.getElementById('ciudadContainer').style.display = 'block';
+        document.getElementById('ciudadPlanta').value = '';
+        document.getElementById('barrioContainer').style.display = 'none';
+        document.getElementById('comunaContainer').style.display = 'none';
+      }
+    }
+    
+    // Funciones para Ciudades
+    window.filtrarCiudades = function(texto) {
+      const lista = document.getElementById('listaCiudades');
+      
+      if (!texto || texto.trim() === '') {
+        mostrarListaCiudades();
+        return;
+      }
+      
+      const textoLower = texto.toLowerCase();
+      const filtrados = ciudadesDisponibles.filter(ciudad => 
+        ciudad.toLowerCase().includes(textoLower)
+      );
+      
+      renderizarLista(lista, filtrados, (item) => seleccionarCiudad(item));
+    };
+    
+    window.mostrarListaCiudades = function() {
+      const lista = document.getElementById('listaCiudades');
+      renderizarLista(lista, ciudadesDisponibles, (item) => seleccionarCiudad(item));
+      lista.style.display = 'block';
+    };
+    
+    window.ocultarListaCiudades = function() {
+      document.getElementById('listaCiudades').style.display = 'none';
+    };
+    
+    function seleccionarCiudad(ciudad) {
+      const input = document.getElementById('ciudadPlanta');
+      input.value = ciudad;
+      ciudadSeleccionada = ciudad;
+      ocultarListaCiudades();
+      
+      console.log('[Ciudad] Seleccionada:', ciudad);
+      
+      // Cargar barrios de la ciudad
+      if (typeof getBarriosPorCiudad === 'function') {
+        barriosDisponibles = getBarriosPorCiudad(ciudad);
+        console.log('[Barrios] Disponibles:', barriosDisponibles.length);
+        document.getElementById('barrioContainer').style.display = 'block';
+        document.getElementById('barrioPlanta').value = '';
+        
+        // Mostrar comuna si la ciudad la maneja
+        if (typeof ciudadTieneComunas === 'function' && ciudadTieneComunas(ciudad)) {
+          console.log('[Comuna] Ciudad tiene comunas:', ciudad);
+          const comunaContainer = document.getElementById('comunaContainer');
+          const comunaInput = document.getElementById('comunaPlanta');
+          
+          comunaContainer.style.display = 'block';
+          if (comunaInput) {
+            comunaInput.value = '';
+            // Asegurar que el botón de editar esté oculto inicialmente
+            const btnEditar = document.getElementById('btnEditarComuna');
+            if (btnEditar) btnEditar.style.display = 'none';
+          }
+        } else {
+          document.getElementById('comunaContainer').style.display = 'none';
+        }
+      }
+    }
+    
+    // Funciones para Barrios
+    window.filtrarBarrios = function(texto) {
+      const lista = document.getElementById('listaBarrios');
+      const input = document.getElementById('barrioPlanta');
+      
+      if (!texto || texto.trim() === '') {
+        if (barriosDisponibles.length > 0) {
+          mostrarListaBarrios();
+        }
+        return;
+      }
+      
+      const textoLower = texto.toLowerCase();
+      const filtrados = barriosDisponibles.filter(barrio => 
+        barrio.toLowerCase().includes(textoLower)
+      );
+      
+      if (filtrados.length > 0) {
+        renderizarLista(lista, filtrados, (item) => seleccionarBarrio(item));
+      } else {
+        // Si no hay coincidencias y es Cali, permitir escribir barrio libre y habilitar comuna
+        if (ciudadSeleccionada === 'Cali') {
+          lista.innerHTML = '<div class="autocomplete-no-results">No se encontró el barrio. Puedes escribirlo manualmente y seleccionar la comuna.</div>';
+          lista.style.display = 'block';
+          habilitarSeleccionComunaManual();
+        } else {
+          lista.innerHTML = '<div class="autocomplete-no-results">No se encontraron resultados</div>';
+          lista.style.display = 'block';
+        }
+      }
+    };
+    
+    window.mostrarListaBarrios = function() {
+      const lista = document.getElementById('listaBarrios');
+      if (barriosDisponibles.length > 0) {
+        renderizarLista(lista, barriosDisponibles, (item) => seleccionarBarrio(item));
+        lista.style.display = 'block';
+      }
+    };
+    
+    window.ocultarListaBarrios = function() {
+      document.getElementById('listaBarrios').style.display = 'none';
+    };
+    
+    function seleccionarBarrio(barrio) {
+      const input = document.getElementById('barrioPlanta');
+      input.value = barrio;
+      ocultarListaBarrios();
+      
+      // Auto-llenar comuna si es Cali
+      if (ciudadSeleccionada === 'Cali' && typeof getComunaPorBarrio === 'function') {
+        const comuna = getComunaPorBarrio(barrio);
+        console.log('[Barrio] Seleccionado:', barrio, '→ Comuna retornada:', comuna, 'Tipo:', typeof comuna);
+        
+        if (comuna !== null && comuna !== undefined) {
+          const comunaInput = document.getElementById('comunaPlanta');
+          const comunaContainer = document.getElementById('comunaContainer');
+          
+          console.log('[Comuna] Input encontrado:', !!comunaInput, 'Container visible:', comunaContainer?.style.display);
+          
+          if (comunaInput && comunaContainer) {
+            // Asegurar que el contenedor esté visible
+            comunaContainer.style.display = 'block';
+            
+            // Convertir a string el número
+            const numeroComuna = String(comuna);
+            
+            console.log('[Comuna] Asignando valor:', numeroComuna, 'al campo tipo:', comunaInput.tagName);
+            
+            // Si el campo es un select, convertirlo a input primero
+            if (comunaInput.tagName === 'SELECT') {
+              console.log('[Comuna] Convirtiendo SELECT a INPUT');
+              const container = comunaInput.parentElement;
+              const icon = container.querySelector('.fas');
+              container.innerHTML = '';
+              if (icon) container.appendChild(icon);
+              
+              const newInput = document.createElement('input');
+              newInput.type = 'text';
+              newInput.id = 'comunaPlanta';
+              newInput.className = 'form-control';
+              newInput.value = numeroComuna;
+              newInput.readOnly = true;
+              newInput.placeholder = 'Se llena automáticamente';
+              newInput.style.paddingRight = '45px';
+              container.appendChild(newInput);
+              
+              console.log('[Comuna] INPUT creado con valor:', newInput.value);
+            } else {
+              // Si ya es input, solo asignar el valor
+              comunaInput.value = numeroComuna;
+              console.log('[Comuna] Valor asignado a INPUT existente:', comunaInput.value);
+            }
+            
+            // Mostrar botón de editar
+            setTimeout(() => {
+              if (typeof mostrarBotonEditarComuna === 'function') {
+                mostrarBotonEditarComuna();
+                console.log('[Comuna] Botón de editar mostrado');
+              }
+            }, 100);
+          } else {
+            console.error('[Comuna] No se encontró el input o container');
+          }
+        } else {
+          console.warn('[Barrio] No se encontró comuna para:', barrio);
+        }
+      } else {
+        console.log('[Barrio] No es Cali o función no disponible. Ciudad:', ciudadSeleccionada);
+      }
+    }
+    
+    function habilitarSeleccionComunaManual() {
+      // Si el usuario escribe un barrio que no está en la lista y es Cali,
+      // habilitar la edición de comuna automáticamente
+      if (ciudadSeleccionada === 'Cali') {
+        setTimeout(() => {
+          const btnEditar = document.getElementById('btnEditarComuna');
+          if (btnEditar) {
+            btnEditar.style.display = 'block';
+            // Simular click en editar para mostrar el select de comunas
+            if (typeof habilitarEdicionComuna === 'function') {
+              habilitarEdicionComuna();
+            }
+          }
+        }, 300);
+      }
+    }
+    
+    // Función auxiliar para renderizar listas
+    function renderizarLista(contenedor, items, onSelect) {
+      if (!contenedor) return;
+      
+      if (items.length === 0) {
+        contenedor.innerHTML = '<div class="autocomplete-no-results">No hay opciones disponibles</div>';
+        contenedor.style.display = 'block';
+        return;
+      }
+      
+      contenedor.innerHTML = '';
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'autocomplete-item';
+        div.textContent = item;
+        div.onclick = () => onSelect(item);
+        contenedor.appendChild(div);
+      });
+      contenedor.style.display = 'block';
+    }
+    
+    // Inicializar departamentos cuando cargue la página
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof DEPARTAMENTOS_COLOMBIA !== 'undefined') {
+        departamentosDisponibles = DEPARTAMENTOS_COLOMBIA;
+      }
+    });
+  </script>
+</body>
+</html>

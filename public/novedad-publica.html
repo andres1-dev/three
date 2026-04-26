@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Novedades | Grupo TDM</title>
+    
+    <!-- Prevenir caché completamente -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=2">
+    <link rel="alternate icon" type="image/svg+xml" href="icons/app.svg?v=2">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg?v=2">
+    <link rel="shortcut icon" href="icons/favicon.svg?v=2">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 760px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: white;
+            padding: 32px 24px 24px 24px;
+            text-align: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+
+        .header-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-logo img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+        }
+
+        .header h1 {
+            font-family: 'Inter', sans-serif;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            color: #202124;
+        }
+
+        .header p {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #5f6368;
+        }
+
+        /* Mensaje informativo colapsable */
+        .info-collapse {
+            margin-top: 20px;
+            background: #f8f9fa;
+            border: 1px solid #e8eaed;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .info-collapse summary {
+            padding: 16px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5f6368;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .info-collapse summary:hover {
+            background: #f1f3f4;
+            color: #667eea;
+        }
+
+        .info-collapse summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .info-collapse summary .fa-info-circle {
+            color: #667eea;
+            font-size: 1rem;
+        }
+
+        .info-collapse summary span {
+            flex: 1;
+        }
+
+        .info-collapse summary .chevron-icon {
+            font-size: 0.75rem;
+            transition: transform 0.3s ease;
+        }
+
+        .info-collapse[open] summary .chevron-icon {
+            transform: rotate(180deg);
+        }
+
+        .info-collapse[open] {
+            background: white;
+            border-color: #667eea;
+        }
+
+        .info-collapse[open] summary {
+            background: #f8f9fa;
+            border-bottom: 1px solid #e8eaed;
+            color: #667eea;
+        }
+
+        .info-content {
+            padding: 20px;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-content ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .info-content ul li {
+            padding: 8px 0;
+            font-size: 0.875rem;
+            color: #5f6368;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .info-content ul li i {
+            color: #667eea;
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .form-content {
+            padding: 32px 24px;
+        }
+
+        .section-title {
+            font-family: 'Google Sans', 'Roboto', sans-serif;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #202124;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .section-description {
+            font-size: 0.875rem;
+            color: #5f6368;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            position: relative;
+        }
+
+        .form-group.field-locked {
+            opacity: 0.4;
+            pointer-events: none;
+            transform: translateY(10px);
+        }
+
+        .form-group.field-locked::before {
+            content: '🔒 Completa el campo anterior';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 20px;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5f6368;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            white-space: nowrap;
+        }
+
+        .form-group.field-reveal {
+            animation: revealField 0.4s ease forwards;
+        }
+
+        @keyframes revealField {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5f6368;
+            margin-bottom: 8px;
+        }
+
+        .form-label .required {
+            color: #d93025;
+            margin-left: 2px;
+        }
+
+        .form-label .optional-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.625rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-left: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            vertical-align: middle;
+        }
+
+        .form-label .helper-text {
+            display: block;
+            font-size: 0.75rem;
+            color: #5f6368;
+            font-weight: 400;
+            margin-top: 4px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper.select-wrapper::after {
+            content: '';
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #5f6368;
+            pointer-events: none;
+            transition: border-top-color 0.2s ease;
+        }
+
+        .input-wrapper.select-wrapper:hover::after {
+            border-top-color: #667eea;
+        }
+
+        .input-wrapper.select-wrapper:focus-within::after {
+            border-top-color: #667eea;
+        }
+
+        .input-wrapper.select-wrapper.success::after {
+            border-top-color: #1e8e3e;
+        }
+
+        .input-wrapper.select-wrapper.error::after {
+            border-top-color: #d93025;
+        }
+
+        .input-wrapper:hover .form-control {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .input-wrapper:hover .input-icon {
+            color: #667eea;
+        }
+
+        .input-wrapper:focus-within .form-control {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .input-wrapper:focus-within .input-icon {
+            color: #667eea;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.75rem;
+            pointer-events: none;
+            z-index: 1;
+            transition: color 0.2s ease;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 20px 10px 44px;
+            border: 1px solid #dadce0;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            color: #5f6368;
+            background: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            border-width: 1px;
+            padding: 10px 20px 10px 44px;
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .form-control::placeholder {
+            color: #9ca3af;
+            font-weight: 400;
+        }
+
+        /* Estilos para inputs con datalist (autocompletado) */
+        input[list]::-webkit-calendar-picker-indicator {
+            display: none !important;
+        }
+
+        input[list] {
+            position: relative;
+            padding-right: 44px;
+        }
+
+        /* Dropdown personalizado para filtrado en móvil */
+        .custom-dropdown-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        .custom-dropdown-wrapper input {
+            padding-right: 20px;
+            padding-left: 44px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Icono de la izquierda (específico del área) */
+        .custom-dropdown-wrapper .input-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.75rem;
+            pointer-events: none;
+            z-index: 2;
+            transition: color 0.2s ease;
+        }
+
+        .custom-dropdown-wrapper:has(input:hover) .input-icon,
+        .custom-dropdown-wrapper:has(input:focus) .input-icon {
+            color: #667eea;
+        }
+
+        /* Cuando el dropdown está abierto, aumentar z-index del wrapper */
+        .custom-dropdown-wrapper:has(.custom-dropdown-suggestions[style*="display: block"]) {
+            z-index: 1001;
+        }
+
+        .custom-dropdown-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #dadce0;
+            border-top: none;
+            border-radius: 0 0 16px 16px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1002;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            margin-top: -1px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .custom-dropdown-suggestions li {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            color: #202124;
+            transition: background 0.2s ease;
+            border-bottom: 1px solid #f1f3f4;
+            background: white;
+        }
+
+        .custom-dropdown-suggestions li:first-child {
+            border-radius: 0;
+        }
+
+        .custom-dropdown-suggestions li:last-child {
+            border-bottom: none;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .custom-dropdown-suggestions li:hover {
+            background: #f8f9fa;
+            color: #667eea;
+        }
+
+        .custom-dropdown-suggestions li:active {
+            background: #e8eaed;
+        }
+
+        /* Scroll suave para el dropdown */
+        .custom-dropdown-suggestions::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-dropdown-suggestions::-webkit-scrollbar-track {
+            background: #f1f3f4;
+            border-radius: 0 0 16px 0;
+        }
+
+        .custom-dropdown-suggestions::-webkit-scrollbar-thumb {
+            background: #dadce0;
+            border-radius: 3px;
+        }
+
+        .custom-dropdown-suggestions::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        /* Indicador visual para campos con autocompletado */
+        .input-wrapper:has(input[list])::after {
+            content: '\f002';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            pointer-events: none;
+            font-size: 0.75rem;
+            transition: color 0.2s ease;
+        }
+
+        .input-wrapper:has(input[list]:focus)::after {
+            color: #667eea;
+            content: '\f0d7';
+        }
+
+        .input-wrapper:has(input[list].success)::after {
+            color: #1e8e3e;
+            content: '\f00c';
+        }
+
+        .input-wrapper:has(input[list].error)::after {
+            color: #d93025;
+            content: '\f00d';
+        }
+
+        .form-control.error {
+            border-color: #d93025 !important;
+            background: #fce8e6 !important;
+            color: #d93025 !important;
+        }
+
+        .form-control.error:hover,
+        .form-control.error:focus {
+            border-color: #d93025 !important;
+            background: #fce8e6 !important;
+            color: #d93025 !important;
+        }
+
+        .input-wrapper:has(.form-control.error) .input-icon {
+            color: #d93025 !important;
+        }
+
+        .input-wrapper.select-wrapper:has(.form-control.error)::after {
+            border-top-color: #d93025 !important;
+        }
+
+        .input-wrapper:has(input[list].error)::after {
+            color: #d93025 !important;
+            content: '\f00d' !important;
+        }
+
+        .form-control.success {
+            border-color: #1e8e3e;
+        }
+
+        .error-message {
+            display: none;
+            font-size: 0.75rem;
+            color: #d93025;
+            margin-top: 6px;
+            padding-left: 16px;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        textarea.form-control {
+            min-height: 100px;
+            resize: vertical;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            padding-top: 10px;
+            padding-left: 44px;
+        }
+
+        textarea.form-control.textarea-clean {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        textarea.form-control:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        textarea.form-control:focus {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+            padding: 10px 20px 10px 20px;
+        }
+
+        textarea.form-control.textarea-clean:focus {
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        select.form-control {
+            cursor: pointer;
+            appearance: none;
+            background-image: none;
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            padding-right: 44px;
+            color: #5f6368;
+            transition: all 0.2s ease;
+        }
+
+        select.form-control:hover {
+            background-color: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        select.form-control:focus {
+            background-color: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        select.form-control option {
+            color: #202124;
+            background: white;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+
+        .btn-primary:active:not(:disabled) {
+            background: #4c51bf;
+        }
+
+        .btn-primary:disabled {
+            background: #f1f3f4;
+            color: #80868b;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 12px 24px;
+            background: white;
+            color: #667eea;
+            border: 1px solid #dadce0;
+            border-radius: 24px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+
+        .btn-secondary:disabled {
+            background: #f1f3f4;
+            color: #80868b;
+            cursor: not-allowed;
+            border-color: #dadce0;
+        }
+
+        .info-card {
+            background: #f8f9fa;
+            border: 1px solid #dadce0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 28px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e8eaed;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-row:first-child {
+            padding-top: 0;
+        }
+
+        .info-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5f6368;
+        }
+
+        .info-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .info-value .fecha-verde {
+            color: #1e8e3e;
+            font-weight: 400;
+        }
+
+        .info-value .fecha-rojo {
+            color: #d93025;
+            font-weight: 400;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .file-upload {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        .file-upload input[type="file"] {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 40px 20px;
+            border: 2px dashed #dadce0;
+            border-radius: 16px;
+            background: #fafbfc;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .file-upload-label:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .file-upload-label:hover .file-upload-icon {
+            background: #667eea;
+            transform: scale(1.05);
+        }
+
+        .file-upload-label:hover .file-upload-icon i {
+            color: white;
+        }
+
+        .file-upload-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #e8eaed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .file-upload-icon i {
+            font-size: 1.75rem;
+            color: #5f6368;
+            transition: color 0.2s ease;
+        }
+
+        .file-upload-text {
+            font-size: 0.875rem;
+            color: #5f6368;
+            line-height: 1.5;
+        }
+
+        .file-upload-text strong {
+            color: #202124;
+            display: block;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 0.9375rem;
+        }
+
+        .file-upload-label:hover .file-upload-text strong {
+            color: #667eea;
+        }
+
+        .file-preview {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border: 1px solid #dadce0;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-preview-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-preview-icon {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-preview-name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #202124;
+        }
+
+        .file-preview-remove {
+            background: none;
+            border: none;
+            color: #d93025;
+            cursor: pointer;
+            font-size: 1.25rem;
+            padding: 8px;
+            border-radius: 50%;
+        }
+
+        .file-preview-remove:hover {
+            background: #fce8e6;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        .alert i {
+            font-size: 1.25rem;
+            margin-top: 2px;
+        }
+
+        .alert-info {
+            background: #e8f0fe;
+            border: 1px solid #d2e3fc;
+            color: #1967d2;
+        }
+
+        .alert-warning {
+            background: #fef7e0;
+            border: 1px solid #fce8b2;
+            color: #b06000;
+        }
+
+        .alert-success {
+            background: #e6f4ea;
+            border: 1px solid #ceead6;
+            color: #137333;
+        }
+
+        .alert-error {
+            background: #fce8e6;
+            border: 1px solid #f6aea9;
+            color: #c5221f;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #e8eaed;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s ease;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .step-indicator::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: #e8eaed;
+            z-index: 0;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e8eaed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #5f6368;
+            transition: all 0.2s ease;
+        }
+
+        .step-circle i {
+            font-size: 0.875rem;
+        }
+
+        .step.active .step-circle {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background: #1e8e3e;
+            border-color: #1e8e3e;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: #5f6368;
+            text-align: center;
+        }
+
+        .step.active .step-label {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        /* Campos dinámicos */
+        .dynamic-item {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #e8eaed;
+            border-radius: 16px;
+            position: relative;
+            overflow: visible;
+        }
+
+        .dynamic-item:hover {
+            border-color: #dadce0;
+        }
+
+        .dynamic-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .btn-add-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: white;
+            border: 1px solid #dadce0;
+            border-radius: 24px;
+            color: #5f6368;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .btn-add-item:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .btn-add-item i {
+            font-size: 0.75rem;
+        }
+
+        .btn-remove-item {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 6px;
+            background: transparent;
+            border: none;
+            color: #5f6368;
+            cursor: pointer;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1rem;
+        }
+
+        .btn-remove-item:hover {
+            background: #fce8e6;
+            color: #d93025;
+        }
+
+        @media (max-width: 768px) {
+            .dynamic-item {
+                grid-template-columns: 1fr;
+                padding: 16px;
+                padding-top: 40px;
+            }
+
+            .btn-remove-item {
+                top: 8px;
+                right: 8px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                border-radius: 8px;
+            }
+
+            .form-content {
+                padding: 24px 16px;
+            }
+
+            .header {
+                padding: 24px 16px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .step-indicator {
+                margin-bottom: 24px;
+            }
+
+            .step-label {
+                font-size: 0.625rem;
+            }
+
+            .step-circle {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+        }
+
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 32px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e8eaed;
+            border-top: 4px solid #673ab7;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        .loading-text {
+            font-size: 0.875rem;
+            color: #5f6368;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-logo">
+                <img src="icons/app.svg" alt="Logo Grupo TDM">
+            </div>
+            <h1>Reporte de Novedades</h1>
+        </div>
+
+        <!-- Form Content -->
+        <div class="form-content">
+            <!-- Progress Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Buscar OP</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Confirmar</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Detalles</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Enviar</div>
+                </div>
+                <div class="step" id="step5">
+                    <div class="step-circle"><i class="fas fa-check"></i></div>
+                    <div class="step-label">Realizado</div>
+                </div>
+            </div>
+
+            <form id="novedadForm">
+                <!-- Sección 1: Búsqueda de OP -->
+                <div id="seccionBusqueda">
+                    <div class="section-title">Buscar Orden de Producción</div>
+                    <div class="section-description">
+                        Ingresa el número de OP para cargar automáticamente la información del producto asociado.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Orden de Producción <span class="required">*</span>
+                            <span class="helper-text">Ejemplo: 4180</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-search input-icon"></i>
+                            <input 
+                                type="text" 
+                                id="opInput" 
+                                class="form-control" 
+                                placeholder="Ingresa el número de OP"
+                                required
+                                pattern="[0-9]+"
+                                title="Solo se permiten números"
+                            >
+                        </div>
+                        <div class="error-message" id="opError">El número de OP es obligatorio para continuar con el reporte</div>
+                    </div>
+
+                    <button type="button" id="btnBuscarOP" class="btn-primary">
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Continuar</span>
+                    </button>
+                </div>
+
+                <!-- Sección 2: Información del Producto y Detalles -->
+                <div id="seccionDetalles" class="hidden">
+                    <div class="section-title">Información del Producto</div>
+                    <div class="section-description">
+                        Verifica que la información coincida con tu orden de producción. Si algo no es correcto, puedes regresar y cambiar el número de OP.
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-row">
+                            <span class="info-label">Planta:</span>
+                            <span class="info-value" id="infoPlanta">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Referencia:</span>
+                            <span class="info-value" id="infoReferencia">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Orden de Producción:</span>
+                            <span class="info-value" id="infoOP">-</span>
+                        </div>
+                        <div class="info-row" id="infoProcesoRow" style="display: none;">
+                            <span class="info-label">Proceso:</span>
+                            <span class="info-value" id="infoProceso">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Cantidad:</span>
+                            <span class="info-value" id="infoCantidad">-</span>
+                        </div>
+                        <div class="info-row" id="infoPrendaRow" style="display: none;">
+                            <span class="info-label">Tipo de Prenda:</span>
+                            <span class="info-value" id="infoPrenda">-</span>
+                        </div>
+                        <div class="info-row" id="infoTejidoRow" style="display: none;">
+                            <span class="info-label">Tipo de Tejido:</span>
+                            <span class="info-value" id="infoTejido">-</span>
+                        </div>
+                        <div class="info-row" id="infoGeneroRow" style="display: none;">
+                            <span class="info-label">Género:</span>
+                            <span class="info-value" id="infoGenero">-</span>
+                        </div>
+                        <div class="info-row" id="infoCuentoRow" style="display: none;">
+                            <span class="info-label">Cuento:</span>
+                            <span class="info-value" id="infoCuento">-</span>
+                        </div>
+                        <div class="info-row" id="infoSalidaRow" style="display: none;">
+                            <span class="info-label">Fecha de Salida:</span>
+                            <span class="info-value" id="infoSalida">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Campo de correo electrónico (opcional, solo si la planta no tiene email) -->
+                    <div id="correoGroup" class="form-group hidden" style="margin-top: 24px;">
+                        <label class="form-label">
+                            Correo Electrónico 
+                            <span class="optional-badge">Opcional</span>
+                            <span class="helper-text">¿Deseas recibir notificaciones por correo? Proporciona tu email (solo se solicitará una vez)</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input 
+                                type="email" 
+                                id="correoInput" 
+                                class="form-control" 
+                                placeholder="ejemplo@correo.com"
+                                maxlength="100"
+                            >
+                        </div>
+                        <div class="error-message" id="correoError">Por favor ingresa un correo válido</div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button type="button" id="btnVolverBusqueda" class="btn-secondary" style="flex: 1;">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <button type="button" id="btnConfirmarProducto" class="btn-primary" style="flex: 2;">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Continuar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección 3: Detalles de la Novedad -->
+                <div id="seccionNovedadDetalles" class="hidden">
+                    <div class="section-title">Detalles de la Novedad</div>
+                    <div class="section-description">
+                        Completa la información sobre la incidencia que deseas reportar.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Área de Servicios <span class="required">*</span>
+                            <span class="helper-text">Selecciona el área relacionada con la novedad</span>
+                        </label>
+                        <div class="input-wrapper select-wrapper">
+                            <i class="fas fa-building input-icon"></i>
+                            <select id="area" class="form-control" required>
+                                <option value="">Seleccione un área...</option>
+                                <option value="INSUMOS">Insumos</option>
+                                <option value="CORTE">Corte</option>
+                                <option value="TELAS">Telas</option>
+                                <option value="CODIGOS">Códigos</option>
+                                <option value="DISEÑO">Diseño</option>
+                                <option value="OTROS">Otros</option>
+                            </select>
+                        </div>
+                        <div class="error-message" id="areaError">Por favor selecciona un área</div>
+                    </div>
+
+                    <div id="tipoNovedadGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Tipo de Novedad <span class="required">*</span>
+                            <span class="helper-text">Especifica el tipo de incidencia</span>
+                        </label>
+                        <div class="input-wrapper select-wrapper">
+                            <i class="fas fa-tag input-icon"></i>
+                            <select id="tipoNovedad" class="form-control">
+                                <option value="">Seleccione un tipo...</option>
+                                <option value="FALTANTE">Faltante</option>
+                                <option value="IMPERFECTO">Imperfecto</option>
+                                <option value="PERDIDA">Pérdida</option>
+                            </select>
+                        </div>
+                        <div class="error-message" id="tipoError">Por favor selecciona un tipo de novedad</div>
+                    </div>
+
+                    <!-- Campos dinámicos según área -->
+                    
+                    <!-- INSUMOS -->
+                    <div id="tipoInsumoGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Insumos Solicitados <span class="required">*</span>
+                            <span class="helper-text">Puedes escribir para filtrar o agregar un insumo personalizado</span>
+                        </label>
+                        <div id="insumosList"></div>
+                        <button type="button" class="btn-add-item" onclick="agregarFilaInsumo()">
+                            <i class="fas fa-plus"></i>
+                            <span>Agregar Insumo</span>
+                        </button>
+                    </div>
+
+                    <!-- CORTE -->
+                    <div id="tipoCorteGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Piezas de Corte <span class="required">*</span>
+                            <span class="helper-text">Puedes escribir para filtrar o agregar una pieza personalizada</span>
+                        </label>
+                        <div id="corteList"></div>
+                        <button type="button" class="btn-add-item" onclick="agregarFilaCorte()">
+                            <i class="fas fa-plus"></i>
+                            <span>Agregar Pieza</span>
+                        </button>
+                    </div>
+
+                    <!-- TELAS -->
+                    <div id="tipoTelasGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Imperfecciones en Telas <span class="required">*</span>
+                            <span class="helper-text">Puedes escribir para filtrar o agregar una imperfección personalizada</span>
+                        </label>
+                        <div id="telasList"></div>
+                        <button type="button" class="btn-add-item" onclick="agregarFilaTela()">
+                            <i class="fas fa-plus"></i>
+                            <span>Agregar Imperfección</span>
+                        </button>
+                    </div>
+
+                    <!-- CÓDIGOS -->
+                    <div id="tipoCodigosGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Solicitud de Códigos <span class="required">*</span>
+                            <span class="helper-text">Selecciona el tipo de solicitud</span>
+                        </label>
+                        
+                        <div class="input-wrapper select-wrapper" style="margin-bottom: 20px;">
+                            <i class="fas fa-barcode input-icon"></i>
+                            <select id="codigosTipoSolicitud" class="form-control" onchange="handleCodigosTipoChange()">
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="LOTE_COMPLETO">Lote Completo</option>
+                                <option value="UNIDADES">Unidades Específicas</option>
+                            </select>
+                        </div>
+
+                        <div id="codigosLoteCompletoGroup" class="hidden" style="margin-bottom: 20px;">
+                            <label class="form-label">Cantidad Total del Lote</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-hashtag input-icon"></i>
+                                <input type="number" id="codigosCantidadTotal" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div id="codigosUnidadesGroup" class="hidden">
+                            <div id="codigosList" style="margin-bottom: 12px;"></div>
+                            <button type="button" class="btn-add-item" onclick="agregarFilaCodigo()">
+                                <i class="fas fa-plus"></i>
+                                <span>Agregar Unidad</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CANTIDAD NORMAL (para áreas sin campos especiales) -->
+                    <div id="cantidadNormalGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Cantidad Solicitada <span class="required">*</span>
+                            <span class="helper-text">Ingresa la cantidad de unidades</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-hashtag input-icon"></i>
+                            <input type="number" id="cantidadNormal" class="form-control" min="1" placeholder="Cantidad">
+                        </div>
+                        <div class="error-message" id="cantidadError">Por favor ingresa la cantidad</div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button type="button" id="btnVolverConfirmacion" class="btn-secondary" style="flex: 1;">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <button type="button" id="btnContinuar" class="btn-primary" style="flex: 2;">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Continuar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección 4: Información Adicional -->
+                <div id="seccionAdicional" class="hidden">
+                    <div class="section-title">Información Adicional</div>
+                    <div class="section-description">
+                        Agrega detalles adicionales y evidencia fotográfica si es necesario.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Descripción de la Novedad
+                            <span class="optional-badge">Opcional</span>
+                            <span class="helper-text">Cuéntanos qué pasó y cualquier detalle que consideres importante</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <textarea 
+                                id="descripcion" 
+                                class="form-control textarea-clean" 
+                                placeholder="Escribe aquí los detalles de lo que ocurrió..."
+                                maxlength="1000"
+                            ></textarea>
+                        </div>
+                        <div class="error-message" id="descripcionError">La descripción debe tener al menos 10 caracteres</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Imagen de Soporte
+                            <span class="optional-badge">Opcional</span>
+                            <span class="helper-text">JPG, PNG o GIF • Máximo 5MB</span>
+                        </label>
+                        <div class="file-upload">
+                            <input 
+                                type="file" 
+                                id="imagen" 
+                                accept="image/jpeg,image/png,image/gif"
+                            >
+                            <label for="imagen" class="file-upload-label">
+                                <div class="file-upload-icon">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div class="file-upload-text">
+                                    <strong>Selecciona una imagen</strong>
+                                    <span>o arrástrala aquí</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="filePreview" class="hidden"></div>
+                        <div class="error-message" id="imagenError">El archivo debe ser una imagen válida (máx. 5MB)</div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button type="button" id="btnVolverDetalles" class="btn-secondary" style="flex: 1;">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <button type="submit" id="btnSubmit" class="btn-primary" style="flex: 2;">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Enviar Reporte</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Sección 5: Confirmación de Envío -->
+                <div id="seccionExito" class="hidden">
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <!-- Icono de éxito -->
+                        <div style="width: 96px; height: 96px; background: #1e8e3e; border-radius: 50%; margin: 0 auto 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(30, 142, 62, 0.25); animation: successPulse 0.6s ease;">
+                            <i class="fas fa-check" style="font-size: 48px; color: white;"></i>
+                        </div>
+                        
+                        <!-- Título -->
+                        <h2 style="font-size: 1.875rem; font-weight: 600; color: #202124; margin-bottom: 16px; letter-spacing: -0.02em;">
+                            Reporte Enviado Exitosamente
+                        </h2>
+                        
+                        <!-- Descripción -->
+                        <p style="font-size: 1rem; color: #5f6368; margin-bottom: 40px; line-height: 1.6; max-width: 480px; margin-left: auto; margin-right: auto;">
+                            Su novedad ha sido registrada en el sistema y el equipo correspondiente ha sido notificado automáticamente.
+                        </p>
+                        
+                        <!-- Card con ID de novedad -->
+                        <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 40px; border: 2px solid #e8eaed; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
+                                <i class="fas fa-file-alt" style="color: #5f6368; font-size: 1rem;"></i>
+                                <span style="font-size: 0.875rem; color: #5f6368; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Número de Reporte</span>
+                            </div>
+                            <div id="novedadIdDisplay" style="font-size: 1.5rem; font-weight: 600; color: #202124; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+                                NOV-XXXXXXXX
+                            </div>
+                            <p style="font-size: 0.75rem; color: #80868b; margin-top: 12px; margin-bottom: 0;">
+                                Guarde este número para futuras consultas
+                            </p>
+                        </div>
+                        
+                        <!-- Botón centrado -->
+                        <div style="display: flex; justify-content: center;">
+                            <button type="button" id="btnNuevoReporte" class="btn-primary" style="max-width: 280px;">
+                                <i class="fas fa-plus-circle"></i>
+                                <span>Enviar Otro Reporte</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <style>
+                    @keyframes successPulse {
+                        0% {
+                            transform: scale(0);
+                            opacity: 0;
+                        }
+                        50% {
+                            transform: scale(1.1);
+                        }
+                        100% {
+                            transform: scale(1);
+                            opacity: 1;
+                        }
+                    }
+                </style>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts con timestamp para evitar caché -->
+    <script>
+        // Timestamp único para esta carga de página
+        window.CACHE_BUSTER = Date.now();
+    </script>
+    <script src="js/config.js"></script>
+    <script src="js/novedad-publica.js"></script>
+    
+    <script>
+        // Forzar recarga sin caché al volver con el botón atrás
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
