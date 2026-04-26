@@ -755,7 +755,7 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
     console.log('[_crearFilaDinamica] Label tipo:', labelTipo);
     
     fila.innerHTML = `
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
             <label class="form-label">${labelTipo} <span class="required">*</span></label>
             <div class="input-wrapper custom-dropdown-wrapper" style="position: relative;">
                 <i class="fas ${iconoTipo} input-icon"></i>
@@ -769,7 +769,7 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
                 <ul class="custom-dropdown-suggestions" id="${suggestionId}" style="display: none;"></ul>
             </div>
         </div>
-        <div class="form-group" style="margin-bottom: 0;">
+        <div class="form-group cantidad-group" style="margin-bottom: 0; display: none; grid-column: 1 / -1;">
             <label class="form-label">Cantidad <span class="required">*</span></label>
             <div class="input-wrapper">
                 <i class="fas fa-hashtag input-icon"></i>
@@ -787,6 +787,7 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
     // Configurar dropdown personalizado
     const inputTipo = fila.querySelector('.item-tipo');
     const inputCantidad = fila.querySelector('.item-cantidad');
+    const cantidadGroup = fila.querySelector('.cantidad-group');
     const suggestionsList = fila.querySelector(`#${suggestionId}`);
     const wrapperDiv = fila.querySelector('.custom-dropdown-wrapper');
     
@@ -809,11 +810,11 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
                 return `<li data-value="${opt}">${displayText}</li>`;
             }).join('');
             suggestionsList.style.display = 'block';
-            suggestionsList.style.zIndex = '1002';
+            suggestionsList.style.zIndex = '10000';
         } else {
             suggestionsList.innerHTML = '<li style="color: #94a3b8; cursor: default; pointer-events: none;">No se encontraron opciones</li>';
             suggestionsList.style.display = 'block';
-            suggestionsList.style.zIndex = '1002';
+            suggestionsList.style.zIndex = '10000';
         }
     }
     
@@ -838,7 +839,7 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
                 return `<li data-value="${opt}">${displayText}</li>`;
             }).join('');
             suggestionsList.style.display = 'block';
-            suggestionsList.style.zIndex = '1002';
+            suggestionsList.style.zIndex = '10000';
         } else {
             filterSuggestions();
         }
@@ -853,7 +854,19 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             suggestionsList.style.display = 'none';
             inputTipo.classList.remove('error');
             inputTipo.classList.add('success');
-            inputCantidad.focus();
+            
+            // Mostrar campo de cantidad con animación
+            cantidadGroup.style.display = 'block';
+            setTimeout(() => {
+                cantidadGroup.style.opacity = '1';
+                cantidadGroup.style.transform = 'translateY(0)';
+            }, 10);
+            
+            // Hacer scroll suave al campo de cantidad
+            setTimeout(() => {
+                cantidadGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                inputCantidad.focus();
+            }, 300);
         }
     });
     
@@ -873,6 +886,11 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             this.classList.remove('success');
         }
     });
+    
+    // Estilo inicial para animación del campo cantidad
+    cantidadGroup.style.opacity = '0';
+    cantidadGroup.style.transform = 'translateY(-10px)';
+    cantidadGroup.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
     return fila;
 }

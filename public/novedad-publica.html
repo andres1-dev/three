@@ -1546,40 +1546,36 @@
                 <!-- Sección 5: Confirmación de Envío -->
                 <div id="seccionExito" class="hidden">
                     <div style="text-align: center; padding: 60px 20px;">
-                        <!-- Icono de éxito -->
-                        <div style="width: 96px; height: 96px; background: #1e8e3e; border-radius: 50%; margin: 0 auto 32px; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(30, 142, 62, 0.25); animation: successPulse 0.6s ease;">
-                            <i class="fas fa-check" style="font-size: 48px; color: white;"></i>
+                        <!-- Icono de éxito - Minimalista -->
+                        <div style="width: 80px; height: 80px; margin: 0 auto 24px; border: 3px solid #1e8e3e; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: successPulse 0.6s ease;">
+                            <i class="fas fa-check" style="font-size: 40px; color: #1e8e3e;"></i>
                         </div>
                         
                         <!-- Título -->
-                        <h2 style="font-size: 1.875rem; font-weight: 600; color: #202124; margin-bottom: 16px; letter-spacing: -0.02em;">
-                            Reporte Enviado Exitosamente
+                        <h2 style="font-size: 1.5rem; font-weight: 600; color: #202124; margin-bottom: 12px;">
+                            Reporte Enviado
                         </h2>
                         
                         <!-- Descripción -->
-                        <p style="font-size: 1rem; color: #5f6368; margin-bottom: 40px; line-height: 1.6; max-width: 480px; margin-left: auto; margin-right: auto;">
-                            Su novedad ha sido registrada en el sistema y el equipo correspondiente ha sido notificado automáticamente.
+                        <p style="font-size: 1rem; color: #5f6368; margin-bottom: 32px; line-height: 1.6;">
+                            Su novedad ha sido registrada exitosamente en el sistema
                         </p>
                         
                         <!-- Card con ID de novedad -->
-                        <div style="background: white; border-radius: 12px; padding: 24px; margin-bottom: 40px; border: 2px solid #e8eaed; max-width: 400px; margin-left: auto; margin-right: auto;">
-                            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px;">
-                                <i class="fas fa-file-alt" style="color: #5f6368; font-size: 1rem;"></i>
-                                <span style="font-size: 0.875rem; color: #5f6368; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Número de Reporte</span>
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 32px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            <div style="font-size: 0.75rem; color: #80868b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                                Número de Reporte
                             </div>
-                            <div id="novedadIdDisplay" style="font-size: 1.5rem; font-weight: 600; color: #202124; font-family: 'Courier New', monospace; letter-spacing: 1px;">
+                            <div id="novedadIdDisplay" style="font-size: 1.25rem; font-weight: 600; color: #202124; font-family: 'Courier New', monospace;">
                                 NOV-XXXXXXXX
                             </div>
-                            <p style="font-size: 0.75rem; color: #80868b; margin-top: 12px; margin-bottom: 0;">
-                                Guarde este número para futuras consultas
-                            </p>
                         </div>
                         
                         <!-- Botón centrado -->
                         <div style="display: flex; justify-content: center;">
                             <button type="button" id="btnNuevoReporte" class="btn-primary" style="max-width: 280px;">
-                                <i class="fas fa-plus-circle"></i>
-                                <span>Enviar Otro Reporte</span>
+                                <i class="fas fa-plus"></i>
+                                <span>Nuevo Reporte</span>
                             </button>
                         </div>
                     </div>
