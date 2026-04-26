@@ -225,6 +225,7 @@
             transform: translateY(0);
             transition: opacity 0.3s ease, transform 0.3s ease;
             position: relative;
+            overflow: visible;
         }
 
         .form-group.field-locked {
@@ -1019,6 +1020,14 @@
             border: 1px solid #e8eaed;
             border-radius: 16px;
             position: relative;
+            overflow: visible;
+        }
+        
+        /* Contenedores de listas dinámicas - permitir overflow */
+        #insumosList,
+        #corteList,
+        #telasList,
+        #codigosList {
             overflow: visible;
         }
 
