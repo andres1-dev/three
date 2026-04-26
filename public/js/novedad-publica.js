@@ -24,8 +24,6 @@ keysToRemove.forEach(key => localStorage.removeItem(key));
 // Limpiar sessionStorage
 sessionStorage.clear();
 
-console.log('[CACHE] Caché limpiado - Trabajando con datos frescos');
-
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRvcXN1cnh4eGF1ZG51dHN5ZGxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU3MjExMDUsImV4cCI6MjA5MTI5NzEwNX0.yKcRgTad3cb2otQ7wtjkRETj3P-3THB9v8csluebALg';
@@ -142,8 +140,6 @@ async function actualizarEmailPlanta() {
     
     const planta = FormState.opData.planta;
     
-    console.log('[actualizarEmailPlanta] 📧 Actualizando email para planta:', planta);
-    
     // Deshabilitar input mientras se actualiza
     correoInput.disabled = true;
     const originalPlaceholder = correoInput.placeholder;
@@ -167,7 +163,6 @@ async function actualizarEmailPlanta() {
         
         if (response.ok) {
             const result = await response.json();
-            console.log('[actualizarEmailPlanta] ✅ Email actualizado:', result);
             
             // Mostrar feedback visual
             correoInput.classList.add('success');
@@ -311,9 +306,6 @@ async function buscarOP() {
     
     try {
         const url = `${CONFIG.FUNCTIONS_URL}/upload-public-image?op=${encodeURIComponent(op)}`;
-        console.log('[buscarOP] 🔍 URL completa:', url);
-        console.log('[buscarOP] 🔑 SUPABASE_KEY presente:', !!SUPABASE_KEY);
-        console.log('[buscarOP] 📡 Iniciando petición GET...');
         
         const response = await fetch(url, {
             method: 'GET',
@@ -324,12 +316,6 @@ async function buscarOP() {
             }
         });
         
-        console.log('[buscarOP] 📥 Respuesta recibida:');
-        console.log('  - Status:', response.status);
-        console.log('  - StatusText:', response.statusText);
-        console.log('  - OK:', response.ok);
-        console.log('  - Headers:', Object.fromEntries(response.headers.entries()));
-        
         if (!response.ok) {
             const errorText = await response.text();
             console.error('[buscarOP] ❌ Error en respuesta:', errorText);
@@ -337,20 +323,16 @@ async function buscarOP() {
         }
         
         const result = await response.json();
-        console.log('[buscarOP] ✅ Datos parseados:', result);
         
         if (result.success && result.found && result.data) {
             FormState.opData = result.data;
-            console.log('[buscarOP] 🎉 OP encontrada mediante Edge Function:', FormState.opData);
             mostrarInformacionProducto(FormState.opData);
             
             // Mostrar campo de correo si la planta no tiene email
             const correoGroup = document.getElementById('correoGroup');
             if (result.needsEmail) {
-                console.log('[buscarOP] 📧 La planta necesita email');
                 correoGroup.classList.remove('hidden');
             } else {
-                console.log('[buscarOP] ✅ La planta ya tiene email:', result.currentEmail);
                 correoGroup.classList.add('hidden');
             }
             
@@ -721,9 +703,7 @@ function volverDetalles() {
 
 // CAMPOS DINÁMICOS
 function _crearFilaDinamica(opciones, listId, removeFn) {
-    console.log('[_crearFilaDinamica] Creando fila para:', listId);
     const lista = document.getElementById(listId);
-    console.log('[_crearFilaDinamica] Lista encontrada:', !!lista);
     
     if (!lista) {
         console.error('[_crearFilaDinamica] ERROR: No se encontró el elemento con ID:', listId);
@@ -752,10 +732,8 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         placeholder = 'Escribe o selecciona insumo...';
     }
     
-    console.log('[_crearFilaDinamica] Label tipo:', labelTipo);
-    
     fila.innerHTML = `
-        <div class="form-group" style="margin-bottom: 0; grid-column: 1 / -1;">
+        <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">${labelTipo} <span class="required">*</span></label>
             <div class="input-wrapper custom-dropdown-wrapper" style="position: relative;">
                 <i class="fas ${iconoTipo} input-icon"></i>
@@ -766,10 +744,9 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
                     autocomplete="off"
                     required
                 >
-                <ul class="custom-dropdown-suggestions" id="${suggestionId}" style="display: none;"></ul>
             </div>
         </div>
-        <div class="form-group cantidad-group" style="margin-bottom: 0; display: none; grid-column: 1 / -1;">
+        <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Cantidad <span class="required">*</span></label>
             <div class="input-wrapper">
                 <i class="fas fa-hashtag input-icon"></i>
@@ -781,15 +758,28 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         </button>
     `;
     lista.appendChild(fila);
-    console.log('[_crearFilaDinamica] Fila agregada. Total de filas:', lista.children.length);
+    
+    // Crear el dropdown y agregarlo al body (fuera del contenedor con overflow hidden)
+    const suggestionsList = document.createElement('ul');
+    suggestionsList.className = 'custom-dropdown-suggestions';
+    suggestionsList.id = suggestionId;
+    suggestionsList.style.display = 'none';
+    document.body.appendChild(suggestionsList);
+    
     _actualizarBotonesEliminar(listId);
     
     // Configurar dropdown personalizado
     const inputTipo = fila.querySelector('.item-tipo');
     const inputCantidad = fila.querySelector('.item-cantidad');
-    const cantidadGroup = fila.querySelector('.cantidad-group');
-    const suggestionsList = fila.querySelector(`#${suggestionId}`);
     const wrapperDiv = fila.querySelector('.custom-dropdown-wrapper');
+    
+    // Función para posicionar el dropdown
+    function positionDropdown() {
+        const inputRect = inputTipo.getBoundingClientRect();
+        suggestionsList.style.top = `${inputRect.bottom}px`;
+        suggestionsList.style.left = `${inputRect.left}px`;
+        suggestionsList.style.width = `${inputRect.width}px`;
+    }
     
     // Función para filtrar y mostrar sugerencias
     function filterSuggestions() {
@@ -809,13 +799,12 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
                 const displayText = opt.charAt(0) + opt.slice(1).toLowerCase();
                 return `<li data-value="${opt}">${displayText}</li>`;
             }).join('');
-            suggestionsList.style.display = 'block';
-            suggestionsList.style.zIndex = '10000';
         } else {
             suggestionsList.innerHTML = '<li style="color: #94a3b8; cursor: default; pointer-events: none;">No se encontraron opciones</li>';
-            suggestionsList.style.display = 'block';
-            suggestionsList.style.zIndex = '10000';
         }
+        
+        suggestionsList.style.display = 'block';
+        positionDropdown();
     }
     
     // Evento input para filtrar
@@ -833,15 +822,18 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
     
     // Evento focus para mostrar todas las opciones
     inputTipo.addEventListener('focus', function() {
-        if (!this.value.trim()) {
-            suggestionsList.innerHTML = opciones.map(opt => {
-                const displayText = opt.charAt(0) + opt.slice(1).toLowerCase();
-                return `<li data-value="${opt}">${displayText}</li>`;
-            }).join('');
-            suggestionsList.style.display = 'block';
-            suggestionsList.style.zIndex = '10000';
-        } else {
-            filterSuggestions();
+        suggestionsList.innerHTML = opciones.map(opt => {
+            const displayText = opt.charAt(0) + opt.slice(1).toLowerCase();
+            return `<li data-value="${opt}">${displayText}</li>`;
+        }).join('');
+        suggestionsList.style.display = 'block';
+        positionDropdown();
+    });
+    
+    // Actualizar posición al hacer scroll
+    window.addEventListener('scroll', function() {
+        if (suggestionsList.style.display === 'block') {
+            positionDropdown();
         }
     });
     
@@ -854,28 +846,29 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             suggestionsList.style.display = 'none';
             inputTipo.classList.remove('error');
             inputTipo.classList.add('success');
-            
-            // Mostrar campo de cantidad con animación
-            cantidadGroup.style.display = 'block';
-            setTimeout(() => {
-                cantidadGroup.style.opacity = '1';
-                cantidadGroup.style.transform = 'translateY(0)';
-            }, 10);
-            
-            // Hacer scroll suave al campo de cantidad
-            setTimeout(() => {
-                cantidadGroup.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                inputCantidad.focus();
-            }, 300);
+            inputCantidad.focus();
         }
     });
     
     // Cerrar dropdown al hacer click fuera
     document.addEventListener('click', function(e) {
-        if (!fila.contains(e.target)) {
+        if (!fila.contains(e.target) && !suggestionsList.contains(e.target)) {
             suggestionsList.style.display = 'none';
         }
     });
+    
+    // Limpiar dropdown del DOM cuando se elimine la fila
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            mutation.removedNodes.forEach((node) => {
+                if (node === fila && suggestionsList.parentNode) {
+                    suggestionsList.remove();
+                    observer.disconnect();
+                }
+            });
+        });
+    });
+    observer.observe(lista, { childList: true });
     
     // Validación en tiempo real para cantidad
     inputCantidad.addEventListener('input', function() {
@@ -886,11 +879,6 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             this.classList.remove('success');
         }
     });
-    
-    // Estilo inicial para animación del campo cantidad
-    cantidadGroup.style.opacity = '0';
-    cantidadGroup.style.transform = 'translateY(-10px)';
-    cantidadGroup.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
     
     return fila;
 }
@@ -906,11 +894,9 @@ function _actualizarBotonesEliminar(listId) {
 }
 
 function agregarFilaInsumo() { 
-    console.log('[agregarFilaInsumo] Llamada a agregar fila de insumo');
     _crearFilaDinamica(INSUMOS_OPCIONES, 'insumosList', 'eliminarFilaInsumo'); 
 }
 function eliminarFilaInsumo(btn) {
-    console.log('[eliminarFilaInsumo] Llamada a eliminar fila');
     const lista = document.getElementById('insumosList');
     if (lista.children.length <= 1) return;
     btn.closest('.dynamic-item').remove();
@@ -918,11 +904,9 @@ function eliminarFilaInsumo(btn) {
 }
 
 function agregarFilaCorte() { 
-    console.log('[agregarFilaCorte] Llamada a agregar fila de corte');
     _crearFilaDinamica(CORTE_OPCIONES, 'corteList', 'eliminarFilaCorte'); 
 }
 function eliminarFilaCorte(btn) {
-    console.log('[eliminarFilaCorte] Llamada a eliminar fila');
     const lista = document.getElementById('corteList');
     if (lista.children.length <= 1) return;
     btn.closest('.dynamic-item').remove();
@@ -930,11 +914,9 @@ function eliminarFilaCorte(btn) {
 }
 
 function agregarFilaTela() { 
-    console.log('[agregarFilaTela] Llamada a agregar fila de tela');
     _crearFilaDinamica(TELAS_OPCIONES, 'telasList', 'eliminarFilaTela'); 
 }
 function eliminarFilaTela(btn) {
-    console.log('[eliminarFilaTela] Llamada a eliminar fila');
     const lista = document.getElementById('telasList');
     if (lista.children.length <= 1) return;
     btn.closest('.dynamic-item').remove();
@@ -943,14 +925,9 @@ function eliminarFilaTela(btn) {
 
 function handleAreaChange(e) {
     const area = e.target.value;
-    console.log('[handleAreaChange] ===== INICIO =====');
-    console.log('[handleAreaChange] Área seleccionada:', area);
     
     const tipoGroup = document.getElementById('tipoNovedadGroup');
     const tipoSelect = document.getElementById('tipoNovedad');
-    
-    console.log('[handleAreaChange] tipoGroup encontrado:', !!tipoGroup);
-    console.log('[handleAreaChange] tipoSelect encontrado:', !!tipoSelect);
     
     if (!tipoGroup) {
         console.error('[handleAreaChange] ERROR: No se encontró tipoNovedadGroup');
@@ -964,13 +941,6 @@ function handleAreaChange(e) {
     const codigosGroup = document.getElementById('tipoCodigosGroup');
     const cantidadGroup = document.getElementById('cantidadNormalGroup');
     
-    console.log('[handleAreaChange] Grupos encontrados:');
-    console.log('  - insumoGroup:', !!insumoGroup);
-    console.log('  - corteGroup:', !!corteGroup);
-    console.log('  - telasGroup:', !!telasGroup);
-    console.log('  - codigosGroup:', !!codigosGroup);
-    console.log('  - cantidadGroup:', !!cantidadGroup);
-    
     if (insumoGroup) insumoGroup.classList.add('hidden');
     if (corteGroup) corteGroup.classList.add('hidden');
     if (telasGroup) telasGroup.classList.add('hidden');
@@ -978,32 +948,25 @@ function handleAreaChange(e) {
     if (cantidadGroup) cantidadGroup.classList.add('hidden');
     
     if (area === 'DISEÑO') {
-        console.log('[handleAreaChange] Procesando área DISEÑO');
         tipoGroup.classList.add('hidden');
         tipoSelect.required = false;
         unlockAllFields(); // Diseño no tiene más campos
         
     } else if (area === 'TELAS') {
-        console.log('[handleAreaChange] Procesando área TELAS');
         revealField(tipoGroup);
         tipoSelect.value = 'IMPERFECTO';
         tipoSelect.required = true;
         tipoSelect.disabled = true;
         if (telasGroup) {
-            console.log('[handleAreaChange] Mostrando grupo de telas');
             revealField(telasGroup);
             const telasList = document.getElementById('telasList');
-            console.log('[handleAreaChange] telasList encontrado:', !!telasList);
-            console.log('[handleAreaChange] telasList.children.length:', telasList?.children.length);
             if (telasList && telasList.children.length === 0) {
-                console.log('[handleAreaChange] Agregando primera fila de tela');
                 agregarFilaTela();
             }
         }
         unlockAllFields(); // Telas ya mostró todos sus campos
         
     } else if (area === 'INSUMOS') {
-        console.log('[handleAreaChange] Procesando área INSUMOS');
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
@@ -1011,7 +974,6 @@ function handleAreaChange(e) {
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
         
     } else if (area === 'CORTE') {
-        console.log('[handleAreaChange] Procesando área CORTE');
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
@@ -1019,7 +981,6 @@ function handleAreaChange(e) {
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
         
     } else if (area === 'CODIGOS') {
-        console.log('[handleAreaChange] Procesando área CODIGOS');
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
@@ -1027,7 +988,6 @@ function handleAreaChange(e) {
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
         
     } else if (area !== '') {
-        console.log('[handleAreaChange] Procesando área OTROS:', area);
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
@@ -1036,14 +996,11 @@ function handleAreaChange(e) {
     }
     
     if (area) hideError(e.target, document.getElementById('areaError'));
-    console.log('[handleAreaChange] ===== FIN =====');
 }
 
 function handleTipoNovedadChange(e) {
     const area = document.getElementById('area').value;
     const tipo = e.target.value;
-    
-    console.log('[handleTipoNovedadChange] Área:', area, 'Tipo:', tipo);
     
     if (!tipo) return;
     
@@ -1054,7 +1011,6 @@ function handleTipoNovedadChange(e) {
     
     // Mostrar el grupo correspondiente según el área
     if (area === 'INSUMOS' && insumoGroup) {
-        console.log('[handleTipoNovedadChange] Mostrando grupo de insumos');
         revealField(insumoGroup);
         const insumosList = document.getElementById('insumosList');
         if (insumosList && insumosList.children.length === 0) {
@@ -1063,7 +1019,6 @@ function handleTipoNovedadChange(e) {
         unlockAllFields();
         
     } else if (area === 'CORTE' && corteGroup) {
-        console.log('[handleTipoNovedadChange] Mostrando grupo de corte');
         revealField(corteGroup);
         const corteList = document.getElementById('corteList');
         if (corteList && corteList.children.length === 0) {
@@ -1072,13 +1027,11 @@ function handleTipoNovedadChange(e) {
         unlockAllFields();
         
     } else if (area === 'CODIGOS' && codigosGroup) {
-        console.log('[handleTipoNovedadChange] Mostrando grupo de códigos');
         revealField(codigosGroup);
         cargarCurvaParaCodigos();
         unlockAllFields();
         
     } else if (cantidadGroup) {
-        console.log('[handleTipoNovedadChange] Mostrando campo de cantidad normal');
         revealField(cantidadGroup);
         unlockAllFields();
     }
@@ -1552,6 +1505,11 @@ function limpiarFormularioCompleto() {
     FormState.selectedFile = null;
     FormState.isSubmitting = false;
     
+    // Limpiar todos los dropdowns del body
+    document.querySelectorAll('.custom-dropdown-suggestions').forEach(dropdown => {
+        dropdown.remove();
+    });
+    
     // Limpiar todos los inputs y selects
     document.getElementById('novedadForm').reset();
     document.getElementById('opInput').value = '';
@@ -1715,7 +1673,6 @@ function sanitizeInput(input) {
 }
 
 async function enviarNovedad(data) {
-    console.log('[novedad-publica] Enviando datos:', data);
     const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` },
@@ -1733,16 +1690,7 @@ async function enviarNovedad(data) {
  * SIN FALLBACK - Para diagnosticar errores
  */
 async function enviarNovedadSegura(data) {
-    console.log('[enviarNovedadSegura] 📤 Iniciando envío...');
-    console.log('[enviarNovedadSegura] 📦 Datos a enviar:', {
-        lote: data.lote,
-        area: data.area,
-        tieneImagen: !!data.imagen,
-        imagenSize: data.imagen?.base64?.length || 0
-    });
-    
     const url = `${CONFIG.FUNCTIONS_URL}/upload-public-image`;
-    console.log('[enviarNovedadSegura] 🔗 URL:', url);
     
     try {
         const response = await fetch(url, {
@@ -1755,43 +1703,30 @@ async function enviarNovedadSegura(data) {
             body: JSON.stringify(data)
         });
         
-        console.log('[enviarNovedadSegura] 📥 Respuesta recibida:');
-        console.log('  - Status:', response.status);
-        console.log('  - StatusText:', response.statusText);
-        console.log('  - OK:', response.ok);
-        
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('[enviarNovedadSegura] ❌ Error en respuesta:', errorText);
             throw new Error(`Error ${response.status}: ${errorText}`);
         }
         
         const result = await response.json();
-        console.log('[enviarNovedadSegura] ✅ Resultado:', result);
         
         return result;
         
     } catch (error) {
-        console.error('[enviarNovedadSegura] 💥 ERROR COMPLETO:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
+        console.error('[enviarNovedadSegura] Error:', error);
         throw error;
     }
 }
 
 async function uploadImagenAsync(file, idNovedad) {
-    console.log('[novedad-publica] Subiendo imagen para ID:', idNovedad);
     try {
         const fileData = await fileToBase64(file);
         const payload = { accion: 'SUBIR_DRIVE', idNovedad: idNovedad, hoja: 'NOVEDADES', base64: fileData.base64, mimeType: fileData.mimeType, fileName: fileData.fileName };
         const response = await fetch(GAS_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         if (!response.ok) throw new Error('Error al subir imagen');
         const result = await response.json();
-        console.log('[novedad-publica] Imagen subida:', result.url);
     } catch (error) {
-        console.error('[novedad-publica] Error al subir imagen:', error);
+        console.error('[uploadImagenAsync] Error:', error);
     }
 }
 
@@ -1801,8 +1736,6 @@ async function uploadImagenAsync(file, idNovedad) {
  * @returns {Promise<string>} URL pública de la imagen subida
  */
 async function uploadImagenSupabase(file) {
-    console.log('[uploadImagenSupabase] Iniciando subida de imagen:', file.name);
-    
     try {
         // Comprimir y convertir la imagen
         const compressedBlob = await compressImage(file);
@@ -1812,12 +1745,6 @@ async function uploadImagenSupabase(file) {
         const randomStr = Math.random().toString(36).substring(2, 8);
         const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 30);
         const fileName = `${sanitizedName}`;
-        
-        console.log('[uploadImagenSupabase] Preparando subida:', {
-            originalSize: (file.size / 1024).toFixed(2) + ' KB',
-            compressedSize: (compressedBlob.size / 1024).toFixed(2) + ' KB',
-            fileName: fileName
-        });
         
         // Convertir Blob a base64 para enviar a la Edge Function
         const base64Data = await blobToBase64(compressedBlob);
@@ -1842,7 +1769,6 @@ async function uploadImagenSupabase(file) {
         
         if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json().catch(() => ({}));
-            console.error('[uploadImagenSupabase] Error en respuesta:', errorData);
             throw new Error(errorData.message || `Error ${uploadResponse.status}: ${uploadResponse.statusText}`);
         }
         
@@ -1851,8 +1777,6 @@ async function uploadImagenSupabase(file) {
         if (!result.success || !result.url) {
             throw new Error(result.message || 'Error al subir la imagen');
         }
-        
-        console.log('[uploadImagenSupabase] Imagen subida exitosamente:', result.url);
         
         return result.url;
         
@@ -1931,17 +1855,6 @@ function compressImage(file) {
                 canvas.toBlob(
                     (blob) => {
                         if (blob) {
-                            const originalKB = (file.size / 1024).toFixed(2);
-                            const compressedKB = (blob.size / 1024).toFixed(2);
-                            const reduction = ((1 - blob.size / file.size) * 100).toFixed(1);
-                            
-                            console.log('[compressImage] Imagen optimizada:', {
-                                original: originalKB + ' KB',
-                                comprimido: compressedKB + ' KB',
-                                reduccion: reduction + '%',
-                                dimensiones: `${w}x${h}`,
-                                calidad: (quality * 100) + '%'
-                            });
                             resolve(blob);
                         } else {
                             reject(new Error('Error al comprimir la imagen'));
