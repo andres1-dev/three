@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Acceso - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="theme-color" content="#3b82f6">
+    
+    <!-- Content Security Policy (Seguridad contra XSS) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src 'self' https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://zpikjjcbievfpzegupmw.supabase.co wss://zpikjjcbievfpzegupmw.supabase.co;">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/login.css">
+    <style>
+        #particles-js { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        .auth-error { background: #fff1f2; color: #e11d48; padding: 12px; border-radius: 12px; margin-bottom: 20px; font-size: 13px; display: none; align-items: center; gap: 10px; border: 1px solid #fee2e2; }
+        .login-logo-img { width: 80px; height: 80px; margin-bottom: 20px; animation: floatWhale 4s ease-in-out infinite; }
+        @keyframes floatWhale { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .hidden { display: none !important; }
+    </style>
+</head>
+
+<body class="auth-shield-pass login-body">
+    <div id="particles-js"></div>
+
+    <div class="login-page-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="icons/app.svg" class="login-logo-img" alt="Logo">
+                <p class="login-subtitle">HACEMOS MODA</p>
+            </div>
+            
+            <div id="authError" class="auth-error">
+                <i class="fas fa-circle-exclamation"></i><span id="errorText"></span>
+            </div>
+            
+            <button id="biometricBtn" class="btn-biometric hidden" onclick="loginWithBiometric()" type="button">
+                <div id="biometric-icon"></div><span id="biometric-label">Usar biometría</span>
+            </button>
+            <a class="biometric-manual-link hidden" id="biometricManualLink" href="javascript:void(0)" onclick="showManualLogin()">Usar contraseña</a>
+
+            <div id="manual-fields">
+                <form id="loginForm" onsubmit="return false;">
+                    <div class="form-floating-group">
+                        <i class="fas fa-id-card input-icon"></i>
+                        <input type="email" id="email" placeholder="Correo electrónico" required autocomplete="username">
+                    </div>
+                    <div class="form-floating-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" placeholder="Contraseña" required autocomplete="current-password">
+                        <i class="fas fa-eye toggle-pass" onclick="togglePassword('password', event)"></i>
+                    </div>
+                    <button type="submit" id="loginBtn" class="btn-auth-primary">
+                        <span id="btnText">INGRESAR</span><i class="fas fa-right-to-bracket"></i>
+                    </button>
+                </form>
+                <a href="javascript:void(0)" onclick="resetCredentials()" style="display:block; text-align:center; margin-top:20px; font-size:12px; color:#94a3b8; text-decoration:underline;">Limpiar credenciales locales</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Enrolamiento -->
+    <div id="biometric-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.3); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+        <div class="biometric-modal-card">
+            <div class="bm-icon-wrap" id="bm-icon-wrap"></div>
+            <h3 class="bm-title" id="bm-title">Activar Biometría</h3>
+            <div class="bm-actions">
+                <button class="bm-btn-skip" onclick="document.getElementById('biometric-modal').style.display='none'">Ahora no</button>
+                <button class="bm-btn-activate" id="bm-activate-btn">Activar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/core/biometry.js"></script>
+
+    <script type="module">
+        import { supabase, SUPABASE_URL } from './src/config/supabase.js'
+        
+        const B_KEY = 'sispro_biometric_ids'; 
+
+        window.onload = async () => {
+            if (typeof initParticles === 'function') initParticles();
+            await initBiometricButton();
+        };
+
+        window.togglePassword = (id, e) => {
+            const i = document.getElementById(id || 'password');
+            const icon = e ? e.target : document.querySelector('.toggle-pass');
+            if (i.type === 'password') { i.type = 'text'; if (icon) icon.classList.replace('fa-eye', 'fa-eye-slash'); } 
+            else { i.type = 'password'; if (icon) icon.classList.replace('fa-eye-slash', 'fa-eye'); }
+        };
+
+        window.showManualLogin = () => {
+            document.getElementById('biometricBtn').classList.add('hidden');
+            document.getElementById('biometricManualLink').classList.add('hidden');
+            document.getElementById('manual-fields').style.display = 'block';
+        };
+
+        window.resetCredentials = async () => {
+            localStorage.clear();
+            sessionStorage.clear();
+            if (navigator.credentials && navigator.credentials.preventSilentAccess) {
+                await navigator.credentials.preventSilentAccess();
+            }
+            Swal.fire({ 
+                icon: 'success', 
+                title: 'Datos limpios', 
+                text: 'Se han borrado las credenciales locales de este dispositivo.', 
+                showConfirmButton: false, 
+                timer: 1500 
+            }).then(() => {
+                window.location.reload();
+            });
+        };
+
+        function getMap() { try { return JSON.parse(localStorage.getItem(B_KEY) || '{}'); } catch { return {}; } }
+
+        async function initBiometricButton() {
+            const map = getMap();
+            if (window.PublicKeyCredential) {
+                const av = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false);
+                if (av) {
+                    const keys = Object.keys(map).filter(k => k.includes('@'));
+                    if (keys.length > 0) {
+                        document.getElementById('biometricBtn').classList.remove('hidden');
+                        document.getElementById('biometric-icon').innerHTML = BIOMETRY.getSVGForType();
+                        document.getElementById('biometric-label').textContent = BIOMETRY.getLabelForType();
+                        document.getElementById('biometricManualLink').classList.remove('hidden');
+                        document.getElementById('manual-fields').style.display = 'none';
+                        window._biometricUserId = keys[0];
+                        setTimeout(() => loginWithBiometric(), 500);
+                        return;
+                    }
+                }
+            }
+        }
+
+        window.loginWithBiometric = async () => {
+            const btn = document.getElementById('biometricBtn');
+            const label = document.getElementById('biometric-label');
+            const restore = label.textContent;
+            btn.disabled = true;
+            label.textContent = 'Verificando...';
+
+            try {
+                const map = getMap();
+                const userId = window._biometricUserId || Object.keys(map)[0];
+                const credIdB64 = map[userId?.toLowerCase()];
+                if (!credIdB64) throw new Error("No hay registro local. Inicie sesión manualmente.");
+
+                const binaryId = Uint8Array.from(atob(credIdB64.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: crypto.getRandomValues(new Uint8Array(32)),
+                        allowCredentials: [{ type: 'public-key', id: binaryId }],
+                        userVerification: 'required',
+                        timeout: 30000
+                    }
+                });
+
+                if (!assertion) throw new Error("Cancelado");
+                
+                // 3. Solicitar sesión segura al servidor usando la firma biométrica
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/biometric-auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'authenticate',
+                        email: userId,
+                        credential_id: credIdB64
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || "Error de autenticación segura");
+                }
+
+                // 4. Iniciar sesión oficialmente en el cliente con los tokens recibidos
+                const { error: sessionError } = await supabase.auth.setSession(result.session);
+                if (sessionError) throw sessionError;
+                
+                window.location.href = 'index.html';
+            } catch (err) {
+                btn.disabled = false;
+                label.textContent = restore;
+                if (err.name !== 'NotAllowedError') {
+                    Swal.fire('Atención', err.message, 'warning');
+                    showManualLogin();
+                }
+            }
+        };
+
+        async function offerEnrollment(userId, password) {
+            if (getMap()[userId.toLowerCase()]) return;
+
+            const modal = document.getElementById('biometric-modal');
+            document.getElementById('bm-icon-wrap').innerHTML = BIOMETRY.getSVGForType();
+            document.getElementById('bm-title').textContent = `Activar ${BIOMETRY.getLabelForType()}`;
+            modal.style.display = 'flex';
+
+            const confirmed = await new Promise(res => {
+                document.getElementById('bm-activate-btn').onclick = () => { modal.style.display='none'; res(true); };
+            });
+            if (!confirmed) return;
+
+            try {
+                const uidB = new Uint8Array(16);
+                crypto.getRandomValues(uidB);
+                const chall = new Uint8Array(32);
+                crypto.getRandomValues(chall);
+
+                const cred = await navigator.credentials.create({
+                    publicKey: {
+                        challenge: chall,
+                        rp: { name: 'Grupo TDM', id: location.hostname },
+                        user: { id: uidB, name: userId, displayName: userId },
+                        pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+                        authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'preferred' },
+                        timeout: 60000
+                    }
+                });
+
+                if (cred) {
+                    const b64Id = btoa(String.fromCharCode(...new Uint8Array(cred.rawId))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+                    
+                    // Almacenar de forma SEGURA en el servidor (Vault Edge Function)
+                    const response = await fetch(`${SUPABASE_URL}/functions/v1/biometric-auth`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'enroll',
+                            email: userId,
+                            password: password,
+                            credential_id: b64Id
+                        })
+                    });
+
+                    const result = await response.json();
+                    if (!response.ok || !result.success) {
+                        throw new Error(result.error || "No se pudo asegurar la credencial en el servidor");
+                    }
+
+                    // Guardar solo el ID público en local
+                    const map = getMap();
+                    map[userId.toLowerCase()] = b64Id;
+                    localStorage.setItem(B_KEY, JSON.stringify(map));
+                    
+                    Swal.fire({ icon: 'success', title: '¡Seguridad Activada!', text: 'Bóveda biométrica configurada en el servidor.', showConfirmButton: false, timer: 2000 });
+                    await new Promise(r => setTimeout(r, 1000));
+                }
+                return true;
+            } catch (err) {
+                await Swal.fire('Error al enrolar', err.message, 'error');
+                return false;
+            }
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        loginForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            document.getElementById('loginBtn').disabled = true;
+            document.getElementById('btnText').textContent = 'VALIDANDO...';
+            try {
+                const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+                if (error) throw error;
+                const success = await offerEnrollment(email, pass);
+                if (success !== false) {
+                    window.location.href = 'index.html';
+                } else {
+                    // Si falló el enrolamiento, reactivar botón pero NO redirigir para que el usuario pueda intentar o ver el error
+                    document.getElementById('loginBtn').disabled = false;
+                    document.getElementById('btnText').textContent = 'CONTINUAR AL DASHBOARD';
+                    document.getElementById('loginForm').onsubmit = () => { window.location.href = 'index.html'; return false; };
+                }
+            } catch (err) {
+                document.getElementById('errorText').textContent = err.message.includes('Invalid login') ? 'Credenciales incorrectas' : err.message;
+                document.getElementById('authError').style.display = 'flex';
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('btnText').textContent = 'INGRESAR';
+            }
+        };
+    </script>
+</body>
+
+</html>

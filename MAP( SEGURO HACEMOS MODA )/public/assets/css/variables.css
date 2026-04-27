@@ -1,0 +1,81 @@
+/**
+ * CSS Variables
+ * Definición de tokens de diseño
+ */
+
+:root {
+    /* Colors - Primary */
+    --color-primary: #4361ee;
+    --color-primary-dark: #3451cf;
+    --color-primary-light: #e7f1ff;
+    
+    /* Colors - Semantic */
+    --color-success: #28a745;
+    --color-success-bg: #d4edda;
+    --color-success-text: #155724;
+    
+    --color-warning: #ffc107;
+    --color-warning-bg: #fff3cd;
+    --color-warning-text: #856404;
+    
+    --color-danger: #ef4444;
+    --color-danger-bg: #f8d7da;
+    --color-danger-text: #721c24;
+    
+    --color-info: #1e6fdf;
+    --color-info-bg: #e7f1ff;
+    
+    /* Colors - Neutral */
+    --color-text-primary: #1a1a2e;
+    --color-text-secondary: #2c3e50;
+    --color-text-muted: #6c757d;
+    --color-text-light: #868e96;
+    
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f1f5f9;
+    --color-bg-tertiary: #f8f9fa;
+    
+    --color-border: #dee2e6;
+    --color-border-light: #e9ecef;
+    
+    /* Colors - Special */
+    --color-accent-orange: #f59e0b;
+    --color-code-bg: #1e1e2e;
+    --color-code-text: #d4d4d4;
+    
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    
+    /* Border Radius */
+    --radius-sm: 12px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-xl: 24px;
+    --radius-pill: 40px;
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.08);
+    
+    /* Typography */
+    --font-size-xs: 0.7rem;
+    --font-size-sm: 0.75rem;
+    --font-size-base: 0.8rem;
+    --font-size-md: 0.85rem;
+    --font-size-lg: 1.6rem;
+    
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    
+    --font-mono: 'JetBrains Mono', 'SF Mono', monospace;
+    
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+}

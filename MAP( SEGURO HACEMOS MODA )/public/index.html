@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Access Busints | Procesador Premium</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    
+    <!-- Content Security Policy (Seguridad contra XSS) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://bossanova.uk https://jsuites.net https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://bossanova.uk https://jsuites.net; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://zpikjjcbievfpzegupmw.supabase.co wss://zpikjjcbievfpzegupmw.supabase.co;">
+
+    <!-- Prevenir cache -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- External Libraries -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    
+    <!-- jspreadsheet -->
+    <script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
+    <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
+    <script src="https://jsuites.net/v4/jsuites.js"></script>
+    <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+    
+    <!-- Application Styles -->
+    <link rel="stylesheet" href="./assets/css/variables.css">
+    <link rel="stylesheet" href="./assets/css/layout.css">
+    <link rel="stylesheet" href="./assets/css/components.css">
+    
+    <!-- Contenido Principal -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div>
+                    <div class="brand-cluster">
+                        <img src="./assets/brand/busint.svg" alt="BUSINT" class="logo-main">
+                        <span class="brand-sep">to</span>
+                        <img src="./assets/brand/supabase.svg" alt="Supabase" class="logo-sub">
+                    </div>
+                    <p>Copie desde BUSINT y pegue aquí, que nosotros hacemos la magia</p>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                    <div id="user-info-area"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spreadsheet Section -->
+        <div class="spreadsheet-section" id="spreadsheet-section" style="margin-bottom: 24px;">
+            <div id="spreadsheet" style="width: 100%; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"></div>
+        </div>
+
+        <!-- Vista de Resultados Premium -->
+        <div id="results-view" style="display: none; animation: fadeIn 0.5s ease-out;">
+            <div style="background: #ffffff; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05), 0 10px 10px -5px rgba(0,0,0,0.02); padding: 50px 30px; text-align: center; border: 1px solid #f1f5f9; margin-bottom: 30px;">
+                
+                <div style="width: 80px; height: 80px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                    <i class="fas fa-check" style="font-size: 32px; color: #16a34a;"></i>
+                </div>
+                
+                <h2 style="font-size: 28px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">Sincronización Exitosa</h2>
+                <p style="color: #64748b; font-size: 16px; margin-bottom: 40px;">Los registros han sido procesados y almacenados en la nube.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 750px; margin: 0 auto 30px;">
+                    <style>
+                        .stat-card {
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                            cursor: default;
+                        }
+                        .stat-card:hover {
+                            transform: translateY(-5px);
+                            box-shadow: 0 12px 20px -5px rgba(0,0,0,0.1) !important;
+                        }
+                    </style>
+                    
+                    <!-- Actualizados -->
+                    <div class="stat-card" style="background: #eff6ff; padding: 20px 15px; border-radius: 16px; position: relative; overflow: hidden; color: #1e40af; text-align: left; border: 1px solid #dbeafe; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="position: relative; z-index: 2;">
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; margin-bottom: 2px;">Actualizados</div>
+                            <div id="res-updated" style="font-size: 32px; font-weight: 800; line-height: 1;">0</div>
+                        </div>
+                        <i class="fas fa-sync-alt" style="position: absolute; right: -5px; bottom: -5px; font-size: 60px; color: #3b82f6; opacity: 0.1; transform: rotate(-15deg); z-index: 1;"></i>
+                    </div>
+                    
+                    <!-- Nuevos -->
+                    <div class="stat-card" style="background: #f0fdf4; padding: 20px 15px; border-radius: 16px; position: relative; overflow: hidden; color: #166534; text-align: left; border: 1px solid #dcfce7; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="position: relative; z-index: 2;">
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; margin-bottom: 2px;">Nuevos</div>
+                            <div id="res-inserted" style="font-size: 32px; font-weight: 800; line-height: 1;">0</div>
+                        </div>
+                        <i class="fas fa-plus-circle" style="position: absolute; right: -5px; bottom: -5px; font-size: 60px; color: #10b981; opacity: 0.1; transform: rotate(-15deg); z-index: 1;"></i>
+                    </div>
+
+                    <!-- Errores -->
+                    <div class="stat-card" style="background: #fff1f2; padding: 20px 15px; border-radius: 16px; position: relative; overflow: hidden; color: #991b1b; text-align: left; border: 1px solid #ffe4e6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                        <div style="position: relative; z-index: 2;">
+                            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; opacity: 0.7; margin-bottom: 2px;">Errores</div>
+                            <div id="res-errors" style="font-size: 32px; font-weight: 800; line-height: 1;">0</div>
+                        </div>
+                        <i class="fas fa-exclamation-triangle" style="position: absolute; right: -5px; bottom: -5px; font-size: 60px; color: #ef4444; opacity: 0.1; transform: rotate(-15deg); z-index: 1;"></i>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 15px; justify-content: center; align-items: center;">
+                    <button id="backToTableBtn" class="btn" style="background: #1e293b; color: white; padding: 12px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                        <i class="fas fa-arrow-left"></i> Volver a la tabla
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Status Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 24px; border-top: 1px solid #f1f5f9;">
+            <div id="statusBadge" class="status-badge status-idle">
+                <i class="fas fa-info-circle"></i> <span>Esperando datos de Excel...</span>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <!-- Herramientas que aparecen dinámicamente -->
+                <div id="action-tools" style="display: flex; gap: 8px; opacity: 0; pointer-events: none; transition: all 0.3s;">
+                    <button id="viewJsonBtn" class="btn-action-small" title="Ver JSON">
+                        <i class="fas fa-eye"></i> Ver
+                    </button>
+                    <button id="downloadJsonBtn" class="btn-action-small" title="Descargar">
+                        <i class="fas fa-download"></i> Descargar
+                    </button>
+                    <button id="copyJsonBtn" class="btn-action-small" title="Copiar">
+                        <i class="fas fa-copy"></i> Copiar
+                    </button>
+                    
+                    <!-- Botones técnicos ocultos -->
+                    <div style="display: none;">
+                        <button id="processBtn"></button>
+                        <button id="uploadBtn"></button>
+                        <button id="downloadJsonBtnAlt"></button>
+                        <button id="copyJsonBtnAlt"></button>
+                    </div>
+                </div>
+
+                <!-- Botón de descarga de BD COMPLETA (Fijo junto a limpiar) -->
+                <button id="downloadFullCsvBtn" class="btn-action-db" title="Descargar Base de Datos Completa (CSV)">
+                    <i class="fas fa-database"></i> BD Completa
+                </button>
+
+                <!-- El botón de limpiar siempre al final (derecha) -->
+                <button id="clearBtn" class="btn-danger" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;">
+                    <i class="fas fa-trash-alt"></i> Limpiar Tabla
+                </button>
+            </div>
+        </div>
+
+        <style>
+            .btn-action-small {
+                background: #f8fafc;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+                padding: 10px 15px;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .btn-action-small:hover {
+                background: #eff6ff;
+                color: #3b82f6;
+                border-color: #bfdbfe;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            }
+            .btn-action-db {
+                background: #eff6ff;
+                color: #3b82f6;
+                border: 1px solid #dbeafe;
+                padding: 10px 15px;
+                border-radius: 10px;
+                font-size: 13px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .btn-action-db:hover {
+                background: #dbeafe;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            }
+            #clearBtn {
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            #clearBtn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15);
+                background: #fee2e2 !important;
+            }
+        </style>
+
+        <!-- Statistics (Floating/Hidden) -->
+        <div id="statsArea" style="display: none; margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px; font-size: 13px; color: #64748b; gap: 20px;">
+            <span><i class="fas fa-columns"></i> <span id="colCount">0</span> Columnas</span>
+            <span><i class="fas fa-rows"></i> <span id="rowCount">0</span> Filas</span>
+            <span><i class="fas fa-tag"></i> <span id="headerType">-</span></span>
+        </div>
+
+        <!-- JSON Preview (Hidden by default) -->
+        <div id="jsonPreview" style="display: none; margin-top: 20px; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+            <div style="background: #f8fafc; padding: 10px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 13px;">
+                <span style="font-weight: 600;"><i class="fas fa-code text-primary"></i> Vista Previa JSON</span>
+                <span id="jsonCount" style="color: #64748b;">0 registros</span>
+            </div>
+            <pre id="jsonContent" style="margin: 0; background: #1e293b; color: #e2e8f0; padding: 20px; font-size: 12px; overflow: auto; max-height: 250px;"></pre>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module">
+        import { supabase } from './src/config/supabase.js';
+
+        async function checkAuth() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error || !session) {
+                    window.location.replace('login.html');
+                    return;
+                }
+
+                
+                
+                // Mostrar Info de Usuario (Priorizando Nombre Real)
+                const meta = session.user.user_metadata;
+                const userName = meta?.full_name || session.user.email;
+                const userRole = meta?.role || 'Usuario';
+
+                document.getElementById('user-info-area').innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="text-align: right;">
+                            <div style="font-weight: 600; font-size: 14px; color: #1e293b;">${userName}</div>
+                            <div style="font-size: 11px; color: #64748b; font-weight: 500;">${userRole}</div>
+                        </div>
+                        <button id="logoutBtn" title="Cerrar Sesión" style="background: #fff1f2; border: 1px solid #fecaca; width: 38px; height: 38px; border-radius: 12px; color: #ef4444; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById('logoutBtn').onclick = async () => {
+                    try {
+                        await supabase.auth.signOut();
+                        // Solo borrar datos de sesión, PRESERVAR biometría
+                        localStorage.removeItem('sispro_user');
+                        sessionStorage.clear();
+                        window.location.href = 'login.html';
+                    } catch (err) {
+                        localStorage.removeItem('sispro_user');
+                        window.location.href = 'login.html';
+                    }
+                };
+
+            } catch (err) {
+                console.error('Error Auth:', err);
+                window.location.replace('login.html');
+            }
+        }
+
+        // Iniciar validación rápida
+        checkAuth();
+    </script>
+    
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
