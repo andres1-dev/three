@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Novedades - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    
+    <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
+    <script>
+      (function(){
+        const s = localStorage.getItem('sispro_user');
+        if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
+      })();
+    </script>
+</head>    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.88);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            padding-top: 0;
+            background-attachment: fixed;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                padding: 2rem;
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 60px;
+            }
+        }
+
+        /* ── Improved Mini-Stats Box (Compact & Technical) ── */
+        .stat-card-mini {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            min-width: 170px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card-mini:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border-color: #e2e8f0;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 0.95rem;
+        }
+
+        .stat-icon.pending {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+
+        .stat-icon.process {
+            background: #fffbeb;
+            color: #f59e0b;
+        }
+
+        .stat-icon.done {
+            background: #ecfdf5;
+            color: #10b981;
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-val-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-val {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-qty-badge {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 1px 6px;
+            border-radius: 4px;
+        }
+
+        .stat-lab {
+            font-size: 0.6rem;
+            color: #94a3b8;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .divider-v {
+            width: 1px;
+            height: 30px;
+            background: #f1f5f9;
+            margin: 0 10px;
+        }
+
+        /* ── Modern Separated Tools ── */
+        .search-area-lux {
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+            flex: 1;
+            max-width: 600px;
+            height: 44px;
+            transition: all 0.2s;
+        }
+
+        .search-area-lux:focus-within {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08);
+        }
+
+        .controls-row-lux {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .actions-group-lux {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-input-clean {
+            border: none;
+            background: transparent;
+            flex: 1;
+            font-size: 0.9rem;
+            color: #1e293b;
+            padding: 12px 0;
+            font-weight: 500;
+        }
+
+        .search-input-clean:focus {
+            outline: none;
+        }
+
+        .search-input-clean::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        .integrated-switch {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 4px 12px;
+            background: #f1f5f9;
+            border-radius: 14px;
+            margin-left: 12px;
+            user-select: none;
+            height: 34px;
+            /* Fix height for perfect centering */
+        }
+
+        .switch-label-lux {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            white-space: nowrap;
+            margin: 0;
+            line-height: 1;
+            /* Match centered layout */
+            display: flex;
+            align-items: center;
+        }
+
+        /* Pure Centering for Bootstrap Switch */
+        .integrated-switch .form-check {
+            padding: 0;
+            margin: 0;
+            min-height: auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .integrated-switch .form-check-input {
+            width: 32px !important;
+            height: 18px !important;
+            margin: 0 !important;
+            /* Remove all default bootstrap margins */
+            cursor: pointer;
+            border-color: #cbd5e1;
+            background-color: #e2e8f0;
+            position: relative;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        /* ── Ultra Compact Cards ── */
+        .novedad-card-ultra {
+            background: white;
+            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            margin-bottom: 0.85rem;
+            display: flex;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            transition: all 0.2s ease;
+            min-height: 160px;
+            height: auto;
+            position: relative;
+        }
+
+        .novedad-card-ultra:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+            border-color: #cbd5e1;
+        }
+
+        /* Asegurar que el contenido esté por encima */
+        .novedad-card-ultra > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Torre de Acciones con Color por Estado */
+        .status-pendiente .actions-tower-ultra {
+            background-color: rgba(245, 158, 11, 0.05);
+            border-left: 1px solid rgba(245, 158, 11, 0.15);
+        }
+
+        .status-elaboracion .actions-tower-ultra {
+            background-color: rgba(251, 191, 36, 0.1);
+            border-left: 1px solid rgba(251, 191, 36, 0.25);
+        }
+
+        .status-finalizado .actions-tower-ultra {
+            background-color: rgba(34, 197, 94, 0.05);
+            border-left: 1px solid rgba(34, 197, 94, 0.15);
+        }
+
+        .card-visual-ultra {
+            width: 140px;
+            min-width: 140px;
+            background: #f8fafc;
+            cursor: zoom-in;
+            border-right: 1px solid #f1f5f9;
+            overflow: hidden;
+            /* Para contener el zoom del hover */
+            position: relative;
+        }
+
+        .card-visual-ultra img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-visual-ultra:hover img {
+            transform: scale(1.15);
+            filter: brightness(1.1);
+        }
+
+        .card-visual-ultra::after {
+            content: '\f00e';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            color: white;
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .card-visual-ultra:hover::after {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Estilo para cuando NO hay imagen */
+        .card-visual-ultra .no-image-placeholder {
+            transition: all 0.3s ease;
+        }
+
+        .card-visual-ultra:hover .no-image-placeholder i {
+            transform: scale(1.1);
+            color: #94a3b8;
+        }
+
+        .card-body-ultra {
+            flex: 1;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 4px;
+        }
+
+        .card-top-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .card-tag-ultra {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #1e293b;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .tech-pills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 0;
+        }
+
+        .tech-pill-lux {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: #475569;
+            background: transparent;
+            border: 1px solid #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tech-pill-highlight {
+            font-size: 0.6rem;
+            font-weight: 800;
+            color: #1e40af;
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .tech-pill-highlight i {
+            font-size: 0.6rem;
+            color: #3b82f6;
+        }
+
+        .tech-pill-lux i {
+            font-size: 0.6rem;
+            color: #94a3b8;
+        }
+
+        /* ── Pestaña de Datos Técnicos (Sin línea divisoria) ── */
+        .tech-divider-container {
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tech-badge-container {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 0.65rem;
+            display: inline-flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+            color: #64748b;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            max-width: 100%;
+        }
+
+        .tech-badge-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            white-space: nowrap;
+        }
+
+        .tech-badge-item i {
+            font-size: 0.6rem;
+        }
+
+        .tech-badge-separator {
+            color: #cbd5e1;
+            margin: 0 2px;
+        }
+
+        /* Para pantallas móviles pequeñas, ajustar tamaño */
+        @media (max-width: 480px) {
+            .tech-badge-container {
+                font-size: 0.55rem;
+                padding: 5px 8px;
+                gap: 3px;
+            }
+
+            .tech-badge-item i {
+                font-size: 0.5rem;
+            }
+        }
+
+        .card-desc-ultra {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #1e293b;
+            font-weight: 500;
+            margin: 0;
+            padding: 12px 0;
+            text-align: left;
+            width: 100%;
+        }
+        
+        /* Estilos para el contenido JSONB dentro de card-desc-ultra */
+        .card-desc-ultra > div {
+            white-space: normal;
+        }
+
+        .card-meta-ultra {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 0.65rem;
+            color: #64748b;
+            font-weight: 600;
+            padding-top: 12px;
+            width: 100%;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .planta-label-lux {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0f172a;
+            font-weight: 800;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .info-trigger-lux {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            font-size: 0.5rem;
+            background: #eff6ff;
+            color: #3b82f6;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            vertical-align: super;
+            /* Estilo hiperíndice */
+            margin-left: 4px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            font-weight: 900;
+        }
+
+        .info-trigger-lux:hover {
+            background: #3b82f6;
+            color: white;
+            transform: scale(1.2);
+            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+        }
+
+        .date-row-lux {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            font-size: 0.7rem;
+            line-height: 1.4;
+            color: #64748b;
+            font-weight: 600;
+        }
+        
+        .date-row-lux span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .days-badge-lux {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.7rem;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        /* 0-2 días: A tiempo (verde) */
+        .days-badge-lux.is-ontime {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #16a34a;
+        }
+
+        /* 3-4 días: Advertencia (naranja) */
+        .days-badge-lux.is-warning {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #d97706;
+        }
+
+        /* 5+ días: Fuera de plazo (rojo) */
+        .days-badge-lux.is-overdue {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+        }
+
+        .actions-tower-ultra {
+            width: 220px;
+            background: #fbfbfc;
+            border-left: 1px solid #f1f5f9;
+            padding: 0.75rem 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* ── Solid Status Action Button ── */
+        .status-btn-lux {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            color: white !important;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: none;
+        }
+
+        .status-btn-lux.p {
+            background: #ef4444;
+        }
+
+        /* Solid Red */
+        .status-btn-lux.w {
+            background: #f59e0b;
+        }
+
+        /* Solid Amber */
+        .status-btn-lux.d {
+            background: #10b981;
+        }
+
+        /* Solid Emerald */
+
+        .status-btn-lux:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-btn-lux i {
+            font-size: 0.8rem;
+        }
+
+        .status-select-hidden {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            border: none;
+            outline: none;
+            box-shadow: none;
+            background: transparent;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            text-align: center;
+            text-align-last: center;
+        }
+
+        /* Mejorar apariencia del select en PC */
+        @media (min-width: 769px) {
+            .status-select-hidden {
+                font-size: 0.65rem;
+                font-weight: 800;
+            }
+        }
+
+        .status-btn-lux.is-loading {
+            pointer-events: none;
+            opacity: 0.9;
+            cursor: wait;
+        }
+
+        .status-btn-lux.is-loading i {
+            margin-right: 8px;
+        }
+
+        .btn-print-ultra,
+        .btn-notify-ultra,
+        .btn-chat-print-ultra,
+        .btn-edit-ultra {
+            height: auto;
+            border-radius: 10px;
+            color: white;
+            border: none;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 12px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-edit-ultra {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+
+        .btn-edit-ultra:hover {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-print-ultra {
+            background: var(--color-primary);
+        }
+
+        .btn-print-ultra:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-print-ultra:not(:disabled):hover {
+            background: var(--color-primary-dark);
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-notify-ultra {
+            background: #06b6d4;
+        }
+
+        .btn-notify-ultra:hover {
+            background: #0891b2;
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-chat-print-ultra {
+            background: #10b981;
+        }
+
+        .btn-chat-print-ultra:not(:disabled):hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-chat-print-ultra:disabled {
+            background: #cbd5e1;
+            color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Botones de Tipo de Cobro */
+        .cobro-option-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 8px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+            width: 100%;
+        }
+
+        .cobro-option-btn:hover {
+            border-color: #06b6d4;
+            color: #06b6d4;
+            background: #ecfeff;
+            transform: translateY(-2px);
+        }
+
+        .cobro-option-btn.selected {
+            border-color: #06b6d4;
+            background: #06b6d4;
+            color: white;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+        }
+
+        .cobro-option-btn i {
+            font-size: 1.2rem;
+        }
+
+        .cobro-option-btn span {
+            font-weight: 700;
+            text-align: center;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            opacity: 1;
+        }
+
+        .btn-print-ultra i,
+        .btn-notify-ultra i,
+        .btn-chat-print-ultra i {
+            font-size: 0.8rem;
+        }
+
+        /* ── Modal Premium Minimalista ── */
+        .modal-overlay-notify {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay-notify.active {
+            display: flex;
+        }
+
+        .modal-notify-container {
+            background: white;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 520px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: modalSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .modal-notify-body {
+            padding: 40px 32px 32px;
+        }
+
+        .notify-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 8px 0;
+            letter-spacing: -0.02em;
+        }
+
+        .notify-subtitle {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0 0 32px 0;
+            line-height: 1.5;
+        }
+
+        .notify-textarea-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .notify-textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 16px;
+            border: 2px solid #f1f5f9;
+            border-radius: 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9375rem;
+            color: #1e293b;
+            resize: vertical;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .notify-textarea:focus {
+            outline: none;
+            border-color: #06b6d4;
+            background: white;
+            box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.08);
+        }
+
+        .notify-textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        .notify-ai-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            z-index: 3;
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+            outline: none !important;
+        }
+
+        .notify-ai-btn:focus,
+        .notify-ai-btn:active {
+            outline: none !important;
+        }
+
+        .notify-ai-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35);
+        }
+
+        .notify-ai-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .notify-ai-btn i {
+            font-size: 0.875rem;
+        }
+
+        .notify-ai-status {
+            display: none;
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 12px;
+            font-size: 0.8125rem;
+            color: #0369a1;
+            line-height: 1.5;
+        }
+
+        .notify-ai-status.active {
+            display: block;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Opciones de Cobro Horizontal con Iconos */
+        .notify-cobro-container {
+            margin-top: 20px;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .notify-cobro-label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .notify-cobro-options {
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .notify-cobro-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 4px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-height: 55px;
+            flex: 1;
+            min-width: 70px;
+        }
+
+        .notify-cobro-btn i {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .notify-cobro-btn span {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #94a3b8;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.2s;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .notify-cobro-btn:hover {
+            border-color: #06b6d4;
+            background: #f0f9ff;
+        }
+
+        .notify-cobro-btn:hover i {
+            color: #06b6d4;
+            transform: scale(1.1);
+        }
+
+        .notify-cobro-btn:hover span {
+            opacity: 1;
+            max-height: 30px;
+        }
+
+        .notify-cobro-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Responsive para botones de cobro */
+        @media (max-width: 576px) {
+            .notify-cobro-options {
+                gap: 4px;
+            }
+            
+            .notify-cobro-btn {
+                padding: 6px 2px;
+                min-height: 50px;
+                min-width: 60px;
+            }
+            
+            .notify-cobro-btn i {
+                font-size: 0.9rem;
+            }
+            
+            .notify-cobro-btn span {
+                font-size: 0.55rem;
+            }
+        }
+
+        .modal-notify-footer {
+            padding: 0 32px 32px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .notify-btn {
+            padding: 12px 24px;
+            border-radius: 14px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .notify-btn-cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .notify-btn-cancel:hover {
+            background: #e2e8f0;
+        }
+
+        .notify-btn-send {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+        }
+
+        .notify-btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(6, 182, 212, 0.35);
+        }
+
+        .notify-btn-send:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .novedad-card-ultra.is-finalized {
+            opacity: 0.7;
+            background: #fafafa;
+        }
+
+        @media (max-width: 992px) {
+            .novedad-card-ultra {
+                height: auto;
+                flex-direction: column;
+            }
+
+            .card-visual-ultra {
+                width: 100%;
+                height: 120px;
+            }
+
+            .actions-tower-ultra {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid #f1f5f9;
+                padding: 1rem;
+                flex-direction: row;
+            }
+
+            .stats-container-main {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            /* Tool Bar Mobile Polish */
+            .controls-row-lux {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+            .search-area-lux {
+                max-width: 100%;
+            }
+            .actions-group-lux {
+                justify-content: space-between;
+                width: 100%;
+            }
+            .integrated-switch {
+                flex: 1;
+                margin-left: 0;
+            }
+            .view-btn-lux {
+                display: none !important;
+            }
+        }
+
+        /* ── Compact View Mode ── */
+        #novedadesFeed.is-compact {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        .is-compact .novedad-card-ultra {
+            flex-direction: column !important;
+            height: 100%;
+        }
+
+        .is-compact .card-visual-ultra {
+            width: 100% !important;
+            height: 120px !important;
+            border-right: none !important;
+            border-bottom: 3px solid transparent;
+        }
+
+        .is-compact .actions-tower-ultra {
+            width: 100% !important;
+            flex-direction: row !important;
+            border-left: none !important;
+            border-top: 1px solid #f1f5f9 !important;
+            padding: 10px !important;
+        }
+
+        .is-compact .card-desc-ultra {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal !important;
+            max-height: 3em;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .is-compact .novedad-card-ultra:hover .card-desc-ultra {
+            -webkit-line-clamp: unset;
+            max-height: 500px;
+            overflow: visible;
+            background: white;
+            z-index: 10;
+        }
+
+        .view-btn-lux {
+            background: white;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-left: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .view-btn-lux:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #f0f7ff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+        }
+
+        .view-btn-lux.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        /* ── Pagination Luxury ── */
+        .pagination-container-lux {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin: 2rem 0;
+            padding: 1rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f1f5f9;
+        }
+
+        .page-btn-lux {
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #475569;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .page-btn-lux:hover:not(:disabled) {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+            transform: translateY(-1px);
+        }
+
+        .page-btn-lux:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+
+        .page-btn-lux.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .page-info-lux {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div class="wrapper-dashboard">
+        <!-- ── KPI Chips ── -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
+                <span>Indicadores</span>
+                <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="kpiChevron"></i>
+            </button>
+            <button onclick="gsCurrentPage=1;_toggleFinalizados()" id="btn-toggle-cerradas" title="Ver cerradas" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;-webkit-tap-highlight-color:transparent;">
+                <i class="fas fa-eye" id="icon-toggle-cerradas"></i>
+                <span id="label-toggle-cerradas">Cerradas</span>
+            </button>
+        </div>
+
+        <div id="kpiContainer" style="display:none;grid-template-columns:repeat(3,1fr);gap:1px;margin-bottom:20px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                <span style="font-size:1.1rem;font-weight:800;color:#f59e0b;" id="stat-pending">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Pendientes</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                <span style="font-size:1.1rem;font-weight:800;color:#3b82f6;" id="stat-process">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Elaboración</span>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
+                <span style="font-size:1.1rem;font-weight:800;color:#10b981;" id="stat-done">0</span>
+                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Cerradas</span>
+            </div>
+        </div>
+
+        <!-- IDs de compatibilidad ocultos para el JS existente -->
+        <span id="stat-pending-qty" style="display:none;">0</span>
+        <span id="stat-process-qty" style="display:none;">0</span>
+        <span id="stat-done-qty" style="display:none;">0</span>
+        <span id="m-stat-pending" style="display:none;">0</span>
+        <span id="m-stat-process" style="display:none;">0</span>
+        <span id="m-stat-done" style="display:none;">0</span>
+
+        <!-- ── Search ── -->
+        <div class="input-with-icon mb-3">
+            <i class="codicon codicon-search input-icon"></i>
+            <input type="text" id="searchInput" class="form-control" style="border-radius:20px;"
+                placeholder="Filtrar por lote, planta, radicado o descripción..." oninput="handleFilter()">
+        </div>
+
+        <!-- input oculto para compatibilidad con JS -->
+        <input type="checkbox" id="toggleFinalizados" style="display:none;" onchange="gsCurrentPage=1; renderTabla()">
+
+        <!-- ── Main Feed ── -->
+        <div id="loader" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted fw-bold">SINCRONIZANDO DATOS...</p>
+        </div>
+
+        <div id="dataSection" style="display: none;">
+            <div id="novedadesFeed" class="pb-3">
+                <!-- Tarjetas ultra compactas -->
+            </div>
+            <!-- Paginación Aesthetic -->
+            <div id="paginationFeed"></div>
+        </div>
+    </div>
+
+    <!-- Modal Premium Minimalista -->
+    <div id="modalNotifyOverlay" class="modal-overlay-notify">
+        <div class="modal-notify-container">
+            <div class="modal-notify-body">
+                <h2 class="notify-title">Notificar Solución</h2>
+                <p class="notify-subtitle">Describe la solución implementada para resolver esta novedad</p>
+
+                <div class="notify-textarea-wrapper">
+                    <textarea 
+                        id="notifySolucion" 
+                        class="notify-textarea" 
+                        placeholder="Escribe aquí la solución..."
+                    ></textarea>
+                    <button class="notify-ai-btn" onclick="corregirTextoIA()" title="Mejorar con IA">
+                        <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                    </button>
+                </div>
+
+                <div id="notifyAiStatus" class="notify-ai-status">
+                    <i class="fas fa-circle-notch fa-spin"></i> La IA está mejorando tu texto...
+                </div>
+
+                <!-- Opciones de Cobro Horizontal -->
+                <div class="notify-cobro-container">
+                    <label class="notify-cobro-label">Plantillas de Resolución</label>
+                    <div class="notify-cobro-options">
+                        <button type="button" class="notify-cobro-btn" onclick="insertarPlantilla('MANO_A_MANO')" title="Insertar plantilla Mano a Mano">
+                            <i class="fas fa-handshake"></i>
+                            <span>Mano a Mano</span>
+                        </button>
+                        <button type="button" class="notify-cobro-btn" onclick="insertarPlantilla('TALLER')" title="Insertar plantilla Taller">
+                            <i class="fas fa-industry"></i>
+                            <span>Taller</span>
+                        </button>
+                        <button type="button" class="notify-cobro-btn" onclick="insertarPlantilla('LINEA')" title="Insertar plantilla Línea">
+                            <i class="fas fa-route"></i>
+                            <span>Línea</span>
+                        </button>
+                        <button type="button" class="notify-cobro-btn" onclick="insertarPlantilla('REFERENCIA')" title="Insertar plantilla Referencia">
+                            <i class="fas fa-tag"></i>
+                            <span>Referencia</span>
+                        </button>
+                        <button type="button" class="notify-cobro-btn" onclick="insertarPlantilla('FICHA')" title="Insertar plantilla Ficha">
+                            <i class="fas fa-file-alt"></i>
+                            <span>Ficha</span>
+                        </button>
+                        <button type="button" class="notify-cobro-btn" onclick="insertarPlantilla('ENTREGA')" title="Insertar plantilla Entrega">
+                            <i class="fas fa-truck"></i>
+                            <span>Entrega</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-notify-footer">
+                <button class="notify-btn notify-btn-cancel" onclick="cerrarModalNotify()">
+                    Cancelar
+                </button>
+                <button class="notify-btn notify-btn-send" onclick="enviarNotificacion()" id="btnEnviarNotify">
+                    <i class="fas fa-paper-plane"></i> Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edición de Novedad -->
+    <div id="modalEditNovedad" class="modal-overlay-notify" style="display: none;">
+        <div class="modal-notify-container" style="max-width: 900px;">
+            <div class="modal-notify-body">
+                <h2 class="notify-title">Editar Novedad</h2>
+                <p class="notify-subtitle" id="editNovedadSubtitle">Modifica los datos de la novedad</p>
+
+                <form id="editNovedadForm" style="max-height: 65vh; overflow-y: auto; padding-right: 8px;">
+                    <!-- Info de contexto (solo lectura) -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 3px solid #3b82f6;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.8rem;">
+                            <div><strong>ID:</strong> <span id="editNovedadId">-</span></div>
+                            <div><strong>Lote:</strong> <span id="editNovedadLote">-</span></div>
+                            <div><strong>Planta:</strong> <span id="editNovedadPlanta">-</span></div>
+                            <div><strong>Referencia:</strong> <span id="editNovedadRef">-</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 1: Área de Servicios | Tipo de Novedad o Cantidad -->
+                    <div class="row-pc-grid mt-2" id="editAreaNovedadRow" style="grid-template-columns: 1fr;">
+                        <div class="mb-3">
+                            <label for="editArea" class="form-label">Área de Servicios: <span style="color:#ef4444;">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-building input-icon"></i>
+                                <select id="editArea" class="form-control" required onchange="handleEditAreaChange()">
+                                    <option value="">Seleccione un área...</option>
+                                    <option value="INSUMOS">INSUMOS</option>
+                                    <option value="CORTE">CORTE</option>
+                                    <option value="CODIGOS">CÓDIGOS</option>
+                                    <option value="DISEÑO">DISEÑO</option>
+                                    <option value="TELAS">TELAS</option>
+                                    <option value="OTROS">OTROS</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 hidden" id="editTipoNovedadGroup">
+                            <label for="editTipoNovedad" class="form-label">Tipo de Novedad: <span style="color:#ef4444;">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-exclamation-circle input-icon"></i>
+                                <select id="editTipoNovedad" class="form-control">
+                                    <option value="">Seleccione tipo...</option>
+                                    <option value="FALTANTE">FALTANTE</option>
+                                    <option value="IMPERFECTO">IMPERFECTO</option>
+                                    <option value="PERDIDA">PERDIDA</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 hidden" id="editCantidadDisenoGroup">
+                            <label for="editCantidadSolicitada" class="form-label">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-hashtag input-icon"></i>
+                                <input type="number" class="form-control" id="editCantidadSolicitada">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fila 2: Cantidad simple (para áreas normales) -->
+                    <div class="mb-3 hidden" id="editCantidadNormalGroup">
+                        <label for="editCantidadNormal" class="form-label">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                        <div class="input-with-icon">
+                            <i class="fas fa-hashtag input-icon"></i>
+                            <input type="number" class="form-control" id="editCantidadNormal">
+                        </div>
+                    </div>
+
+                    <!-- Lista de tipos de tela -->
+                    <div class="mb-3 hidden" id="editTipoTelasGroup">
+                        <div class="row-pc-grid mb-2">
+                            <label class="form-label mb-0">Tipo de Imperfección: <span style="color:#ef4444;">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                                <button type="button" class="btn-action-muted" onclick="agregarFilaEditTela()" title="Agregar otro tipo">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editTelasList"></div>
+                    </div>
+
+                    <!-- Lista dinámica de insumos -->
+                    <div class="mb-3 hidden" id="editTipoInsumoGroup">
+                        <div class="row-pc-grid mb-2">
+                            <label class="form-label mb-0">Tipo de Insumo: <span style="color:#ef4444;">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                                <button type="button" class="btn-action-muted" onclick="agregarFilaEditInsumo()" title="Agregar otro insumo">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editInsumosList"></div>
+                    </div>
+
+                    <!-- Lista dinámica de corte -->
+                    <div class="mb-3 hidden" id="editTipoCorteGroup">
+                        <div class="row-pc-grid mb-2">
+                            <label class="form-label mb-0">Tipo de Corte: <span style="color:#ef4444;">*</span></label>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+                                <button type="button" class="btn-action-muted" onclick="agregarFilaEditCorte()" title="Agregar otro tipo">
+                                    <i class="fas fa-plus"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                        <div id="editCorteList"></div>
+                    </div>
+
+                    <!-- Lista dinámica de códigos -->
+                    <div class="mb-3 hidden" id="editTipoCodigosGroup">
+                        <div class="row-pc-grid mb-3" id="editCodigosRowGrid" style="grid-template-columns: 1fr;">
+                            <div>
+                                <label class="form-label">Tipo de Solicitud: <span style="color:#ef4444;">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-layer-group input-icon"></i>
+                                    <select id="editCodigosTipoSolicitud" class="form-control" onchange="handleEditCodigosTipoChange()">
+                                        <option value="">Seleccione...</option>
+                                        <option value="LOTE_COMPLETO">LOTE COMPLETO</option>
+                                        <option value="UNIDADES">UNIDADES ESPECÍFICAS</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="hidden" id="editCodigosLoteCompletoGroup">
+                                <label class="form-label">Cantidad Total del Lote: <span style="color:#ef4444;">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fas fa-hashtag input-icon"></i>
+                                    <input type="number" id="editCodigosCantidadTotal" class="form-control" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="hidden" id="editCodigosUnidadesGroup">
+                            <div class="row-pc-grid mb-2" style="grid-template-columns: 1fr 1fr 1fr;">
+                                <label class="form-label mb-0">Talla: <span style="color:#ef4444;">*</span></label>
+                                <label class="form-label mb-0">Color: <span style="color:#ef4444;">*</span></label>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <label class="form-label mb-0">Cantidad: <span style="color:#ef4444;">*</span></label>
+                                    <button type="button" class="btn-action-muted" onclick="agregarFilaCodigoEdit()" title="Agregar otro código">
+                                        <i class="fas fa-plus"></i> Agregar
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="editCodigosList"></div>
+                        </div>
+                    </div>
+
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="editDescripcion" class="form-label mb-0">Descripción detallada:</label>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('editDescripcion')"
+                                    title="Mejorar redacción y ortografía">
+                                    <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                                </button>
+                                <button type="button" class="btn-restore-text" onclick="restaurarTextoOriginal('editDescripcion')"
+                                    title="Restaurar texto original" style="display: none;">
+                                    <i class="fas fa-undo"></i> Restaurar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="ai-textarea-wrapper">
+                            <textarea id="editDescripcion" class="form-control" rows="4" placeholder="Escribe aquí los detalles de la novedad..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Tipo de Cobro -->
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Cobro:</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px;">
+                            <button type="button" class="cobro-option-btn" data-cobro="TALLER" onclick="seleccionarCobroYPlantilla('TALLER')">
+                                <i class="fas fa-industry"></i>
+                                <span>Taller</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="MANO_A_MANO" onclick="seleccionarCobroYPlantilla('MANO_A_MANO')">
+                                <i class="fas fa-handshake"></i>
+                                <span>Mano a Mano</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="LINEA" onclick="seleccionarCobroYPlantilla('LINEA')">
+                                <i class="fas fa-route"></i>
+                                <span>Línea</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="REFERENCIA" onclick="seleccionarCobroYPlantilla('REFERENCIA')">
+                                <i class="fas fa-tag"></i>
+                                <span>Referencia</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="FICHA" onclick="seleccionarCobroYPlantilla('FICHA')">
+                                <i class="fas fa-file-alt"></i>
+                                <span>Ficha</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="ENTREGA" onclick="seleccionarCobroYPlantilla('ENTREGA')">
+                                <i class="fas fa-truck"></i>
+                                <span>Entrega</span>
+                            </button>
+                            <button type="button" class="cobro-option-btn" data-cobro="PERSONALIZADO" onclick="seleccionarCobroYPlantilla('PERSONALIZADO')" style="border: 2px dashed #cbd5e1;">
+                                <i class="fas fa-pen"></i>
+                                <span>Personalizado</span>
+                            </button>
+                        </div>
+                        <input type="hidden" id="editCobro" value="">
+                    </div>
+
+                    <!-- Comentarios (oculto inicialmente) -->
+                    <div class="mb-3" id="editComentariosContainer" style="display: none;">
+                        <label for="editComentarios" class="form-label">Comentarios:</label>
+                        <div class="ai-textarea-wrapper">
+                            <textarea id="editComentarios" class="form-control" rows="3" placeholder="Comentarios sobre la resolución de la novedad..." readonly></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-notify-footer">
+                <button class="notify-btn notify-btn-cancel" onclick="cerrarModalEditNovedad()">
+                    Cancelar
+                </button>
+                <button class="notify-btn notify-btn-send" onclick="guardarEdicionNovedad()" id="btnGuardarEdit">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="js/config.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/auth.js"></script>
+
+    <script src="js/particles-config.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/resolucion.js"></script>
+
+</body>
+
+</html>

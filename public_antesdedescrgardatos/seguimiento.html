@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Seguimiento - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
+    <!-- Escudo de Seguridad -->
+    <script>
+      (function(){
+        const s = localStorage.getItem('sispro_user');
+        if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
+      })();
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #1e293b; padding-top: 0; }
+
+        .seg-wrapper {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 3rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+        }
+
+        @media (max-width: 767px) {
+            .seg-wrapper {
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                padding: 2rem;
+                margin-top: 60px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .seg-wrapper { padding: 3rem; }
+        }
+
+        /* ── Header ── */
+        .seg-page-title {
+            font-size: 1.55rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+        .seg-subtitle { font-size: 0.8rem; color: #94a3b8; margin-top: 3px; }
+
+        .refresh-btn {
+            display: inline-flex; align-items: center; gap: 7px;
+            padding: 8px 16px; background: #3b82f6; color: white;
+            border: none; border-radius: 10px; font-size: 0.78rem;
+            font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: #2563eb; transform: translateY(-1px); }
+        .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .refresh-btn.spinning i { animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Contador de resultados ── */
+        .seg-count {
+            font-size: 0.72rem; font-weight: 700; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 1rem;
+        }
+
+        /* ── Tarjeta acordeón ── */
+        .seg-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .seg-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); border-color: #cbd5e1; }
+
+        /* Borde izquierdo por estado */
+        .seg-card.st-PENDIENTE   { border-left: 4px solid #94a3b8; }
+        .seg-card.st-ELABORACION { border-left: 4px solid #f59e0b; }
+        .seg-card.st-FINALIZADO  { border-left: 4px solid #22c55e; }
+
+        /* ── Header de la tarjeta (siempre visible) ── */
+        .seg-card-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 16px; cursor: pointer;
+            user-select: none;
+        }
+        .seg-card-header:hover { background: #fafafa; }
+
+        .seg-state-dot {
+            width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+        }
+        .st-PENDIENTE   .seg-state-dot { background: #94a3b8; }
+        .st-ELABORACION .seg-state-dot { background: #f59e0b; box-shadow: 0 0 0 3px #fef3c7; }
+        .st-FINALIZADO  .seg-state-dot { background: #22c55e; }
+
+        .seg-header-main { flex: 1; min-width: 0; }
+        .seg-lote {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.82rem; font-weight: 800; color: #1e293b;
+        }
+        .seg-meta { font-size: 0.68rem; color: #94a3b8; margin-top: 2px; }
+
+        .seg-badge {
+            font-size: 0.6rem; font-weight: 800; padding: 3px 8px;
+            border-radius: 20px; text-transform: uppercase; flex-shrink: 0;
+        }
+        .badge-PENDIENTE   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+        .badge-ELABORACION { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+        .badge-FINALIZADO  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+
+        .seg-chevron {
+            color: #94a3b8; font-size: 0.75rem; flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+        .seg-card.open .seg-chevron { transform: rotate(180deg); }
+
+        /* ── Cuerpo colapsable ── */
+        .seg-card-body {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1);
+            border-top: 0px solid #f1f5f9;
+        }
+        .seg-card.open .seg-card-body {
+            max-height: 800px;
+            border-top-width: 1px;
+        }
+        .seg-card-body-inner { padding: 16px; }
+
+        /* ── Stepper ── */
+        .seg-stepper { display: flex; flex-direction: column; gap: 0; margin-bottom: 14px; }
+        .seg-step { display: flex; gap: 18px; align-items: stretch; }
+        .seg-step-line-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        .seg-step-dot {
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; flex-shrink: 0; line-height: 1;
+            border: 2px solid #e2e8f0; background: #f8fafc; color: #cbd5e1;
+        }
+        .seg-step-dot.done   { background: #22c55e; border-color: #22c55e; color: white; }
+        .seg-step-dot.active { background: #fffbeb; border-color: #f59e0b; color: #f59e0b; box-shadow: 0 0 0 4px #fef3c733; }
+        .seg-step-dot.done-final { background: #22c55e; border-color: #22c55e; color: white; }
+        .seg-step-connector-wrap { position: relative; width: 2px; flex: 1; min-height: 56px; }
+        .seg-step-connector { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: #e2e8f0; }
+        .seg-step-connector.done { background: #22c55e; }
+        .seg-step-dur {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.55rem; font-weight: 400; color: #94a3b8;
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 2px 5px; white-space: nowrap;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            display: flex; align-items: center; gap: 2px;
+            z-index: 1;
+        }
+        .seg-step-text { padding-top: 4px; padding-bottom: 28px; flex: 1; }
+        .seg-step-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; }
+        .seg-step-label.done   { color: #16a34a; }
+        .seg-step-label.active { color: #d97706; }
+        .seg-step-desc { font-size: 0.68rem; color: #94a3b8; margin-top: 0; }
+
+        /* ── Descripción ── */
+        .seg-desc {
+            font-size: 0.78rem; color: #475569; line-height: 1.55;
+            background: #f8fafc; border-radius: 10px; padding: 10px 12px;
+            border-left: 3px solid #e2e8f0; margin-bottom: 12px;
+        }
+
+        /* ── Footer de tarjeta ── */
+        .seg-card-footer {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; flex-wrap: wrap;
+        }
+        .seg-date-info { font-size: 0.65rem; color: #94a3b8; }
+
+        /* ── Estados vacío / error / carga ── */
+        .seg-state-box {
+            text-align: center; padding: 60px 20px; color: #94a3b8;
+            background: white; border-radius: 16px; border: 1px solid #e2e8f0;
+        }
+        .seg-state-box i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.35; }
+        .seg-state-box .title { font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; color: #64748b; }
+        .seg-state-box .sub { font-size: 0.75rem; }
+
+        /* ── Paginación ── */
+        #seg-pagination {
+            display: flex; align-items: center; justify-content: center;
+            gap: 6px; margin-top: 16px; flex-wrap: wrap;
+        }
+        .seg-page-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1.5px solid #e2e8f0; background: white;
+            color: #64748b; font-size: 0.75rem; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s;
+        }
+        .seg-page-btn:hover { border-color: #3b82f6; color: #3b82f6; }
+        .seg-page-btn.active {
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border-color: transparent; color: white;
+            box-shadow: 0 3px 10px rgba(59,130,246,0.3);
+        }
+        .seg-page-arrow {
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 1.5px solid #e2e8f0; background: white;
+            color: #94a3b8; font-size: 0.7rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.18s;
+        }
+        .seg-page-arrow:hover:not(:disabled) { border-color: #3b82f6; color: #3b82f6; }
+        .seg-page-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        /* ── Botón ver finalizadas (inline en el contador) ── */
+        .btn-finalizadas {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 3px 12px; border-radius: 20px;
+            border: 1px solid #e2e8f0; background: white;
+            font-size: 0.68rem; font-weight: 600; color: #94a3b8;
+            cursor: pointer; transition: all 0.18s; white-space: nowrap;
+        }
+        .btn-finalizadas:hover { border-color: #cbd5e1; color: #64748b; background: #f8fafc; }
+        .btn-finalizadas.active { border-color: #cbd5e1; color: #64748b; background: #f1f5f9; }
+    </style>
+</head>
+<body>
+
+<div class="seg-wrapper">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+    </div>
+
+    <div id="seg-count" class="seg-count" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;"></div>
+    <div id="tracking-container">
+        <div class="seg-state-box">
+            <i class="fas fa-circle-notch fa-spin" style="opacity:0.6;"></i>
+            <div class="title">Cargando novedades...</div>
+        </div>
+    </div>
+    <div id="seg-pagination" style="display:none;"></div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="js/config.js"></script>
+<script src="js/forms/gas.js"></script>
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/sounds.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/chat.js"></script>
+
+
+<script>
+/* ── Seguimiento — lógica de página ── */
+
+const TRACKING_POLL    = 30_000;  // Supabase Realtime maneja cambios instantáneos; poll como fallback
+const PAGE_SIZE        = 3;      // novedades por página
+let _trackingTimer     = null;
+let _expandedIds       = new Set();
+let _showFinalizadas   = false;
+let _lastNovedadesData = [];
+let _currentPage       = 1;      // página actual (1-indexed)
+
+/**
+ * Parsea una fecha que puede venir en varios formatos desde Sheets:
+ * - ISO: "2026-03-14T10:30:00"
+ * - Locale ES: "14/03/2026 10:30:00" o "14/03/2026"
+ * - Ya un timestamp numérico
+ * Devuelve un timestamp numérico (ms), o 0 si no se puede parsear.
+ */
+function _parseSheetDate(val) {
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    const s = String(val).trim();
+    if (!s) return 0;
+    // ISO o formato estándar — intento directo
+    const direct = new Date(s);
+    if (!isNaN(direct.getTime())) return direct.getTime();
+    // Formato DD/MM/YYYY HH:mm:ss  o  DD/MM/YYYY
+    const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (m) {
+        const [, d, mo, y, h = '0', mi = '0', sec = '0'] = m;
+        return new Date(+y, +mo - 1, +d, +h, +mi, +sec).getTime();
+    }
+    return 0;
+}
+
+/* ── Carga y render ── */
+
+async function loadTracking(novedadesPromise) {
+    try {
+        if (!CONFIG.API_KEY) await fetchSecureConfig();
+        // Si no se pasó promesa pre-iniciada, invalidar caché para datos frescos en el poll
+        if (!novedadesPromise && typeof invalidateCache === 'function') {
+            invalidateCache('NOVEDADES');
+        }
+        const novedades = await (novedadesPromise || fetchNovedadesData());
+        renderTracking(novedades);
+        if (typeof _guestNovedades !== 'undefined') _guestNovedades = novedades;
+        return novedades;
+    } catch (e) {
+        console.error('[SEGUIMIENTO] Error:', e);
+        const container = document.getElementById('tracking-container');
+        if (!container.querySelector('.seg-card')) {
+            container.innerHTML = `
+                <div class="seg-state-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div class="title">Error al cargar</div>
+                    <div class="sub">Verifica tu conexión e intenta de nuevo.</div>
+                </div>`;
+        }
+        return [];
+    }
+}
+
+function renderTracking(novedades) {
+    const container = document.getElementById('tracking-container');
+    const countEl   = document.getElementById('seg-count');
+
+    if (!novedades || !novedades.length) {
+        countEl.innerHTML = '';
+        container.innerHTML = `
+            <div class="seg-state-box">
+                <i class="fas fa-box-open"></i>
+                <div class="title">Sin novedades registradas</div>
+                <div class="sub">Cuando registres una novedad aparecerá aquí.</div>
+            </div>`;
+        _lastNovedadesData = [];
+        _renderPagination(0, 0);
+        return;
+    }
+
+    const stateOrder = { PENDIENTE: 0, ELABORACION: 1, FINALIZADO: 2 };
+    const sorted = [...novedades].sort((a, b) => {
+        const sa = stateOrder[a.ESTADO] ?? 0;
+        const sb = stateOrder[b.ESTADO] ?? 0;
+        if (sa !== sb) return sa - sb;
+        return _parseSheetDate(b.FECHA) - _parseSheetDate(a.FECHA);
+    });
+
+    const activas     = sorted.filter(n => n.ESTADO !== 'FINALIZADO');
+    const finalizadas = sorted.filter(n => n.ESTADO === 'FINALIZADO');
+
+    // Contador + botón finalizadas en la misma línea
+    _renderCountBar(countEl, sorted.length, activas.length, finalizadas.length);
+
+    const prevMap = {};
+    _lastNovedadesData.forEach(n => { if (n.ID_NOVEDAD) prevMap[n.ID_NOVEDAD] = n; });
+    _lastNovedadesData = novedades;
+
+    const renderedIds = new Set(Array.from(container.querySelectorAll('.seg-card')).map(c => c.id.replace('card-', '')));
+    const newIds      = new Set(sorted.map(n => n.ID_NOVEDAD).filter(Boolean));
+    const hasStructuralChange = [...newIds].some(id => !renderedIds.has(id)) || [...renderedIds].some(id => !newIds.has(id));
+
+    if (hasStructuralChange || container.querySelector('.seg-state-box')) {
+        _fullRender(sorted);
+    } else {
+        sorted.forEach(nov => {
+            const prev = prevMap[nov.ID_NOVEDAD];
+            if (!prev || prev.ESTADO !== nov.ESTADO) _patchCard(nov);
+        });
+        _applyPageView(sorted);
+    }
+}
+
+/* ── Contador + botón finalizadas ── */
+function _renderCountBar(el, total, activas, finalizadas) {
+    el.innerHTML = `
+        <span>${total} novedad${total !== 1 ? 'es' : ''} · ${activas} activa${activas !== 1 ? 's' : ''}</span>
+        ${finalizadas > 0 ? `
+        <button id="btn-ver-finalizadas" class="btn-finalizadas ${_showFinalizadas ? 'active' : ''}"
+            onclick="toggleFinalizadas()">
+            <i class="fas ${_showFinalizadas ? 'fa-eye-slash' : 'fa-eye'}" style="font-size:0.6rem;"></i>
+            ${_showFinalizadas ? 'Ocultar finalizadas' : `Ver finalizadas (${finalizadas})`}
+        </button>` : ''}
+    `;
+}
+
+/* ── Full render con paginación ── */
+function _fullRender(sorted) {
+    const container = document.getElementById('tracking-container');
+    // Renderizar todas las tarjetas en el DOM (ocultas o visibles según estado/página)
+    container.innerHTML = sorted.map(nov => buildCard(nov)).join('');
+    _applyPageView(sorted);
+}
+
+/**
+ * Aplica visibilidad según página actual y _showFinalizadas.
+ * No toca el HTML de las tarjetas — solo display.
+ */
+function _applyPageView(sorted) {
+    const visible = sorted.filter(n => _showFinalizadas || n.ESTADO !== 'FINALIZADO');
+    const totalPages = Math.ceil(visible.length / PAGE_SIZE);
+
+    // Ajustar página si quedó fuera de rango
+    if (_currentPage > totalPages) _currentPage = Math.max(1, totalPages);
+
+    const start = (_currentPage - 1) * PAGE_SIZE;
+    const pageIds = new Set(visible.slice(start, start + PAGE_SIZE).map(n => n.ID_NOVEDAD));
+
+    // Mostrar/ocultar cada tarjeta
+    sorted.forEach(nov => {
+        const card = document.getElementById('card-' + nov.ID_NOVEDAD);
+        if (!card) return;
+        const inPage    = pageIds.has(nov.ID_NOVEDAD);
+        const isFin     = nov.ESTADO === 'FINALIZADO';
+        const showFin   = _showFinalizadas || !isFin;
+        card.style.display = (inPage && showFin) ? '' : 'none';
+    });
+
+    _renderPagination(totalPages, visible.length);
+}
+
+/* ── Paginador ── */
+function _renderPagination(totalPages, totalVisible) {
+    const el = document.getElementById('seg-pagination');
+    if (!el) return;
+
+    if (totalPages <= 1) { el.style.display = 'none'; el.innerHTML = ''; return; }
+
+    el.style.display = 'flex';
+
+    const prev = `<button class="seg-page-arrow" onclick="goToPage(${_currentPage - 1})" ${_currentPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left"></i></button>`;
+    const next = `<button class="seg-page-arrow" onclick="goToPage(${_currentPage + 1})" ${_currentPage === totalPages ? 'disabled' : ''}>
+        <i class="fas fa-chevron-right"></i></button>`;
+
+    let pages = '';
+    for (let i = 1; i <= totalPages; i++) {
+        pages += `<button class="seg-page-btn ${i === _currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+
+    const info = `<span style="font-size:0.65rem;color:#94a3b8;margin:0 4px;">${totalVisible} novedad${totalVisible !== 1 ? 'es' : ''}</span>`;
+
+    el.innerHTML = prev + pages + next + info;
+}
+
+function goToPage(page) {
+    const sorted = _getSorted();
+    const visible = sorted.filter(n => _showFinalizadas || n.ESTADO !== 'FINALIZADO');
+    const totalPages = Math.ceil(visible.length / PAGE_SIZE);
+    if (page < 1 || page > totalPages) return;
+    _currentPage = page;
+    _applyPageView(sorted);
+    document.querySelector('.seg-wrapper')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function _getSorted() {
+    const stateOrder = { PENDIENTE: 0, ELABORACION: 1, FINALIZADO: 2 };
+    return [..._lastNovedadesData].sort((a, b) => {
+        const sa = stateOrder[a.ESTADO] ?? 0;
+        const sb = stateOrder[b.ESTADO] ?? 0;
+        if (sa !== sb) return sa - sb;
+        return _parseSheetDate(b.FECHA) - _parseSheetDate(a.FECHA);
+    });
+}
+
+function toggleFinalizadas() {
+    _showFinalizadas = !_showFinalizadas;
+    _currentPage = 1; // volver a página 1 al cambiar filtro
+    const sorted = _getSorted();
+    const finalizadas = sorted.filter(n => n.ESTADO === 'FINALIZADO');
+    _renderCountBar(document.getElementById('seg-count'), sorted.length,
+        sorted.filter(n => n.ESTADO !== 'FINALIZADO').length, finalizadas.length);
+    _applyPageView(sorted);
+}
+
+/**
+ * Actualiza en-place una tarjeta existente cuando cambia su estado.
+ * No destruye el DOM — solo cambia clases, badge y stepper.
+ */
+function _patchCard(nov) {
+    const id    = nov.ID_NOVEDAD;
+    const card  = document.getElementById('card-' + id);
+    if (!card) return;
+
+    const estado = nov.ESTADO || 'PENDIENTE';
+    const stateLabel = { PENDIENTE: 'Pendiente', ELABORACION: 'En proceso', FINALIZADO: 'Solucionado' };
+
+    // Actualizar clase de estado (borde izquierdo + dot color)
+    card.className = card.className.replace(/st-\w+/, `st-${estado}`);
+
+    // Actualizar badge
+    const badge = card.querySelector('.seg-badge');
+    if (badge) {
+        badge.className = `seg-badge badge-${estado}`;
+        badge.textContent = stateLabel[estado] || estado;
+    }
+
+    // Actualizar dot de color
+    // (el dot hereda color via CSS de la clase st-*)
+
+    // Actualizar stepper (reconstruir solo esa parte)
+    const stepperEl = card.querySelector('.seg-stepper');
+    if (stepperEl) {
+        const safeId     = id.replace(/'/g, "\\'");
+        const safePlanta = (nov.PLANTA || '').replace(/'/g, "\\'");
+        const safeLote   = (nov.LOTE || '').replace(/'/g, "\\'");
+        const isArchived = String(nov.CHAT || '').startsWith('https://');
+        stepperEl.innerHTML = _buildStepperHtml(estado, nov.HISTORIAL_ESTADOS, nov.FECHA, safeId, safePlanta, safeLote, isArchived);
+    }
+
+    // Si pasó a FINALIZADO y no se muestran finalizadas, ocultar la tarjeta
+    if (estado === 'FINALIZADO' && !_showFinalizadas) {
+        card.style.display = 'none';
+        // Re-aplicar paginación para reflejar el cambio
+        _applyPageView(_getSorted());
+    } else {
+        card.style.display = '';
+    }
+}
+
+/**
+ * Parsea HISTORIAL_ESTADOS en un mapa de timestamps por estado destino.
+ * Formato: "PENDIENTE->ELABORACION@2026-03-14T10:30:00|ELABORACION->FINALIZADO@2026-03-14T14:22:11"
+ * Devuelve: { ELABORACION: Date, FINALIZADO: Date }
+ */
+function _parseHistorial(raw) {
+    const map = {};
+    if (!raw) return map;
+    String(raw).split('|').forEach(entry => {
+        const m = entry.match(/->(\w+)@(.+)/);
+        if (m) {
+            const d = new Date(m[2]);
+            if (!isNaN(d)) map[m[1]] = d;
+        }
+    });
+    return map;
+}
+
+/**
+ * Formatea una duración en ms a texto legible: "2h 15m", "3d 4h", "45m"
+ */
+function _formatDuracion(ms) {
+    if (!ms || ms <= 0) return null;
+    const mins  = Math.floor(ms / 60000);
+    const hours = Math.floor(mins / 60);
+    const days  = Math.floor(hours / 24);
+    if (days > 0)  return `${days}d ${hours % 24}h`;
+    if (hours > 0) return `${hours}h ${mins % 60}m`;
+    return `${mins}m`;
+}
+
+function _buildStepperHtml(estado, historialRaw, fechaCreacion, safeId, safePlanta, safeLote, isArchived) {
+    const stateOrder = { PENDIENTE: 0, ELABORACION: 1, FINALIZADO: 2 };
+    const currentIdx = stateOrder[estado] ?? 0;
+    const historial  = _parseHistorial(historialRaw);
+
+    // Timestamps de cada estado
+    const tsCreacion    = fechaCreacion ? new Date(_parseSheetDate(fechaCreacion)) : null;
+    const tsElaboracion = historial['ELABORACION'] || null;
+    const tsFinalizado  = historial['FINALIZADO']  || null;
+
+    const steps = [
+        { icon: 'fa-file-alt',     label: 'Reporte Recibido', desc: 'Tu novedad fue registrada en el sistema',   ts: tsCreacion },
+        { icon: 'fa-tools',        label: 'En Elaboración',   desc: 'El equipo está trabajando en la solución',  ts: tsElaboracion },
+        { icon: 'fa-check-circle', label: 'Solucionado',      desc: 'La novedad ha sido resuelta',               ts: tsFinalizado },
+        { icon: 'fa-comments',     label: 'Consultar',        desc: '¿Tienes dudas? Escríbenos',                 ts: null, isChat: true }
+    ];
+
+    return steps.map((step, idx) => {
+        const isDone   = idx < currentIdx;
+        const isActive = idx === currentIdx;
+        const isFinal  = estado === 'FINALIZADO' && idx === 2;
+        const isChat   = !!step.isChat;
+        let dotClass = '';
+        if (isDone)        dotClass = 'done';
+        else if (isFinal)  dotClass = 'done-final';
+        else if (isActive) dotClass = 'active';
+        let labelClass = '';
+        if (isDone || isFinal) labelClass = 'done';
+        else if (isActive)     labelClass = 'active';
+
+        const showLine  = idx < steps.length - 1;
+        const lineClass = isDone ? 'done' : '';
+
+        // Duración entre este paso y el siguiente — va en la columna de línea
+        let durChipHtml = '';
+        if (showLine && isDone && !isChat && !steps[idx + 1]?.isChat) {
+            const tsNext = steps[idx + 1].ts;
+            if (step.ts && tsNext) {
+                const dur = _formatDuracion(tsNext - step.ts);
+                if (dur) durChipHtml = `<div class="seg-step-dur"><i class="fas fa-clock" style="font-size:0.48rem;"></i>${dur}</div>`;
+            }
+        }
+
+        // Tiempo total (último paso FINALIZADO) — dentro de un connector-wrap corto para que conecte
+        let totalChipHtml = '';
+        if (isFinal && fechaCreacion) {            const tsIni = new Date(_parseSheetDate(fechaCreacion));
+            if (tsFinalizado && !isNaN(tsIni)) {
+                const dur = _formatDuracion(tsFinalizado - tsIni);
+                if (dur) totalChipHtml = `
+                    <div class="seg-step-connector-wrap" style="min-height:40px;">
+                        <div class="seg-step-connector done" style="opacity:0.25;"></div>
+                        <div class="seg-step-dur"><i class="fas fa-stopwatch" style="font-size:0.48rem;"></i>${dur}</div>
+                    </div>`;
+            }
+        }
+
+        // Timestamp del paso (fecha/hora en que ocurrió)
+        let tsHtml = '';
+        if (step.ts && (isDone || isFinal || isActive)) {
+            tsHtml = `<div style="font-size:0.62rem;color:#cbd5e1;margin-top:0;">
+                ${step.ts.toLocaleDateString('es-CO', { day:'2-digit', month:'short' })}
+                ${step.ts.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit' })}
+            </div>`;
+        }
+
+        // Construir columna de línea
+        let lineColContent = '';
+        if (!isChat && showLine) {
+            // En el paso Solucionado (isFinal), el conector hacia Consultar lleva el chip de tiempo total
+            const chipEnConector = isFinal ? totalChipHtml : durChipHtml;
+            lineColContent = `
+                <div class="seg-step-connector-wrap">
+                    <div class="seg-step-connector ${lineClass}"></div>
+                    ${chipEnConector}
+                </div>`;
+        }
+
+        return `
+            <div class="seg-step">
+                <div class="seg-step-line-col">
+                    <div class="seg-step-dot ${dotClass}" ${isChat ? `style="background:linear-gradient(135deg,#3b82f6,#6366f1);border-color:#3b82f6;color:white;cursor:pointer;" onclick="openChat('${safeId||''}','${safePlanta||''}','${safeLote||''}',${isArchived ? 'true' : 'false'})"` : ''}>
+                        <i class="fas ${step.icon}"></i>
+                    </div>
+                    ${lineColContent}
+                </div>
+                <div class="seg-step-text" style="${isChat ? 'display:flex;align-items:center;' : ''}">
+                    ${isChat ? `
+                        <div>
+                            <div class="seg-step-label" style="color:#3b82f6;cursor:pointer;" onclick="openChat('${safeId||''}','${safePlanta||''}','${safeLote||''}',${isArchived ? 'true' : 'false'})">Consultar</div>
+                            <div class="seg-step-desc">¿Tienes dudas? Escríbenos</div>
+                        </div>
+                    ` : `
+                    <div class="seg-step-label ${labelClass}">
+                        ${step.label}
+                        ${isActive && estado !== 'FINALIZADO' ? `<span style="margin-left:6px;background:#fef3c7;color:#d97706;font-size:0.58rem;font-weight:800;padding:1px 6px;border-radius:10px;">ACTUAL</span>` : ''}
+                        ${isDone || isFinal ? `<i class="fas fa-check" style="margin-left:5px;font-size:0.6rem;color:#22c55e;"></i>` : ''}
+                    </div>
+                    <div class="seg-step-desc">${step.desc}</div>
+                    ${tsHtml}
+                    `}
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function buildCard(nov) {
+    const id     = nov.ID_NOVEDAD || '';
+    const estado = nov.ESTADO || 'PENDIENTE';
+    const isOpen = _expandedIds.has(id);
+
+    const stateLabel = { PENDIENTE: 'Pendiente', ELABORACION: 'En proceso', FINALIZADO: 'Solucionado' };
+    const label = stateLabel[estado] || estado;
+
+    // Fecha formateada
+    let fechaStr = '';
+    if (nov.FECHA) {
+        try {
+            const d = _parseSheetDate(nov.FECHA);
+            if (d > 0) fechaStr = new Date(d).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            else fechaStr = nov.FECHA;
+        } catch(_) { fechaStr = nov.FECHA; }
+    }
+
+    const descHtml = nov.DESCRIPCION ? `
+        <div class="seg-desc">${String(nov.DESCRIPCION).substring(0, 200)}${nov.DESCRIPCION.length > 200 ? '...' : ''}</div>` : '';
+
+    const safeId     = id.replace(/'/g, "\\'");
+    const safePlanta = (nov.PLANTA || '').replace(/'/g, "\\'");
+    const safeLote   = (nov.LOTE || '').replace(/'/g, "\\'");
+    const isArchived = String(nov.CHAT || '').startsWith('https://');
+
+    return `
+        <div class="seg-card st-${estado}${isOpen ? ' open' : ''}" id="card-${id}">
+            <div class="seg-card-header" onclick="toggleCard('${safeId}')">
+                <div class="seg-state-dot"></div>
+                <div class="seg-header-main">
+                    <div class="seg-lote">
+                        <i class="fas fa-barcode" style="color:#94a3b8;margin-right:5px;font-size:0.7rem;"></i>
+                        Lote ${nov.LOTE || 'S/N'}
+                        <span style="font-family:Inter;font-size:0.65rem;font-weight:600;color:#94a3b8;margin-left:6px;">${nov.AREA || ''}</span>
+                    </div>
+                    <div class="seg-meta">${fechaStr}${nov.CANTIDAD_SOLICITADA ? ` · ${nov.CANTIDAD_SOLICITADA} UND` : ''}</div>
+                </div>
+                <span class="seg-badge badge-${estado}">${label}</span>
+                <i class="fas fa-chevron-down seg-chevron"></i>
+            </div>
+            <div class="seg-card-body">
+                <div class="seg-card-body-inner">
+                    <div class="seg-stepper">${_buildStepperHtml(estado, nov.HISTORIAL_ESTADOS, nov.FECHA, safeId, safePlanta, safeLote, isArchived)}</div>
+                    ${descHtml}
+                    <div class="seg-card-footer">
+                        <div class="seg-date-info">
+                            <i class="fas fa-hashtag" style="margin-right:3px;"></i>${id || 'S/ID'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function toggleCard(id) {
+    const card = document.getElementById('card-' + id);
+    if (!card) return;
+    const isOpen = card.classList.contains('open');
+    if (isOpen) {
+        card.classList.remove('open');
+        _expandedIds.delete(id);
+    } else {
+        card.classList.add('open');
+        _expandedIds.add(id);
+    }
+}
+
+/* ── Init ── */
+
+window.onload = async function() {
+    // Disparar fetch de novedades en paralelo con loadUsers
+    const novedadesPromise = fetchNovedadesData();
+
+    await loadUsers();
+
+    if (!currentUser || currentUser.ROL !== 'GUEST') {
+        window.location.replace('index.html');
+        return;
+    }
+
+    const novedades = await loadTracking(novedadesPromise);
+
+    // Auto-expandir desde hash (#idNovedad) o la primera activa
+    const hashId = location.hash ? location.hash.replace('#', '') : null;
+    if (hashId) {
+        expandAndScroll(hashId);
+    } else {
+        const firstActive = document.querySelector('.seg-card.st-PENDIENTE, .seg-card.st-ELABORACION');
+        if (firstActive) {
+            const id = firstActive.id.replace('card-', '');
+            toggleCard(id);
+        }
+    }
+
+    // Poll de respaldo (Supabase Realtime es el canal principal de tiempo real)
+    _trackingTimer = setInterval(loadTracking, TRACKING_POLL);
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            clearInterval(_trackingTimer);
+            _trackingTimer = null;
+        } else {
+            invalidateCache('NOVEDADES');
+            loadTracking();
+            _trackingTimer = setInterval(loadTracking, TRACKING_POLL);
+        }
+    });
+
+    // Notificaciones — reutiliza los datos ya cargados, sin fetch extra
+    initNotifications(novedades);
+};
+
+/**
+ * Expande una tarjeta y hace scroll hasta ella.
+ * Si está en otra página, navega a esa página primero.
+ */
+function expandAndScroll(idNovedad) {
+    // Encontrar en qué página está esta novedad
+    const sorted  = _getSorted();
+    const visible = sorted.filter(n => _showFinalizadas || n.ESTADO !== 'FINALIZADO');
+    const idx     = visible.findIndex(n => n.ID_NOVEDAD === idNovedad);
+    if (idx >= 0) {
+        const targetPage = Math.floor(idx / PAGE_SIZE) + 1;
+        if (targetPage !== _currentPage) {
+            _currentPage = targetPage;
+            _applyPageView(sorted);
+        }
+    }
+    // Si la novedad es FINALIZADO y está oculta, mostrarla
+    const nov = sorted.find(n => n.ID_NOVEDAD === idNovedad);
+    if (nov && nov.ESTADO === 'FINALIZADO' && !_showFinalizadas) {
+        toggleFinalizadas();
+        return; // toggleFinalizadas llama _applyPageView, luego el hash se pierde — re-expandir
+    }
+    const card = document.getElementById('card-' + idNovedad);
+    if (!card) return;
+    if (!card.classList.contains('open')) toggleCard(idNovedad);
+    setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+}
+</script>
+
+</body>
+</html>

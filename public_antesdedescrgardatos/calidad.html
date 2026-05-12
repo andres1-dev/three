@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Calidad - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
+    <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
+    <script>
+      (function(){
+        const s = localStorage.getItem('sispro_user');
+        if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
+      })();
+    </script>
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --color-primary: #3f51b5;
+            --border-radius: 16px;
+        }
+
+        body {
+            padding-top: 0;
+            background-attachment: fixed;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ── KPI Chips ── */
+        .kpi-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 0;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .kpi-toggle-btn i { transition: transform 0.2s; font-size: 0.6rem; }
+        .kpi-toggle-btn.open i { transform: rotate(180deg); }
+
+        .kpi-compact-row {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .kpi-compact-row.open { display: grid; }
+
+        .kpi-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 8px;
+            gap: 2px;
+            border-right: 1px solid #e2e8f0;
+        }
+        .kpi-chip:nth-child(4n) { border-right: none; }
+        .kpi-chip:nth-child(n+5) { border-top: 1px solid #e2e8f0; }
+        .kpi-chip-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1;
+        }
+        .kpi-chip-lab {
+            font-size: 0.58rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .kpi-chip-sep { display: none; }
+        .kpi-header-mobile { display: none; }
+
+        /* ── Toolbar ── */
+        .toolbar-container { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; align-items: stretch; }
+
+        @media (max-width: 767px) {
+            .toolbar-container { flex-direction: column; gap: 8px; }
+        }
+
+        /* ── Cards Grid ── */
+        #qualityFeed { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+        .report-card-lux {
+            background: white; border: 1px solid #f1f5f9; border-radius: 16px;
+            overflow: hidden; display: flex; flex-direction: column;
+            transition: all 0.3s ease; position: relative; box-shadow: var(--shadow-sm);
+        }
+        .report-card-lux:hover { transform: translateY(-6px); box-shadow: var(--shadow-lg); border-color: #e2e8f0; }
+        .report-img-container { width: 100%; height: 220px; background: linear-gradient(135deg, #f8fafc, #f1f5f9); position: relative; overflow: hidden; }
+        .report-img-container img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+        .report-card-lux:hover .report-img-container img { transform: scale(1.08); }
+        .lote-tag-lux { position: absolute; top: 12px; right: 12px; background: rgba(15,23,42,0.92); backdrop-filter: blur(10px); color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; z-index: 10; }
+        .report-content-lux { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+        .report-title-lux { font-size: 1rem; font-weight: 800; color: #0f172a; margin: 0 0 8px 0; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .report-info-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.75rem; color: #64748b; font-weight: 600; flex-wrap: wrap; }
+        .report-summary-lux { font-size: 0.85rem; color: #475569; line-height: 1.5; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .report-footer-lux { margin-top: auto; border-top: 1px solid #f1f5f9; padding-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .status-badge-lux { padding: 5px 12px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap; }
+        .spinner-lux { width: 40px; height: 40px; border: 3px solid rgba(63,81,181,0.1); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                padding: 2rem;
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 60px;
+            }
+
+            .kpi-compact-row {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+
+            .kpi-chip:nth-child(4n) { border-right: 1px solid #e2e8f0; }
+            .kpi-chip:nth-child(2n) { border-right: none; }
+            .kpi-chip:nth-child(n+3) { border-top: 1px solid #e2e8f0; }
+
+            .toolbar-container { flex-direction: column; gap: 8px; }
+
+            #qualityFeed { 
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .report-img-container { height: 200px; }
+            .report-content-lux { padding: 1rem; }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-compact-row {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .search-box-lux,
+            .date-filter-box,
+            .btn-reload-lux {
+                height: 48px;
+            }
+        }
+
+        #scrollLoader {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        /* ── Flatpickr — neutro ── */
+        .flatpickr-calendar {
+            border-radius: 12px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .flatpickr-months {
+            border-radius: 12px 12px 0 0 !important;
+            background: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .flatpickr-current-month, .flatpickr-prev-month, .flatpickr-next-month {
+            color: #1e293b !important;
+        }
+        .flatpickr-prev-month svg, .flatpickr-next-month svg { fill: #64748b !important; }
+        .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: #1e293b !important; }
+        .flatpickr-weekday { color: #94a3b8 !important; font-weight: 700 !important; font-size: 0.7rem !important; background: transparent !important; }
+        .flatpickr-day { border-radius: 8px !important; font-size: 0.82rem !important; color: #475569 !important; }
+        .flatpickr-day:hover { background: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+            background: #1e293b !important;
+            border-color: #1e293b !important;
+            color: white !important;
+        }
+        .flatpickr-day.inRange {
+            background: #f1f5f9 !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            color: #475569 !important;
+        }
+        span.flatpickr-weekday { background: transparent !important; }
+
+        /* ── SweetAlert2 Modal Position Fix ── */
+        .swal2-container {
+            z-index: 9998 !important;
+        }
+
+        .swal2-popup {
+            margin-top: 80px !important;
+        }
+
+        @media (max-width: 768px) {
+            .swal2-popup {
+                margin-top: 70px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ── Particles Background ── -->
+
+
+    <div class="wrapper-dashboard">
+
+        <!-- ── Header ── -->
+        <div class="text-center text-lg-start mb-3">
+        </div>
+
+        <!-- ── KPI Row ── -->
+        <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()">
+            <span>Indicadores</span>
+            <i class="fas fa-chevron-down"></i>
+        </button>
+
+        <div class="kpi-compact-row" id="kpiContainer">
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" id="kpi-total">0</span>
+                <span class="kpi-chip-lab">Total</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#10b981;" id="kpi-ok">0</span>
+                <span class="kpi-chip-lab">Aprobados</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#ef4444;" id="kpi-rejected">0</span>
+                <span class="kpi-chip-lab">Rechazados</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#f97316;" id="kpi-plants">0</span>
+                <span class="kpi-chip-lab">Plantas</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#8b5cf6;" id="kpi-audit">0</span>
+                <span class="kpi-chip-lab">Auditorías</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#06b6d4;" id="kpi-ronda">0</span>
+                <span class="kpi-chip-lab">Rondas</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#f59e0b;" id="kpi-contramuestra">0</span>
+                <span class="kpi-chip-lab">Contramuestras</span>
+            </div>
+            <div class="kpi-chip">
+                <span class="kpi-chip-val" style="color:#ec4899;" id="kpi-seguimiento">0</span>
+                <span class="kpi-chip-lab">Seguimientos</span>
+            </div>
+        </div>
+
+        <!-- ── Toolbar with Filters ── -->
+        <div class="toolbar-container">
+            <div class="input-with-icon" style="flex:1;">
+                <i class="codicon codicon-search input-icon"></i>
+                <input type="text" id="searchInput" class="form-control"
+                    placeholder="Buscar por lote, referencia, planta..." oninput="handleSearch()">
+            </div>
+            <div class="input-with-icon" style="flex:1;">
+                <i class="codicon codicon-calendar input-icon"></i>
+                <input type="text" id="dateRangePicker" class="form-control"
+                    placeholder="Rango de fechas" readonly style="cursor:pointer;">
+            </div>
+        </div>
+
+        <!-- ── Módulo Principal ── -->
+        <div id="initialLoader" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-3 text-muted fw-bold">SINCRONIZANDO REPORTES...</p>
+        </div>
+
+        <div id="qualityFeed" style="display: none;"></div>
+
+        <div id="scrollLoader" style="display: none;">
+            <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+            <span class="text-muted small fw-bold">Cargando más registros...</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/admin/calidad.js"></script>
+
+</body>
+</html>

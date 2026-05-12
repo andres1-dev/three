@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Reportes - Grupo TDM</title>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://stackpath.bootstrapcdn.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+
+  <!-- ── Vendor CSS ── -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"></noscript>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+
+  <!-- ── App CSS (orden importa) ── -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/footer.css">
+
+  <!-- ── Escudo de Seguridad (Bloqueo Agresivo) ── -->
+  <script>
+    (function(){
+      const s = localStorage.getItem('sispro_user');
+      if(!s || s==='undefined' || s==='null') window.location.replace('login.html');
+    })();
+  </script>
+  <style>
+    #viewToggle .view-toggle-btn.active {
+      background-color: white !important;
+      background: white !important;
+    }
+    .wrapper-dashboard {
+      margin-top: 80px;
+      max-width: 1400px;
+      width: 96%;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 2rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+    @media (min-width: 768px) {
+      .wrapper-dashboard { margin-top: 100px; padding: 3rem; }
+    }
+    @media (max-width: 767px) {
+      .wrapper-dashboard {
+        width: 100%; border-radius: 0;
+        border-left: none; border-right: none; box-shadow: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CONTENIDO PRINCIPAL
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div class="wrapper-dashboard">
+
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO PRINCIPAL — Búsqueda y detalle del lote
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="mainForm">
+
+        <!-- Buscador de lote -->
+        <div class="mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <!-- Toggle para GUEST: cambiar entre búsqueda y tarjetas -->
+            <div id="viewToggle" class="view-toggle">
+              <button type="button" class="view-toggle-btn active" data-view="search" onclick="switchLoteView('search')" title="Buscar por número de OP">
+                <i class="codicon codicon-search"></i>
+              </button>
+              <button type="button" class="view-toggle-btn" data-view="cards" onclick="switchLoteView('cards')" title="Ver mis lotes en tarjetas">
+                <i class="codicon codicon-filter"></i>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Vista de búsqueda (input) -->
+          <div id="searchView">
+            <div class="input-with-icon">
+              <i class="codicon codicon-search input-icon"></i>
+              <input type="text" id="loteInput" class="form-control"
+                placeholder="Seleccione la Orden de Producción">
+            </div>
+            <ul id="loteSuggestions" class="list-group mt-2 hidden"></ul>
+          </div>
+          
+          <!-- Vista de tarjetas (solo para GUEST) -->
+          <div id="cardsView" style="display: none;">
+            <!-- Filtro de planta para ADMIN y otros usuarios -->
+            <div id="plantaFilter" style="display: none;">
+              <div class="input-with-icon">
+                <i class="codicon codicon-filter input-icon"></i>
+                <input 
+                  type="text" 
+                  id="plantaFilterInput" 
+                  class="form-control" 
+                  placeholder="Seleccione la Planta de Producción"
+                  oninput="handlePlantaFilterSearch()"
+                  onfocus="showPlantaSuggestions()"
+                />
+                <ul id="plantaSuggestions" class="planta-suggestions hidden"></ul>
+              </div>
+            </div>
+            
+            <!-- Solapa de resumen -->
+            <div id="summaryPanel" class="summary-panel hidden">
+              <div class="summary-header">
+                <i class="fas fa-chart-pie"></i>
+                <span>Resumen</span>
+              </div>
+              <div class="summary-content">
+                <div class="summary-grid">
+                  <div class="summary-box">
+                    <div class="summary-box-label">Total OPs</div>
+                    <div class="summary-box-value" id="totalOPs">0</div>
+                  </div>
+                  <div class="summary-box">
+                    <div class="summary-box-label">Total Unidades</div>
+                    <div class="summary-box-value" id="totalUnidades">0</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div id="lotesCards" class="lotes-cards-grid">
+              <!-- Las tarjetas se generarán dinámicamente aquí -->
+            </div>
+            
+            <!-- Mensaje del sistema para ADMIN (sin colapsar, idéntico al de búsqueda) -->
+            <div id="emptyStateMessageAdmin" class="empty-state-message">
+              <div class="empty-state-content">
+                <div class="empty-state-text">
+                  <p>La presente aplicación se encuentra articulada de manera directa con los líderes de cada uno de los procesos productivos del <strong>GRUPO TDM</strong>, concebido como un sistema integral. Su propósito es recopilar, analizar y gestionar de forma precisa las necesidades que se presentan en el desarrollo diario de las producciones que se encuentran bajo su responsabilidad.</p>
+                  
+                  <p>Adicionalmente, la aplicación permitirá realizar un seguimiento continuo y estructurado de las novedades reportadas, así como establecer un canal de comunicación directo con el personal interno encargado de gestionar y agilizar la atención de dichas solicitudes, garantizando mayor trazabilidad y eficiencia en cada proceso.</p>
+                  
+                  <p>Agradecemos de manera especial su disposición y compromiso, solicitando que la información consignada sea clara, completa y oportuna. Asimismo, les invitamos a hacer uso de esta herramienta cada vez que se presente cualquier novedad, con el fin de asegurar una gestión eficaz y una mejora continua en nuestros procesos.</p>
+                  
+                  <p class="empty-state-signature">Cordialmente,<br><strong>Grupo TDM</strong></p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Mensaje colapsable en vista de tarjetas (solo para GUEST) -->
+            <div class="welcome-collapse">
+              <div class="welcome-collapse-header" onclick="toggleWelcomeCollapse()">
+                <div class="welcome-collapse-title">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Información del Sistema</span>
+                </div>
+                <i class="fas fa-chevron-down welcome-collapse-icon"></i>
+              </div>
+              <div class="welcome-collapse-body" id="welcomeCollapseBody">
+                <div class="welcome-collapse-content">
+                  <p>La presente aplicación se encuentra articulada de manera directa con los líderes de cada uno de los procesos productivos del <strong>GRUPO TDM</strong>, concebido como un sistema integral. Su propósito es recopilar, analizar y gestionar de forma precisa las necesidades que se presentan en el desarrollo diario de las producciones que se encuentran bajo su responsabilidad.</p>
+                  
+                  <p>Adicionalmente, la aplicación permitirá realizar un seguimiento continuo y estructurado de las novedades reportadas, así como establecer un canal de comunicación directo con el personal interno encargado de gestionar y agilizar la atención de dichas solicitudes, garantizando mayor trazabilidad y eficiencia en cada proceso.</p>
+                  
+                  <p>Agradecemos de manera especial su disposición y compromiso, solicitando que la información consignada sea clara, completa y oportuna. Asimismo, les invitamos a hacer uso de esta herramienta cada vez que se presente cualquier novedad, con el fin de asegurar una gestión eficaz y una mejora continua en nuestros procesos.</p>
+                  
+                  <p class="welcome-collapse-signature">Cordialmente,<br><strong>Grupo TDM</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Mensaje de bienvenida profesional -->
+          <div id="emptyStateMessage" class="empty-state-message">
+            <div class="empty-state-content">
+              <div class="empty-state-text">
+                <p>La presente aplicación se encuentra articulada de manera directa con los líderes de cada uno de los procesos productivos del <strong>GRUPO TDM</strong>, concebido como un sistema integral. Su propósito es recopilar, analizar y gestionar de forma precisa las necesidades que se presentan en el desarrollo diario de las producciones que se encuentran bajo su responsabilidad.</p>
+                
+                <p>Adicionalmente, la aplicación permitirá realizar un seguimiento continuo y estructurado de las novedades reportadas, así como establecer un canal de comunicación directo con el personal interno encargado de gestionar y agilizar la atención de dichas solicitudes, garantizando mayor trazabilidad y eficiencia en cada proceso.</p>
+                
+                <p>Agradecemos de manera especial su disposición y compromiso, solicitando que la información consignada sea clara, completa y oportuna. Asimismo, les invitamos a hacer uso de esta herramienta cada vez que se presente cualquier novedad, con el fin de asegurar una gestión eficaz y una mejora continua en nuestros procesos.</p>
+                
+                <p class="empty-state-signature">Cordialmente,<br><strong>Grupo TDM</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detalles del lote seleccionado -->
+        <div id="detailsSection" class="hidden">
+
+          <!-- Planta y Acciones: Simetría Perfecta en PC -->
+          <div class="row-pc-grid mb-4">
+            <div class="mb-3">
+              <div class="field-header mb-1">
+                <label for="planta" class="form-label mb-0">Planta:</label>
+                <button class="btn-action-muted" type="button" id="editPlantaBtn"
+                  title="Actualizar datos de la planta seleccionada">
+                  <i class="fas fa-user-edit"></i> Actualizar
+                </button>
+              </div>
+              <div class="input-with-icon">
+                <i class="fas fa-industry input-icon"></i>
+                <select id="planta" class="form-control" required>
+                  <option value="">Seleccione una planta...</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="field-header mb-1">
+                <label for="acciones" class="form-label mb-0">Acciones:</label>
+                <!-- Placeholder para simetría vertical -->
+                <div class="sync-placeholder"></div>
+              </div>
+              <div class="input-with-icon">
+                <i class="fas fa-tasks input-icon"></i>
+                <select id="acciones" class="form-control" required>
+                  <option value="">Seleccione una acción...</option>
+                  <option value="NOVEDADES">NOVEDADES</option>
+                  <option value="CALIDAD">CALIDAD</option>
+                  <option value="RUTERO">RUTERO</option>
+                  <option value="ACTUALIZAR_DATOS" hidden>ACTUALIZAR DATOS</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Toggle: datos del lote (colapsado por defecto) -->
+          <div class="lot-collapse-header" id="lotCollapseToggle" aria-expanded="false" aria-controls="lotCollapseBody">
+            <span class="lot-collapse-label">
+              <i class="fas fa-layer-group"></i> Ver datos del lote
+            </span>
+            <i class="fas fa-chevron-down lot-chevron"></i>
+          </div>
+
+          <div id="lotCollapseBody" class="lot-collapse-body">
+            <div class="mb-3">
+              <label for="linea" class="form-label">Línea:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-industry input-icon"></i>
+                <input type="text" id="linea" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="fecha" class="form-label">Fecha y Hora:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-calendar-alt input-icon"></i>
+                <input type="text" id="fecha" class="form-control" readonly required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="lote" class="form-label">Lote:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-box input-icon"></i>
+                <input type="text" id="lote" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="referencia" class="form-label">Referencia:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-barcode input-icon"></i>
+                <input type="text" id="referencia" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="prenda" class="form-label">Prenda:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-tshirt input-icon"></i>
+                <input type="text" id="prenda" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="genero" class="form-label">Género:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-venus-mars input-icon"></i>
+                <input type="text" id="genero" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="tejido" class="form-label">Tejido:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-scroll input-icon"></i>
+                <input type="text" id="tejido" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="cantidad" class="form-label">Cantidad:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="text" id="cantidad" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="salida" class="form-label">Salida:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-calendar-check input-icon"></i>
+                <input type="text" id="salida" class="form-control" readonly>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="proceso" class="form-label">Proceso:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-cogs input-icon"></i>
+                <input type="text" id="proceso" class="form-control" readonly>
+              </div>
+            </div>
+
+            <!-- Duración Estimada: Ocupa todo el ancho al final -->
+            <div class="mb-3" style="grid-column: 1 / -1;">
+              <label for="duracionEstimada" class="form-label">Duración:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-clock input-icon"></i>
+                <input type="text" id="duracionEstimada" class="form-control" readonly>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <p id="errorMessage" class="text-danger hidden">Ocurrió un error al cargar los datos. Intente nuevamente.</p>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO DE NOVEDADES
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="novedadesForm">
+        <div id="novedadesSection" class="hidden">
+          <!-- Fila 1: Área de Servicios | Tipo de Novedad o Cantidad -->
+          <div class="row-pc-grid mt-2" id="areaNovedadRow" style="grid-template-columns: 1fr;">
+            <div class="mb-3">
+              <label for="area" class="form-label">Área de Servicios: <span style="color:#ef4444;">*</span></label>
+              <div class="input-with-icon">
+                <i class="fas fa-building input-icon"></i>
+                <select id="area" class="form-control" required>
+                  <option value="">Seleccione un área...</option>
+                  <option value="INSUMOS">INSUMOS</option>
+                  <option value="CORTE">CORTE</option>
+                  <option value="CODIGOS">CÓDIGOS</option>
+                  <option value="DISEÑO">DISEÑO</option>
+                  <option value="TELAS">TELAS</option>
+                  <option value="OTROS">OTROS</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3 hidden" id="tipoNovedadGroup">
+              <label for="tipoNovedad" class="form-label">Tipo de Novedad: <span style="color:#ef4444;">*</span></label>
+              <div class="input-with-icon">
+                <i class="fas fa-exclamation-circle input-icon"></i>
+                <select id="tipoNovedad" class="form-control">
+                  <option value="">Seleccione tipo...</option>
+                  <option value="FALTANTE">FALTANTE</option>
+                  <option value="IMPERFECTO">IMPERFECTO</option>
+                  <option value="PERDIDA">PERDIDA</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3 hidden" id="cantidadDisenoGroup">
+              <label for="cantidadSolicitada" class="form-label">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+              <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="number" class="form-control" id="cantidadSolicitada">
+              </div>
+            </div>
+          </div>
+
+          <!-- Fila 2: Cantidad simple (para áreas normales) -->
+          <div class="mb-3 hidden" id="cantidadNormalGroup">
+            <label for="cantidadNormal" class="form-label">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-hashtag input-icon"></i>
+              <input type="number" class="form-control" id="cantidadNormal">
+            </div>
+          </div>
+
+          <!-- Lista de tipos de tela — solo visible cuando área = TELAS -->
+          <div class="mb-3 hidden" id="tipoTelasGroup">
+            <!-- Encabezados (solo visible en desktop) -->
+            <div class="row-pc-grid mb-2 encabezados-desktop" style="display:none;">
+              <label class="form-label mb-0">Tipo de Imperfección: <span style="color:#ef4444;">*</span></label>
+              <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+            </div>
+            <button type="button" class="btn-action-muted mb-2 btn-agregar-top" onclick="agregarFilaTela()" title="Agregar otro tipo">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+            <div id="telasList"></div>
+          </div>
+
+          <!-- Lista dinámica de insumos — solo visible cuando área = INSUMOS -->
+          <div class="mb-3 hidden" id="tipoInsumoGroup">
+            <!-- Encabezados (solo visible en desktop) -->
+            <div class="row-pc-grid mb-2 encabezados-desktop" style="display:none;">
+              <label class="form-label mb-0">Tipo de Insumo: <span style="color:#ef4444;">*</span></label>
+              <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+            </div>
+            <button type="button" class="btn-action-muted mb-2 btn-agregar-top" onclick="agregarFilaInsumo()" title="Agregar otro insumo">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+            <div id="insumosList"></div>
+          </div>
+
+          <!-- Lista dinámica de corte — solo visible cuando área = CORTE -->
+          <div class="mb-3 hidden" id="tipoCorteGroup">
+            <!-- Encabezados (solo visible en desktop) -->
+            <div class="row-pc-grid mb-2 encabezados-desktop" style="display:none;">
+              <label class="form-label mb-0">Tipo de Corte: <span style="color:#ef4444;">*</span></label>
+              <label class="form-label mb-0">Cantidad Solicitada: <span style="color:#ef4444;">*</span></label>
+            </div>
+            <button type="button" class="btn-action-muted mb-2 btn-agregar-top" onclick="agregarFilaCorte()" title="Agregar otro tipo">
+              <i class="fas fa-plus"></i> Agregar
+            </button>
+            <div id="corteList"></div>
+          </div>
+
+          <!-- Lista dinámica de códigos — solo visible cuando área = CODIGOS -->
+          <div class="mb-3 hidden" id="tipoCodigosGroup">
+            <!-- Selector: Lote completo vs Unidades específicas -->
+            <div class="row-pc-grid mb-3" id="codigosRowGrid" style="grid-template-columns: 1fr;">
+              <div>
+                <label class="form-label">Tipo de Solicitud: <span style="color:#ef4444;">*</span></label>
+                <div class="input-with-icon">
+                  <i class="fas fa-layer-group input-icon"></i>
+                  <select id="codigosTipoSolicitud" class="form-control" onchange="handleCodigosTipoChange()">
+                    <option value="">Seleccione...</option>
+                    <option value="LOTE_COMPLETO">LOTE COMPLETO</option>
+                    <option value="UNIDADES">UNIDADES ESPECÍFICAS</option>
+                  </select>
+                </div>
+              </div>
+              
+              <!-- Cantidad total (solo para LOTE COMPLETO) - en la misma fila -->
+              <div class="hidden" id="codigosLoteCompletoGroup">
+                <label class="form-label">Cantidad Total del Lote: <span style="color:#ef4444;">*</span></label>
+                <div class="input-with-icon">
+                  <i class="fas fa-hashtag input-icon"></i>
+                  <input type="number" id="codigosCantidadTotal" class="form-control" min="1" readonly disabled>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista de unidades específicas -->
+            <div class="hidden" id="codigosUnidadesGroup">
+              <!-- Encabezados (solo visible en desktop) -->
+              <div class="row-pc-grid mb-2 encabezados-desktop" style="display:none; grid-template-columns: 1fr 1fr 1fr;">
+                <label class="form-label mb-0">Talla: <span style="color:#ef4444;">*</span></label>
+                <label class="form-label mb-0">Color: <span style="color:#ef4444;">*</span></label>
+                <label class="form-label mb-0">Cantidad: <span style="color:#ef4444;">*</span></label>
+              </div>
+              <button type="button" class="btn-action-muted mb-2 btn-agregar-top" onclick="agregarFilaCodigo()" title="Agregar otro código">
+                <i class="fas fa-plus"></i> Agregar
+              </button>
+              <div id="codigosList"></div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="observacionesNovedad" class="form-label mb-0">Descripción detallada:</label>
+              <div style="display: flex; gap: 8px;" id="aiButtonsNovedad">
+                <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('observacionesNovedad')"
+                  title="Mejorar redacción y ortografía">
+                  <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                </button>
+                <button type="button" class="btn-restore-text" onclick="restaurarTextoOriginal('observacionesNovedad')"
+                  title="Restaurar texto original" style="display: none;">
+                  <i class="fas fa-undo"></i> Restaurar
+                </button>
+              </div>
+            </div>
+            <div class="ai-textarea-wrapper">
+              <textarea id="observacionesNovedad" class="form-control"
+                placeholder="Escribe aquí los detalles de la novedad..." rows="4"></textarea>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Evidencia Fotográfica:</label>
+            <div class="file-dropzone" id="imagenDropzone" role="button" tabindex="0">
+              <i class="fas fa-camera file-dropzone__icon"></i>
+              <div class="file-dropzone__text">
+                <span class="file-dropzone__action">Haz clic para subir imagen</span>
+                <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
+              </div>
+              <span class="file-dropzone__name" id="imagenName"></span>
+            </div>
+            <input type="file" id="imagen" class="file-dropzone__input" accept="image/*">
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="btn btn-primary">Enviar Reporte de Novedad</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO DE CALIDAD
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="calidadForm">
+        <div id="calidadSection" class="hidden">
+
+          <!-- 1. MAPA GPS — ancho completo -->
+          <div class="mb-3 mt-2">
+            <!-- Cabecera con toggle de permiso -->
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+              <label class="form-label mb-0">
+                <i class="fas fa-map-marker-alt me-1"></i> Localización:
+              </label>
+              <div style="display:flex; align-items:center; gap:10px; font-size:0.8rem; color:#64748b;">
+                <!-- Ícono de refrescar sin texto -->
+                <button type="button" id="gps-refresh-btn" onclick="activarGpsManual()" title="Actualizar ubicación"
+                  style="
+                  display:none; background:none; border:none;
+                  color:#94a3b8; cursor:pointer; padding:2px; line-height:1;
+                  transition:color 0.15s;
+                " onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94a3b8'">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                </button>
+                <span id="gps-status-label">Cargando...</span>
+                <div style="position:relative; display:inline-block; width:42px; height:22px; cursor:pointer;"
+                   onclick="toggleGpsPermission()">
+                  <input type="checkbox" id="gps-toggle-check" style="opacity:0; width:0; height:0; position:absolute;">
+                  <span id="gps-toggle-slider" style="
+                    position:absolute; inset:0;
+                    background:#cbd5e1;
+                    border-radius:22px;
+                    transition:background 0.25s;
+                  "></span>
+                  <span id="gps-toggle-knob" style="
+                    position:absolute; top:3px; left:3px;
+                    width:16px; height:16px;
+                    background:white;
+                    border-radius:50%;
+                    transition:transform 0.25s;
+                    box-shadow:0 1px 4px rgba(0,0,0,0.2);
+                  "></span>
+                </div>
+              </div>
+            </div>
+            <!-- Campo oculto para guardar coords en el payload -->
+            <input type="hidden" id="localizacion">
+            <!-- Tarjeta del mapa -->
+            <div id="mapa-calidad-card" style="
+              border-radius: 14px;
+              overflow: hidden;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 4px 12px rgba(38,82,219,0.08);
+              background: #f8fafc;
+              min-height: 220px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              font-size: 0.85rem;
+              color: #94a3b8;
+            ">
+              <span><i class="fas fa-spinner fa-spin me-2"></i> Obteniendo coordenadas...</span>
+            </div>
+          </div>
+
+          <!-- 2. CORREO y TIPO DE VISITA — fila de dos columnas -->
+          <div class="row-pc-grid">
+            <div class="mb-3">
+              <label for="email" class="form-label">Correo:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-envelope input-icon"></i>
+                <input type="email" id="email" class="form-control" placeholder="usuario@ejemplo.com" required>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="tipoVisita" class="form-label">Tipo de Visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-clipboard-check input-icon"></i>
+                <select id="tipoVisita" class="form-control" required>
+                  <option value="">Seleccione tipo...</option>
+                  <option value="AUDITORIA">AUDITORIA</option>
+                  <option value="RONDA">RONDA</option>
+                  <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                  <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón guía AQL -->
+          <div class="mb-3">
+            <button type="button" id="aqlBtn" onclick="abrirModalAQL()"
+              style="display:none; width:100%; border-radius:14px;
+                     border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer;
+                     transition:all 0.2s; padding:0; overflow:hidden;
+                     flex-direction:column; align-items:stretch;">
+              <!-- Header centrado -->
+              <div style="padding:10px 14px 8px; border-bottom:1px solid #e2e8f0;
+                           display:flex; flex-direction:column; align-items:center; gap:2px;">
+                <span style="font-size:0.75rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+                  <i class="fas fa-ruler-combined" style="color:#64748b;"></i>Muestreo AQL
+                </span>
+                <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:3px;">
+                  Ver detalle <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
+                </span>
+              </div>
+              <!-- Tarjetas -->
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr; width:100%;">
+                <div style="padding:12px 6px; text-align:center; border-right:1px solid #e2e8f0;
+                             display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:0.58rem; font-weight:600; text-transform:uppercase; color:#94a3b8; letter-spacing:0.04em; height:14px; display:flex; align-items:center;">Revisar</div>
+                  <div id="aqlBtnMuestra" style="font-size:1.5rem; font-weight:800; color:#1e293b; line-height:1; margin:4px 0;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; height:14px; display:flex; align-items:center;">unidades</div>
+                </div>
+                <div style="padding:12px 6px; text-align:center; border-right:1px solid #e2e8f0;
+                             display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:0.58rem; font-weight:600; text-transform:uppercase; color:#94a3b8; letter-spacing:0.04em; height:14px; display:flex; align-items:center;">Aprobar si</div>
+                  <div id="aqlBtnAceptar" style="font-size:1.5rem; font-weight:800; color:#16a34a; line-height:1; margin:4px 0;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; height:14px; display:flex; align-items:center;">≤ defectos</div>
+                </div>
+                <div style="padding:12px 6px; text-align:center;
+                             display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                  <div style="font-size:0.58rem; font-weight:600; text-transform:uppercase; color:#94a3b8; letter-spacing:0.04em; height:14px; display:flex; align-items:center;">Rechazar si</div>
+                  <div id="aqlBtnRechazar" style="font-size:1.5rem; font-weight:800; color:#dc2626; line-height:1; margin:4px 0;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; height:14px; display:flex; align-items:center;">≥ defectos</div>
+                </div>
+              </div>
+            </button>
+          </div>
+
+          <!-- Modal AQL -->
+          <div id="aqlModal" style="display:none; position:fixed; inset:0; z-index:9000;
+               background:rgba(15,23,42,0.45); backdrop-filter:blur(4px);
+               align-items:center; justify-content:center;">
+            <div style="background:white; border-radius:20px; padding:24px; width:360px;
+                        max-width:calc(100vw - 32px); box-shadow:0 20px 50px rgba(0,0,0,0.2); max-height:90vh; overflow-y:auto;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+                <button type="button" onclick="cerrarModalAQL()"
+                  style="background:none; border:none; color:transparent; font-size:1.2rem; cursor:default; padding:4px; visibility:hidden;">
+                  <i class="fas fa-times"></i>
+                </button>
+                <div style="text-align:center; flex:1;">
+                  <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fas fa-ruler-combined" style="color:#3F51B5; font-size:1rem;"></i>
+                    <span style="font-size:1rem; font-weight:800; color:#1e293b;">Muestreo por Aceptación</span>
+                    <i class="fas fa-circle-info" style="color:#3F51B5; font-size:0.9rem; cursor:help;"
+                      title="ISO 2859-1:2026 / MIL-STD-1916 — Muestreo por Aceptacion
+
+NIVEL DE INSPECCION — define cuantas prendas se revisan:
+  I   Reducido: proveedor confiable, menos muestras
+  II  Estandar: uso general en confeccion (predeterminado)
+  III Severo: proveedor nuevo o con historial de fallas
+
+NIVEL AQL — tolerancia maxima de defectos aceptados:
+  1.0  Critico: alta gama o exportacion
+  1.5  Muy estricto: clientes exigentes
+  2.5  Estandar internacional
+  4.0  Normal: uso general en talleres (predeterminado)
+  6.5  Permisivo: proceso muy confiable
+
+RESULTADOS:
+  Revisar    prendas a tomar al azar del lote
+  Aprobar    si los defectos son iguales o menores, el lote pasa
+  Rechazar   si los defectos son iguales o mayores, el lote se rechaza"></i>
+                  </div>
+                  <div style="font-size:0.68rem; color:#94a3b8; margin-top:3px;">ISO 2859-1:2026 · Tabla Militar Estándar</div>
+                </div>
+                <button type="button" onclick="cerrarModalAQL()"
+                  style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:4px;">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+                <div>
+                  <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; display:block; margin-bottom:6px;">Nivel de inspección</label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-layer-group input-icon"></i>
+                    <select id="aqlNivelInspeccion" class="form-control" onchange="calcularAQL()">
+                      <option value="I">I — Reducido</option>
+                      <option value="II" selected>II — Estándar</option>
+                      <option value="III">III — Severo</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label style="font-size:0.7rem; font-weight:700; text-transform:uppercase; color:#64748b; display:block; margin-bottom:6px;">Nivel AQL</label>
+                  <div class="input-with-icon">
+                    <i class="fas fa-sliders-h input-icon"></i>
+                    <select id="aqlNivel" class="form-control" onchange="calcularAQL()">
+                      <option value="1.0">1.0 — Crítico</option>
+                      <option value="1.5">1.5 — Estricto</option>
+                      <option value="2.5">2.5 — Normal</option>
+                      <option value="4.0" selected>4.0 — Flexible</option>
+                      <option value="6.5">6.5 — Permisivo</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div style="background:linear-gradient(135deg,#eef2ff,#f8fafc); border:1px solid #c7d2fe;
+                          border-radius:14px; padding:16px; display:grid;
+                          grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; margin-bottom:10px;">
+                <div>
+                  <div style="font-size:0.55rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Revisar</div>
+                  <div id="aqlMuestra" style="font-size:2rem; font-weight:900; color:#3F51B5; line-height:1;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; margin-top:3px;">unidades</div>
+                </div>
+                <div style="border-left:1px solid #e2e8f0; border-right:1px solid #e2e8f0;">
+                  <div style="font-size:0.55rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Aprobar ≤</div>
+                  <div id="aqlAceptar" style="font-size:2rem; font-weight:900; color:#16a34a; line-height:1;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; margin-top:3px;">defectos</div>
+                </div>
+                <div>
+                  <div style="font-size:0.55rem; font-weight:700; text-transform:uppercase; color:#64748b; margin-bottom:6px;">Rechazar ≥</div>
+                  <div id="aqlRechazar" style="font-size:2rem; font-weight:900; color:#dc2626; line-height:1;">—</div>
+                  <div style="font-size:0.55rem; color:#94a3b8; margin-top:3px;">defectos</div>
+                </div>
+              </div>
+              <div id="aqlLetra" style="font-size:0.62rem; color:#94a3b8; font-weight:600; text-align:center; margin-bottom:14px;"></div>
+              <button type="button" onclick="cerrarModalAQL()"
+                style="width:100%; padding:12px; border-radius:10px; border:none;
+                       background:#3F51B5; color:white; font-weight:700; font-size:0.85rem; cursor:pointer;">
+                Entendido
+              </button>
+            </div>
+          </div>
+
+          <!-- Conclusión -->
+          <div class="mb-3">
+            <label for="conclusion" class="form-label">Conclusión:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-check-circle input-icon"></i>
+              <select id="conclusion" class="form-control" required>
+                <option value="">Seleccione una conclusión...</option>
+                <option value="APROBADO">APROBADO</option>
+                <option value="RECHAZADO">RECHAZADO</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Avance de producción — visible solo en RONDA y CONTRAMUESTRA -->
+          <div id="avanceSection" class="mb-3" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+              <label class="form-label mb-0">Avance de producción:</label>
+              <span id="avanceValor" style="font-size:1.1rem; font-weight:800; color:#3F51B5; min-width:42px; text-align:right;">0%</span>
+            </div>
+            <div style="position:relative; padding: 6px 0;">
+              <input type="range" id="avanceSlider" min="0" max="100" step="5" value="0"
+                style="width:100%; accent-color:#3F51B5; height:6px; cursor:pointer;">
+              <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">0%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">25%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">50%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">75%</span>
+                <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">100%</span>
+              </div>
+            </div>
+            <input type="hidden" id="avancePorcentaje">
+          </div>
+
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <label for="observacionesCalidad" class="form-label mb-0">Observaciones:</label>
+              <div style="display: flex; gap: 8px;" id="aiButtonsCalidad">
+                <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('observacionesCalidad')"
+                  title="Mejorar redacción y ortografía">
+                  <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                </button>
+                <button type="button" class="btn-restore-text" onclick="restaurarTextoOriginal('observacionesCalidad')"
+                  title="Restaurar texto original" style="display: none;">
+                  <i class="fas fa-undo"></i> Restaurar
+                </button>
+              </div>
+            </div>
+            <div class="ai-textarea-wrapper">
+              <textarea id="observacionesCalidad" class="form-control"
+                placeholder="Detalla los hallazgos encontrados..." rows="4" required></textarea>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label">Soporte:</label>
+            <div class="file-dropzone" id="soporteDropzone" role="button" tabindex="0">
+              <i class="fas fa-camera file-dropzone__icon"></i>
+              <div class="file-dropzone__text">
+                <span class="file-dropzone__action">Haz clic para subir soporte técnico</span>
+              <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
+              </div>
+              <span class="file-dropzone__name" id="soporteName"></span>
+            </div>
+            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*">
+          </div>
+
+          <div class="mb-3 text-center">
+            <button type="submit" class="btn btn-primary">Enviar Reporte</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO RUTERO
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="ruteroForm">
+        <div id="ruteroSection" class="hidden">
+
+          <div class="row-pc-grid mt-2">
+            <div class="mb-3">
+              <label for="ruteroFechaVisita" class="form-label">Fecha de Visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-calendar-alt input-icon"></i>
+                <input type="date" id="ruteroFechaVisita" class="form-control" required>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="ruteroTipoVisita" class="form-label">Tipo de Visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-clipboard-check input-icon"></i>
+                <select id="ruteroTipoVisita" class="form-control" required>
+                  <option value="">Seleccione tipo...</option>
+                  <option value="AUDITORIA">AUDITORIA</option>
+                  <option value="RONDA">RONDA</option>
+                  <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                  <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="row-pc-grid">
+            <div class="mb-3">
+              <label for="ruteroDestino" class="form-label">Destino post-visita:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-map-signs input-icon"></i>
+                <select id="ruteroDestino" class="form-control" required>
+                  <option value="">Seleccione destino...</option>
+                  <option value="CDI">CDI</option>
+                  <option value="PROCESO">PROCESO</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="ruteroCantidad" class="form-label">Cantidad del lote:</label>
+              <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="text" id="ruteroCantidad" class="form-control" readonly placeholder="Se llena automáticamente">
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3 text-center">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-route"></i> Agregar al Rutero
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- ══════════════════════════════════════════════════════════════════
+           FORMULARIO DE ACTUALIZAR DATOS DE PLANTA
+           ══════════════════════════════════════════════════════════════════ -->
+      <form id="actualizarDatosForm">
+        <div id="actualizarDatosSection" class="hidden">
+
+          <div class="mb-3">
+            <label for="cedulaPlanta" class="form-label">NIT o Cédula de Ciudadanía: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-id-card input-icon"></i>
+              <input type="text" id="cedulaPlanta" class="form-control" readonly
+                placeholder="Se carga automáticamente" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="nombrePlanta" class="form-label">RAZON SOCIAL: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-industry input-icon"></i>
+              <input type="text" id="nombrePlanta" class="form-control" readonly required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="direccionPlanta" class="form-label">Dirección: <span style="color:#ef4444;">*</span></label>
+            
+            <!-- Campo de dirección -->
+            <div class="input-with-icon">
+              <i class="fas fa-map-marker-alt input-icon"></i>
+              <input type="text" id="direccionPlanta" class="form-control" placeholder="Escribe la dirección o usa el constructor" required>
+            </div>
+            <div class="form-text" style="font-size:0.75rem; margin-top:4px;">
+              <a href="#" onclick="mostrarConstructorDireccion(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
+                <i class="codicon codicon-edit" style="font-size:0.75rem;"></i> Puedes escribir directamente o usar el constructor
+              </a>
+            </div>
+            
+            <!-- Constructor de dirección (oculto por defecto) -->
+            <div id="constructorDireccion" style="display:none; margin-top:16px; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+              
+              <!-- Instrucciones sutiles -->
+              <p style="font-size:0.8rem; color:#94a3b8; margin:0 0 16px 0; line-height:1.5;">
+                Ingresa cada uno de los datos que conforman tu dirección. Ten en cuenta que no todos los campos aplican, registra solo la información que se requiera.
+              </p>
+              
+              <!-- Sección: Vía Principal -->
+              <div style="margin-bottom:20px;">
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-road" style="color:#94a3b8; margin-right:6px;"></i>
+                  Vía principal
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo de vía</label>
+                    <select id="tipoVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value="">Seleccionar</option>
+                      <option value="CL">CALLE</option>
+                      <option value="AC">AVENIDA CALLE</option>
+                      <option value="CR">CARRERA</option>
+                      <option value="AK">AVENIDA CARRERA</option>
+                      <option value="TV">TRANSVERSAL</option>
+                      <option value="DG">DIAGONAL</option>
+                      <option value="AV">AVENIDA</option>
+                      <option value="AUTOPISTA">AUTOPISTA</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                    <input type="text" id="numPrincipal" class="form-control form-control-sm" placeholder="" oninput="this.value=this.value.replace(/[^0-9]/g,'');construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Letra</label>
+                    <select id="letraVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                      <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                      <option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                      <option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option>
+                      <option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
+                      <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                      <option value="Y">Y</option><option value="Z">Z</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Bis</label>
+                    <select id="bisVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="BIS">Bis</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                    <select id="sectorVia" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="NORTE">NORTE</option>
+                      <option value="SUR">SUR</option>
+                      <option value="ESTE">ESTE</option>
+                      <option value="OESTE">OESTE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sección: Cruce -->
+              <div style="margin-bottom:20px;">
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-hashtag" style="color:#94a3b8; margin-right:6px;"></i>
+                  Cruce (#)
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                    <input type="text" id="numCruce" class="form-control form-control-sm" placeholder="" oninput="this.value=this.value.replace(/[^0-9]/g,'');construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Letra</label>
+                    <select id="letraCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option>
+                      <option value="E">E</option><option value="F">F</option><option value="G">G</option><option value="H">H</option>
+                      <option value="I">I</option><option value="J">J</option><option value="K">K</option><option value="L">L</option>
+                      <option value="M">M</option><option value="N">N</option><option value="O">O</option><option value="P">P</option>
+                      <option value="Q">Q</option><option value="R">R</option><option value="S">S</option><option value="T">T</option>
+                      <option value="U">U</option><option value="V">V</option><option value="W">W</option><option value="X">X</option>
+                      <option value="Y">Y</option><option value="Z">Z</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Bis</label>
+                    <select id="bisCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="BIS">Bis</option>
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                    <select id="sectorCruce" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="NORTE">NORTE</option>
+                      <option value="SUR">SUR</option>
+                      <option value="ESTE">ESTE</option>
+                      <option value="OESTE">OESTE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sección: Placa -->
+              <div style="margin-bottom:20px;">
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:12px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-minus" style="color:#94a3b8; margin-right:6px;"></i>
+                  Placa (-)
+                </h6>
+                <div class="row g-2">
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Número</label>
+                    <input type="text" id="numPlaca" class="form-control form-control-sm" placeholder="" oninput="this.value=this.value.replace(/[^0-9]/g,'');construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Orientación</label>
+                    <select id="sectorPlaca" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="NORTE">NORTE</option>
+                      <option value="SUR">SUR</option>
+                      <option value="ESTE">ESTE</option>
+                      <option value="OESTE">OESTE</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Sección: Información Adicional -->
+              <div>
+                <h6 style="font-size:0.9rem; font-weight:700; color:#475569; margin-bottom:8px; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">
+                  <i class="fas fa-home" style="color:#94a3b8; margin-right:6px;"></i>
+                  Información adicional
+                </h6>
+                <p style="font-size:0.75rem; color:#94a3b8; margin-bottom:10px;">
+                  Especifica indicaciones adicionales como apartamento, torre, etc.
+                </p>
+                <div class="row g-2">
+                  <div class="col-md-4">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Tipo</label>
+                    <select id="tipoComplemento" class="form-control form-control-sm" onchange="construirDireccion()" style="font-size:0.85rem;">
+                      <option value=""></option>
+                      <option value="APARTAMENTO">APARTAMENTO</option>
+                      <option value="BLOQUE">BLOQUE</option>
+                      <option value="BODEGA">BODEGA</option>
+                      <option value="CASA">CASA</option>
+                      <option value="CONJUNTO">CONJUNTO</option>
+                      <option value="EDIFICIO">EDIFICIO</option>
+                      <option value="ESQUINA">ESQUINA</option>
+                      <option value="ETAPA">ETAPA</option>
+                      <option value="INTERIOR">INTERIOR</option>
+                      <option value="LOCAL">LOCAL</option>
+                      <option value="LOTE">LOTE</option>
+                      <option value="MANZANA">MANZANA</option>
+                      <option value="PISO">PISO</option>
+                      <option value="PLANTA">PLANTA</option>
+                      <option value="TORRE">TORRE</option>
+                      <option value="UNIDAD">UNIDAD</option>
+                      <option value="UNIDAD RESIDENCIAL">UNIDAD RESIDENCIAL</option>
+                    </select>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label" style="font-size:0.8rem; color:#64748b; margin-bottom:4px;">Complemento</label>
+                    <input type="text" id="complementoDireccion" class="form-control form-control-sm" placeholder="Ej: 201, Torre 3, Conjunto Los Pinos" oninput="construirDireccion()" style="font-size:0.85rem;">
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Botón para confirmar dirección -->
+              <div style="text-align:right; margin-top:16px; padding-top:16px; border-top:1px solid #e2e8f0;">
+                <button type="button" onclick="confirmarDireccion()" style="
+                  background:#10b981; color:#fff; border:none; padding:10px 24px;
+                  border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:600;
+                  box-shadow:0 2px 6px rgba(16,185,129,0.25);
+                ">
+                  <i class="fas fa-check me-2"></i> Confirmar dirección
+                </button>
+                <button type="button" onclick="cancelarConstructor()" style="
+                  background:#f1f5f9; color:#475569; border:1px solid #cbd5e1; padding:10px 24px;
+                  border-radius:8px; font-size:0.9rem; cursor:pointer; font-weight:600;
+                  margin-left:8px;
+                ">
+                  <i class="fas fa-times me-2"></i> Cancelar
+                </button>
+              </div>
+              
+            </div>
+          </div>
+
+          <!-- Nuevos campos de ubicación -->
+          <div class="mb-3">
+            <label for="paisPlanta" class="form-label">País: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-globe input-icon"></i>
+              <input type="text" id="paisPlanta" class="form-control" value="Colombia" readonly required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="departamentoPlanta" class="form-label">Departamento:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-map input-icon"></i>
+              <select id="departamentoPlanta" class="form-control">
+                <option value="">Seleccione departamento</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3" id="ciudadContainer" style="display:none;">
+            <label for="ciudadPlanta" class="form-label">Ciudad:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-city input-icon"></i>
+              <select id="ciudadPlanta" class="form-control">
+                <option value="">Seleccione ciudad</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3" id="barrioContainer" style="display:none;">
+            <label for="barrioPlanta" class="form-label">Barrio:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-home input-icon"></i>
+              <select id="barrioPlanta" class="form-control">
+                <option value="">Seleccione barrio</option>
+              </select>
+              <input type="text" id="barrioPlantaManual" class="form-control" placeholder="Escribe el nombre del barrio" style="display:none;">
+            </div>
+            <div id="barrioToggleLink" class="form-text small" style="display:none;">
+              <a href="#" onclick="toggleBarrioManual(); return false;" style="color:#3F51B5; font-weight:600; display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
+                <i class="codicon codicon-edit" style="font-size:0.75rem;"></i> ¿No encuentras tu barrio?
+              </a>
+            </div>
+          </div>
+
+          <div class="mb-3" id="comunaContainer" style="display:none;">
+            <label for="comunaPlanta" class="form-label"><span id="comunaLabel">Comuna</span>: <span id="comunaAsterisk" style="color:#ef4444; display:none;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-map-pin input-icon"></i>
+              <input type="text" id="comunaPlanta" class="form-control" placeholder="Se llena automáticamente" readonly>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="contactoPlanta" class="form-label">Nombre de Contacto:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-user input-icon"></i>
+              <input type="text" id="contactoPlanta" class="form-control" placeholder="Ej: Juan Pérez">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="telefonoPlanta" class="form-label">Teléfono: <span style="color:#ef4444;">*</span></label>
+            <div class="phone-input-integrated">
+              <div class="phone-prefix-area">
+                <img src="https://flagcdn.com/w20/co.png" srcset="https://flagcdn.com/w40/co.png 2x" width="20"
+                  alt="Colombia">
+                <span class="phone-prefix-text">+57</span>
+              </div>
+              <input type="tel" id="telefonoPlanta" class="form-control" placeholder="(316) 800-7979" required
+                maxlength="15">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="emailPlanta" class="form-label">Correo Electrónico: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" id="emailPlanta" class="form-control" list="emailOptions"
+                placeholder="Ej: planta@empresa.com" required>
+            </div>
+            <datalist id="emailOptions">
+              <option value="@gmail.com">
+              <option value="@outlook.com">
+              <option value="@hotmail.com">
+              <option value="@yahoo.com">
+              <option value="@icloud.com">
+              <option value="@live.com">
+              <option value="@msn.com">
+              <option value="@me.com">
+              <option value="@aol.com">
+              <option value="@protonmail.com">
+              <option value="@zoho.com">
+            </datalist>
+          </div>
+
+          <div class="mb-3">
+            <label for="localizacionPlanta" class="form-label">Localización GPS:</label>
+            
+            <!-- Pregunta inicial con diseño sutil -->
+            <div id="gps-pregunta-card" style="background:white; border:1px solid #e2e8f0; border-radius:8px; padding:1.25rem; margin-bottom:12px;">
+              <div style="display:flex; align-items:flex-start; gap:12px;">
+                <div style="flex-shrink:0; width:40px; height:40px; background:#eff6ff; border-radius:8px; display:flex; align-items:center; justify-content:center;">
+                  <i class="fas fa-map-marker-alt" style="font-size:18px; color:#3b82f6;"></i>
+                </div>
+                <div style="flex:1;">
+                  <h5 style="margin:0 0 6px; color:#1e293b; font-size:0.95rem; font-weight:600;">
+                    Ubicación del taller
+                  </h5>
+                  <p style="margin:0 0 12px; color:#64748b; font-size:0.85rem; line-height:1.5;">
+                    Si te encuentras físicamente en el taller, podemos capturar las coordenadas GPS automáticamente. Esto nos ayuda a optimizar la programación de rutas y mantener un mapeo geográfico preciso de nuestras plantas de producción. Es opcional y solo toma unos segundos.
+                  </p>
+                  <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                    <button type="button" onclick="respuestaUbicacionTaller(true)" class="btn-gps-option btn-gps-si">
+                      <i class="fas fa-check"></i>
+                      <span>Estoy en el taller</span>
+                    </button>
+                    <button type="button" onclick="respuestaUbicacionTaller(false)" class="btn-gps-option btn-gps-no">
+                      <i class="fas fa-times"></i>
+                      <span>Omitir ubicación</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Contenedor del mapa (oculto inicialmente) -->
+            <div id="gps-planta-card" style="display:none; background:#f8f9fc; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; margin-bottom:12px;"></div>
+            
+            <!-- Input de coordenadas (oculto inicialmente) -->
+            <div style="display:none; position:relative;" id="localizacionInputContainer">
+              <i class="fas fa-location-dot" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); color:#94a3b8; pointer-events:none; z-index:10;"></i>
+              <input type="text" id="localizacionPlanta" class="form-control" placeholder="Coordenadas GPS" readonly style="padding-left:40px;">
+            </div>
+          </div>
+          
+          <style>
+            .btn-gps-option {
+              display:inline-flex;
+              align-items:center;
+              gap:6px;
+              padding:8px 16px;
+              border:1px solid #e2e8f0;
+              border-radius:6px;
+              font-weight:500;
+              font-size:0.85rem;
+              cursor:pointer;
+              transition:all 0.2s ease;
+              background:white;
+            }
+            
+            .btn-gps-si {
+              color:#059669;
+              border-color:#d1fae5;
+            }
+            
+            .btn-gps-si:hover {
+              background:#ecfdf5;
+              border-color:#10b981;
+              transform:translateY(-1px);
+            }
+            
+            .btn-gps-no {
+              color:#64748b;
+              border-color:#e2e8f0;
+            }
+            
+            .btn-gps-no:hover {
+              background:#f8fafc;
+              border-color:#cbd5e1;
+              transform:translateY(-1px);
+            }
+            
+            .btn-gps-option i {
+              font-size:0.9rem;
+            }
+          </style>
+
+          <!-- Checkboxes de Consentimiento -->
+          <div class="mb-3" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:20px;">
+            
+            <!-- Checkbox 1: Política de Datos -->
+            <div class="mb-3" style="display:flex; align-items:start; gap:12px;">
+              <input type="checkbox" id="checkPoliticaDatos" style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+              <label for="checkPoliticaDatos" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
+                Acepto la 
+                <a href="#" onclick="mostrarPoliticaDatos(); return false;" style="color:#3b82f6; font-weight:600; text-decoration:none; border-bottom:1px dashed #3b82f6; text-transform:none !important;">
+                  política de tratamiento de datos personales
+                </a>
+              </label>
+            </div>
+
+            <!-- Checkbox 2: Notificaciones (Opcional) -->
+            <div style="display:flex; align-items:start; gap:12px;">
+              <input type="checkbox" id="checkNotificaciones" style="margin-top:4px; width:18px; height:18px; cursor:pointer; flex-shrink:0; accent-color:#3b82f6;">
+              <label for="checkNotificaciones" style="cursor:pointer; font-size:0.9rem; color:#475569; line-height:1.6; margin:0; font-weight:400; text-transform:none !important;">
+                Acepto recibir notificaciones operativas del sistema
+              </label>
+            </div>
+
+          </div>
+
+          <div class="mb-3 text-center">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Guardar Datos
+            </button>
+          </div>
+        </div>
+      </form>
+
+  </div>
+
+
+  <!-- ── Vendor JS ── -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       MODAL DE POLÍTICA DE DATOS (Completa y Extensa)
+       ══════════════════════════════════════════════════════════════════ -->
+  <div id="modalPoliticaDatos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10000; backdrop-filter:blur(4px); overflow-y:auto; align-items:center; justify-content:center;">
+    <div style="display:flex; align-items:center; justify-content:center; min-height:100%; padding:40px 20px; width:100%;">
+      <div style="background:white; border-radius:12px; max-width:800px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.4); overflow:hidden; display:flex; flex-direction:column; margin:auto; position:relative;">
+        
+        <!-- Header -->
+        <div style="padding:20px; border-bottom:2px solid #e2e8f0; background:linear-gradient(135deg, #f8fafc, #ffffff);">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <div style="display:flex; align-items:center; gap:12px;">
+              <img src="icons/app.svg" alt="Logo" style="width:40px; height:40px; object-fit:contain;">
+              <div>
+                <h3 style="margin:0; font-size:1rem; font-weight:700; color:#1e293b;">Política de Datos</h3>
+                <p style="margin:0; font-size:0.7rem; color:#64748b;">Ley 1581 de 2012</p>
+              </div>
+            </div>
+            <button onclick="cerrarPoliticaDatos()" style="background:transparent; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px; transition:all 0.2s;">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body (Scrollable) -->
+        <div style="padding:16px; overflow-y:auto; max-height:60vh;">
+          
+          <!-- Introducción -->
+          <div style="background:#eff6ff; border-left:3px solid #3b82f6; padding:10px; border-radius:4px; margin-bottom:16px;">
+            <p style="margin:0; font-size:0.7rem; line-height:1.5; color:#1e40af;">
+              <strong>Grupo TDM</strong> se compromete a proteger la privacidad y seguridad de sus datos personales. Esta política describe cómo recopilamos, usamos, almacenamos y protegemos su información de acuerdo con la legislación colombiana vigente.
+            </p>
+          </div>
+
+          <!-- Sección 1 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-user-shield" style="color:#3b82f6; font-size:0.75rem;"></i>
+              1. Responsable del Tratamiento
+            </h4>
+            <p style="margin:0 0 6px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <strong>Razón Social:</strong> TEXTILES Y CREACIONES EL UNIVERSO S.A.S.<br>
+              <strong>NIT:</strong> 900.616.124-4<br>
+              <strong>Domicilio:</strong> Calle 26 # 7-21 B/ Jorge Isaacs, Cali, Valle del Cauca, Colombia<br>
+              <strong>Correo Electrónico:</strong> coordinadorlogistico@eltemplodelamoda.com.co<br>
+              <strong>Teléfono:</strong> +57 (316) 800-7979
+            </p>
+          </div>
+
+          <!-- Sección 2 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-database" style="color:#3b82f6; font-size:0.75rem;"></i>
+              2. Datos Personales Recopilados
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Recopilamos los siguientes tipos de datos personales:
+            </p>
+            <ul style="margin:0; padding-left:16px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <li><strong>Datos de identificación:</strong> Nombre completo, NIT, Cédula de Ciudadanía</li>
+              <li><strong>Datos de contacto:</strong> Dirección física, correo electrónico, número telefónico</li>
+              <li><strong>Datos de ubicación:</strong> País, departamento, ciudad, barrio, comuna, coordenadas GPS</li>
+              <li><strong>Datos de la planta:</strong> Razón social, información de contacto, ubicación geográfica</li>
+              <li><strong>Datos operacionales:</strong> Información relacionada con procesos productivos, lotes, calidad</li>
+            </ul>
+          </div>
+
+          <!-- Sección 3 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-bullseye" style="color:#3b82f6; font-size:0.75rem;"></i>
+              3. Finalidades del Tratamiento
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Sus datos personales serán utilizados para las siguientes finalidades:
+            </p>
+            <ul style="margin:0; padding-left:16px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <li>Gestión y administración de información de plantas de producción</li>
+              <li>Programación, optimización y seguimiento de rutas logísticas</li>
+              <li>Mapeo geográfico y geolocalización de instalaciones productivas</li>
+              <li>Comunicación relacionada con operaciones, novedades y actualizaciones</li>
+              <li>Envío de notificaciones operativas sobre confirmaciones de novedades registradas</li>
+              <li>Interacciones y comunicaciones con Grupo TDM relacionadas con procesos productivos</li>
+              <li>Cumplimiento de obligaciones contractuales y legales</li>
+              <li>Generación de reportes, estadísticas y análisis operacionales</li>
+              <li>Mejora continua de procesos y servicios</li>
+              <li>Atención de solicitudes, quejas y reclamos</li>
+              <li>Auditorías internas y externas de calidad</li>
+            </ul>
+            <div style="background:#fef3c7; border-left:2px solid #f59e0b; padding:8px; border-radius:4px; margin-top:8px;">
+              <p style="margin:0; font-size:0.65rem; line-height:1.4; color:#78350f;">
+                <strong><i class="fas fa-info-circle me-1"></i> Nota importante:</strong> Las notificaciones del sistema son de carácter operativo y necesarias para el funcionamiento del servicio. No incluyen publicidad ni comunicaciones comerciales no solicitadas.
+              </p>
+            </div>
+          </div>
+
+          <!-- Sección 4 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-balance-scale" style="color:#3b82f6; font-size:0.75rem;"></i>
+              4. Derechos del Titular
+            </h4>
+            <p style="margin:0 0 8px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Como titular de los datos personales, usted tiene derecho a:
+            </p>
+            <ul style="margin:0; padding-left:16px; font-size:0.65rem; line-height:1.5; color:#475569;">
+              <li><strong>Conocer, actualizar y rectificar</strong> sus datos personales</li>
+              <li><strong>Solicitar prueba</strong> de la autorización otorgada</li>
+              <li><strong>Ser informado</strong> sobre el uso que se ha dado a sus datos</li>
+              <li><strong>Presentar quejas</strong> ante la Superintendencia de Industria y Comercio</li>
+              <li><strong>Revocar la autorización</strong> y/o solicitar la supresión de datos cuando sea procedente</li>
+              <li><strong>Acceder gratuitamente</strong> a sus datos personales objeto de tratamiento</li>
+            </ul>
+          </div>
+
+          <!-- Sección 5 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-lock" style="color:#3b82f6; font-size:0.75rem;"></i>
+              5. Seguridad de la Información
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Grupo TDM implementa medidas técnicas, humanas y administrativas necesarias para proteger sus datos personales y evitar su adulteración, pérdida, consulta, uso o acceso no autorizado o fraudulento. Utilizamos protocolos de seguridad como cifrado SSL/TLS, autenticación de usuarios, respaldos periódicos y controles de acceso.
+            </p>
+          </div>
+
+          <!-- Sección 6 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-clock" style="color:#3b82f6; font-size:0.75rem;"></i>
+              6. Tiempo de Conservación
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Los datos personales serán conservados durante el tiempo que sea necesario para cumplir con las finalidades descritas, y posteriormente durante el tiempo que exijan las normas legales aplicables. Una vez cumplida la finalidad y los términos legales, los datos serán eliminados de forma segura.
+            </p>
+          </div>
+
+          <!-- Sección 7 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-share-nodes" style="color:#3b82f6; font-size:0.75rem;"></i>
+              7. Transferencia y Transmisión de Datos
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Grupo TDM podrá transferir o transmitir sus datos personales a terceros únicamente cuando sea necesario para el cumplimiento de las finalidades autorizadas, garantizando que dichos terceros cumplan con las obligaciones de protección de datos establecidas en la ley colombiana.
+            </p>
+          </div>
+
+          <!-- Sección 8 -->
+          <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px; font-size:0.8rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-envelope" style="color:#3b82f6; font-size:0.75rem;"></i>
+              8. Ejercicio de Derechos
+            </h4>
+            <p style="margin:0; font-size:0.65rem; line-height:1.5; color:#475569;">
+              Para ejercer sus derechos o presentar consultas o reclamos relacionados con el tratamiento de sus datos personales, puede contactarnos a través de:
+            </p>
+            <div style="background:#f8fafc; border-radius:4px; padding:8px; margin-top:8px;">
+              <p style="margin:0; font-size:0.65rem; color:#475569;">
+                <strong>Correo:</strong> coordinadorlogistico@eltemplodelamoda.com.co<br>
+                <strong>Teléfono:</strong> +57 (316) 800-7979<br>
+                <strong>Horario:</strong> Lunes a Viernes, 7:10 AM - 4:43 PM
+              </p>
+            </div>
+          </div>
+
+          <!-- Marco Legal -->
+          <div style="background:#fef3c7; border-left:3px solid #f59e0b; padding:10px; border-radius:4px;">
+            <h5 style="margin:0 0 6px; font-size:0.75rem; font-weight:700; color:#92400e; display:flex; align-items:center; gap:6px;">
+              <i class="fas fa-gavel" style="font-size:0.7rem;"></i>
+              Marco Legal
+            </h5>
+            <p style="margin:0; font-size:0.65rem; line-height:1.4; color:#78350f;">
+              Esta política se rige por la <strong>Ley 1581 de 2012</strong>, el <strong>Decreto 1377 de 2013</strong>, y demás normas concordantes que regulan la protección de datos personales en Colombia.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div style="padding:14px 16px; border-top:2px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:space-between; align-items:center;">
+          <p style="margin:0; font-size:0.65rem; color:#64748b;">
+            <i class="fas fa-calendar-alt me-1"></i>
+            Última actualización: Abril 2026
+          </p>
+          <button onclick="cerrarPoliticaDatos()" style="
+            background:linear-gradient(135deg, #3b82f6, #6366f1); color:white; border:none;
+            padding:8px 20px; border-radius:6px; font-weight:600; font-size:0.75rem;
+            cursor:pointer; box-shadow:0 4px 12px rgba(59,130,246,0.3); transition:all 0.2s;
+          ">
+            <i class="fas fa-check me-2"></i>
+            Entendido
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function mostrarPoliticaDatos() {
+      const modal = document.getElementById('modalPoliticaDatos');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+      }
+    }
+
+    function cerrarPoliticaDatos() {
+      const modal = document.getElementById('modalPoliticaDatos');
+      if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restaurar scroll del body
+      }
+    }
+
+    // Cerrar modal al hacer clic fuera
+    document.getElementById('modalPoliticaDatos')?.addEventListener('click', function(e) {
+      if (e.target === this) cerrarPoliticaDatos();
+    });
+
+    // Cerrar modal con tecla ESC
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') cerrarPoliticaDatos();
+    });
+  </script>
+
+  <!-- ── App JS (orden importa: dependencias primero) ── -->
+  <script src="js/config.js"></script>
+  <script src="js/data/colombia-locations.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin/usuarios.js"></script>
+  <script src="js/admin/csv-upload.js"></script>
+
+  <!-- ── Módulo de formularios (js/forms/) ── -->
+  <script src="js/forms/index.js"></script> <!-- estado compartido + dispatcher -->
+  <script src="js/forms/gas.js"></script> <!-- sendToGAS, fileToBase64, collectLotData -->
+  <script src="js/forms/lotes.js"></script> <!-- búsqueda y selección de lotes -->
+  <script src="js/forms/novedades.js"></script> <!-- formulario novedades -->
+  <script src="js/forms/calidad.js"></script> <!-- formulario calidad -->
+  <script src="js/forms/plantas.js"></script> <!-- formulario plantas + Google Maps -->
+  <script src="js/forms/dropzone.js"></script> <!-- dropzone personalizado de archivos -->
+  <script src="js/forms/rutero.js"></script> <!-- formulario rutero -->
+
+  <script src="js/particles-config.js"></script>
+  <script src="js/sounds.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/app.js"></script>
+
+
+</body>
+
+</html>

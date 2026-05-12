@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Cargar Barras - Grupo TDM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"></noscript>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/mobile.css">
+
+  <!-- Escudo de Seguridad -->
+  <script>
+    (function(){
+      const s = localStorage.getItem('sispro_user');
+      if (!s || s === 'undefined' || s === 'null') { window.location.replace('login.html'); return; }
+      try { const u = JSON.parse(s); if (!u || u.ROL !== 'ADMIN') window.location.replace('index.html'); }
+      catch(e) { window.location.replace('login.html'); }
+    })();
+  </script>
+
+  <style>
+    body { padding-top: 0; color: #1e293b; font-family: 'Inter', sans-serif; }
+
+    .wrapper-dashboard {
+      width: 96%; max-width: 640px;
+      margin: 80px auto 2rem; padding: 2rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      position: relative; z-index: 10;
+    }
+
+    @media (max-width: 767px) {
+      .wrapper-dashboard {
+        padding: 1.5rem; width: 100%;
+        border-radius: 0; border-left: none; border-right: none;
+        box-shadow: none; margin-top: 60px;
+      }
+    }
+
+    /* Drop Zone */
+    .drop-zone-label {
+      display: block; padding: 36px 24px;
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      background: rgba(255,255,255,0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: all 0.25s ease; text-align: center; margin-bottom: 16px;
+    }
+    .drop-zone-label:hover {
+      border-color: var(--color-primary);
+      background: rgba(238,240,251,0.6);
+      transform: translateY(-1px); box-shadow: 0 6px 20px rgba(63,81,181,0.1);
+    }
+    .drop-zone-label i { font-size: 40px; color: var(--color-text-muted); margin-bottom: 12px; display: block; }
+    .drop-zone-label strong { display: block; font-size: 15px; color: var(--color-text-main); margin-bottom: 6px; font-weight: 600; text-transform: none; }
+    .drop-zone-label span { display: block; font-size: 13px; color: var(--color-text-label); text-transform: none; }
+
+    .format-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; background: rgba(255,255,255,0.7); border-radius: 20px;
+      font-size: 11px; color: var(--color-text-muted);
+      border: 1px solid var(--color-border); margin-top: 10px;
+    }
+    .format-badge i { color: var(--color-primary); font-size: 11px; }
+
+    .format-info-bar {
+      padding: 12px 16px; background: #f8fafc;
+      border-radius: var(--radius-md); border: 1px solid var(--color-border);
+      font-size: 13px; color: var(--color-text-label);
+    }
+
+    /* Tracking */
+    .tracking-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 28px; padding-bottom: 16px;
+      border-bottom: 1px solid var(--color-border);
+      flex-wrap: wrap; gap: 10px;
+    }
+
+    .file-badge {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px; background: #f8fafc;
+      border-radius: 10px; border: 1px solid var(--color-border);
+    }
+    .file-badge i { color: var(--color-primary); font-size: 16px; }
+    .file-badge span { font-weight: 600; color: var(--color-text-main); font-size: 13px; }
+
+    .tracking-status {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 14px; background: #f8fafc;
+      border-radius: 20px; border: 1px solid var(--color-border);
+      font-size: 12px; font-weight: 600; color: var(--color-text-main);
+    }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--color-text-muted); animation: pulse 2s infinite; }
+    .tracking-status.processing .status-dot { background: #f0b429; }
+    .tracking-status.success .status-dot { background: var(--color-primary); animation: none; }
+    .tracking-status.error .status-dot { background: #e85d75; animation: none; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.9)} }
+
+    /* Timeline */
+    .timeline { position: relative; margin-bottom: 28px; }
+    .timeline::before { content:''; position:absolute; left:20px; top:22px; bottom:0; width:2px; background:var(--color-border); }
+    .timeline-item { position:relative; margin-bottom:24px; padding-left:58px; }
+    .timeline-marker {
+      position:absolute; left:0; top:0; width:40px; height:40px;
+      border-radius:10px;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border:2px solid var(--color-border);
+      display:flex; align-items:center; justify-content:center; z-index:2;
+    }
+    .timeline-marker i { font-size:14px; color:var(--color-text-muted); }
+    .timeline-item.active .timeline-marker { background:rgba(254,245,231,0.7); border-color:#f0b429; }
+    .timeline-item.active .timeline-marker i { color:#d89614; }
+    .timeline-item.complete .timeline-marker { background:rgba(238,240,251,0.7); border-color:var(--color-primary); }
+    .timeline-item.complete .timeline-marker i { color:var(--color-primary); }
+    .timeline-item.pending .timeline-content { opacity:.45; }
+    .timeline-content h3 { font-size:14px; font-weight:700; color:var(--color-text-main); margin:0 0 3px; }
+    .timeline-description { font-size:12px; color:var(--color-text-label); margin:0 0 6px; }
+    .timeline-details {
+      font-size:12px; color:var(--color-text-main);
+      padding:10px 14px;
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border-radius:8px; border:1px solid rgba(226,232,240,0.6);
+      min-height:38px; display:flex; align-items:center;
+    }
+    .timeline-item.pending .timeline-details { display:none; }
+    .timeline-item.active .timeline-details,
+    .timeline-item.complete .timeline-details { display:block; }
+
+    .progress-bar-container { width:100%; height:7px; background:var(--color-border); border-radius:6px; overflow:hidden; margin-bottom:6px; }
+    .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--color-primary),var(--color-primary-dark)); width:0%; transition:width .4s ease; }
+    .progress-text { font-size:11px; font-weight:700; color:var(--color-primary); text-align:center; }
+
+    /* Stats */
+    .stats-panel { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:24px; }
+    @media(max-width:480px){ .stats-panel{grid-template-columns:repeat(2,1fr);} }
+    .stat-item { display:flex; flex-direction:column; align-items:center; padding:16px 8px; background:white; border-radius:var(--radius-md); border:1px solid var(--color-border); text-align:center; }
+    .stat-item i { font-size:20px; color:var(--color-text-muted); margin-bottom:6px; }
+    .stat-value { font-size:22px; font-weight:800; color:var(--color-text-main); line-height:1; margin-bottom:3px; }
+    .stat-label { font-size:10px; color:var(--color-text-label); text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+    .stat-item.success { border-color:#c5cae9; background:#eef0fb; }
+    .stat-item.success i,.stat-item.success .stat-value { color:var(--color-primary); }
+    .stat-item.warning { border-color:#fde68a; background:#fffbeb; }
+    .stat-item.warning i,.stat-item.warning .stat-value { color:#d89614; }
+    .stat-item.error { border-color:#fecdd3; background:#fff1f2; }
+    .stat-item.error i,.stat-item.error .stat-value { color:#e85d75; }
+
+    .action-footer { text-align:center; padding-top:20px; border-top:1px solid var(--color-border); }
+
+    .hidden { display:none !important; }
+  </style>
+</head>
+
+<body>
+
+  <div class="wrapper-dashboard">
+
+    <!-- Upload Section -->
+    <div id="uploadSection">
+
+      <label for="fileInput" class="drop-zone-label">
+        <input type="file" id="fileInput" accept=".xls,.xlsx" onchange="handleFileSelect(event)" style="display:none;">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <strong>Arrastra tu archivo aquí</strong>
+        <span>o haz clic para seleccionar</span>
+        <div class="format-badge"><i class="fas fa-file-excel"></i> XLS / XLSX</div>
+      </label>
+
+      <div class="format-info-bar">
+        <i class="fas fa-info-circle" style="color:var(--color-primary);margin-right:8px;"></i>
+        <strong>Columnas:</strong> A (referencia) · B (talla) · C (id_color) · L (barcode)
+      </div>
+    </div>
+
+    <!-- Tracking Section -->
+    <div id="trackingSection" class="hidden">
+
+      <!-- KPI colapsable -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <button onclick="toggleBarrasKPIs()" id="barrasKpiBtn" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
+          <span>Indicadores</span>
+          <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="barrasKpiChevron"></i>
+        </button>
+      </div>
+      <div id="barrasKpiContainer" style="display:none;grid-template-columns:repeat(4,1fr);gap:1px;margin-bottom:16px;border:1px solid var(--color-border);border-radius:12px;overflow:hidden;background:rgba(255,255,255,0.5);backdrop-filter:blur(8px);">
+        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid var(--color-border);">
+          <span style="font-size:1.1rem;font-weight:800;color:var(--color-text-main);" id="statTotal">-</span>
+          <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Total</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid var(--color-border);">
+          <span style="font-size:1.1rem;font-weight:800;color:var(--color-primary);" id="statSuccess">-</span>
+          <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Subidos</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid var(--color-border);">
+          <span style="font-size:1.1rem;font-weight:800;color:#d89614;" id="statDuplicates">-</span>
+          <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Duplicados</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
+          <span style="font-size:1.1rem;font-weight:800;color:#e85d75;" id="statErrors">-</span>
+          <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Errores</span>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item pending" id="step1">
+          <div class="timeline-marker"><i class="fas fa-file-import"></i></div>
+          <div class="timeline-content">
+            <h3>Lectura del archivo</h3>
+            <p class="timeline-description">Extrayendo datos del Excel</p>
+            <div class="timeline-details" id="step1Details"></div>
+          </div>
+        </div>
+        <div class="timeline-item pending" id="step2">
+          <div class="timeline-marker"><i class="fas fa-database"></i></div>
+          <div class="timeline-content">
+            <h3>Verificación en base de datos</h3>
+            <p class="timeline-description">Detectando barcodes duplicados</p>
+            <div class="timeline-details" id="step2Details"></div>
+          </div>
+        </div>
+        <div class="timeline-item pending" id="step3">
+          <div class="timeline-marker"><i class="fas fa-check-double"></i></div>
+          <div class="timeline-content">
+            <h3>Validación de datos</h3>
+            <p class="timeline-description">Verificando integridad</p>
+            <div class="timeline-details" id="step3Details"></div>
+          </div>
+        </div>
+        <div class="timeline-item pending" id="step4">
+          <div class="timeline-marker"><i class="fas fa-cloud-upload-alt"></i></div>
+          <div class="timeline-content">
+            <h3>Subida a base de datos</h3>
+            <p class="timeline-description">Insertando registros nuevos</p>
+            <div class="timeline-details" id="step4Details">
+              <div class="progress-bar-container"><div class="progress-bar-fill" id="uploadProgress"></div></div>
+              <p class="progress-text" id="uploadProgressText">0%</p>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item pending" id="step5">
+          <div class="timeline-marker"><i class="fas fa-check-circle"></i></div>
+          <div class="timeline-content">
+            <h3>Proceso completado</h3>
+            <div class="timeline-details" id="step5Details"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-footer hidden" id="actionFooter">
+        <button class="btn btn-primary" onclick="resetTracking()">
+          <i class="fas fa-redo me-2"></i>Cargar otro archivo
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- Optimización: skip descarga de usuarios en páginas de carga masiva -->
+  <script>window._SKIP_AUTH_FETCH = true;</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10" defer></script>
+
+  <!-- App core -->
+  <script src="js/config.js" defer></script>
+  <script src="js/api.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/auth.js" defer></script>
+  <script src="js/sounds.js" defer></script>
+  <script src="js/notifications.js" defer></script>
+  <script src="js/particles-config.js" defer></script>
+
+  <!-- Módulo barras -->
+  <script src="upload/barras/js/config.js" defer></script>
+  <script src="upload/barras/js/csv-generator.js" defer></script>
+  <script src="upload/barras/js/file-handler.js" defer></script>
+  <script src="upload/barras/js/data-validator.js" defer></script>
+  <script src="upload/barras/js/database-uploader.js" defer></script>
+  <script src="upload/barras/js/ui-controller.js" defer></script>
+  <script src="upload/barras/js/app.js" defer></script>
+
+  <script>
+    function toggleBarrasKPIs(forceOpen) {
+      const container = document.getElementById('barrasKpiContainer');
+      const chevron = document.getElementById('barrasKpiChevron');
+      const isOpen = container.style.display === 'grid';
+      const open = forceOpen !== undefined ? forceOpen : !isOpen;
+      container.style.display = open ? 'grid' : 'none';
+      if (chevron) chevron.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+    }
+    // Override completeProcess para auto-expandir KPIs al terminar
+    window.addEventListener('load', () => {
+      if (typeof UIController !== 'undefined') {
+        const orig = UIController.completeProcess.bind(UIController);
+        UIController.completeProcess = function(results) {
+          orig(results);
+          toggleBarrasKPIs(true);
+        };
+      }
+    });
+  </script>
+
+</body>
+</html>
