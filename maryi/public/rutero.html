@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Rutero - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://stackpath.bootstrapcdn.com">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <style>
+        body { opacity: 0; visibility: hidden; transition: opacity 0.2s; }
+        body.auth-shield-pass { opacity: 1; visibility: visible; }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+        }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                width: 100%;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                padding: 2rem;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .wrapper-dashboard { padding: 3rem; }
+        }
+
+        .rutero-header { display: none; }
+
+        .day-tabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            margin-bottom: 16px;
+            scrollbar-width: none;
+        }
+        .day-tabs::-webkit-scrollbar { display: none; }
+        .day-tab {
+            flex-shrink: 0;
+            padding: 7px 16px;
+            border-radius: 20px;
+            border: 1.5px solid #e2e8f0;
+            background: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .day-tab.active {
+            background: #3F51B5;
+            border-color: #3F51B5;
+            color: white;
+            box-shadow: 0 4px 12px rgba(63,81,181,0.3);
+        }
+        .day-tab .badge-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            font-size: 0.6rem;
+            margin-left: 5px;
+            background: rgba(0,0,0,0.12);
+        }
+        .day-tab.active .badge-count { background: rgba(255,255,255,0.25); }
+
+        /* Tarjetas */
+        .visita-card {
+            background: white;
+            border-radius: 12px;
+            border: 1.5px solid #e2e8f0;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: box-shadow 0.2s, transform 0.15s;
+            cursor: grab;
+            position: relative;
+        }
+        .visita-card:active { cursor: grabbing; }
+        .visita-card.dragging { opacity: 0.45; transform: scale(0.97); box-shadow: 0 8px 24px rgba(63,81,181,0.18); }
+        .visita-card.drag-over { border-color: #3F51B5; box-shadow: 0 0 0 2px rgba(63,81,181,0.2); }
+        .seg-row.drag-over .seg-row-card { border-color: #3F51B5; box-shadow: 0 0 0 2px rgba(63,81,181,0.15); }
+        .visita-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+        /* Visitado: borde verde sutil */
+        .visita-card.visitado {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+            opacity: 0.75;
+        }
+
+        /* Reprogramado: borde rojo, deshabilitado */
+        .visita-card.reprogramado {
+            border-color: #fecaca;
+            background: #fff5f5;
+            opacity: 0.72;
+            cursor: default;
+        }
+
+        .drag-handle { color: #cbd5e1; font-size: 0.9rem; padding-top: 2px; flex-shrink: 0; cursor: grab; }
+
+        .prioridad-badge {
+            width: 26px; height: 26px; border-radius: 50%;
+            background: #eef2ff; color: #3F51B5;
+            font-size: 0.7rem; font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .visita-card.visitado .prioridad-badge { background: #dcfce7; color: #16a34a; }
+
+        .visita-info { flex: 1; min-width: 0; }
+        .visita-lote   { font-size: 0.8rem; font-weight: 800; color: #1e293b; }
+        .visita-planta { font-size: 0.72rem; color: #64748b; margin-top: 1px; }
+        .visita-meta   { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; align-items: center; }
+
+        .visita-tag {
+            font-size: 0.62rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 10px;
+            background: #f1f5f9; color: #475569;
+            text-transform: uppercase;
+        }
+        .tipo-auditoria    { background: #ede9fe; color: #7c3aed; }
+        .tipo-ronda        { background: #dcfce7; color: #16a34a; }
+        .tipo-contramuestra{ background: #fef9c3; color: #a16207; }
+        .tipo-seguimiento  { background: #dbeafe; color: #1d4ed8; }
+
+        /* Badge de estado calculado */
+        .estado-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 0.6rem; font-weight: 800;
+            padding: 3px 9px; border-radius: 10px;
+            text-transform: uppercase;
+        }
+        .estado-visitado  { background: #dcfce7; color: #16a34a; }
+        .estado-pendiente { background: #fef3c7; color: #d97706; }
+        .estado-vencido   { background: #fee2e2; color: #dc2626; }
+        .estado-reprogramado { background: #fee2e2; color: #dc2626; }
+
+        .visita-nota { font-size: 0.72rem; color: #64748b; margin-top: 5px; font-style: italic; line-height: 1.4; }
+
+        /* Match info */
+        .match-info {
+            font-size: 0.65rem; color: #16a34a; font-weight: 700;
+            margin-top: 4px; display: flex; align-items: center; gap: 4px;
+        }
+
+        .visita-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+        .btn-visita {
+            width: 30px; height: 30px; border-radius: 50%;
+            border: 1.5px solid #e2e8f0; background: white;
+            color: #94a3b8; cursor: pointer; font-size: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-visita:hover { border-color: #f59e0b; color: #f59e0b; }
+        .btn-visita.btn-confirmar:hover { border-color: #3F51B5; color: #3F51B5; }
+
+        /* ── Toggle de vista ── */
+        .view-toggle {
+            display: flex; gap: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 20px; padding: 3px;
+        }
+        .view-toggle-btn {
+            width: 30px; height: 30px; border-radius: 17px;
+            border: none; background: transparent; color: rgba(255,255,255,0.7);
+            cursor: pointer; font-size: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .view-toggle-btn.active { background: rgba(255,255,255,0.25); color: white; }
+
+        /* ── Vista seguimiento global ── */
+        .seg-resumen {
+            background: white;
+            border-radius: 14px;
+            border: 1.5px solid #e2e8f0;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            display: flex; align-items: center; gap: 0;
+        }
+        .seg-resumen-stat {
+            flex: 1; text-align: center; padding: 0 12px;
+        }
+        .seg-resumen-stat + .seg-resumen-stat {
+            border-left: 1px solid #f1f5f9;
+        }
+        .seg-resumen-num  { font-size: 1.6rem; font-weight: 900; line-height: 1; }
+        .seg-resumen-lbl  { font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+                            color: #94a3b8; margin-top: 3px; letter-spacing: 0.4px; }
+        .seg-resumen-bar  { flex: 2; padding-left: 20px; border-left: 1px solid #f1f5f9; }
+        .seg-progress-pct { font-size: 1rem; font-weight: 900; color: #1e293b; margin-bottom: 5px; }
+        .seg-progress-track {
+            height: 6px; border-radius: 6px; background: #f1f5f9; overflow: hidden; margin-bottom: 4px;
+        }
+        .seg-progress-fill {
+            height: 100%; border-radius: 6px;
+            background: linear-gradient(90deg, #3F51B5, #22c55e);
+            transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+        }
+        .seg-progress-lbl { font-size: 0.6rem; color: #94a3b8; font-weight: 600; }
+
+        /* Sección label — solo en vista cards */
+        .seg-section-label {
+            font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+            color: #94a3b8; letter-spacing: 0.6px;
+            margin: 16px 0 8px 44px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        /* Timeline — línea transportadora */
+        .seg-timeline {
+            position: relative;
+            padding-left: 0;
+        }
+        /*
+         * Matemática de alineación:
+         *   time col = 44px, gap = 10px → borde izq del nodo = 54px
+         *   nodo width = 22px → centro = 54 + 11 = 65px
+         *   línea left = 65 - 1 = 64px  (width:2px → ocupa 64-65px, centro en 65)
+         */
+        .seg-timeline::before {
+            content: '';
+            position: absolute;
+            left: 66px; top: 0; bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+            border-radius: 2px;
+            z-index: 0;
+        }
+
+        /* Fila de visita */
+        .seg-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 12px 7px 0;
+            position: relative; z-index: 1;
+        }
+
+        /* Columna de tiempo — 44px, alineada a la derecha */
+        .seg-row-time {
+            width: 44px; flex-shrink: 0;
+            text-align: right;
+            font-size: 0.6rem; font-weight: 700;
+            color: #94a3b8; font-family: 'Courier New', monospace;
+            line-height: 1.2;
+        }
+        .seg-row-time.has-time { color: #3F51B5; }
+        .seg-row-time.has-time small { color: #3F51B5; font-size: 0.5rem; font-weight: 800; }
+        .seg-row-time small { display: block; font-size: 0.52rem; font-weight: 600; color: #cbd5e1; }
+
+        /* Nodo — 26px centrado en la línea (left:64px, centro=65px ✓) */
+        .seg-row-node {
+            width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem;
+            background: white; border: 2px solid #e2e8f0;
+            position: relative; z-index: 2;
+            transition: all 0.2s;
+            box-shadow: 0 0 0 3px white;
+        }
+        /* Color del ícono = color del borde, exactamente */
+        .seg-row.inicio       .seg-row-node { border-color: #3F51B5; color: #3F51B5; }
+        .seg-row.visitado     .seg-row-node { border-color: #16a34a; color: #16a34a; }
+        .seg-row.vencido      .seg-row-node { border-color: #dc2626; color: #dc2626; }
+        .seg-row.reprogramado .seg-row-node { border-color: #dc2626; color: #dc2626; }
+        .seg-row.pendiente    .seg-row-node { border-color: #d97706; color: #d97706; }
+
+        /* Fila de duración — misma estructura que seg-row */
+        .seg-dur-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 12px 0 0;
+            position: relative; z-index: 2;
+            min-height: 20px;
+        }
+        .seg-dur-spacer { width: 44px; flex-shrink: 0; }
+        /* anchor: 26px, sin margin — mismo gap:10px → centro en 67px ✓ */
+        .seg-dur-anchor {
+            width: 26px; flex-shrink: 0;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .seg-dur-chip {
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            font-size: 0.5rem; font-weight: 800; color: #94a3b8;
+            background: white; border: 1.5px solid #e2e8f0;
+            border-radius: 20px; padding: 2px 7px;
+            white-space: nowrap; letter-spacing: 0.2px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            z-index: 3;
+        }
+        .seg-dur-chip.real { color: #3F51B5; border-color: #c7d2fe; background: #eef2ff; }
+
+        /* Tarjeta de contenido — 2 filas, más grande */
+        .seg-row-card {
+            flex: 1; min-width: 0;
+            background: white; border-radius: 12px;
+            border: 1.5px solid #f1f5f9;
+            padding: 11px 14px;
+            display: flex; align-items: center; gap: 10px;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+        .seg-row-card:hover { border-color: #e2e8f0; box-shadow: 0 3px 12px rgba(0,0,0,0.07); }
+        .seg-row.inicio    .seg-row-card { border-color: #c7d2fe; background: #eef2ff; }
+        .seg-row.visitado  .seg-row-card { border-color: #bbf7d0; background: #f0fdf4; }
+        .seg-row.vencido   .seg-row-card { border-color: #fecaca; background: #fff5f5; }
+        .seg-row.reprogramado .seg-row-card { border-color: #fecaca; background: #fff5f5; opacity: 0.8; }
+        .seg-row.pendiente .seg-row-card { border-color: #e2e8f0; }
+
+        .seg-row-body { flex: 1; min-width: 0; }
+
+        /* Fila 1: lote + referencia */
+        .seg-row-lote {
+            font-size: 0.82rem; font-weight: 800; color: #1e293b;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            margin-bottom: 5px;
+        }
+        /* Fila 2: tags y meta */
+        .seg-row-meta {
+            font-size: 0.65rem; color: #94a3b8;
+            display: flex; gap: 5px; flex-wrap: wrap; align-items: center;
+        }
+        .seg-row-meta .sep { color: #e2e8f0; }
+
+        /* Columna derecha: badge + botones apilados */
+        .seg-row-right {
+            display: flex; flex-direction: column;
+            align-items: flex-end; gap: 6px; flex-shrink: 0;
+        }
+
+        .seg-row-badge {
+            font-size: 0.58rem; font-weight: 800; padding: 3px 10px;
+            border-radius: 10px; text-transform: uppercase; white-space: nowrap;
+        }
+        .seg-row-badge.visitado      { background: #dcfce7; color: #16a34a; }
+        .seg-row-badge.pendiente     { background: #fef3c7; color: #d97706; }
+        .seg-row-badge.vencido       { background: #fee2e2; color: #dc2626; }
+        .seg-row-badge.reprogramado  { background: #fee2e2; color: #dc2626; }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: #94a3b8; }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 12px; display: block; opacity: 0.4; }
+        .empty-state p { font-size: 0.85rem; font-weight: 600; margin: 0; }
+
+        .rutero-loader { text-align: center; padding: 40px; color: #94a3b8; }
+
+        #rutero-saving {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #1e293b; color: white;
+            padding: 8px 16px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700;
+            display: none; align-items: center; gap: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            z-index: 9999;
+        }
+
+        /* Modal posponer */
+        .posponer-overlay {
+            position: fixed; inset: 0;
+            background: rgba(15,23,42,0.45); backdrop-filter: blur(4px);
+            z-index: 9000; display: flex; align-items: center; justify-content: center;
+        }
+        .posponer-box {
+            background: white; border-radius: 16px;
+            padding: 24px; width: 320px; max-width: calc(100vw - 32px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+        }
+        .posponer-box h3 { font-size: 1rem; font-weight: 800; color: #1e293b; margin: 0 0 16px; }
+
+        /* Botones circulares del header — icono perfectamente centrado */
+        .hdr-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            border: 1.5px solid rgba(255,255,255,0.3);
+            color: white; cursor: pointer; flex-shrink: 0;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0; margin: 0;
+            font-size: 0; /* anula herencia de font-size en el botón */
+            line-height: 1;
+            transition: background 0.2s;
+            vertical-align: middle;
+        }
+        .hdr-btn:hover { background: rgba(255,255,255,0.28); }
+        .hdr-btn i {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 13px;
+            line-height: 1;
+            width: auto; height: auto;
+            margin: 0; padding: 0;
+        }
+
+        /* Responsive: en móvil ocultar botones individuales y mostrar menú */
+        @media (max-width: 540px) {
+            #header-actions  { display: none !important; }
+            #view-toggle-wrap { display: none !important; }
+            #header-actions-mobile { display: block !important; }
+        }
+    </style>
+    <script>
+        (function(){
+            const s = localStorage.getItem('sispro_user');
+            if(!s || s==='undefined' || s==='null') { window.location.replace('login.html'); return; }
+            try {
+                const u = JSON.parse(s);
+                const allowed = ['ADMIN','MODERATOR','USER-C'];
+                if (!allowed.includes(u.ROL)) window.location.replace('index.html');
+            } catch(e) { window.location.replace('login.html'); }
+        })();
+    </script>
+</head>
+<body>
+
+<div id="rutero-saving"><i class="fas fa-circle-notch fa-spin"></i> Guardando orden...</div>
+
+<div class="wrapper-dashboard">
+
+    <div class="day-tabs" id="dayTabs"></div>
+    <div id="ruteroList"><div class="rutero-loader"><i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem;"></i></div></div>
+
+</div><!-- /.wrapper-dashboard -->
+
+<!-- FAB de acciones del rutero -->
+<div id="rutero-fab-wrap" style="position:fixed;bottom:24px;right:24px;z-index:1000;display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+    <div id="rutero-fab-menu" style="display:none;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button id="btn-enviar-correo" onclick="enviarResumenPorCorreo();_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fas fa-envelope" style="color:#3F51B5;"></i> Correo
+        </button>
+        <button id="btn-wa-inicio" onclick="enviarResumenWhatsApp('inicio');_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fab fa-whatsapp" style="color:#25D366;"></i> Programación
+        </button>
+        <button id="btn-wa-cierre" onclick="enviarResumenWhatsApp('cierre');_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fas fa-flag-checkered" style="color:#3F51B5;"></i> Cierre
+        </button>
+        <button onclick="cargarRutero();_closeFabMenu()" style="display:flex;align-items:center;gap:8px;background:white;border:1px solid #e2e8f0;border-radius:20px;padding:8px 14px;font-size:0.75rem;font-weight:700;color:#1e293b;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.08);white-space:nowrap;-webkit-tap-highlight-color:transparent;">
+            <i class="fas fa-sync-alt" style="color:#3F51B5;"></i> Actualizar
+        </button>
+    </div>
+    <button id="rutero-fab-btn" onclick="_toggleFabMenu()" style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#3f51b5,#6366f1);color:white;border:none;box-shadow:0 4px 16px rgba(63,81,181,0.4);font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s ease;-webkit-tap-highlight-color:transparent;outline:none;">
+        <i class="fas fa-ellipsis-v" id="rutero-fab-icon"></i>
+    </button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="js/config.js"></script>
+<script src="js/forms/gas.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/sounds.js"></script>
+<script src="js/notifications.js"></script>
+<script src="js/chat.js"></script>
+
+<script>
+document.body.classList.add('auth-shield-pass');
+
+let _ruteroData   = [];  // visitas del rutero
+let _reportesData = [];  // reportes de calidad para cruzar
+let _sisproData   = [];  // lotes SISPRO para cruzar cantidades
+let _auditorFiltro = null; // null = todos (solo ADMIN/MODERATOR)
+let _selectedDay  = null;
+let _dragSrcIndex = null;
+let _vista        = 'progreso'; // 'cards' | 'progreso'
+
+/* ══════════════════════════════════════════════════════════════════════
+   CARGA
+   ══════════════════════════════════════════════════════════════════════ */
+
+// Índice de reportes pre-computado: key → true (para O(1) lookup en calcularEstado)
+let _reportesIndex = new Set();
+// Caché de estados calculados: ID_VISITA → estado (evita recalcular en cada render)
+let _estadoCache = new Map();
+
+function _buildReportesIndex() {
+    _reportesIndex = new Set();
+    const norm = s => (s || '').toString().trim().toLowerCase();
+    for (const r of _reportesData) {
+        // r.FECHA ya está normalizada a YYYY-MM-DD
+        const key = `${r.FECHA}|${norm(r.PLANTA)}|${norm(r.LOTE)}|${norm(r.REFERENCIA)}|${norm(r.PROCESO)}|${norm(r.TIPO_VISITA)}`;
+        _reportesIndex.add(key);
+    }
+}
+
+async function cargarRutero(ruteroPromise, reportesPromise) {
+    document.getElementById('ruteroList').innerHTML = '<div class="rutero-loader"><i class="fas fa-circle-notch fa-spin" style="font-size:1.5rem;"></i></div>';
+    try {
+        await fetchSecureConfig();
+
+        // Usar promesas pre-iniciadas si se pasaron, o iniciar nuevas (ej: recarga manual)
+        const [ruteroRows, reportesRows] = await Promise.all([
+            ruteroPromise || fetchSupabaseData(SHEET_RUTERO.name),
+            reportesPromise || fetchSupabaseData(SHEET_REPORTES.name)
+        ]);
+
+        _reportesData = reportesRows.map(r => ({
+            ...r,
+            FECHA: parsarFechaUniversal(r.FECHA)
+        }));
+        _buildReportesIndex();
+        _estadoCache.clear();
+
+        // Filtrar por auditor
+        const rol     = currentUser?.ROL || '';
+        const auditor = currentUser?.USUARIO || currentUser?.PLANTA || '';
+        const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
+
+        const allRutero = esAdmin
+            ? ruteroRows
+            : ruteroRows.filter(r => (r.AUDITOR || '').trim().toLowerCase() === auditor.trim().toLowerCase());
+
+        // Normalizar FECHA_VISITA a YYYY-MM-DD en todos los registros
+        _ruteroData = allRutero.map(r => ({
+            ...r,
+            FECHA_VISITA: parsarFechaUniversal(r.FECHA_VISITA),
+        }));
+
+        // Ordenar por fecha + prioridad numérica
+        _ruteroData.sort((a, b) => {
+            const fd = (a.FECHA_VISITA || '').localeCompare(b.FECHA_VISITA || '');
+            if (fd !== 0) return fd;
+            return parseInt(a.PRIORIDAD || 99) - parseInt(b.PRIORIDAD || 99);
+        });
+
+        // Pre-calcular estados una sola vez para todos los registros
+        const hoy = new Date(); hoy.setHours(0,0,0,0);
+        for (const r of _ruteroData) {
+            _estadoCache.set(r, _calcularEstadoRaw(r, hoy));
+        }
+
+        // Aplicar visibilidad de controles según rol
+        _aplicarRolUI();
+
+        renderTabs();
+        renderList();
+
+    } catch(e) {
+        console.error('[rutero]', e);
+        document.getElementById('ruteroList').innerHTML =
+            `<div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error al cargar el rutero</p></div>`;
+    }
+}
+
+/**
+ * Normaliza CUALQUIER formato de fecha a YYYY-MM-DD.
+ * Cubre todos los formatos que pueden venir de Sheets o del input:
+ *   - YYYY-MM-DD (input date nativo)
+ *   - ISO: 2026-03-14T21:16:21
+ *   - Latino: 14/3/2026, 21:16:21  o  14/3/2026
+ *   - SISPRO: 02-mar-26
+ *   - Sheets serializado: "Sat Mar 14 2026 00:00:00 GMT-0500"
+ *   - Sheets número serial (raro pero posible)
+ */
+function parsarFechaUniversal(raw) {
+    if (!raw) return '';
+    const s = String(raw).trim();
+
+    // ISO o YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+
+    // Latino: 14/3/2026 12:05:44  o  14/3/2026, 21:16:21  o  14/3/2026
+    if (s.includes('/')) {
+        // Separar por coma o espacio para quitar la parte de hora
+        const part = s.split(/[, ]/)[0].trim();
+        const [d, m, y] = part.split('/');
+        if (d && m && y && y.trim().length === 4) {
+            return `${y.trim()}-${m.trim().padStart(2,'0')}-${d.trim().padStart(2,'0')}`;
+        }
+    }
+
+    // SISPRO: 02-mar-26
+    if (/^\d{2}-[a-z]{3}-\d{2}$/i.test(s)) {
+        const meses = {ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,oct:10,nov:11,dic:12};
+        const [dd, mm, yy] = s.split('-');
+        const mes = meses[mm.toLowerCase()];
+        if (mes) return `20${yy}-${String(mes).padStart(2,'0')}-${dd.padStart(2,'0')}`;
+    }
+
+    // Fallback: Date constructor (cubre "Sat Mar 14 2026...", timestamps, etc.)
+    try {
+        const d = new Date(s);
+        if (!isNaN(d)) {
+            // Usar UTC para evitar desfase de zona horaria
+            const y = d.getUTCFullYear();
+            const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const day = String(d.getUTCDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+    } catch(_) {}
+    return '';
+}
+
+// Alias para compatibilidad con el código existente
+const parsarFechaReporte = parsarFechaUniversal;
+
+/* Devuelve la cantidad registrada en la propia visita, ignorando el cruce con SISPRO */
+function getCantidadSispro(visita) {
+    const n = parseInt(String(visita.CANTIDAD).replace(/[^0-9]/g, ''));
+    return isNaN(n) ? null : n;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MATCH CON REPORTES
+   Criterios: PLANTA + LOTE + REFERENCIA + PROCESO + TIPO_VISITA
+              y la fecha del reporte (FECHA) debe coincidir con FECHA_VISITA
+   ══════════════════════════════════════════════════════════════════════ */
+
+// Cálculo real — solo se llama una vez por visita al cargar
+function _calcularEstadoRaw(visita, hoy) {
+    const norm = s => (s || '').toString().trim().toLowerCase();
+    if (norm(visita.ESTADO) === 'reprogramado') return 'REPROGRAMADO';
+
+    const fechaVisita = (visita.FECHA_VISITA || '').trim();
+    const key = `${fechaVisita}|${norm(visita.PLANTA)}|${norm(visita.LOTE)}|${norm(visita.REFERENCIA)}|${norm(visita.PROCESO)}|${norm(visita.TIPO_VISITA)}`;
+
+    if (_reportesIndex.has(key)) return 'VISITADO';
+
+    const dVisita = new Date(fechaVisita + 'T00:00:00');
+    if (!isNaN(dVisita) && dVisita < hoy) return 'VENCIDO';
+
+    return 'PENDIENTE';
+}
+
+// Lookup O(1) desde caché — usar en todos los renders
+function calcularEstado(visita) {
+    if (_estadoCache.has(visita)) return _estadoCache.get(visita);
+    // Fallback para visitas no pre-calculadas (ej: después de actualizar estado)
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    const estado = _calcularEstadoRaw(visita, hoy);
+    _estadoCache.set(visita, estado);
+    return estado;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════════════════════════════════ */
+function renderTabs() {
+    const container = document.getElementById('dayTabs');
+    const dias = [...new Set(_ruteroData.map(r => r.FECHA_VISITA).filter(Boolean))].sort();
+
+    if (!_selectedDay || !dias.includes(_selectedDay)) {
+        const hoy = new Date().toISOString().split('T')[0];
+        _selectedDay = dias.find(d => d >= hoy) || dias[0] || hoy;
+    }
+
+    container.innerHTML = dias.map(dia => {
+        const pendientes = _ruteroData.filter(r => r.FECHA_VISITA === dia && calcularEstado(r) === 'PENDIENTE').length;
+        const vencidos   = _ruteroData.filter(r => r.FECHA_VISITA === dia && calcularEstado(r) === 'VENCIDO').length;
+        const count = pendientes + vencidos;
+        return `<div class="day-tab ${dia === _selectedDay ? 'active' : ''}" onclick="selectDay('${dia}')">
+            ${formatDayLabel(dia)}${count > 0 ? `<span class="badge-count">${count}</span>` : ''}
+        </div>`;
+    }).join('') || '<div style="font-size:0.8rem;color:#94a3b8;padding:8px;">Sin días programados</div>';
+}
+
+function formatDayLabel(iso) {
+    if (!iso) return '';
+    const hoy    = new Date(); hoy.setHours(0,0,0,0);
+    const manana = new Date(hoy); manana.setDate(hoy.getDate()+1);
+    const d      = new Date(iso + 'T00:00:00');
+    if (d.toDateString() === hoy.toDateString())    return 'Hoy';
+    if (d.toDateString() === manana.toDateString()) return 'Mañana';
+    return d.toLocaleDateString('es-CO', { weekday:'short', day:'numeric', month:'short' });
+}
+
+function selectDay(dia) {
+    _selectedDay = dia;
+    renderTabs();
+    renderList();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TOGGLE DE VISTA
+   ══════════════════════════════════════════════════════════════════════ */
+function setVista(v) {
+    // Solo vista progreso
+    _vista = 'progreso';
+    renderList();
+}
+
+function _aplicarRolUI() {
+    const rol = currentUser?.ROL || '';
+    const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
+    const btnCorreo = document.getElementById('btn-enviar-correo');
+    const btnWAi    = document.getElementById('btn-wa-inicio');
+    const btnWAc    = document.getElementById('btn-wa-cierre');
+    if (btnCorreo) btnCorreo.style.display = esAdmin ? 'flex' : 'none';
+    if (btnWAi)    btnWAi.style.display    = esAdmin ? 'flex' : 'none';
+    if (btnWAc)    btnWAc.style.display    = esAdmin ? 'flex' : 'none';
+    _vista = 'progreso';
+}
+
+function _toggleFabMenu() {
+    const menu = document.getElementById('rutero-fab-menu');
+    const icon = document.getElementById('rutero-fab-icon');
+    if (!menu) return;
+    const open = menu.style.display === 'none' || menu.style.display === '';
+    menu.style.display = open ? 'flex' : 'none';
+    if (icon) icon.className = open ? 'fas fa-times' : 'fas fa-ellipsis-v';
+    if (open) {
+        setTimeout(() => {
+            document.addEventListener('click', function _close(e) {
+                if (!e.target.closest('#rutero-fab-wrap')) {
+                    _closeFabMenu();
+                    document.removeEventListener('click', _close);
+                }
+            });
+        }, 10);
+    }
+}
+
+function _closeFabMenu() {
+    const menu = document.getElementById('rutero-fab-menu');
+    const icon = document.getElementById('rutero-fab-icon');
+    if (menu) menu.style.display = 'none';
+    if (icon) icon.className = 'fas fa-ellipsis-v';
+}
+
+function _toggleAccionesMenu() { _toggleFabMenu(); }
+
+function _onAuditorChange(val) {
+    _auditorFiltro = val || null;
+    renderList();
+}
+
+async function enviarResumenPorCorreo() {
+    const btn = document.getElementById('btn-enviar-correo');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Enviando...';
+
+    try {
+        const visitas = _ruteroData.filter(r => r.FECHA_VISITA === _selectedDay);
+        if (!visitas.length) {
+            Swal.fire({ icon: 'info', title: 'Sin visitas', text: 'No hay visitas para este día.', confirmButtonColor: '#3F51B5' });
+            return;
+        }
+
+        // Agrupar por auditor
+        const grupos = {};
+        visitas.forEach(v => {
+            const a = (v.AUDITOR || 'Sin auditor').trim();
+            if (!grupos[a]) grupos[a] = [];
+            grupos[a].push(v);
+        });
+
+        const auditores = Object.entries(grupos).map(([nombre, items]) => {
+            const visitadas  = items.filter(v => calcularEstado(v) === 'VISITADO').length;
+            const pendientes = items.filter(v => calcularEstado(v) === 'PENDIENTE').length;
+            const diferidas  = items.filter(v => ['VENCIDO','REPROGRAMADO'].includes(calcularEstado(v))).length;
+            const uds        = items.reduce((acc, v) => acc + (getCantidadSispro(v) || 0), 0);
+            const pct        = items.length > 0 ? Math.round((visitadas / items.length) * 100) : 0;
+
+            // Ordenar: CDI primero, luego por estado
+            const sorted = [...items].sort((a, b) => {
+                const aCDI = /cdi/i.test(a.DESTINO || ''), bCDI = /cdi/i.test(b.DESTINO || '');
+                if (aCDI !== bCDI) return aCDI ? -1 : 1;
+                const ord = e => e==='PENDIENTE'?0:e==='VENCIDO'?1:e==='VISITADO'?2:3;
+                return ord(calcularEstado(a)) - ord(calcularEstado(b));
+            });
+
+            return {
+                nombre,
+                stats: { total: items.length, visitadas, pendientes, diferidas, uds, pct },
+                visitas: sorted.map(v => ({
+                    lote:       v.LOTE       || '',
+                    referencia: v.REFERENCIA || '',
+                    planta:     v.PLANTA     || '',
+                    tipoVisita: v.TIPO_VISITA|| '',
+                    proceso:    v.PROCESO    || '',
+                    destino:    v.DESTINO    || '',
+                    cantidad:   getCantidadSispro(v) || v.CANTIDAD || '',
+                    estado:     calcularEstado(v),
+                })),
+            };
+        });
+
+        // Formatear fecha legible
+        const d = new Date(_selectedDay + 'T00:00:00');
+        const fechaLabel = d.toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+
+        const res = await fetch(GAS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ accion: 'ENVIAR_RESUMEN_RUTERO', fecha: fechaLabel, auditores }),
+        });
+        const json = await res.json();
+
+        if (json.success) {
+            Swal.fire({ icon: 'success', title: 'Enviado', text: json.message, confirmButtonColor: '#3F51B5' });
+        } else {
+            throw new Error(json.message);
+        }
+    } catch(e) {
+        Swal.fire({ icon: 'error', title: 'Error', text: e.message || 'No se pudo enviar el correo.', confirmButtonColor: '#3F51B5' });
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
+
+function enviarResumenWhatsApp(modo) {
+    const visitas = _ruteroData.filter(r => r.FECHA_VISITA === _selectedDay);
+    if (!visitas.length) {
+        Swal.fire({ icon: 'info', title: 'Sin visitas', text: 'No hay visitas para este día.', confirmButtonColor: '#3F51B5' });
+        return;
+    }
+
+    const rawTel = (currentUser?.TELEFONO || '').replace(/\D/g, '');
+    const telefono = rawTel.startsWith('57') ? rawTel : '57' + rawTel;
+    if (!rawTel) {
+        Swal.fire({ icon: 'warning', title: 'Sin teléfono', text: 'Tu perfil no tiene número de teléfono registrado.', confirmButtonColor: '#3F51B5' });
+        return;
+    }
+
+    const d = new Date(_selectedDay + 'T00:00:00');
+    const fechaLabel = d.toLocaleDateString('es-CO', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+
+    // Agrupar por auditor
+    const grupos = {};
+    visitas.forEach(v => {
+        const a = (v.AUDITOR || 'Sin auditor').trim();
+        if (!grupos[a]) grupos[a] = [];
+        grupos[a].push(v);
+    });
+
+    // Ordenar visitas: CDI primero, luego por estado
+    const sortVisitas = arr => [...arr].sort((a, b) => {
+        const aCDI = /cdi/i.test(a.DESTINO || ''), bCDI = /cdi/i.test(b.DESTINO || '');
+        if (aCDI !== bCDI) return aCDI ? -1 : 1;
+        const ord = e => e==='PENDIENTE'?0:e==='VENCIDO'?1:e==='VISITADO'?2:3;
+        return ord(calcularEstado(a)) - ord(calcularEstado(b));
+    });
+
+    let msg = '';
+
+    if (modo === 'inicio') {
+        // ── INICIO DE RUTA: sin estados, resumen por destino/tipo, cantidades en negrita ──
+        msg += `*PROGRAMACION DE RUTA*\n`;
+        msg += `_${cap(fechaLabel)}_\n\n`;
+
+        // Resumen global por destino
+        const udsCDI      = visitas.filter(v => /cdi/i.test(v.DESTINO||'')).reduce((a,v) => a+(getCantidadSispro(v)||0),0);
+        const udsProceso  = visitas.filter(v => !/cdi/i.test(v.DESTINO||'')).reduce((a,v) => a+(getCantidadSispro(v)||0),0);
+        const totalUds    = udsCDI + udsProceso;
+
+        // Resumen por tipo de visita
+        const tiposMap = {};
+        visitas.forEach(v => {
+            const t = (v.TIPO_VISITA || 'Sin tipo').trim();
+            if (!tiposMap[t]) tiposMap[t] = { total: 0, uds: 0 };
+            tiposMap[t].total++;
+            tiposMap[t].uds += getCantidadSispro(v) || 0;
+        });
+
+        msg += `*RESUMEN DEL DIA*\n`;
+        msg += `Total visitas: *${visitas.length}*\n`;
+        if (udsCDI > 0)     msg += `CDI: *${udsCDI.toLocaleString()} uds.*\n`;
+        if (udsProceso > 0) msg += `Proceso: *${udsProceso.toLocaleString()} uds.*\n`;
+        if (totalUds > 0)   msg += `Total unidades: *${totalUds.toLocaleString()}*\n`;
+        msg += `\n`;
+
+        // Desglose por tipo
+        msg += `*POR TIPO DE VISITA*\n`;
+        Object.entries(tiposMap).forEach(([tipo, data]) => {
+            msg += `${tipo}: *${data.total}* visita${data.total!==1?'s':''}`;
+            if (data.uds > 0) msg += ` - *${data.uds.toLocaleString()} uds.*`;
+            msg += `\n`;
+        });
+
+        // Por auditor
+        Object.entries(grupos).forEach(([auditor, items]) => {
+            const uds = items.reduce((a,v) => a+(getCantidadSispro(v)||0), 0);
+            msg += `\n*${auditor.toUpperCase()}*\n`;
+            msg += `${items.length} visita${items.length!==1?'s':''}`;
+            if (uds > 0) msg += ` - *${uds.toLocaleString()} uds.*`;
+            msg += `\n\n`;
+
+            sortVisitas(items).forEach(v => {
+                const cant = getCantidadSispro(v);
+                msg += `*${v.LOTE || 'S/N'}* - ${v.REFERENCIA || ''}\n`;
+                msg += `_${v.PLANTA || 'Sin planta'}_\n`;
+                const meta = [v.TIPO_VISITA, v.PROCESO, v.DESTINO].filter(Boolean).join(' - ');
+                if (meta) msg += `${meta}\n`;
+                if (cant) msg += `*${cant.toLocaleString()} uds.*\n`;
+                msg += `\n`;
+            });
+        });
+
+    } else {
+        // ── CIERRE DE JORNADA: con estados y cumplimiento ──
+        const totalVisitas = visitas.length;
+        const totalVisit   = visitas.filter(v => calcularEstado(v) === 'VISITADO').length;
+        const totalPend    = visitas.filter(v => calcularEstado(v) === 'PENDIENTE').length;
+        const totalDif     = visitas.filter(v => ['VENCIDO','REPROGRAMADO'].includes(calcularEstado(v))).length;
+        const totalUds     = visitas.reduce((a,v) => a+(getCantidadSispro(v)||0), 0);
+        const pctGlobal    = totalVisitas > 0 ? Math.round((totalVisit/totalVisitas)*100) : 0;
+        const estadoLabel  = e => e==='VISITADO'?'Visitado':e==='REPROGRAMADO'?'Diferido':e==='VENCIDO'?'Vencido':'Pendiente';
+
+        msg += `*CIERRE DE JORNADA*\n`;
+        msg += `_${cap(fechaLabel)}_\n\n`;
+
+        msg += `*RESUMEN GENERAL*\n`;
+        msg += `Visitadas: *${totalVisit}*   Pendientes: *${totalPend}*`;
+        if (totalDif > 0) msg += `   Diferidas: *${totalDif}*`;
+        msg += `\n`;
+        if (totalUds > 0) msg += `Unidades: *${totalUds.toLocaleString()}*   `;
+        msg += `Cumplimiento: *${pctGlobal}%*\n`;
+
+        Object.entries(grupos).forEach(([auditor, items]) => {
+            const visit = items.filter(v => calcularEstado(v) === 'VISITADO').length;
+            const pend  = items.filter(v => calcularEstado(v) === 'PENDIENTE').length;
+            const dif   = items.filter(v => ['VENCIDO','REPROGRAMADO'].includes(calcularEstado(v))).length;
+            const uds   = items.reduce((a,v) => a+(getCantidadSispro(v)||0), 0);
+            const pct   = items.length > 0 ? Math.round((visit/items.length)*100) : 0;
+
+            msg += `\n*${auditor.toUpperCase()}*\n`;
+            msg += `Visitadas: *${visit}*   Pendientes: *${pend}*${dif>0?`   Diferidas: *${dif}*`:''}${uds>0?`   Uds: *${uds.toLocaleString()}*`:''}\n`;
+            msg += `Cumplimiento: *${pct}%*\n\n`;
+
+            sortVisitas(items).forEach(v => {
+                const est  = calcularEstado(v);
+                const cant = getCantidadSispro(v);
+                msg += `*${v.LOTE || 'S/N'}* - ${v.REFERENCIA || ''}\n`;
+                msg += `_${v.PLANTA || 'Sin planta'}_\n`;
+                const meta = [v.TIPO_VISITA, v.PROCESO, v.DESTINO].filter(Boolean).join(' - ');
+                if (meta) msg += `${meta}\n`;
+                if (cant) msg += `*${cant.toLocaleString()} uds.*\n`;
+                msg += `Estado: *${estadoLabel(est)}*\n\n`;
+            });
+        });
+    }
+
+    const url = `https://wa.me/${telefono}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+}
+
+function _toggleTipo(id) {
+    const panel = document.getElementById(id);
+    const ico   = document.getElementById('ico-' + id);
+    if (!panel) return;
+    const open = panel.style.display === 'none' || panel.style.display === '';
+    panel.style.display = open ? 'block' : 'none';
+    if (ico) ico.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   VISTA SEGUIMIENTO GLOBAL — todas las rutas del día de un vistazo
+   ══════════════════════════════════════════════════════════════════════ */
+function renderListProgreso() {
+    const container = document.getElementById('ruteroList');
+    const rol = currentUser?.ROL || '';
+    const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
+
+    // Obtener auditores únicos del día para el select
+    const todosDelDia = _ruteroData.filter(r => r.FECHA_VISITA === _selectedDay);
+    const auditoresDelDia = esAdmin
+        ? [...new Set(todosDelDia.map(r => (r.AUDITOR || '').trim()).filter(Boolean))].sort()
+        : [];
+
+    const visitas = todosDelDia.filter(r =>
+        !esAdmin || !_auditorFiltro || (r.AUDITOR || '').trim() === _auditorFiltro
+    );
+
+    if (!visitas.length) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-check"></i><p>Sin visitas para este día</p></div>`;
+        return;
+    }
+
+    const visitadas      = visitas.filter(v => calcularEstado(v) === 'VISITADO');
+    const vencidas       = visitas.filter(v => calcularEstado(v) === 'VENCIDO');
+    const reprogramadas  = visitas.filter(v => calcularEstado(v) === 'REPROGRAMADO');
+    const pendientes     = visitas.filter(v => calcularEstado(v) === 'PENDIENTE');
+    const total          = visitas.length;
+    const pct            = total > 0 ? Math.round((visitadas.length / total) * 100) : 0;
+
+    // Sumar unidades equivalentes por grupo (desde SISPRO)
+    const sumUds = arr => arr.reduce((acc, v) => {
+        const c = getCantidadSispro(v);
+        return acc + (c || 0);
+    }, 0);
+    const udsVisitadas  = sumUds(visitadas);
+    const udsPendientes = sumUds(pendientes);
+    const udsNoCumpl    = sumUds([...vencidas, ...reprogramadas]);
+    const fmtUds = n => n >= 1000 ? (n/1000).toFixed(1).replace('.0','') + 'k' : String(n);
+
+    const resumenHtml = `
+    <div class="seg-resumen">
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#22c55e;">${visitadas.length}</div>
+            <div class="seg-resumen-lbl">Visitadas</div>
+            ${udsVisitadas > 0 ? `<div style="font-size:0.55rem;color:#22c55e;font-weight:700;margin-top:2px;">${fmtUds(udsVisitadas)} uds.</div>` : ''}
+        </div>
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#d97706;">${pendientes.length}</div>
+            <div class="seg-resumen-lbl">Pendientes</div>
+            ${udsPendientes > 0 ? `<div style="font-size:0.55rem;color:#d97706;font-weight:700;margin-top:2px;">${fmtUds(udsPendientes)} uds.</div>` : ''}
+        </div>
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#dc2626;">${reprogramadas.length + vencidas.length}</div>
+            <div class="seg-resumen-lbl">Diferidas</div>
+            ${udsNoCumpl > 0 ? `<div style="font-size:0.55rem;color:#dc2626;font-weight:700;margin-top:2px;">${fmtUds(udsNoCumpl)} uds.</div>` : ''}
+        </div>
+        <div class="seg-resumen-bar">
+            <div class="seg-progress-pct">${pct}%</div>
+            <div class="seg-progress-track"><div class="seg-progress-fill" style="width:${pct}%"></div></div>
+            <div class="seg-progress-lbl">${visitadas.length} de ${total} visitas completadas</div>
+        </div>
+    </div>`;
+
+    // Obtener timestamp real de un reporte que hace match con la visita
+    const getReporteTimestamp = (v) => {
+        const norm = s => (s || '').toString().trim().toLowerCase();
+        const fechaVisita = (v.FECHA_VISITA || '').trim();
+        const match = _reportesData.find(r =>
+            r.FECHA === fechaVisita   // r.FECHA ya normalizada a YYYY-MM-DD
+            && norm(r.PLANTA)      === norm(v.PLANTA)
+            && norm(r.LOTE)        === norm(v.LOTE)
+            && norm(r.REFERENCIA)  === norm(v.REFERENCIA)
+            && norm(r.PROCESO)     === norm(v.PROCESO)
+            && norm(r.TIPO_VISITA) === norm(v.TIPO_VISITA)
+        );
+        if (!match || !match.TIMESTAMP) return null;
+        // TIMESTAMP formato: "14/3/2026 12:05:44"
+        const parts = String(match.TIMESTAMP).split(/[, ]/);
+        if (parts.length >= 2) {
+            const [d, m, y] = parts[0].split('/');
+            const timePart = parts[1] || '00:00:00';
+            if (d && m && y) {
+                return new Date(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}T${timePart}`);
+            }
+        }
+        return null;
+    };
+
+    const fmtTime = (date) => {
+        if (!date) return '--:--';
+        let h = date.getHours(), m = date.getMinutes();
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${h}:${String(m).padStart(2,'0')} <small>${ampm}</small>`;
+    };
+
+    const fmtDur = (ms) => {
+        if (!ms || ms <= 0) return null;
+        const totalMin = Math.round(ms / 60000);
+        if (totalMin < 1) return null;
+        const h = Math.floor(totalMin / 60);
+        const m = totalMin % 60;
+        return h > 0 ? `${h}h ${m > 0 ? m + 'm' : ''}`.trim() : `${m}m`;
+    };
+
+    // Mapa de índice local del día para cada visita (para drag handlers)
+    const dayIndexMap = new Map(
+        _ruteroData
+            .filter(r => r.FECHA_VISITA === _selectedDay)
+            .map((r, i) => [r, i])
+    );
+
+    const buildRow = (v, timeLabel, isRealTime, visNum) => {
+        const estado     = calcularEstado(v);
+        const isVisitado      = estado === 'VISITADO';
+        const isVencido       = estado === 'VENCIDO';
+        const isReprogramado  = estado === 'REPROGRAMADO';
+        const rowClass   = isVisitado ? 'visitado' : isVencido ? 'vencido' : isReprogramado ? 'reprogramado' : 'pendiente';
+        const icon       = isVisitado ? 'fa-check' : (isVencido || isReprogramado) ? 'fa-times' : 'fa-clock';
+        const tipoClass  = 'tipo-' + (v.TIPO_VISITA || '').toLowerCase();
+        const matchCount = contarMatches(v);
+        const draggable  = !isVisitado && !isReprogramado;
+        const di         = dayIndexMap.get(v) ?? 0;
+
+        return `
+        <div class="seg-row ${rowClass}" ${draggable ? `draggable="true"
+            data-id="${v.ID_VISITA}" data-index="${di}"
+            ondragstart="_onDragStart(event,${di})"
+            ondragover="_onDragOver(event)"
+            ondrop="_onDrop(event,${di})"
+            ondragend="_onDragEnd(event)"` : ''}>
+            <div class="seg-row-time ${isRealTime ? 'has-time' : ''}">${timeLabel}</div>
+            <div class="seg-row-node"><i class="fas ${icon}"></i></div>
+            <div class="seg-row-card">
+                ${draggable ? `<div class="drag-handle seg-drag-touch" style="font-size:0.85rem;color:#cbd5e1;cursor:grab;flex-shrink:0;" data-index="${di}"><i class="fas fa-grip-vertical"></i></div>` : `<div style="width:0.85rem;flex-shrink:0;"></div>`}
+                <div class="prioridad-badge" style="flex-shrink:0;${isVisitado ? 'background:#dcfce7;color:#16a34a;' : isReprogramado ? 'background:#fee2e2;color:#dc2626;' : ''}">${isVisitado ? '<i class="fas fa-check" style="font-size:0.65rem;"></i>' : isReprogramado ? '<i class="fas fa-calendar-times" style="font-size:0.65rem;"></i>' : visNum ?? '—'}</div>
+                <div class="seg-row-body">
+                    <div class="seg-row-lote">
+                        <div style="font-size:0.6rem;font-weight:700;color:#94a3b8;letter-spacing:0.3px;margin-bottom:3px;">${v.PLANTA || ''}</div>
+                        ${v.LOTE || 'S/N'}<span style="font-weight:400;color:#94a3b8;"> — ${v.REFERENCIA || ''}</span>
+                    </div>
+                    <div class="seg-row-meta">
+                        <span class="visita-tag ${tipoClass}" style="font-size:0.58rem;padding:2px 8px;">${v.TIPO_VISITA || ''}</span>
+                        ${v.PROCESO ? `<span class="sep">·</span><span>${v.PROCESO}</span>` : ''}
+                        ${v.DESTINO ? `<span class="sep">·</span><span><i class="fas fa-map-signs" style="font-size:0.55rem;margin-right:2px;"></i>${v.DESTINO}</span>` : ''}
+                        ${v.CANTIDAD ? `<span class="sep">·</span><span><i class="fas fa-hashtag" style="font-size:0.55rem;margin-right:1px;"></i>${v.CANTIDAD} uds.</span>` : ''}
+                        ${matchCount > 0 && !isVisitado ? `<span class="sep">·</span><span style="color:#16a34a;font-weight:700;"><i class="fas fa-check-double" style="font-size:0.55rem;margin-right:2px;"></i>${matchCount} reporte${matchCount>1?'s':''}</span>` : ''}
+                    </div>
+                </div>
+                <div class="seg-row-right">
+                    <span class="seg-row-badge ${rowClass}">${isVisitado ? '<i class="fas fa-check-circle"></i> Visitado' : isReprogramado ? '<i class="fas fa-calendar-times"></i> Diferido' : isVencido ? '<i class="fas fa-exclamation-circle"></i> Vencido' : '<i class="fas fa-clock"></i> Pendiente'}</span>
+                    ${isVisitado && matchCount > 0 ? `<button class="btn-visita" style="border-color:#bbf7d0;color:#16a34a;" title="Ver archivo (próximamente)" disabled><i class="fas fa-folder-open"></i></button>` : ''}
+                    ${draggable ? `
+                    <div style="display:flex;gap:5px;">
+                        <button class="btn-visita btn-confirmar" onclick="confirmarVisita(${_ruteroData.indexOf(v)})" title="Registrar reporte">
+                            <i class="fas fa-clipboard-check"></i>
+                        </button>
+                        <button class="btn-visita" onclick="posponerVisita('${v.ID_VISITA}','${v.FECHA_VISITA}')" title="Posponer visita">
+                            <i class="fas fa-calendar-plus"></i>
+                        </button>
+                    </div>` : ''}
+                </div>
+            </div>
+        </div>`;
+    };
+
+    const buildDurChip = (durStr, isReal) => `
+        <div class="seg-dur-row">
+            <div class="seg-dur-spacer"></div>
+            <div class="seg-dur-anchor">
+                <span class="seg-dur-chip ${isReal ? 'real' : ''}"><i class="fas fa-stopwatch" style="font-size:0.45rem;margin-right:3px;"></i>${durStr}</span>
+            </div>
+        </div>`;
+
+    // Ordenar: visitadas primero (por timestamp real), luego pendientes, luego vencidas, luego reprogramadas
+    const ordered = [
+        ...visitadas.sort((a, b) => {
+            const ta = getReporteTimestamp(a), tb = getReporteTimestamp(b);
+            if (ta && tb) return ta - tb;
+            return 0;
+        }),
+        ...pendientes,
+        ...vencidas,
+        ...reprogramadas,
+    ];
+
+    // Nodo de inicio: 7:10 am
+    const startHour = 7;
+    const startDate = new Date(_selectedDay + 'T07:10:00');
+    let prevTime = startDate;
+
+    let rowsHtml = `
+        <div class="seg-row inicio">
+            <div class="seg-row-time has-time" style="color:#3F51B5;">7:10 <small>AM</small></div>
+            <div class="seg-row-node"><i class="fas fa-flag"></i></div>
+            <div class="seg-row-card" style="border-color:#c7d2fe;background:#eef2ff;">
+                <div class="seg-row-body">
+                    <div class="seg-row-lote" style="color:#3F51B5;">Inicio de ruta</div>
+                    <div class="seg-row-meta">
+                        <span>${formatDayLabel(_selectedDay)}, tienes ${ordered.length} visita${ordered.length !== 1 ? 's' : ''} programada${ordered.length !== 1 ? 's' : ''} equivalentes a ${(udsVisitadas + udsPendientes + udsNoCumpl).toLocaleString()} unidades</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+    // Contador visual solo para pendientes/vencidas
+    let _pendNum = 0;
+
+    ordered.forEach((v, visIdx) => {
+        const estado = calcularEstado(v);
+        const ts = estado === 'VISITADO' ? getReporteTimestamp(v) : null;
+        const timeLabel = ts ? fmtTime(ts) : '--:--';
+        const isReal = !!ts;
+
+        // Número visual: solo para pendientes y vencidas
+        const isPendOrVenc = estado === 'PENDIENTE' || estado === 'VENCIDO';
+        if (isPendOrVenc) _pendNum++;
+        const visNum = isPendOrVenc ? _pendNum : null;
+
+        // Chip de duración desde el nodo anterior
+        const durMs = ts ? (ts - prevTime) : null;
+        const durStr = durMs ? fmtDur(durMs) : null;
+        if (durStr) rowsHtml += buildDurChip(durStr, isReal);
+
+        rowsHtml += buildRow(v, timeLabel, isReal, visNum);
+        if (ts) prevTime = ts;
+    });
+
+    container.innerHTML = resumenHtml + `<div class="seg-timeline">${rowsHtml}</div>`;
+    // Select de auditor para admin/moderator — solo auditores con datos, sin opción "Todos"
+    if (esAdmin && auditoresDelDia.length > 1) {
+        // Si el filtro actual no está en la lista (o es null), forzar al primero
+        if (!_auditorFiltro || !auditoresDelDia.includes(_auditorFiltro)) {
+            _auditorFiltro = auditoresDelDia[0];
+            // Re-renderizar con el filtro correcto
+            renderListProgreso();
+            return;
+        }
+        const selectHtml = `
+        <div style="margin-bottom:14px;">
+            <select id="auditor-select" onchange="_onAuditorChange(this.value)"
+                style="width:100%;padding:9px 14px;border-radius:10px;border:1.5px solid #e2e8f0;
+                       font-size:0.78rem;font-weight:700;color:#1e293b;background:white;
+                       appearance:none;-webkit-appearance:none;cursor:pointer;
+                       background-image:url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><path fill=%22%2364748b%22 d=%22M8 11L2 5h12z%22/></svg>');
+                       background-repeat:no-repeat;background-position:right 12px center;background-size:12px;">
+                ${auditoresDelDia.map(a => `<option value="${a}" ${_auditorFiltro === a ? 'selected' : ''}>${a}</option>`).join('')}
+            </select>
+        </div>`;
+        container.innerHTML = selectHtml + container.innerHTML;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   LISTA
+   ══════════════════════════════════════════════════════════════════════ */
+function buildCard(v, i) {
+    const estado          = calcularEstado(v);
+    const tipoClass       = 'tipo-' + (v.TIPO_VISITA || '').toLowerCase();
+    const isVisitado      = estado === 'VISITADO';
+    const isVencido       = estado === 'VENCIDO';
+    const isReprogramado  = estado === 'REPROGRAMADO';
+    const disabled        = isVisitado || isReprogramado;
+
+    const estadoBadge = isVisitado
+        ? `<span class="estado-badge estado-visitado"><i class="fas fa-check-circle"></i> Visitado</span>`
+        : isReprogramado
+            ? `<span class="estado-badge estado-vencido"><i class="fas fa-calendar-times"></i> Diferido</span>`
+            : isVencido
+                ? `<span class="estado-badge estado-vencido"><i class="fas fa-exclamation-circle"></i> Vencido</span>`
+                : `<span class="estado-badge estado-pendiente"><i class="fas fa-clock"></i> Pendiente</span>`;
+
+    const matchCount = contarMatches(v);
+    const matchInfo  = matchCount > 0 && !isVisitado
+        ? `<div class="match-info"><i class="fas fa-check-double"></i> ${matchCount} reporte${matchCount>1?'s':''} confirmado${matchCount>1?'s':''}</div>`
+        : '';
+
+    return `
+    <div class="visita-card ${isVisitado ? 'visitado' : isReprogramado ? 'reprogramado' : ''}" draggable="${!disabled}"
+        data-id="${v.ID_VISITA}" data-index="${i}"
+        ondragstart="_onDragStart(event,${i})"
+        ondragover="_onDragOver(event)"
+        ondrop="_onDrop(event,${i})"
+        ondragend="_onDragEnd(event)">
+        <div class="drag-handle" style="${disabled ? 'opacity:0;pointer-events:none;' : ''}"><i class="fas fa-grip-vertical"></i></div>
+        <div class="prioridad-badge" style="${isReprogramado ? 'background:#fee2e2;color:#dc2626;' : ''}">${disabled ? `<i class="fas fa-${isReprogramado ? 'calendar-times' : 'check'}" style="font-size:0.65rem;"></i>` : i+1}</div>
+        <div class="visita-info">
+            <div class="visita-lote">${v.LOTE || 'S/N'} <span style="font-weight:400;color:#94a3b8;">— ${v.REFERENCIA || ''}</span></div>
+            <div class="visita-planta"><i class="fas fa-industry" style="font-size:0.65rem;margin-right:4px;"></i>${v.PLANTA || ''}</div>
+            <div class="visita-meta">
+                <span class="visita-tag ${tipoClass}">${v.TIPO_VISITA || 'VISITA'}</span>
+                <span class="visita-tag">${v.PROCESO || ''}</span>
+                ${estadoBadge}
+            </div>
+            ${matchInfo}
+            ${v.DESTINO ? `<div class="visita-nota"><i class="fas fa-map-signs" style="font-size:0.65rem;margin-right:4px;"></i>Destino: <strong>${v.DESTINO}</strong>${v.CANTIDAD ? ` &nbsp;·&nbsp; <i class="fas fa-hashtag" style="font-size:0.65rem;"></i> ${v.CANTIDAD} uds.` : ''}</div>` : ''}
+        </div>
+        <div class="visita-actions">
+            ${isVisitado && matchCount > 0 ? `<button class="btn-visita" style="border-color:#bbf7d0;color:#16a34a;" title="Ver archivo (próximamente)" disabled><i class="fas fa-folder-open"></i></button>` : ''}
+            ${!disabled ? `
+            <button class="btn-visita btn-confirmar" onclick="confirmarVisita(${i})" title="Ir a registrar reporte de calidad">
+                <i class="fas fa-clipboard-check"></i>
+            </button>
+            <button class="btn-visita" onclick="posponerVisita('${v.ID_VISITA}','${v.FECHA_VISITA}')" title="Reprogramar visita">
+                <i class="fas fa-calendar-plus"></i>
+            </button>` : ''}
+        </div>
+    </div>`;
+}
+
+function renderList() {
+    if (_vista === 'progreso') { renderListProgreso(); return; }
+    const container = document.getElementById('ruteroList');
+    const rol = currentUser?.ROL || '';
+    const esAdmin = rol === 'ADMIN' || rol === 'MODERATOR';
+
+    // USER-C should never reach here, but guard anyway
+    if (!esAdmin) { renderListProgreso(); return; }
+
+    const visitas = _ruteroData.filter(r => r.FECHA_VISITA === _selectedDay);
+
+    if (!visitas.length) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-check"></i><p>Sin visitas para este día</p></div>`;
+        return;
+    }
+
+    // ── Resumen global del día ──
+    const visitadas     = visitas.filter(v => calcularEstado(v) === 'VISITADO');
+    const pendientes    = visitas.filter(v => calcularEstado(v) === 'PENDIENTE');
+    const vencidas      = visitas.filter(v => calcularEstado(v) === 'VENCIDO');
+    const reprogramadas = visitas.filter(v => calcularEstado(v) === 'REPROGRAMADO');
+    const total         = visitas.length;
+    const pct           = total > 0 ? Math.round((visitadas.length / total) * 100) : 0;
+
+    const sumUds = arr => arr.reduce((acc, v) => acc + (getCantidadSispro(v) || 0), 0);
+    const udsTotal = sumUds(visitas);
+
+    const globalHtml = `
+    <div class="seg-resumen" style="flex-wrap:wrap;gap:8px;">
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#22c55e;">${visitadas.length}</div>
+            <div class="seg-resumen-lbl">Visitadas</div>
+        </div>
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#d97706;">${pendientes.length}</div>
+            <div class="seg-resumen-lbl">Pendientes</div>
+        </div>
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#dc2626;">${vencidas.length + reprogramadas.length}</div>
+            <div class="seg-resumen-lbl">Diferidas</div>
+        </div>
+        <div class="seg-resumen-stat">
+            <div class="seg-resumen-num" style="color:#3F51B5;">${udsTotal > 0 ? udsTotal.toLocaleString() : '—'}</div>
+            <div class="seg-resumen-lbl">Unidades</div>
+        </div>
+        <div class="seg-resumen-bar">
+            <div class="seg-progress-pct">${pct}%</div>
+            <div class="seg-progress-track"><div class="seg-progress-fill" style="width:${pct}%"></div></div>
+            <div class="seg-progress-lbl">${visitadas.length} de ${total} visitas completadas</div>
+        </div>
+    </div>`;
+
+    // ── Agrupar por auditor ──
+    const grupos = {};
+    visitas.forEach(v => {
+        const a = (v.AUDITOR || 'Sin auditor').trim();
+        if (!grupos[a]) grupos[a] = [];
+        grupos[a].push(v);
+    });
+
+    const colores = ['#3F51B5','#0891b2','#7c3aed','#be185d','#059669','#d97706'];
+
+    let gruposHtml = '';
+    Object.entries(grupos).forEach(([auditor, items], gi) => {
+        const color   = colores[gi % colores.length];
+        const visit   = items.filter(v => calcularEstado(v) === 'VISITADO').length;
+        const pend    = items.filter(v => calcularEstado(v) === 'PENDIENTE').length;
+        const venc    = items.filter(v => calcularEstado(v) === 'VENCIDO').length;
+        const reprg   = items.filter(v => calcularEstado(v) === 'REPROGRAMADO').length;
+        const uds     = sumUds(items);
+        const pctAud  = items.length > 0 ? Math.round((visit / items.length) * 100) : 0;
+
+        const estadoOrd = v => { const e = calcularEstado(v); return e==='PENDIENTE'?0:e==='VENCIDO'?1:e==='VISITADO'?2:3; };
+        const esCDI     = v => /cdi/i.test(v.DESTINO || '');
+
+        // ── Agrupar por DESTINO — CDI primero, luego resto alfabético ──
+        const destinosMap = {};
+        items.forEach(v => {
+            const dest = (v.DESTINO || 'Sin destino').trim();
+            if (!destinosMap[dest]) destinosMap[dest] = { total: 0, visitadas: 0, uds: 0, items: [] };
+            destinosMap[dest].total++;
+            if (calcularEstado(v) === 'VISITADO') destinosMap[dest].visitadas++;
+            destinosMap[dest].uds += getCantidadSispro(v) || 0;
+            destinosMap[dest].items.push(v);
+        });
+        // CDI primero, luego por total desc
+        const destinosOrdenados = Object.entries(destinosMap).sort(([ka],[kb]) => {
+            const aCDI = /cdi/i.test(ka), bCDI = /cdi/i.test(kb);
+            if (aCDI !== bCDI) return aCDI ? -1 : 1;
+            return destinosMap[kb].total - destinosMap[ka].total;
+        });
+        // Ordenar visitas dentro de cada destino por estado
+        destinosOrdenados.forEach(([, data]) =>
+            data.items.sort((a, b) => estadoOrd(a) - estadoOrd(b))
+        );
+
+        const tipoClaseMap = {
+            'AUDITORIA': 'tipo-auditoria', 'AUDITORÍA': 'tipo-auditoria',
+            'RONDA': 'tipo-ronda',
+            'CONTRAMUESTRA': 'tipo-contramuestra',
+            'SEGUIMIENTO': 'tipo-seguimiento',
+        };
+
+        const tiposHtml = destinosOrdenados.map(([destino, data], di) => {
+            const rowId  = `dest-${gi}-${di}`;
+            const isCDIGroup = /cdi/i.test(destino);
+            const destColor  = isCDIGroup ? '#3F51B5' : '#64748b';
+            const destBgIcon = isCDIGroup ? '#eef2ff' : '#f1f5f9';
+            const destIcon   = isCDIGroup ? 'fa-building' : 'fa-map-signs';
+
+            const detalleRows = data.items.map(v => {
+                const est      = calcularEstado(v);
+                const isV      = est === 'VISITADO';
+                const isR      = est === 'REPROGRAMADO';
+                const isVenc   = est === 'VENCIDO';
+                const cantSis  = getCantidadSispro(v);
+                const tipoClass = tipoClaseMap[(v.TIPO_VISITA||'').toUpperCase()] || '';
+                const estColor = isV ? '#16a34a' : (isR||isVenc) ? '#dc2626' : '#d97706';
+                const estBg    = isV ? '#dcfce7'  : (isR||isVenc) ? '#fee2e2'  : '#fef3c7';
+                const estIcon  = isV ? 'fa-check-circle' : isR ? 'fa-calendar-times' : isVenc ? 'fa-exclamation-circle' : 'fa-clock';
+                const estLabel = isV ? 'Visitado' : isR ? 'Diferido' : isVenc ? 'Vencido' : 'Pendiente';
+
+                return `
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;
+                            border-radius:10px;margin-bottom:5px;
+                            background:${isV?'#f0fdf4':isR?'#fff5f5':'#fafafa'};
+                            border:1.5px solid ${isV?'#bbf7d0':isR?'#fecaca':'#f1f5f9'};
+                            opacity:${isR?'0.8':'1'};">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.58rem;font-weight:700;color:#94a3b8;letter-spacing:0.3px;
+                                    font-style:italic;margin-bottom:2px;display:flex;align-items:center;gap:5px;">
+                            <i class="fas fa-industry" style="font-size:0.55rem;"></i>${v.PLANTA || '—'}
+                        </div>
+                        <div style="font-size:0.78rem;font-weight:800;color:#1e293b;
+                                    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;">
+                            ${v.LOTE || 'S/N'}<span style="font-weight:400;color:#94a3b8;"> — ${v.REFERENCIA || ''}</span>
+                        </div>
+                        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;">
+                            ${v.TIPO_VISITA ? `<span class="visita-tag ${tipoClass}" style="font-size:0.56rem;">${v.TIPO_VISITA}</span>` : ''}
+                            ${v.PROCESO     ? `<span style="font-size:0.6rem;font-weight:700;background:#f1f5f9;color:#475569;padding:2px 7px;border-radius:7px;">${v.PROCESO}</span>` : ''}
+                            ${cantSis       ? `<span style="font-size:0.6rem;color:#64748b;display:flex;align-items:center;gap:2px;"><i class="fas fa-hashtag" style="font-size:0.52rem;"></i>${cantSis.toLocaleString()} uds.</span>` : ''}
+                        </div>
+                    </div>
+                    <div style="flex-shrink:0;">
+                        <span style="font-size:0.58rem;font-weight:800;padding:3px 8px;border-radius:8px;
+                                     background:${estBg};color:${estColor};white-space:nowrap;display:flex;align-items:center;gap:3px;">
+                            <i class="fas ${estIcon}" style="font-size:0.52rem;"></i>${estLabel}
+                        </span>
+                    </div>
+                </div>`;
+            }).join('');
+
+            return `
+            <div style="border-bottom:1px solid #f1f5f9;">
+                <div onclick="_toggleTipo('${rowId}')"
+                     style="display:flex;align-items:center;justify-content:space-between;
+                            padding:9px 4px;cursor:pointer;user-select:none;border-radius:8px;transition:background 0.15s;"
+                     onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="width:24px;height:24px;border-radius:6px;background:${destBgIcon};
+                                     display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                            <i class="fas ${destIcon}" style="font-size:0.6rem;color:${destColor};"></i>
+                        </span>
+                        <span style="font-size:0.75rem;font-weight:800;color:#1e293b;">${destino}</span>
+                        <span style="font-size:0.62rem;color:#94a3b8;">${data.total} visita${data.total!==1?'s':''}</span>
+                        ${data.uds > 0 ? `<span style="font-size:0.62rem;color:#64748b;">· ${data.uds.toLocaleString()} uds.</span>` : ''}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        ${data.visitadas > 0 ? `<span style="font-size:0.6rem;font-weight:800;color:#16a34a;background:#dcfce7;padding:2px 7px;border-radius:8px;">${data.visitadas} ✓</span>` : ''}
+                        ${(data.total - data.visitadas) > 0 ? `<span style="font-size:0.6rem;font-weight:800;color:#d97706;background:#fef3c7;padding:2px 7px;border-radius:8px;">${data.total - data.visitadas} pend.</span>` : ''}
+                        <i id="ico-${rowId}" class="fas fa-chevron-down" style="font-size:0.6rem;color:#94a3b8;transition:transform 0.2s;"></i>
+                    </div>
+                </div>
+                <div id="${rowId}" style="display:none;padding:4px 0 8px 0;">
+                    ${detalleRows}
+                </div>
+            </div>`;
+        }).join('');
+
+        // Chips de estado resumen
+        const chips = [
+            visit        > 0 ? `<span style="background:#dcfce7;color:#16a34a;font-size:0.58rem;font-weight:800;padding:2px 8px;border-radius:8px;"><i class="fas fa-check-circle" style="margin-right:3px;"></i>${visit}</span>` : '',
+            pend         > 0 ? `<span style="background:#fef3c7;color:#d97706;font-size:0.58rem;font-weight:800;padding:2px 8px;border-radius:8px;"><i class="fas fa-clock" style="margin-right:3px;"></i>${pend}</span>` : '',
+            (venc+reprg) > 0 ? `<span style="background:#fee2e2;color:#dc2626;font-size:0.58rem;font-weight:800;padding:2px 8px;border-radius:8px;"><i class="fas fa-calendar-times" style="margin-right:3px;"></i>${venc+reprg}</span>` : '',
+        ].filter(Boolean).join('');
+
+        gruposHtml += `
+        <div style="background:white;border-radius:14px;border:1.5px solid #e2e8f0;padding:14px 16px;margin-bottom:12px;">
+            <!-- Cabecera auditor -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+                <div style="width:38px;height:38px;border-radius:50%;background:${color}18;border:2px solid ${color}40;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <i class="fas fa-user" style="color:${color};font-size:0.8rem;"></i>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:0.88rem;font-weight:800;color:#1e293b;">${auditor}</div>
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:3px;">${chips}
+                        ${uds > 0 ? `<span style="font-size:0.6rem;color:#64748b;margin-left:2px;">${uds.toLocaleString()} uds.</span>` : ''}
+                    </div>
+                </div>
+                <div style="text-align:right;flex-shrink:0;">
+                    <div style="font-size:1.15rem;font-weight:900;color:${color};">${pctAud}%</div>
+                    <div style="font-size:0.52rem;color:#94a3b8;font-weight:700;text-transform:uppercase;">cumplimiento</div>
+                </div>
+            </div>
+            <!-- Barra de progreso -->
+            <div class="seg-progress-track" style="margin-bottom:10px;">
+                <div class="seg-progress-fill" style="width:${pctAud}%;background:linear-gradient(90deg,${color},#22c55e);"></div>
+            </div>
+            <!-- Desglose por destino -->
+            <div>${tiposHtml}</div>
+        </div>`;
+    });
+
+    container.innerHTML = globalHtml + gruposHtml;
+}
+
+function contarMatches(visita) {
+    const norm = s => (s || '').toString().trim().toLowerCase();
+    const fechaVisita = (visita.FECHA_VISITA || '').trim();
+    let count = 0;
+    for (const r of _reportesData) {
+        // r.FECHA ya está normalizada
+        if (r.FECHA === fechaVisita
+            && norm(r.PLANTA)      === norm(visita.PLANTA)
+            && norm(r.LOTE)        === norm(visita.LOTE)
+            && norm(r.REFERENCIA)  === norm(visita.REFERENCIA)
+            && norm(r.PROCESO)     === norm(visita.PROCESO)
+            && norm(r.TIPO_VISITA) === norm(visita.TIPO_VISITA)) {
+            count++;
+        }
+    }
+    return count;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   DRAG & DROP — reordenar prioridad
+   ══════════════════════════════════════════════════════════════════════ */
+function _onDragStart(e, index) {
+    _dragSrcIndex = index;
+    // Buscar la tarjeta raíz aunque el evento venga de un hijo
+    const card = e.currentTarget.closest('.visita-card') || e.currentTarget;
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(index));
+}
+function _onDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    document.querySelectorAll('.visita-card, .seg-row').forEach(c => c.classList.remove('drag-over'));
+    const card = e.currentTarget.closest('.visita-card, .seg-row') || e.currentTarget;
+    card.classList.add('drag-over');
+}
+function _onDrop(e, targetIndex, srcOverride) {
+    e.preventDefault();
+    const src = srcOverride !== undefined ? srcOverride : _dragSrcIndex;
+    if (src === null || src === targetIndex) return;
+
+    // Obtener los índices reales en _ruteroData de las visitas del día
+    const indices = _ruteroData
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => r.FECHA_VISITA === _selectedDay)
+        .map(({ i }) => i);
+
+    // Reordenar en _ruteroData directamente
+    const srcGlobal = indices[src];
+    const tgtGlobal = indices[targetIndex];
+    const [moved] = _ruteroData.splice(srcGlobal, 1);
+    _ruteroData.splice(tgtGlobal, 0, moved);
+
+    // Reasignar prioridades en _ruteroData para este día
+    const visitas = _ruteroData.filter(r => r.FECHA_VISITA === _selectedDay);
+    visitas.forEach((v, i) => { v.PRIORIDAD = String(i + 1); });
+
+    renderList();
+    guardarPrioridades(visitas);
+}
+function _onDragEnd(e) {
+    document.querySelectorAll('.visita-card, .seg-row').forEach(c => {
+        c.classList.remove('dragging');
+        c.classList.remove('drag-over');
+    });
+    _dragSrcIndex = null;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CONFIRMAR VISITA — redirige a index.html con datos pre-llenados
+   ══════════════════════════════════════════════════════════════════════ */
+function confirmarVisita(index) {
+    const visitas = _ruteroData.filter(r => r.FECHA_VISITA === _selectedDay);
+    const v = visitas[index];
+    if (!v) return;
+
+    // Guardar datos en sessionStorage para que index.html los consuma
+    sessionStorage.setItem('rutero_prefill', JSON.stringify({
+        lote:       v.LOTE       || '',
+        referencia: v.REFERENCIA || '',
+        planta:     v.PLANTA     || '',
+        proceso:    v.PROCESO    || '',
+        tipoVisita: v.TIPO_VISITA || '',
+    }));
+
+    window.location.href = 'index.html';
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   POSPONER
+   ══════════════════════════════════════════════════════════════════════ */
+async function posponerVisita(idVisita, fechaActual) {
+    const { value: nuevaFecha } = await Swal.fire({
+        title: 'Reprogramar visita',
+        html: `
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:12px;">La visita original quedará marcada como <strong>Reprogramada</strong>.<br>Selecciona la nueva fecha:</p>
+            <input type="date" id="swal-nueva-fecha" class="swal2-input"
+                min="${new Date().toISOString().split('T')[0]}"
+                value="${fechaActual}">
+        `,
+        confirmButtonText: 'Reprogramar',
+        confirmButtonColor: '#3F51B5',
+        cancelButtonText: 'Cancelar',
+        showCancelButton: true,
+        preConfirm: () => {
+            const val = document.getElementById('swal-nueva-fecha').value;
+            if (!val || val === fechaActual) {
+                Swal.showValidationMessage('Selecciona una fecha diferente a la actual');
+                return false;
+            }
+            return val;
+        }
+    });
+
+    if (!nuevaFecha) return;
+
+    try {
+        await fetch(GAS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ accion: 'POSPONER_RUTERO', idVisita, nuevaFecha })
+        });
+        // Marcar localmente como REPROGRAMADO (no mover ni eliminar)
+        const v = _ruteroData.find(r => r.ID_VISITA === idVisita);
+        if (v) v.ESTADO = 'REPROGRAMADO';
+        // Recargar preservando el día seleccionado
+        const diaActual = _selectedDay;
+        await cargarRutero();
+        // cargarRutero puede haber cambiado _selectedDay — restaurar al día original
+        _selectedDay = diaActual;
+        renderTabs();
+        renderList();
+    } catch(e) {
+        console.error('[rutero] posponer:', e);
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo reprogramar la visita.', confirmButtonColor: '#3F51B5' });
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GUARDAR PRIORIDADES (batch)
+   ══════════════════════════════════════════════════════════════════════ */
+async function guardarPrioridades(visitas) {
+    const saving = document.getElementById('rutero-saving');
+    saving.style.display = 'flex';
+    try {
+        const updates = visitas.map(v => ({ idVisita: v.ID_VISITA, prioridad: v.PRIORIDAD }));
+        await fetch(GAS_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ accion: 'UPDATE_RUTERO_PRIORIDADES', updates })
+        });
+    } catch(e) { console.error('[rutero] prioridades:', e); }
+    finally { setTimeout(() => { saving.style.display = 'none'; }, 800); }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TOUCH DRAG — soporte móvil para seg-drag-touch handles
+   ══════════════════════════════════════════════════════════════════════ */
+(function() {
+    let _touchSrcIndex = null;
+    let _touchGhost    = null;
+    let _touchLastOver = null;
+
+    document.addEventListener('touchstart', function(e) {
+        const handle = e.target.closest('.seg-drag-touch');
+        if (!handle) return;
+        e.preventDefault();
+        const row = handle.closest('.seg-row');
+        if (!row) return;
+        _touchSrcIndex = parseInt(handle.dataset.index);
+
+        // Crear ghost visual
+        _touchGhost = row.cloneNode(true);
+        _touchGhost.style.cssText = `
+            position:fixed; z-index:9999; pointer-events:none;
+            opacity:0.75; transform:scale(0.97);
+            left:0; top:0; width:${row.offsetWidth}px;
+            box-shadow:0 8px 24px rgba(63,81,181,0.2);
+            border-radius:12px; background:white;
+        `;
+        document.body.appendChild(_touchGhost);
+        _moveTouchGhost(e.touches[0]);
+        row.style.opacity = '0.4';
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+        if (_touchSrcIndex === null) return;
+        e.preventDefault();
+        _moveTouchGhost(e.touches[0]);
+
+        // Detectar sobre qué fila estamos
+        const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+        const overRow = el && el.closest('.seg-row[draggable="true"]');
+        if (_touchLastOver && _touchLastOver !== overRow) {
+            _touchLastOver.classList.remove('drag-over');
+        }
+        if (overRow) {
+            overRow.classList.add('drag-over');
+            _touchLastOver = overRow;
+        }
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+        if (_touchSrcIndex === null) return;
+
+        // Limpiar ghost
+        if (_touchGhost) { _touchGhost.remove(); _touchGhost = null; }
+
+        // Restaurar opacidad de la fila origen
+        document.querySelectorAll('.seg-row').forEach(r => r.style.opacity = '');
+
+        if (_touchLastOver) {
+            const targetIndex = parseInt(_touchLastOver.dataset.index);
+            _touchLastOver.classList.remove('drag-over');
+            _touchLastOver = null;
+            if (!isNaN(targetIndex) && targetIndex !== _touchSrcIndex) {
+                _onDrop({ preventDefault: ()=>{} }, targetIndex, _touchSrcIndex);
+            }
+        }
+        _touchSrcIndex = null;
+    });
+
+    function _moveTouchGhost(touch) {
+        if (!_touchGhost) return;
+        _touchGhost.style.left = (touch.clientX - 20) + 'px';
+        _touchGhost.style.top  = (touch.clientY - 30) + 'px';
+    }
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════════════════ */
+window.onload = async function() {
+    // Disparar los fetches de datos en paralelo con la autenticación
+    // para no desperdiciar tiempo esperando loadUsers antes de ir a la red
+    const ruteroPromise = fetchSupabaseData(SHEET_RUTERO.name);
+    const reportesPromise = fetchSupabaseData(SHEET_REPORTES.name);
+
+    // Esperar auth (necesitamos currentUser para filtrar por auditor)
+    await loadUsers();
+    updateAuthUI();
+
+    // Los datos ya están llegando (o llegaron) — procesar
+    await cargarRutero(ruteroPromise, reportesPromise);
+};
+</script>
+</body>
+</html>
