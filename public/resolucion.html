@@ -793,6 +793,66 @@
         cursor: not-allowed;
     }
 
+    /* Botón de sincronización con SISPRO */
+    .btn-sync-sispro {
+        background: #fffbeb;
+        border: 1.5px solid #fde68a;
+        color: #d97706;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 12px;
+        transition: all 0.2s;
+        cursor: pointer;
+        animation: pulse-sync 2s infinite;
+    }
+
+    .btn-sync-sispro:hover {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
+    }
+
+    .fa-spin-hover:hover {
+        animation: fa-spin 2s infinite linear;
+    }
+
+    @keyframes pulse-sync {
+        0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+
+    .btn-chat-ultra {
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 0.65rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 12px;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .btn-chat-ultra:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+
     /* Botones de Tipo de Cobro */
     .cobro-option-btn {
         display: flex;

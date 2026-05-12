@@ -4,6 +4,7 @@
 
 let gsNovedades = [];
 let gsPlantas = [];
+let gsLots = [];
 let gsCurrentPage = 1;
 const gsRecordsPerPage = 6;
 
@@ -45,13 +46,15 @@ async function cargarDatos(soloFinalizados = false) {
     try {
         await fetchSecureConfig();
 
-        const [novedades, plantas] = await Promise.all([
+        const [novedades, plantas, lots] = await Promise.all([
             fetchNovedadesData(soloFinalizados),
-            fetchPlantasData()
+            fetchPlantasData(),
+            fetchSupabaseData('SISPRO')
         ]);
 
         gsNovedades = novedades;
         gsPlantas = plantas;
+        gsLots = lots;
 
         // Verificar si hay datos
         if (!gsNovedades || gsNovedades.length === 0) {
@@ -449,6 +452,31 @@ function renderTabla(data = gsNovedades) {
                 <button class="btn-chat-ultra w-100" data-chat-btn="${nov.ID_NOVEDAD}" onclick="openChat('${nov.ID_NOVEDAD}','${(nov.PLANTA||'').replace(/'/g,"\\'")}','${(nov.LOTE||'').replace(/'/g,"\\'")}',${(String(nov.CHAT||'').startsWith('https://') || String(nov.CHAT||'').startsWith('[')) ? 'true' : 'false'})">
                     <i class="fas fa-comments"></i> CHAT
                 </button>
+                ${(() => {
+                    // Buscar lote en SISPRO para verificar consistencia
+                    const lotInfo = gsLots.find(l => String(l.LOTE) === String(nov.LOTE));
+                    if (!lotInfo) return '';
+
+                    const camposACotejar = ['PLANTA', 'SALIDA', 'REFERENCIA', 'LINEA', 'PROCESO', 'PRENDA', 'GENERO', 'TEJIDO'];
+                    const inconsistencias = camposACotejar.filter(campo => {
+                        const valNov = String(nov[campo] || '').trim();
+                        const valLot = String(lotInfo[campo] || '').trim();
+                        return valNov === '' && valLot !== '';
+                    });
+
+                    // También cotejar cantidad si es 0 en novedad pero > 0 en lote
+                    if (parseFloat(nov.CANTIDAD || 0) === 0 && parseFloat(lotInfo.CANTIDAD || 0) > 0) {
+                        inconsistencias.push('CANTIDAD');
+                    }
+
+                    if (inconsistencias.length > 0) {
+                        return `
+                        <button class="btn-sync-sispro w-100 mt-2" onclick="sincronizarConSispro('${nov.ID_NOVEDAD}', '${nov.LOTE}')" title="Sincronizar datos faltantes con SISPRO: ${inconsistencias.join(', ')}">
+                            <i class="fas fa-sync-alt fa-spin-hover"></i> DATOS INCOMPLETOS
+                        </button>`;
+                    }
+                    return '';
+                })()}
             </div>
         `;
         feed.appendChild(card);
@@ -601,6 +629,103 @@ async function actualizarEstado(timestampId, nuevoEstado, selectEl) {
         btnContainer.classList.remove('is-loading');
         btnContainer.innerHTML = originalHTML;
         renderTabla();
+    }
+}
+
+/**
+ * Sincroniza datos faltantes de una novedad con la información original de SISPRO
+ */
+async function sincronizarConSispro(idNovedad, lote) {
+    const nov = gsNovedades.find(n => n.ID_NOVEDAD === idNovedad);
+    const lot = gsLots.find(l => String(l.LOTE) === String(lote));
+    
+    if (!nov || !lot) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Sincronización',
+            text: 'No se encontraron los datos del lote en el sistema SISPRO.'
+        });
+        return;
+    }
+
+    const camposACotejar = ['PLANTA', 'SALIDA', 'REFERENCIA', 'LINEA', 'PROCESO', 'PRENDA', 'GENERO', 'TEJIDO'];
+    const datosNuevos = {};
+    const inconsistencias = [];
+
+    camposACotejar.forEach(campo => {
+        const valNov = String(nov[campo] || '').trim();
+        const valLot = String(lot[campo] || '').trim();
+        if (valNov === '' && valLot !== '') {
+            datosNuevos[campo] = valLot;
+            inconsistencias.push(campo);
+        }
+    });
+
+    // Cotejar cantidad si es 0 en novedad pero > 0 en lote
+    if (parseFloat(nov.CANTIDAD || 0) === 0 && parseFloat(lot.CANTIDAD || 0) > 0) {
+        datosNuevos.CANTIDAD = parseFloat(lot.CANTIDAD);
+        inconsistencias.push('CANTIDAD');
+    }
+
+    if (inconsistencias.length === 0) {
+        Swal.fire({
+            icon: 'info',
+            title: 'Datos al día',
+            text: 'La novedad ya cuenta con todos los datos disponibles en SISPRO.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+        return;
+    }
+
+    const confirmacion = await Swal.fire({
+        title: 'Sincronizar con SISPRO',
+        html: `Se actualizarán los siguientes campos faltantes usando la información original de SISPRO:<br><br><b>${inconsistencias.join(', ')}</b>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sincronizar ahora',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d97706'
+    });
+
+    if (!confirmacion.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Actualizando registros...',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+    });
+
+    try {
+        const result = await sendToSupabase({
+            accion: 'UPDATE_NOVEDAD', // Usamos la acción existente que ya soporta actualización de campos
+            timestampId: idNovedad,
+            ...datosNuevos // Enviamos solo los campos que queremos actualizar
+        });
+
+        if (result.success) {
+            // Actualizar localmente para evitar recarga completa
+            Object.assign(nov, datosNuevos);
+            
+            Swal.fire({
+                icon: 'success',
+                title: '¡Sincronizado!',
+                text: 'Los datos se han actualizado correctamente con la información de SISPRO.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+            
+            renderTabla();
+        } else {
+            throw new Error(result.message || 'Error al actualizar en Supabase');
+        }
+    } catch (error) {
+        console.error('[sincronizarConSispro] Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Fallo en Sincronización',
+            text: error.message || 'Ocurrió un error inesperado al intentar actualizar los datos.'
+        });
     }
 }
 
