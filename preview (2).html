@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Separación</title>
+
+  <style>
+
+    body{
+      font-family: Arial, sans-serif;
+      background:#f4f4f4;
+      padding:20px;
+    }
+
+    .login{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      max-width:400px;
+      margin-bottom:20px;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);
+    }
+
+    input{
+      width:100%;
+      padding:10px;
+      margin-top:10px;
+      border:1px solid #ccc;
+      border-radius:5px;
+      box-sizing:border-box;
+    }
+
+    button{
+      margin-top:15px;
+      padding:10px 20px;
+      border:none;
+      background:#222;
+      color:white;
+      border-radius:5px;
+      cursor:pointer;
+    }
+
+    .cards{
+      display:flex;
+      gap:20px;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+
+    .card{
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);
+      flex:1;
+      min-width:220px;
+    }
+
+    .card h2{
+      margin:0;
+      font-size:18px;
+      color:#666;
+    }
+
+    .numero{
+      font-size:40px;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      background:white;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);
+    }
+
+    th, td{
+      padding:10px;
+      border-bottom:1px solid #ddd;
+      text-align:left;
+    }
+
+    th{
+      background:#222;
+      color:white;
+    }
+
+    .pendiente{
+      color:orange;
+      font-weight:bold;
+    }
+
+    .separado{
+      color:green;
+      font-weight:bold;
+    }
+
+    #dashboard{
+      display:none;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="login">
+
+    <h2>Acceso API</h2>
+
+    <input
+      type="email"
+      id="correo"
+      placeholder="Correo">
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Contraseña">
+
+    <button onclick="cargarDatos()">
+      Ingresar
+    </button>
+
+  </div>
+
+  <div id="dashboard">
+
+    <h1>Dashboard Separación</h1>
+
+    <div class="cards">
+
+      <div class="card">
+        <h2>Separado pendiente entrega</h2>
+        <div class="numero" id="totalSeparado">0</div>
+      </div>
+
+      <div class="card">
+        <h2>Cantidad separada</h2>
+        <div class="numero" id="cantidadSeparada">0</div>
+      </div>
+
+      <div class="card">
+        <h2>Por separar</h2>
+        <div class="numero" id="totalPorSeparar">0</div>
+      </div>
+
+      <div class="card">
+        <h2>Cantidad por separar</h2>
+        <div class="numero" id="cantidadPorSeparar">0</div>
+      </div>
+
+    </div>
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>OP</th>
+          <th>Referencia</th>
+          <th>Cliente</th>
+          <th>Cantidad</th>
+          <th>Estado Separación</th>
+          <th>Estado Entrega</th>
+        </tr>
+      </thead>
+
+      <tbody id="tabla"></tbody>
+
+    </table>
+
+  </div>
+
+  <script>
+
+    async function cargarDatos(){
+
+      try{
+
+        const correo =
+          document.getElementById('correo').value;
+
+        const password =
+          document.getElementById('password').value;
+
+        const url =
+          'https://iladaofarozipitwaeti.supabase.co/functions/v1/consulta-clientes?fecha_desde=2026-01-01&fecha_hasta=2026-05-06';
+
+        const response = await fetch(url, {
+
+          method: 'GET',
+
+          headers: {
+
+            'Content-Type': 'application/json',
+
+            // AUTH
+            'Authorization':
+              'Basic ' + btoa(correo + ':' + password)
+
+          }
+
+        });
+
+        if(!response.ok){
+          throw new Error('Credenciales inválidas');
+        }
+
+        // RESPUESTA COMPLETA
+        const responseData = await response.json();
+
+        console.log(responseData);
+
+        // ARRAY REAL
+        const data = responseData.registros || [];
+
+        // =========================
+        // FINALIZADO Y NO ENTREGADO
+        // =========================
+
+        const separadosPendientes = data.filter(item =>
+
+          item.estado_separacion === 'FINALIZADO'
+          &&
+          item.estado_entrega !== 'ENTREGADO'
+
+        );
+
+        // =========================
+        // POR SEPARAR
+        // =========================
+
+        const porSeparar = data.filter(item =>
+
+          item.estado_separacion !== 'FINALIZADO'
+
+        );
+
+        // =========================
+        // TOTALES
+        // =========================
+
+        document.getElementById('totalSeparado').innerText =
+          separadosPendientes.length;
+
+        document.getElementById('cantidadSeparada').innerText =
+          separadosPendientes.reduce((acc, item) =>
+
+            acc + Number(item.cliente_cantidad || 0)
+
+          , 0);
+
+        document.getElementById('totalPorSeparar').innerText =
+          porSeparar.length;
+
+        document.getElementById('cantidadPorSeparar').innerText =
+          porSeparar.reduce((acc, item) =>
+
+            acc + Number(item.cliente_cantidad || 0)
+
+          , 0);
+
+        // =========================
+        // TABLA
+        // =========================
+
+        const tabla =
+          document.getElementById('tabla');
+
+        tabla.innerHTML = '';
+
+        const visibles = [
+
+          ...separadosPendientes,
+          ...porSeparar
+
+        ];
+
+        visibles.forEach(item => {
+
+          const tr =
+            document.createElement('tr');
+
+          const estadoClase =
+
+            item.estado_separacion === 'FINALIZADO'
+            ? 'separado'
+            : 'pendiente';
+
+          tr.innerHTML = `
+            <td>${item.op || ''}</td>
+            <td>${item.referencia || ''}</td>
+            <td>${item.cliente_nit || ''}</td>
+            <td>${item.cliente_cantidad || 0}</td>
+
+            <td class="${estadoClase}">
+              ${item.estado_separacion || ''}
+            </td>
+
+            <td>
+              ${item.estado_entrega || 'PENDIENTE'}
+            </td>
+          `;
+
+          tabla.appendChild(tr);
+
+        });
+
+        // MOSTRAR DASHBOARD
+        document.getElementById('dashboard').style.display =
+          'block';
+
+      }
+      catch(error){
+
+        console.error(error);
+
+        alert(error.message);
+
+      }
+
+    }
+
+  </script>
+
+</body>
+</html>
