@@ -487,15 +487,13 @@ function _loadScriptDynamic(src) {
 }
 
 /** ── Motor de UI ── */
-window.logout = async function () {
-    // 1. Limpiar sesión en Supabase (de forma segura)
+window.logout = function () {
+    // 1. Limpiar sesión en Supabase (en segundo plano, sin bloquear)
     const sb = getSB();
     if (sb) {
-        try {
-            await sb.auth.signOut();
-        } catch(e) {
-            console.warn("[AUTH] Error al cerrar sesión en Supabase:", e);
-        }
+        sb.auth.signOut().catch(e => {
+            console.warn("[AUTH] Error de red al cerrar sesión en servidor:", e);
+        });
     }
 
     // 2. Limpiar memoria y persistencia quirúrgicamente
