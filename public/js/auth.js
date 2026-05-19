@@ -488,33 +488,46 @@ function _loadScriptDynamic(src) {
 
 /** ── Motor de UI ── */
 window.logout = function () {
-    // 1. Limpiar sesión en Supabase (en segundo plano, sin bloquear)
-    const sb = getSB();
-    if (sb) {
-        sb.auth.signOut().catch(e => {
-            console.warn("[AUTH] Error de red al cerrar sesión en servidor:", e);
-        });
-    }
+    if (window.isLoggingOut) return;
+    window.isLoggingOut = true;
 
-    // 2. Limpiar memoria y persistencia quirúrgicamente
+    console.log("[AUTH] Iniciando secuencia de logout rápido...");
+
+    // 1. Feedback visual inmediato para evitar la sensación de congelamiento
+    document.body.style.pointerEvents = 'none';
+    document.body.style.opacity = '0.6';
+    document.body.style.transition = 'opacity 0.2s ease';
+
+    // 2. Limpiar memoria y persistencia quirúrgicamente de inmediato
     window.currentUser = null;
 
-    // Borrar todo lo relacionado con la sesión, incluyendo tokens de Supabase
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (key.includes('-auth-token') || key.startsWith('sb-'))) {
-            keysToRemove.push(key);
+    try {
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('-auth-token') || key.startsWith('sb-'))) {
+                keysToRemove.push(key);
+            }
         }
+        const universalKeys = ['busint_user', 'busint_avatar_prefs', 'busint_productora', 'busint_universal_plant'];
+        
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        universalKeys.forEach(k => localStorage.removeItem(k));
+        sessionStorage.clear();
+    } catch(e) {
+        console.warn("[AUTH] Error limpiando storage durante logout:", e);
     }
-    const universalKeys = ['busint_user', 'busint_avatar_prefs', 'busint_productora', 'busint_universal_plant'];
-    
-    keysToRemove.forEach(k => localStorage.removeItem(k));
-    universalKeys.forEach(k => localStorage.removeItem(k));
-    sessionStorage.clear();
 
-    // 3. Redirigir
-    window.location.replace('login.html');
+    // 3. Disparar el cierre en Supabase sin esperar la respuesta (evita bloqueos de red)
+    const sb = getSB();
+    if (sb) {
+        sb.auth.signOut().catch(e => console.warn("[AUTH] Error al cerrar sesión en Supabase en background:", e));
+    }
+
+    // 4. Redirigir rápidamente, dando solo el tiempo mínimo para que la petición salga del navegador
+    setTimeout(() => {
+        window.location.replace('login.html');
+    }, 150);
 };
 
 window.toggleSidebar = function () {
