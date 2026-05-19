@@ -478,20 +478,24 @@ function agregarFilaModalNovedad(datosIniciales = null) {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="input-with-icon smart-select-container">
+            <div class="input-with-icon">
                 <i class="fas fa-ruler input-icon"></i>
-                <input type="text" class="form-control form-control-sm codigo-talla smart-select-input" 
-                    placeholder="Talla..." autocomplete="off" value="${valTalla}">
-                <div class="smart-select-dropdown hidden"></div>
+                <input type="text" class="form-control form-control-sm codigo-talla" 
+                    placeholder="Talla..." autocomplete="off" value="${valTalla}" list="calidad-tallas-list-${Date.now()}">
+                <datalist id="calidad-tallas-list-${Date.now()}">
+                    ${tallasFiltradas.map(t => `<option value="${t}"></option>`).join('')}
+                </datalist>
             </div>
         </div>
         <div class="campo-dinamico">
             <label class="form-label-inline" style="font-size:0.7rem;">Color: <span style="color:#ef4444;">*</span></label>
-            <div class="input-with-icon smart-select-container">
+            <div class="input-with-icon">
                 <i class="fas fa-palette input-icon"></i>
-                <input type="text" class="form-control form-control-sm codigo-color smart-select-input" 
-                    placeholder="Color..." autocomplete="off" value="${valColor}">
-                <div class="smart-select-dropdown hidden"></div>
+                <input type="text" class="form-control form-control-sm codigo-color" 
+                    placeholder="Color..." autocomplete="off" value="${valColor}" list="calidad-colores-list-${Date.now()}">
+                <datalist id="calidad-colores-list-${Date.now()}">
+                    ${coloresFiltrados.map(c => `<option value="${c}"></option>`).join('')}
+                </datalist>
             </div>
         </div>
         <div class="campo-dinamico">
@@ -514,12 +518,7 @@ function agregarFilaModalNovedad(datosIniciales = null) {
     listContainer.appendChild(fila);
     _actualizarBotonesEliminarModalNovedad();
 
-    const inputTalla = fila.querySelector('.codigo-talla');
-    const inputColor = fila.querySelector('.codigo-color');
-    if (typeof _setupSmartSelect === 'function') {
-        _setupSmartSelect(inputTalla, tallasFiltradas);
-        _setupSmartSelect(inputColor, coloresFiltrados);
-    }
+    // Inicializar Smart Selects removido (usando datalist nativo)
 }
 
 function eliminarFilaModalNovedad(btn) {

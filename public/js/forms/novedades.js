@@ -316,20 +316,24 @@ function agregarFilaCodigo(tallaVal = '', colorVal = '', cantVal = '') {
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            <div class="input-with-icon smart-select-container">
+            <div class="input-with-icon">
                 <i class="fas fa-ruler input-icon"></i>
-                <input type="text" class="form-control form-control-sm codigo-talla smart-select-input" 
-                    placeholder="Talla..." autocomplete="off" value="${tallaVal}">
-                <div class="smart-select-dropdown hidden"></div>
+                <input type="text" class="form-control form-control-sm codigo-talla" 
+                    placeholder="Talla..." autocomplete="off" value="${tallaVal}" list="tallas-list-${Date.now()}">
+                <datalist id="tallas-list-${Date.now()}">
+                    ${CODIGOS_TALLAS_LIST.map(t => `<option value="${t}"></option>`).join('')}
+                </datalist>
             </div>
         </div>
         <div class="campo-dinamico">
             <label class="form-label-inline">Color: <span style="color:#ef4444;">*</span></label>
-            <div class="input-with-icon smart-select-container">
+            <div class="input-with-icon">
                 <i class="fas fa-palette input-icon"></i>
-                <input type="text" class="form-control form-control-sm codigo-color smart-select-input" 
-                    placeholder="Color..." autocomplete="off" value="${colorVal}">
-                <div class="smart-select-dropdown hidden"></div>
+                <input type="text" class="form-control form-control-sm codigo-color" 
+                    placeholder="Color..." autocomplete="off" value="${colorVal}" list="colores-list-${Date.now()}">
+                <datalist id="colores-list-${Date.now()}">
+                    ${CODIGOS_COLORES_LIST.map(c => `<option value="${c}"></option>`).join('')}
+                </datalist>
             </div>
         </div>
         <div class="campo-dinamico">
@@ -352,12 +356,9 @@ function agregarFilaCodigo(tallaVal = '', colorVal = '', cantVal = '') {
     lista.appendChild(fila);
     _actualizarBotonesEliminar('codigosList');
 
-    // Inicializar Smart Selects
+    // Inicializar Smart Selects removido (usando datalist nativo)
     const inputTalla = fila.querySelector('.codigo-talla');
     const inputColor = fila.querySelector('.codigo-color');
-
-    _setupSmartSelect(inputTalla, tallasFiltradas);
-    _setupSmartSelect(inputColor, coloresFiltrados);
 
     // Event listeners para validación y máximos
     inputTalla.addEventListener('change', () => actualizarMaximoCodigo(inputTalla));
@@ -404,47 +405,7 @@ function getFilteredSizes() {
     return sizes.length > 0 ? sizes : CODIGOS_TALLAS_LIST;
 }
 
-/**
- * Configura el comportamiento de selector inteligente
- */
-function _setupSmartSelect(input, options) {
-    const dropdown = input.nextElementSibling;
-
-    const showOptions = (filter = '') => {
-        const query = filter.toLowerCase().trim();
-        const filtered = options.filter(opt => opt.toLowerCase().includes(query));
-
-        if (filtered.length === 0) {
-            dropdown.classList.add('hidden');
-            return;
-        }
-
-        dropdown.innerHTML = filtered.map(opt => `
-            <div class="smart-select-item" data-value="${opt}">${opt}</div>
-        `).join('');
-
-        dropdown.classList.remove('hidden');
-    };
-
-    input.addEventListener('focus', () => showOptions(input.value));
-    input.addEventListener('input', () => showOptions(input.value));
-
-    // Manejar selección
-    dropdown.addEventListener('mousedown', (e) => {
-        const item = e.target.closest('.smart-select-item');
-        if (item) {
-            input.value = item.dataset.value;
-            dropdown.classList.add('hidden');
-            // Disparar evento change para validaciones
-            input.dispatchEvent(new Event('change'));
-        }
-    });
-
-    // Cerrar al perder foco
-    input.addEventListener('blur', () => {
-        setTimeout(() => dropdown.classList.add('hidden'), 200);
-    });
-}
+    // Función _setupSmartSelect eliminada, usando datalist nativo
 
 function actualizarMaximoCodigo(selectElement) {
     const fila = selectElement.closest('.insumo-fila');

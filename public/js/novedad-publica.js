@@ -467,18 +467,18 @@ function formatearFechaLarga(fechaStr) {
         const dia = fecha.getDate();
         const mes = meses[fecha.getMonth()];
         const año = fecha.getFullYear();
-        
+
         // Calcular días hábiles desde la fecha hasta hoy
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         fecha.setHours(0, 0, 0, 0);
-        
+
         const diasHabiles = calcularDiasHabiles(fecha, hoy);
-        
+
         // Determinar color según días hábiles
         let colorClass = '';
         let textoTiempo = '';
-        
+
         if (diasHabiles === 0) {
             textoTiempo = 'hoy';
             colorClass = 'fecha-verde';
@@ -501,7 +501,7 @@ function formatearFechaLarga(fechaStr) {
             }
             colorClass = 'fecha-verde';
         }
-        
+
         return `${diaSemana}, ${dia} de ${mes} del ${año} <span class="${colorClass}">(${textoTiempo})</span>`;
     } catch (error) {
         console.error('[formatearFechaLarga] Error al formatear fecha:', error);
@@ -516,10 +516,10 @@ function calcularDiasHabiles(fechaInicio, fechaFin) {
         [fechaInicio, fechaFin] = [fechaFin, fechaInicio];
         invertido = true;
     }
-    
+
     let diasHabiles = 0;
     let fechaActual = new Date(fechaInicio);
-    
+
     while (fechaActual < fechaFin) {
         const diaSemana = fechaActual.getDay();
         // Contar solo de lunes (1) a viernes (5)
@@ -528,7 +528,7 @@ function calcularDiasHabiles(fechaInicio, fechaFin) {
         }
         fechaActual.setDate(fechaActual.getDate() + 1);
     }
-    
+
     return invertido ? -diasHabiles : diasHabiles;
 }
 
@@ -556,15 +556,15 @@ function volverConfirmacion() {
     document.getElementById('seccionNovedadDetalles').classList.add('hidden');
     document.getElementById('seccionDetalles').classList.remove('hidden');
     updateStepIndicator(2);
-    
+
     // Resetear campos de novedad
     document.getElementById('area').value = '';
     document.getElementById('tipoNovedad').value = '';
     document.getElementById('tipoNovedadGroup').classList.add('hidden');
-    
+
     // Ocultar todos los grupos de detalles
     const groups = [
-        'tipoInsumoGroup', 'tipoCorteGroup', 'tipoTelasGroup', 
+        'tipoInsumoGroup', 'tipoCorteGroup', 'tipoTelasGroup',
         'tipoCodigosGroup', 'cantidadNormalGroup'
     ];
     groups.forEach(groupId => {
@@ -574,10 +574,10 @@ function volverConfirmacion() {
             group.classList.remove('field-locked', 'field-reveal');
         }
     });
-    
+
     // Reiniciar bloqueo de campos
     lockFieldsAfter('area');
-    
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -588,7 +588,7 @@ function continuarAdicional() {
         showError(document.getElementById('area'), document.getElementById('areaError'), 'Por favor selecciona un área');
         return;
     }
-    
+
     // Validar tipo de novedad si es visible
     const tipoGroup = document.getElementById('tipoNovedadGroup');
     if (!tipoGroup.classList.contains('hidden')) {
@@ -598,7 +598,7 @@ function continuarAdicional() {
             return;
         }
     }
-    
+
     // Validar campos dinámicos según el área
     if (area === 'INSUMOS') {
         if (!validarFilasDinamicas('insumosList')) {
@@ -639,7 +639,7 @@ function continuarAdicional() {
             }
         }
     }
-    
+
     // Mostrar sección adicional
     document.getElementById('seccionNovedadDetalles').classList.add('hidden');
     document.getElementById('seccionAdicional').classList.remove('hidden');
@@ -650,11 +650,11 @@ function continuarAdicional() {
 function validarFilasDinamicas(listId) {
     const filas = document.querySelectorAll(`#${listId} .dynamic-item`);
     let primerError = null;
-    
+
     filas.forEach(fila => {
         const tipoInput = fila.querySelector('.item-tipo');
         const cantInput = fila.querySelector('.item-cantidad');
-        
+
         // Validar tipo
         if (!tipoInput.value.trim()) {
             tipoInput.classList.add('error');
@@ -662,7 +662,7 @@ function validarFilasDinamicas(listId) {
         } else {
             tipoInput.classList.remove('error');
         }
-        
+
         // Validar cantidad
         if (!cantInput.value || cantInput.value <= 0) {
             cantInput.classList.add('error');
@@ -671,25 +671,25 @@ function validarFilasDinamicas(listId) {
             cantInput.classList.remove('error');
         }
     });
-    
+
     if (primerError) {
         primerError.focus();
         primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return false;
     }
-    
+
     return true;
 }
 
 function validarFilasCodigos() {
     const filas = document.querySelectorAll('#codigosList .dynamic-item');
     let primerError = null;
-    
+
     filas.forEach(fila => {
         const tallaSelect = fila.querySelector('.codigo-talla');
         const colorSelect = fila.querySelector('.codigo-color');
         const cantInput = fila.querySelector('.codigo-cantidad');
-        
+
         // Validar talla
         if (!tallaSelect.value) {
             tallaSelect.classList.add('error');
@@ -697,7 +697,7 @@ function validarFilasCodigos() {
         } else {
             tallaSelect.classList.remove('error');
         }
-        
+
         // Validar color
         if (!colorSelect.value) {
             colorSelect.classList.add('error');
@@ -705,7 +705,7 @@ function validarFilasCodigos() {
         } else {
             colorSelect.classList.remove('error');
         }
-        
+
         // Validar cantidad
         if (!cantInput.value || cantInput.value <= 0) {
             cantInput.classList.add('error');
@@ -714,13 +714,13 @@ function validarFilasCodigos() {
             cantInput.classList.remove('error');
         }
     });
-    
+
     if (primerError) {
         primerError.focus();
         primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return false;
     }
-    
+
     return true;
 }
 
@@ -735,20 +735,20 @@ function volverDetalles() {
 // CAMPOS DINÁMICOS
 function _crearFilaDinamica(opciones, listId, removeFn) {
     const lista = document.getElementById(listId);
-    
+
     if (!lista) {
         console.error('[_crearFilaDinamica] ERROR: No se encontró el elemento con ID:', listId);
         return null;
     }
-    
+
     const fila = document.createElement('div');
     fila.className = 'dynamic-item';
-    
+
     let labelTipo = 'Tipo';
     let iconoTipo = 'fa-tag';
     let placeholder = 'Escribe o selecciona...';
     let suggestionId = `suggestions-${listId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    
+
     if (listId.includes('corte')) {
         labelTipo = 'Tipo de Corte';
         iconoTipo = 'fa-cut';
@@ -762,7 +762,7 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         iconoTipo = 'fa-boxes';
         placeholder = 'Escribe o selecciona insumo...';
     }
-    
+
     fila.innerHTML = `
         <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">${labelTipo} <span class="required">*</span></label>
@@ -789,21 +789,21 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         </button>
     `;
     lista.appendChild(fila);
-    
+
     // Crear el dropdown y agregarlo al body (fuera del contenedor con overflow hidden)
     const suggestionsList = document.createElement('ul');
     suggestionsList.className = 'custom-dropdown-suggestions';
     suggestionsList.id = suggestionId;
     suggestionsList.style.display = 'none';
     document.body.appendChild(suggestionsList);
-    
+
     _actualizarBotonesEliminar(listId);
-    
+
     // Configurar dropdown personalizado
     const inputTipo = fila.querySelector('.item-tipo');
     const inputCantidad = fila.querySelector('.item-cantidad');
     const wrapperDiv = fila.querySelector('.custom-dropdown-wrapper');
-    
+
     // Función para posicionar el dropdown
     function positionDropdown() {
         const inputRect = inputTipo.getBoundingClientRect();
@@ -811,20 +811,20 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         suggestionsList.style.left = `${inputRect.left}px`;
         suggestionsList.style.width = `${inputRect.width}px`;
     }
-    
+
     // Función para filtrar y mostrar sugerencias
     function filterSuggestions() {
         const query = inputTipo.value.toLowerCase().trim();
-        
+
         if (!query) {
             suggestionsList.style.display = 'none';
             return;
         }
-        
-        const filtered = opciones.filter(opt => 
+
+        const filtered = opciones.filter(opt =>
             opt.toLowerCase().includes(query)
         );
-        
+
         if (filtered.length > 0) {
             suggestionsList.innerHTML = filtered.map(opt => {
                 const displayText = opt.charAt(0) + opt.slice(1).toLowerCase();
@@ -833,15 +833,15 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         } else {
             suggestionsList.innerHTML = '<li style="color: #94a3b8; cursor: default; pointer-events: none;">No se encontraron opciones</li>';
         }
-        
+
         suggestionsList.style.display = 'block';
         positionDropdown();
     }
-    
+
     // Evento input para filtrar
-    inputTipo.addEventListener('input', function() {
+    inputTipo.addEventListener('input', function () {
         filterSuggestions();
-        
+
         // Validación en tiempo real
         if (this.value.trim()) {
             this.classList.remove('error');
@@ -850,9 +850,9 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             this.classList.remove('success');
         }
     });
-    
+
     // Evento focus para mostrar todas las opciones
-    inputTipo.addEventListener('focus', function() {
+    inputTipo.addEventListener('focus', function () {
         suggestionsList.innerHTML = opciones.map(opt => {
             const displayText = opt.charAt(0) + opt.slice(1).toLowerCase();
             return `<li data-value="${opt}">${displayText}</li>`;
@@ -860,16 +860,16 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         suggestionsList.style.display = 'block';
         positionDropdown();
     });
-    
+
     // Actualizar posición al hacer scroll
-    window.addEventListener('scroll', function() {
+    window.addEventListener('scroll', function () {
         if (suggestionsList.style.display === 'block') {
             positionDropdown();
         }
     });
-    
+
     // Evento click en sugerencias
-    suggestionsList.addEventListener('click', function(e) {
+    suggestionsList.addEventListener('click', function (e) {
         if (e.target.tagName === 'LI' && e.target.dataset.value) {
             const value = e.target.dataset.value;
             const displayText = value.charAt(0) + value.slice(1).toLowerCase();
@@ -880,14 +880,14 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             inputCantidad.focus();
         }
     });
-    
+
     // Cerrar dropdown al hacer click fuera
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (!fila.contains(e.target) && !suggestionsList.contains(e.target)) {
             suggestionsList.style.display = 'none';
         }
     });
-    
+
     // Limpiar dropdown del DOM cuando se elimine la fila
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
@@ -900,9 +900,9 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         });
     });
     observer.observe(lista, { childList: true });
-    
+
     // Validación en tiempo real para cantidad
-    inputCantidad.addEventListener('input', function() {
+    inputCantidad.addEventListener('input', function () {
         if (this.value && this.value > 0) {
             this.classList.remove('error');
             this.classList.add('success');
@@ -910,7 +910,7 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
             this.classList.remove('success');
         }
     });
-    
+
     return fila;
 }
 
@@ -924,8 +924,8 @@ function _actualizarBotonesEliminar(listId) {
     });
 }
 
-function agregarFilaInsumo() { 
-    _crearFilaDinamica(INSUMOS_OPCIONES, 'insumosList', 'eliminarFilaInsumo'); 
+function agregarFilaInsumo() {
+    _crearFilaDinamica(INSUMOS_OPCIONES, 'insumosList', 'eliminarFilaInsumo');
 }
 function eliminarFilaInsumo(btn) {
     const lista = document.getElementById('insumosList');
@@ -934,8 +934,8 @@ function eliminarFilaInsumo(btn) {
     _actualizarBotonesEliminar('insumosList');
 }
 
-function agregarFilaCorte() { 
-    _crearFilaDinamica(CORTE_OPCIONES, 'corteList', 'eliminarFilaCorte'); 
+function agregarFilaCorte() {
+    _crearFilaDinamica(CORTE_OPCIONES, 'corteList', 'eliminarFilaCorte');
 }
 function eliminarFilaCorte(btn) {
     const lista = document.getElementById('corteList');
@@ -944,8 +944,8 @@ function eliminarFilaCorte(btn) {
     _actualizarBotonesEliminar('corteList');
 }
 
-function agregarFilaTela() { 
-    _crearFilaDinamica(TELAS_OPCIONES, 'telasList', 'eliminarFilaTela'); 
+function agregarFilaTela() {
+    _crearFilaDinamica(TELAS_OPCIONES, 'telasList', 'eliminarFilaTela');
 }
 function eliminarFilaTela(btn) {
     const lista = document.getElementById('telasList');
@@ -956,33 +956,33 @@ function eliminarFilaTela(btn) {
 
 function handleAreaChange(e) {
     const area = e.target.value;
-    
+
     const tipoGroup = document.getElementById('tipoNovedadGroup');
     const tipoSelect = document.getElementById('tipoNovedad');
-    
+
     if (!tipoGroup) {
         console.error('[handleAreaChange] ERROR: No se encontró tipoNovedadGroup');
         return;
     }
-    
+
     // Ocultar todos los grupos
     const insumoGroup = document.getElementById('tipoInsumoGroup');
     const corteGroup = document.getElementById('tipoCorteGroup');
     const telasGroup = document.getElementById('tipoTelasGroup');
     const codigosGroup = document.getElementById('tipoCodigosGroup');
     const cantidadGroup = document.getElementById('cantidadNormalGroup');
-    
+
     if (insumoGroup) insumoGroup.classList.add('hidden');
     if (corteGroup) corteGroup.classList.add('hidden');
     if (telasGroup) telasGroup.classList.add('hidden');
     if (codigosGroup) codigosGroup.classList.add('hidden');
     if (cantidadGroup) cantidadGroup.classList.add('hidden');
-    
+
     if (area === 'DISEÑO') {
         tipoGroup.classList.add('hidden');
         tipoSelect.required = false;
         unlockAllFields(); // Diseño no tiene más campos
-        
+
     } else if (area === 'TELAS') {
         revealField(tipoGroup);
         tipoSelect.value = 'IMPERFECTO';
@@ -996,28 +996,28 @@ function handleAreaChange(e) {
             }
         }
         unlockAllFields(); // Telas ya mostró todos sus campos
-        
+
     } else if (area === 'INSUMOS') {
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
         tipoSelect.value = ''; // Resetear para que el usuario elija
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
-        
+
     } else if (area === 'CORTE') {
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
         tipoSelect.value = ''; // Resetear para que el usuario elija
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
-        
+
     } else if (area === 'CODIGOS') {
         revealField(tipoGroup);
         tipoSelect.required = true;
         tipoSelect.disabled = false;
         tipoSelect.value = ''; // Resetear para que el usuario elija
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
-        
+
     } else if (area !== '') {
         revealField(tipoGroup);
         tipoSelect.required = true;
@@ -1025,21 +1025,21 @@ function handleAreaChange(e) {
         tipoSelect.value = ''; // Resetear para que el usuario elija
         lockFieldsAfter('tipoNovedad'); // Bloquear campos siguientes hasta que elija tipo
     }
-    
+
     if (area) hideError(e.target, document.getElementById('areaError'));
 }
 
 function handleTipoNovedadChange(e) {
     const area = document.getElementById('area').value;
     const tipo = e.target.value;
-    
+
     if (!tipo) return;
-    
+
     const insumoGroup = document.getElementById('tipoInsumoGroup');
     const corteGroup = document.getElementById('tipoCorteGroup');
     const codigosGroup = document.getElementById('tipoCodigosGroup');
     const cantidadGroup = document.getElementById('cantidadNormalGroup');
-    
+
     // Mostrar el grupo correspondiente según el área
     if (area === 'INSUMOS' && insumoGroup) {
         revealField(insumoGroup);
@@ -1048,7 +1048,7 @@ function handleTipoNovedadChange(e) {
             agregarFilaInsumo();
         }
         unlockAllFields();
-        
+
     } else if (area === 'CORTE' && corteGroup) {
         revealField(corteGroup);
         const corteList = document.getElementById('corteList');
@@ -1056,17 +1056,17 @@ function handleTipoNovedadChange(e) {
             agregarFilaCorte();
         }
         unlockAllFields();
-        
+
     } else if (area === 'CODIGOS' && codigosGroup) {
         revealField(codigosGroup);
         cargarCurvaParaCodigos();
         unlockAllFields();
-        
+
     } else if (cantidadGroup) {
         revealField(cantidadGroup);
         unlockAllFields();
     }
-    
+
     hideError(e.target, document.getElementById('tipoError'));
 }
 
@@ -1084,16 +1084,16 @@ function lockFieldsAfter(fieldId) {
     // Esta función bloquea visualmente los campos que vienen después del especificado
     const fieldOrder = ['area', 'tipoNovedad', 'detalles'];
     const currentIndex = fieldOrder.indexOf(fieldId);
-    
+
     if (currentIndex === -1) return;
-    
+
     // Bloquear campos posteriores
     for (let i = currentIndex + 1; i < fieldOrder.length; i++) {
         const field = fieldOrder[i];
         if (field === 'detalles') {
             // Bloquear todos los grupos de detalles
             const groups = [
-                'tipoInsumoGroup', 'tipoCorteGroup', 'tipoTelasGroup', 
+                'tipoInsumoGroup', 'tipoCorteGroup', 'tipoTelasGroup',
                 'tipoCodigosGroup', 'cantidadNormalGroup'
             ];
             groups.forEach(groupId => {
@@ -1117,23 +1117,23 @@ function unlockAllFields() {
 async function cargarCurvaParaCodigos() {
     const op = FormState.opData?.lote;
     const cantidadLote = Number(FormState.opData?.cantidad) || 0;
-    
+
     if (!op) {
         Swal.fire({ title: 'Error', text: 'No se encontró la OP del producto.', icon: 'error', confirmButtonColor: '#673ab7' });
         return;
     }
-    
+
     console.log('[códigos] Preparando sección de códigos para OP:', op);
-    
+
     // Ya no usamos la tabla CURVA.
     // Usamos las listas estáticas y la cantidad del lote.
-    
+
     window.CODIGOS_TALLAS = CODIGOS_TALLAS_LIST;
     window.CODIGOS_COLORES = CODIGOS_COLORES_LIST;
     window.CODIGOS_CANTIDAD_TOTAL = cantidadLote;
-    
+
     document.getElementById('codigosCantidadTotal').value = cantidadLote;
-    
+
     // Limpiar y crear una fila inicial
     const lista = document.getElementById('codigosList');
     lista.innerHTML = '';
@@ -1164,20 +1164,24 @@ function agregarFilaCodigo() {
     fila.innerHTML = `
         <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Talla <span class="required">*</span></label>
-            <div class="input-wrapper smart-select-container">
+            <div class="input-wrapper">
                 <i class="fas fa-ruler input-icon"></i>
-                <input type="text" class="form-control codigo-talla smart-select-input" 
-                    placeholder="Talla..." autocomplete="off" required>
-                <div class="smart-select-dropdown hidden"></div>
+                <input type="text" class="form-control codigo-talla" 
+                    placeholder="Talla..." autocomplete="off" required list="pub-tallas-list-${Date.now()}">
+                <datalist id="pub-tallas-list-${Date.now()}">
+                    ${(window.CODIGOS_TALLAS || CODIGOS_TALLAS_LIST || []).map(t => `<option value="${t}"></option>`).join('')}
+                </datalist>
             </div>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Color <span class="required">*</span></label>
-            <div class="input-wrapper smart-select-container">
+            <div class="input-wrapper">
                 <i class="fas fa-palette input-icon"></i>
-                <input type="text" class="form-control codigo-color smart-select-input" 
-                    placeholder="Color..." autocomplete="off" required>
-                <div class="smart-select-dropdown hidden"></div>
+                <input type="text" class="form-control codigo-color" 
+                    placeholder="Color..." autocomplete="off" required list="pub-colores-list-${Date.now()}">
+                <datalist id="pub-colores-list-${Date.now()}">
+                    ${(window.CODIGOS_COLORES || CODIGOS_COLORES_LIST || []).map(c => `<option value="${c}"></option>`).join('')}
+                </datalist>
             </div>
         </div>
         <div class="form-group" style="margin-bottom: 0;">
@@ -1193,36 +1197,30 @@ function agregarFilaCodigo() {
     `;
     lista.appendChild(fila);
     _actualizarBotonesEliminar('codigosList');
-    
-    // Inicializar Smart Selects
+
+    // Inicializar Smart Selects removido (usando datalist nativo)
     const inputTalla = fila.querySelector('.codigo-talla');
     const inputColor = fila.querySelector('.codigo-color');
     const inputCantidad = fila.querySelector('.codigo-cantidad');
 
-    const tallasFiltradas = getFilteredSizesPublic();
-    const coloresFiltrados = CODIGOS_COLORES_LIST;
-
-    _setupSmartSelectPublic(inputTalla, tallasFiltradas);
-    _setupSmartSelectPublic(inputColor, coloresFiltrados);
-
     // Agregar validación en tiempo real
-    inputTalla.addEventListener('change', function() {
+    inputTalla.addEventListener('change', function () {
         if (this.value) {
             this.classList.remove('error');
             this.classList.add('success');
             actualizarMaximoCodigo(this);
         }
     });
-    
-    inputColor.addEventListener('change', function() {
+
+    inputColor.addEventListener('change', function () {
         if (this.value) {
             this.classList.remove('error');
             this.classList.add('success');
             actualizarMaximoCodigo(this);
         }
     });
-    
-    inputCantidad.addEventListener('input', function() {
+
+    inputCantidad.addEventListener('input', function () {
         if (this.value && this.value > 0) {
             this.classList.remove('error');
             this.classList.add('success');
@@ -1236,7 +1234,7 @@ function actualizarMaximoCodigo(inputElement) {
     const fila = inputElement.closest('.dynamic-item');
     const inputCantidad = fila.querySelector('.codigo-cantidad');
     const maximo = window.CODIGOS_CANTIDAD_TOTAL || 0;
-    
+
     if (maximo > 0) {
         inputCantidad.max = maximo;
         inputCantidad.placeholder = `Máx: ${maximo}`;
@@ -1278,44 +1276,6 @@ function getFilteredSizesPublic() {
     return sizes.length > 0 ? sizes : CODIGOS_TALLAS_LIST;
 }
 
-/**
- * Configura el comportamiento de selector inteligente (Público)
- */
-function _setupSmartSelectPublic(input, options) {
-    const dropdown = input.nextElementSibling;
-    
-    const showOptions = (filter = '') => {
-        const query = filter.toLowerCase().trim();
-        const filtered = options.filter(opt => opt.toLowerCase().includes(query));
-        
-        if (filtered.length === 0) {
-            dropdown.classList.add('hidden');
-            return;
-        }
-
-        dropdown.innerHTML = filtered.map(opt => `
-            <div class="smart-select-item" data-value="${opt}">${opt}</div>
-        `).join('');
-        
-        dropdown.classList.remove('hidden');
-    };
-
-    input.addEventListener('focus', () => showOptions(input.value));
-    input.addEventListener('input', () => showOptions(input.value));
-    
-    dropdown.addEventListener('mousedown', (e) => {
-        const item = e.target.closest('.smart-select-item');
-        if (item) {
-            input.value = item.dataset.value;
-            dropdown.classList.add('hidden');
-            input.dispatchEvent(new Event('change'));
-        }
-    });
-
-    input.addEventListener('blur', () => {
-        setTimeout(() => dropdown.classList.add('hidden'), 200);
-    });
-}
 
 function eliminarFilaCodigo(btn) {
     const lista = document.getElementById('codigosList');
@@ -1331,19 +1291,19 @@ function _recolectarFilas(listId) {
     filas.forEach(fila => {
         const tipoInput = fila.querySelector('.item-tipo');
         const cantInput = fila.querySelector('.item-cantidad');
-        
+
         // Obtener valor y convertir a mayúsculas para envío
         let tipo = tipoInput.value.trim();
         const cant = cantInput.value;
-        
-        if (!tipo || !cant) { 
-            valido = false; 
-            return; 
+
+        if (!tipo || !cant) {
+            valido = false;
+            return;
         }
-        
+
         // Convertir a mayúsculas solo para el envío
         tipo = tipo.toUpperCase();
-        
+
         datos.push({ tipo, cantidad: cant });
     });
     return valido ? datos : null;
@@ -1500,28 +1460,28 @@ async function handleSubmit(e) {
     const btnSubmit = document.getElementById('btnSubmit');
     btnSubmit.disabled = true;
     btnSubmit.innerHTML = '<div class="spinner"></div><span>Enviando...</span>';
-    
+
     try {
         // Preparar datos del formulario
         const formData = prepareFormData();
-        
+
         // Si hay imagen, comprimirla y convertirla a base64
         if (FormState.selectedFile) {
             btnSubmit.innerHTML = '<div class="spinner"></div><span>Procesando imagen...</span>';
             const compressedBlob = await compressImage(FormState.selectedFile);
             const base64Data = await blobToBase64(compressedBlob);
-            
+
             formData.imagen = {
                 base64: base64Data,
                 mimeType: 'image/jpeg',
                 fileName: FormState.selectedFile.name
             };
         }
-        
+
         // Enviar todo a la Edge Function segura
         btnSubmit.innerHTML = '<div class="spinner"></div><span>Guardando reporte...</span>';
         const response = await enviarNovedadSegura(formData);
-        
+
         if (response.success) {
             // Mostrar pantalla de éxito estilo Google Forms
             mostrarPantallaExito(response.id || response.ID_NOVEDAD);
@@ -1541,15 +1501,15 @@ async function handleSubmit(e) {
 function mostrarPantallaExito(idNovedad) {
     // Ocultar secci�n de formulario
     document.getElementById('seccionAdicional').classList.add('hidden');
-    
+
     // Mostrar secci�n de �xito
     const seccionExito = document.getElementById('seccionExito');
     document.getElementById('novedadIdDisplay').textContent = idNovedad;
     seccionExito.classList.remove('hidden');
-    
+
     // Actualizar indicador de paso
     updateStepIndicator(5);
-    
+
     // Scroll al inicio
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1557,16 +1517,16 @@ function mostrarPantallaExito(idNovedad) {
 function iniciarNuevoReporte() {
     // Limpiar completamente el formulario
     limpiarFormularioCompleto();
-    
+
     // Ocultar pantalla de �xito
     document.getElementById('seccionExito').classList.add('hidden');
-    
+
     // Mostrar secci�n de b�squeda
     document.getElementById('seccionBusqueda').classList.remove('hidden');
-    
+
     // Resetear indicador de paso
     updateStepIndicator(1);
-    
+
     // Scroll al inicio
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -1577,12 +1537,12 @@ function limpiarFormularioCompleto() {
     FormState.opData = null;
     FormState.selectedFile = null;
     FormState.isSubmitting = false;
-    
+
     // Limpiar todos los dropdowns del body
     document.querySelectorAll('.custom-dropdown-suggestions').forEach(dropdown => {
         dropdown.remove();
     });
-    
+
     // Limpiar todos los inputs y selects
     document.getElementById('novedadForm').reset();
     document.getElementById('opInput').value = '';
@@ -1590,39 +1550,39 @@ function limpiarFormularioCompleto() {
     document.getElementById('tipoNovedad').value = '';
     document.getElementById('descripcion').value = '';
     document.getElementById('imagen').value = '';
-    
+
     // Limpiar campos espec�ficos
     const cantidadNormal = document.getElementById('cantidadNormal');
     if (cantidadNormal) cantidadNormal.value = '';
-    
+
     const codigosTipo = document.getElementById('codigosTipoSolicitud');
     if (codigosTipo) codigosTipo.value = '';
-    
+
     const codigosCantidad = document.getElementById('codigosCantidadTotal');
     if (codigosCantidad) codigosCantidad.value = '';
-    
+
     // Limpiar listas din�micas
     const insumosList = document.getElementById('insumosList');
     if (insumosList) insumosList.innerHTML = '';
-    
+
     const corteList = document.getElementById('corteList');
     if (corteList) corteList.innerHTML = '';
-    
+
     const telasList = document.getElementById('telasList');
     if (telasList) telasList.innerHTML = '';
-    
+
     const codigosList = document.getElementById('codigosList');
     if (codigosList) codigosList.innerHTML = '';
-    
+
     // Ocultar todas las secciones excepto b�squeda
     document.getElementById('seccionDetalles').classList.add('hidden');
     document.getElementById('seccionNovedadDetalles').classList.add('hidden');
     document.getElementById('seccionAdicional').classList.add('hidden');
     document.getElementById('seccionExito').classList.add('hidden');
-    
+
     // Ocultar todos los grupos de detalles
     const groups = [
-        'tipoNovedadGroup', 'tipoInsumoGroup', 'tipoCorteGroup', 
+        'tipoNovedadGroup', 'tipoInsumoGroup', 'tipoCorteGroup',
         'tipoTelasGroup', 'tipoCodigosGroup', 'cantidadNormalGroup',
         'codigosLoteCompletoGroup', 'codigosUnidadesGroup'
     ];
@@ -1637,11 +1597,11 @@ function limpiarFormularioCompleto() {
             }
         }
     });
-    
+
     // Limpiar preview de imagen
     document.getElementById('filePreview').classList.add('hidden');
     document.getElementById('filePreview').innerHTML = '';
-    
+
     // Limpiar errores
     document.querySelectorAll('.error-message').forEach(el => el.classList.remove('show'));
     document.querySelectorAll('.form-control').forEach(el => {
@@ -1650,21 +1610,21 @@ function limpiarFormularioCompleto() {
     document.querySelectorAll('.input-wrapper').forEach(el => {
         el.classList.remove('error', 'success');
     });
-    
+
     // Limpiar informaci�n del producto
     document.getElementById('infoOP').textContent = '-';
     document.getElementById('infoReferencia').textContent = '-';
     document.getElementById('infoCantidad').textContent = '-';
     document.getElementById('infoPlanta').textContent = '-';
-    
+
     // Resetear bot�n de env�o
     const btnSubmit = document.getElementById('btnSubmit');
     btnSubmit.disabled = false;
     btnSubmit.innerHTML = '<i class="fas fa-paper-plane"></i><span>Enviar Reporte</span>';
-    
+
     // Reiniciar bloqueo de campos
     lockFieldsAfter('area');
-    
+
     // Limpiar cache de curvas
     window.CURVAS_CACHE = {};
     window.CODIGOS_TALLAS = [];
@@ -1678,14 +1638,14 @@ function prepareFormData() {
     const tipoNovedad = document.getElementById('tipoNovedad').value;
     const descripcion = document.getElementById('descripcion').value.trim();
     const descripcionSanitizada = sanitizeInput(descripcion);
-    
+
     // Obtener correo si fue proporcionado
     const correoInput = document.getElementById('correoInput');
     const correo = correoInput && correoInput.value.trim() ? correoInput.value.trim() : null;
-    
+
     let cantidadSolicitada = 0;
     let tipoDetalle = null;
-    
+
     if (area === 'TELAS') {
         const datos = _recolectarFilas('telasList');
         if (datos) {
@@ -1721,7 +1681,7 @@ function prepareFormData() {
         const cantidadInput = document.getElementById('cantidadNormal');
         cantidadSolicitada = Number(cantidadInput.value) || 0;
     }
-    
+
     const formData = {
         hoja: 'NOVEDADES', fecha: new Date().toISOString().split('T')[0],
         lote: FormState.opData.lote, referencia: FormState.opData.referencia, cantidad: FormState.opData.cantidad,
@@ -1730,12 +1690,12 @@ function prepareFormData() {
         tejido: FormState.opData.tejido, area: area, tipoNovedad: tipoNovedad || null, tipoDetalle: tipoDetalle,
         descripcion: descripcionSanitizada, cantidadSolicitada: cantidadSolicitada, imagen: ''
     };
-    
+
     // Agregar correo solo si fue proporcionado
     if (correo) {
         formData.correo = correo;
     }
-    
+
     return formData;
 }
 
@@ -1764,27 +1724,27 @@ async function enviarNovedad(data) {
  */
 async function enviarNovedadSegura(data) {
     const url = `${CONFIG.FUNCTIONS_URL}/upload-public-image`;
-    
+
     try {
         const response = await fetch(url, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'apikey': SUPABASE_KEY, 
-                'Authorization': `Bearer ${SUPABASE_KEY}` 
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
             },
             body: JSON.stringify(data)
         });
-        
+
         if (!response.ok) {
             const errorText = await response.text();
             throw new Error(`Error ${response.status}: ${errorText}`);
         }
-        
+
         const result = await response.json();
-        
+
         return result;
-        
+
     } catch (error) {
         console.error('[enviarNovedadSegura] Error:', error);
         throw error;
@@ -1812,16 +1772,16 @@ async function uploadImagenSupabase(file) {
     try {
         // Comprimir y convertir la imagen
         const compressedBlob = await compressImage(file);
-        
+
         // Generar nombre �nico para el archivo
         const timestamp = Date.now();
         const randomStr = Math.random().toString(36).substring(2, 8);
         const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').substring(0, 30);
         const fileName = `${sanitizedName}`;
-        
+
         // Convertir Blob a base64 para enviar a la Edge Function
         const base64Data = await blobToBase64(compressedBlob);
-        
+
         // Subir mediante Edge Function segura
         const uploadResponse = await fetch(
             `${CONFIG.FUNCTIONS_URL}/upload-public-image`,
@@ -1839,20 +1799,20 @@ async function uploadImagenSupabase(file) {
                 })
             }
         );
-        
+
         if (!uploadResponse.ok) {
             const errorData = await uploadResponse.json().catch(() => ({}));
             throw new Error(errorData.message || `Error ${uploadResponse.status}: ${uploadResponse.statusText}`);
         }
-        
+
         const result = await uploadResponse.json();
-        
+
         if (!result.success || !result.url) {
             throw new Error(result.message || 'Error al subir la imagen');
         }
-        
+
         return result.url;
-        
+
     } catch (error) {
         console.error('[uploadImagenSupabase] Error:', error);
         throw new Error(`No se pudo subir la imagen: ${error.message}`);
@@ -1886,35 +1846,35 @@ function compressImage(file) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         const url = URL.createObjectURL(file);
-        
+
         img.onload = () => {
             URL.revokeObjectURL(url);
-            
+
             try {
                 // Configuraci�n balanceada para optimizar almacenamiento
                 const MAX_W = 1024;  // Reducido de 1280 a 1024px
                 let w = img.width;
                 let h = img.height;
-                
+
                 // Redimensionar si es necesario
                 if (w > MAX_W) {
                     h = Math.round(h * MAX_W / w);
                     w = MAX_W;
                 }
-                
+
                 // Crear canvas y dibujar imagen
                 const canvas = document.createElement('canvas');
                 canvas.width = w;
                 canvas.height = h;
                 const ctx = canvas.getContext('2d');
-                
+
                 // Fondo blanco
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, w, h);
-                
+
                 // Dibujar imagen
                 ctx.drawImage(img, 0, 0, w, h);
-                
+
                 // Calidad adaptativa para mejor compresi�n
                 let quality;
                 if (w > 900) {
@@ -1924,7 +1884,7 @@ function compressImage(file) {
                 } else {
                     quality = 0.7;   // Im�genes peque�as: 70%
                 }
-                
+
                 canvas.toBlob(
                     (blob) => {
                         if (blob) {
@@ -1936,17 +1896,17 @@ function compressImage(file) {
                     'image/jpeg',
                     quality
                 );
-                
+
             } catch (e) {
                 reject(e);
             }
         };
-        
+
         img.onerror = () => {
             URL.revokeObjectURL(url);
             reject(new Error('Error al cargar la imagen'));
         };
-        
+
         img.src = url;
     });
 }

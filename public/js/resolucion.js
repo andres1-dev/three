@@ -1893,17 +1893,21 @@ function agregarFilaCodigoEdit(tallaVal = '', colorVal = '', cantVal = '') {
     ).join('');
     
     fila.innerHTML = `
-        <div class="input-with-icon smart-select-container">
+        <div class="input-with-icon">
             <i class="fas fa-ruler input-icon"></i>
-            <input type="text" class="form-control codigo-talla smart-select-input" 
-                placeholder="Talla..." autocomplete="off" value="${tallaVal}">
-            <div class="smart-select-dropdown hidden"></div>
+            <input type="text" class="form-control codigo-talla" 
+                placeholder="Talla..." autocomplete="off" value="${tallaVal}" list="edit-tallas-list-${Date.now()}">
+            <datalist id="edit-tallas-list-${Date.now()}">
+                ${(window.EDIT_CODIGOS_TALLAS || EDIT_CODIGOS_TALLAS_LIST || []).map(t => `<option value="${t}"></option>`).join('')}
+            </datalist>
         </div>
-        <div class="input-with-icon smart-select-container">
+        <div class="input-with-icon">
             <i class="fas fa-palette input-icon"></i>
-            <input type="text" class="form-control codigo-color smart-select-input" 
-                placeholder="Color..." autocomplete="off" value="${colorVal}">
-            <div class="smart-select-dropdown hidden"></div>
+            <input type="text" class="form-control codigo-color" 
+                placeholder="Color..." autocomplete="off" value="${colorVal}" list="edit-colores-list-${Date.now()}">
+            <datalist id="edit-colores-list-${Date.now()}">
+                ${(window.EDIT_CODIGOS_COLORES || EDIT_CODIGOS_COLORES_LIST || []).map(c => `<option value="${c}"></option>`).join('')}
+            </datalist>
         </div>
         <div style="display:flex; gap:8px; align-items:center;">
             <div class="input-with-icon" style="flex:1;">
@@ -1922,12 +1926,9 @@ function agregarFilaCodigoEdit(tallaVal = '', colorVal = '', cantVal = '') {
     lista.appendChild(fila);
     actualizarBotonesEliminarEdit('editCodigosList');
 
-    // Inicializar Smart Selects
+    // Inicializar Smart Selects removido (usando datalist nativo)
     const inputTalla = fila.querySelector('.codigo-talla');
     const inputColor = fila.querySelector('.codigo-color');
-    
-    _setupSmartSelectEdit(inputTalla, EDIT_CODIGOS_TALLAS_LIST);
-    _setupSmartSelectEdit(inputColor, EDIT_CODIGOS_COLORES_LIST);
 
     inputTalla.addEventListener('change', () => actualizarMaximoCodigoEdit(inputTalla));
     inputColor.addEventListener('change', () => actualizarMaximoCodigoEdit(inputColor));
@@ -1958,45 +1959,7 @@ function actualizarMaximoCodigoEdit(inputElement) {
 /**
  * Configura el comportamiento de selector inteligente (Edición)
  */
-function _setupSmartSelectEdit(input, options) {
-    if (!input) return;
-    const dropdown = input.nextElementSibling;
-    if (!dropdown) return;
-    
-    const showOptions = (filter = '') => {
-        const query = filter.toLowerCase().trim();
-        const filtered = options.filter(opt => opt.toLowerCase().includes(query));
-        
-        if (filtered.length === 0) {
-            dropdown.classList.add('hidden');
-            return;
-        }
-
-        dropdown.innerHTML = filtered.map(opt => `
-            <div class="smart-select-item" data-value="${opt}">${opt}</div>
-        `).join('');
-        
-        dropdown.classList.remove('hidden');
-    };
-
-    input.addEventListener('focus', () => showOptions(input.value));
-    input.addEventListener('input', () => showOptions(input.value));
-    
-    dropdown.addEventListener('mousedown', (e) => {
-        const item = e.target.closest('.smart-select-item');
-        if (item) {
-            input.value = item.dataset.value;
-            dropdown.classList.add('hidden');
-            input.dispatchEvent(new Event('change'));
-        }
-    });
-
-    input.addEventListener('blur', () => {
-        setTimeout(() => {
-            if (dropdown) dropdown.classList.add('hidden');
-        }, 200);
-    });
-}
+    // Función _setupSmartSelectEdit eliminada, usando datalist nativo
 
 /**
  * Elimina una fila de código del modal de edición
