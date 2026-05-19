@@ -169,19 +169,18 @@
         }
 
         .conclusion-badge {
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: 800;
-            font-size: 14px;
+            padding: 0;
+            font-weight: 900;
+            font-size: 16px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .conclusion-badge.aprobado { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .conclusion-badge.rechazado { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .conclusion-badge.aprobado { color: #166534; }
+        .conclusion-badge.rechazado { color: #991b1b; }
 
         .destino-info {
             flex: 1;
@@ -376,10 +375,7 @@
     <!-- Panel de Botones Flotantes Moderno -->
     <div class="print-btn-area no-print" style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 12px; z-index: 10000;">
         <button class="btn-print-action" onclick="window.print()" style="background: #3F51B5; color: white;">
-            <i class="fas fa-print"></i> Imprimir Reporte
-        </button>
-        <button id="btnDescargarPDFCanvas" class="btn-print-action" onclick="descargarComoPDFCanvas()" style="background: #10B981; color: white;">
-            <i class="fas fa-file-pdf"></i> Guardar como PDF
+            <i class="fas fa-print"></i> Imprimir / Guardar PDF
         </button>
     </div>
 
@@ -719,7 +715,7 @@
                             </div>
                         </div>
                         <div class="header-title-area">
-                            <h1 style="font-size: 17px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px;">REPORTE DE AUDITORIA DE CALIDAD</h1>
+                            <h1 style="font-size: 17px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; text-transform: uppercase;">REPORTE DE ${rep.tipo_visita ? rep.tipo_visita : 'AUDITORIA DE CALIDAD'}</h1>
                             <p style="font-size: 11.5px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; margin-top: 4px; letter-spacing: 0.3px;">${productoraNombre}</p>
                         </div>
                         <div class="header-meta-area">
@@ -787,35 +783,54 @@
                                     <span class="data-label">Género</span>
                                     <span class="data-value" style="text-transform: uppercase;">${rep.genero || 'N/A'}</span>
                                 </div>
+                                ${rep.tejido && rep.tejido.trim() !== '' && rep.tejido.trim().toUpperCase() !== 'N/A' ? `
                                 <div class="data-item">
                                     <span class="data-label">Tejido</span>
-                                    <span class="data-value" style="text-transform: uppercase;">${rep.tejido || 'N/A'}</span>
-                                </div>
+                                    <span class="data-value" style="text-transform: uppercase;">${rep.tejido}</span>
+                                </div>` : ''}
+                                ${rep.destino_proceso && rep.destino_proceso.trim() !== '' && rep.destino_proceso.trim().toUpperCase() !== 'N/A' ? `
                                 <div class="data-item">
                                     <span class="data-label">Destino</span>
-                                    <span class="data-value" style="font-weight: 700; color: var(--primary); text-transform: uppercase;">${rep.destino_proceso || 'N/A'}</span>
-                                </div>
+                                    <span class="data-value" style="font-weight: 700; color: var(--primary); text-transform: uppercase;">${rep.destino_proceso}</span>
+                                </div>` : ''}
+                                ${rep.destino_planta && rep.destino_planta.trim() !== '' && rep.destino_planta.trim().toUpperCase() !== 'N/A' ? `
                                 <div class="data-item">
                                     <span class="data-label">Lugar</span>
                                     <span class="data-value" style="font-weight: 700; color: var(--text-dark); text-transform: uppercase;">
-                                        ${String(rep.destino_planta || '').toUpperCase() === 'CDI' ? 'CDI (CENTRO DE DISTRIBUCION)' : (rep.destino_planta || 'N/A')}
+                                        ${String(rep.destino_planta || '').toUpperCase() === 'CDI' ? 'CDI (CENTRO DE DISTRIBUCION)' : rep.destino_planta}
                                     </span>
-                                </div>
+                                </div>` : ''}
+                                ${rep.avance && !isNaN(parseInt(rep.avance)) ? `
+                                <div class="data-item" style="grid-column: span 3; margin-top: 5px;">
+                                    <span class="data-label">Avance del Lote</span>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+                                        <div style="flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+                                            <div style="width:${parseInt(rep.avance)}%; height:100%; background:var(--primary); border-radius:4px;"></div>
+                                        </div>
+                                        <span style="font-weight:800; font-size:11px; color:var(--text-dark);">${parseInt(rep.avance)}%</span>
+                                    </div>
+                                </div>` : ''}
                             </div>
                         </div>
                     </div>
 
                     ${geolocYEvidenciaHtml}
 
-                    <!-- Novedades de Calidad (Grid o Lista) -->
-                    <div class="section avoid-break">
-                        <div class="section-header">
-                            <i class="fas fa-search"></i> Hallazgos Cuantitativos
+                    ${(() => {
+                        const content = renderNovedadesAuditoria(rep.novedades_auditoria);
+                        if (content.includes('No se registraron novedades cuantitativas')) return '';
+                        return `
+                        <!-- Novedades de Calidad (Grid o Lista) -->
+                        <div class="section avoid-break">
+                            <div class="section-header">
+                                <i class="fas fa-search"></i> Hallazgos Cuantitativos
+                            </div>
+                            <div class="section-content" style="padding-bottom:2px;">
+                                ${content}
+                            </div>
                         </div>
-                        <div class="section-content" style="padding-bottom:2px;">
-                            ${renderNovedadesAuditoria(rep.novedades_auditoria)}
-                        </div>
-                    </div>
+                        `;
+                    })()}
 
                     <!-- Observaciones (si las hay o mostrar un placeholder) -->
                     <div class="section avoid-break">
@@ -978,7 +993,11 @@
         }
 
         window.onload = () => {
-            init();
+            init().then(() => {
+                if (window.printData && window.printData._autoPrint) {
+                    setTimeout(() => window.print(), 800);
+                }
+            });
         };
     </script>
 </body>

@@ -375,34 +375,34 @@ async function fetchAndRenderPreviousReports(loteNum) {
             } catch (e) { }
 
             const item = document.createElement('div');
-            item.className = 'previo-reporte-item d-flex align-items-center justify-content-between p-3 border-bottom';
-            item.style.cssText = 'border-bottom: 1px solid #f1f5f9; gap: 12px; font-size: 0.9rem; transition: background 0.2s; cursor: pointer;';
+            item.className = 'previo-reporte-item';
+            item.style.cssText = 'border-bottom: 1px solid #e2e8f0; padding: 15px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; transition: background 0.2s; cursor: pointer;';
             item.addEventListener('mouseenter', () => item.style.background = '#f8fafc');
             item.addEventListener('mouseleave', () => item.style.background = 'transparent');
 
             item.innerHTML = `
-                <div class="d-flex align-items-center gap-3">
-                    <div style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${bgConclusion}; color: ${colorConclusion}; font-size: 1.1rem; flex-shrink: 0;">
+                <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 200px;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${bgConclusion}; color: ${colorConclusion}; font-size: 1.1rem; flex-shrink: 0;">
                         <i class="fas ${iconConclusion}"></i>
                     </div>
                     <div>
-                        <div style="font-weight: 700; color: #1e293b; font-size: 0.85rem;">
+                        <div style="font-weight: 800; color: #1e293b; font-size: 0.95rem; line-height: 1.2; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
                             ${report.TIPO_VISITA || 'AUDITORÍA'} 
-                            <span style="font-weight: 500; color: #64748b; font-size: 0.75rem; margin-left: 5px;">
-                                (${report.PROCESO || 'CONFECCIÓN'})
+                            <span class="badge" style="background: ${bgConclusion}; color: ${colorConclusion}; border-radius: 12px; font-size: 0.65rem; padding: 3px 8px; font-weight: 700; border: 1px solid ${colorConclusion}40;">
+                                ${conclusion}
                             </span>
                         </div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
                             <i class="far fa-clock"></i> ${fechaFormateada}
                         </div>
                     </div>
                 </div>
-                <div class="d-flex align-items-center gap-1" style="flex-shrink: 0;">
-                    <span class="badge" style="background: ${bgConclusion}; color: ${colorConclusion}; border-radius: 12px; font-size: 0.7rem; padding: 4px 8px; font-weight: 700; margin-right: 4px;">
-                        ${conclusion}
-                    </span>
-                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="verDescargarReportePrevio('${report.ID_REPORTE}')" style="border-radius: 6px; padding: 4px 12px; font-size: 0.75rem; border-color: #3F51B5; color: #3F51B5; font-weight: 700; display: flex; align-items: center; gap: 4px; background: transparent; transition: all 0.2s; cursor: pointer;" title="Ver Reporte">
-                        <i class="fas fa-eye"></i> Ver Reporte
+                <div style="display: flex; align-items: center; gap: 12px; padding-right: 5px;">
+                    <button type="button" onclick="verDescargarReportePrevio('${report.ID_REPORTE}')" style="background: transparent; border: none; padding: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8; transition: all 0.2s; cursor: pointer; outline: none;" title="Ver Reporte" onmouseover="this.style.color='#3b82f6'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#94a3b8'; this.style.transform='none';">
+                        <i class="fas fa-eye" style="font-size: 1.2rem;"></i>
+                    </button>
+                    <button type="button" onclick="verDescargarReportePrevio('${report.ID_REPORTE}', true)" style="background: transparent; border: none; padding: 8px; display: flex; align-items: center; justify-content: center; color: #94a3b8; transition: all 0.2s; cursor: pointer; outline: none;" title="Imprimir" onmouseover="this.style.color='#10b981'; this.style.transform='scale(1.1)';" onmouseout="this.style.color='#94a3b8'; this.style.transform='none';">
+                        <i class="fas fa-print" style="font-size: 1.2rem;"></i>
                     </button>
                 </div>
             `;
@@ -739,7 +739,7 @@ async function descargarReportePDFDirecto(idReporte) {
     }
 }
 
-function verDescargarReportePrevio(idReporte) {
+function verDescargarReportePrevio(idReporte, autoPrint = false) {
     const reportObj = _loadedPreviousReports.find(r => r.ID_REPORTE === idReporte);
     if (!reportObj) {
         Swal.fire({
@@ -755,6 +755,10 @@ function verDescargarReportePrevio(idReporte) {
     const reportNormalized = {};
     for (const key in reportObj) {
         reportNormalized[key.toLowerCase()] = reportObj[key];
+    }
+    
+    if (autoPrint) {
+        reportNormalized._autoPrint = true;
     }
 
     // Guardar en localStorage con el formato esperado por la plantilla

@@ -238,6 +238,38 @@ function _buildCurrentUser(user) {
     }
 })();
 
+// 6.2 Escucha Activa de Sesión (Supabase Auth State)
+(function _authObserver() {
+    // Retrasar ligeramente para asegurar que getSB() esté disponible
+    setTimeout(() => {
+        const sb = getSB();
+        if (!sb) return;
+
+        // 1. Escuchar eventos de sesión en segundo plano
+        sb.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                if (!IS_LOGIN_PAGE && typeof window.logout === 'function') {
+                    console.warn("[AUTH] Cierre de sesión detectado por Supabase. Redirigiendo...");
+                    window.logout();
+                }
+            }
+        });
+
+        // 2. Validación proactiva de la sesión al cargar o retomar la pestaña
+        if (!IS_LOGIN_PAGE) {
+            sb.auth.getSession().then(({ data, error }) => {
+                // Si hay error (ej. 400 invalid_grant) o la sesión ya no existe en el servidor
+                if (error || !data.session) {
+                    console.warn("[AUTH] Sesión expirada o inválida detectada. Forzando logout limpio...", error);
+                    if (typeof window.logout === 'function') {
+                        window.logout();
+                    }
+                }
+            });
+        }
+    }, 1000);
+})();
+
 // 6.5 Render Inmediato de Navegación (Native MAP Style)
 (function _renderNavInstant() {
     if (IS_LOGIN_PAGE) return;
