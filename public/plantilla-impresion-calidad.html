@@ -800,7 +800,7 @@
                                         ${String(rep.destino_planta || '').toUpperCase() === 'CDI' ? 'CDI (CENTRO DE DISTRIBUCION)' : rep.destino_planta}
                                     </span>
                                 </div>` : ''}
-                                ${rep.avance && !isNaN(parseInt(rep.avance)) ? `
+                                ${rep.avance && !isNaN(parseInt(rep.avance)) && parseInt(rep.avance) > 0 ? `
                                 <div class="data-item" style="grid-column: span 3; margin-top: 5px;">
                                     <span class="data-label">Avance del Lote</span>
                                     <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
