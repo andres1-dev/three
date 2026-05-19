@@ -385,16 +385,29 @@ window.onload = async function() {
         initNotifications(preloaded.length ? preloaded : undefined);
     }
 
-    // Para GUEST: ocultar opciones del formulario que no les corresponden
-    if (currentUser?.ROL === 'GUEST') {
-        const accionesSelect = document.getElementById('acciones');
-        if (accionesSelect) {
-            Array.from(accionesSelect.options).forEach(opt => {
+    // Opciones del formulario según rol (GUEST e internos)
+    const accionesSelect = document.getElementById('acciones');
+    if (accionesSelect && currentUser) {
+        const role = currentUser.ROL;
+        Array.from(accionesSelect.options).forEach(opt => {
+            if (role === 'GUEST' || role === 'USER-P') {
                 if (opt.value === 'CALIDAD' || opt.value === 'RUTERO') {
                     opt.style.display = 'none';
                     opt.disabled = true;
+                } else {
+                    opt.style.display = '';
+                    opt.disabled = false;
                 }
-            });
+            } else {
+                opt.style.display = '';
+                opt.disabled = false;
+            }
+        });
+        if (role === 'GUEST' || role === 'USER-P') {
+            accionesSelect.value = 'NOVEDADES';
+            accionesSelect.disabled = true;
+        } else {
+            accionesSelect.disabled = false;
         }
     }
 

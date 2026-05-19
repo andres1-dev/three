@@ -57,6 +57,29 @@ const FirmaTaller = {
         `;
 
         // 2. Inyectar modal de pantalla completa si no existe
+        // 2. Inyectar modal de pantalla completa si no existe
+        if (!document.getElementById('fullscreenSigModalStyles')) {
+            const styleEl = document.createElement('style');
+            styleEl.id = 'fullscreenSigModalStyles';
+            styleEl.textContent = `
+                #fullscreenSigModal {
+                    transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+                }
+                @media (orientation: portrait) {
+                    #fullscreenSigModal {
+                        width: 100vh !important;
+                        height: 100vw !important;
+                        position: fixed !important;
+                        top: 50% !important;
+                        left: 50% !important;
+                        transform: translate(-50%, -50%) rotate(90deg) !important;
+                        transform-origin: center center !important;
+                    }
+                }
+            `;
+            document.head.appendChild(styleEl);
+        }
+
         if (!document.getElementById('fullscreenSigModal')) {
             const modalDiv = document.createElement('div');
             modalDiv.id = 'fullscreenSigModal';
@@ -85,7 +108,7 @@ const FirmaTaller = {
                 <div id="fsCanvasWrapper" style="flex: 1; position: relative; margin: 20px 0; border: 2px dashed #cbd5e1; border-radius: 12px; background: #ffffff; overflow: hidden; cursor: crosshair;">
                   <canvas id="fullscreenSigCanvas" style="position: absolute; top:0; left:0; width: 100%; height: 100%; touch-action: none; display: block;"></canvas>
                   <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.02)); display: flex; justify-content: center; align-items: center; text-align: center; pointer-events: none;">
-                    <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;"><i class="fas fa-mobile-alt"></i> Gira tu dispositivo en horizontal para mayor comodidad</span>
+                    <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;"><i class="fas fa-mobile-alt"></i> Firma fija en horizontal (Landscape)</span>
                   </div>
                 </div>
 
@@ -166,9 +189,23 @@ const FirmaTaller = {
         function getPos(e, canvas) {
             const rect    = canvas.getBoundingClientRect();
             const touch   = e.touches ? e.touches[0] : e;
+            const clientX = touch.clientX;
+            const clientY = touch.clientY;
+            
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const isFullscreenCanvas = canvas.id === 'fullscreenSigCanvas';
+            
+            if (isPortrait && isFullscreenCanvas) {
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const canvasX = (clientY - centerY) + (rect.height / 2);
+                const canvasY = -(clientX - centerX) + (rect.width / 2);
+                return { x: canvasX, y: canvasY };
+            }
+            
             return {
-                x: touch.clientX - rect.left,
-                y: touch.clientY - rect.top
+                x: clientX - rect.left,
+                y: clientY - rect.top
             };
         }
 
@@ -375,17 +412,57 @@ const FirmaTaller = {
     getSVG() {
         if (this.isEmpty()) return null;
 
-        // Calcular bounding box real de los trazos para el viewBox
-        const wrapper = document.getElementById('signatureCanvasWrapper');
-        const W = wrapper ? wrapper.offsetWidth  : 600;
-        const H = wrapper ? wrapper.offsetHeight : 130;
+        const W = 600;
+        const H = 150;
+
+        // 1. Encontrar bounding box de los trazos actuales
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+
+        this._strokes.forEach(stroke => {
+            stroke.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            });
+        });
+
+        // Si no hay puntos válidos
+        if (minX === Infinity || minY === Infinity) {
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"></svg>`;
+        }
+
+        const sigW = maxX - minX;
+        const sigH = maxY - minY;
+
+        // Determinar escala para ajustar a un área útil de (W-40) x (H-30)
+        const maxUsefulW = W - 40;
+        const maxUsefulH = H - 30;
+
+        let scale = 1;
+        if (sigW > 0 || sigH > 0) {
+            const scaleX = maxUsefulW / (sigW || 1);
+            const scaleY = maxUsefulH / (sigH || 1);
+            // Cap scale at 1.5x so it doesn't get pixelated/gigantic if they drew a tiny dot
+            scale = Math.min(scaleX, scaleY, 1.5);
+        }
+
+        // Centrar la firma ajustada en el viewBox
+        const finalSigW = sigW * scale;
+        const finalSigH = sigH * scale;
+        const offsetX = (W - finalSigW) / 2;
+        const offsetY = (H - finalSigH) / 2;
 
         const paths = this._strokes.map(stroke => {
             if (stroke.length < 2) return '';
-            const d = stroke.map((p, i) =>
-                `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`
-            ).join(' ');
-            return `<path d="${d}" fill="none" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+            const d = stroke.map((p, i) => {
+                // Normalizar punto rel al minX/minY, aplicar escala y desplazar al centro
+                const x = ((p.x - minX) * scale + offsetX).toFixed(1);
+                const y = ((p.y - minY) * scale + offsetY).toFixed(1);
+                return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+            }).join(' ');
+            return `<path d="${d}" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
         }).join('');
 
         return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}</svg>`;

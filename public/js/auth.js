@@ -26,23 +26,31 @@ function _sanitizeProductora(user) {
         });
     } catch (_) {}
 
+    // Intentar obtener ID de productora desde cualquier fuente disponible
     let rawId = user.ID_PRODUCTORA || user.id_productora || user.productora;
-    const idEsNumerico = rawId && !isNaN(Number(String(rawId).trim()));
-    if (!idEsNumerico) {
+    
+    // Si el ID es null/undefined pero PRODUCTORA existe y es numérico, usarlo como ID
+    if (!rawId) {
         const nameRaw = user.PRODUCTORA || user.productora;
-        if (nameRaw && !isNaN(Number(String(nameRaw).trim()))) {
+        if (nameRaw && !isNaN(Number(String(nameRaw).trim())) && String(nameRaw).trim() !== '0') {
             rawId = nameRaw;
         }
     }
 
     const cleanId = String(rawId || '').trim();
     const mappedName = PRODUCTORAS_MAP[cleanId];
-    if (mappedName) {
+    
+    if (cleanId && (mappedName || !isNaN(Number(cleanId)))) {
+        // Tenemos un ID válido — normalizar
         user.ID_PRODUCTORA = parseInt(cleanId);
         user.id_productora = parseInt(cleanId);
-        user.PRODUCTORA = mappedName;
-        user.productora = mappedName;
+        if (mappedName) {
+            user.PRODUCTORA = mappedName;
+            user.productora = mappedName;
+        }
+        // Si no hay nombre mapeado, mantener el ID numérico (se resolverá en loadUsers)
     } else {
+        // Fallback: verificar si PRODUCTORA es un ID numérico que podemos mapear
         const pVal = String(user.PRODUCTORA || user.productora || '').trim();
         if (pVal && !isNaN(Number(pVal)) && PRODUCTORAS_MAP[pVal]) {
             const mappedNameFallback = PRODUCTORAS_MAP[pVal];
@@ -175,6 +183,20 @@ function _buildCurrentUser(user) {
         }
     } catch(e) {}
 
+    // Fallback: intentar recuperar productora desde la caché de productoras si no hay localStorage
+    if (!window.currentUser.ID_PRODUCTORA) {
+        try {
+            const cached = JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+            if (cached && cached.length > 0) {
+                // Si solo hay una productora, usarla como default
+                if (cached.length === 1) {
+                    window.currentUser.ID_PRODUCTORA = parseInt(cached[0].id_productora);
+                    window.currentUser.PRODUCTORA    = cached[0].productora;
+                }
+            }
+        } catch(e) {}
+    }
+
     // Normalizar productora de forma segura antes de guardar
     _sanitizeProductora(window.currentUser);
 
@@ -275,13 +297,22 @@ async function loadUsers() {
 
         if (window.currentUser) {
             // Preservar productora antes del merge (no viene de PLANTAS ni de Auth)
-            const savedProductora    = window.currentUser.ID_PRODUCTORA;
-            const savedProductoraNom = window.currentUser.PRODUCTORA;
+            let savedProductora    = window.currentUser.ID_PRODUCTORA;
+            let savedProductoraNom = window.currentUser.PRODUCTORA;
 
             const real = u.find(x => String(x.ID_USUARIO || '').trim().toLowerCase() === String(window.currentUser.ID_USUARIO || '').trim().toLowerCase()) ||
                 p.find(x => String(x.ID_PLANTA || '').trim().toLowerCase() === String(window.currentUser.ID_PLANTA || '').trim().toLowerCase());
             if (real) {
                 console.log("[AUTH] Perfil completo vinculado:", real.USUARIO || real.PLANTA);
+                
+                // Si el perfil de planta tiene productora y no tenemos una guardada, usarla
+                if (!savedProductora && real.productora) {
+                    savedProductora = parseInt(real.productora);
+                }
+                if (!savedProductoraNom && real.PRODUCTORA) {
+                    savedProductoraNom = real.PRODUCTORA;
+                }
+                
                 Object.assign(window.currentUser, real);
                 
                 // Forzar limpieza del correo universal en GUEST tras el merge

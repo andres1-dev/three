@@ -92,21 +92,190 @@ function cerrarModalAQL() {
 /**
  * Inicializa la lógica dinámica del formulario de calidad.
  */
+function autogenerarPlantillaCalidad() {
+    const tipo = (document.getElementById('tipoVisita')?.value || '').toUpperCase();
+    if (!tipo) return "";
+    
+    const conclusion = (document.getElementById('conclusion')?.value || '').toUpperCase();
+    
+    // Condición estricta: solo aparece cuando se completan tipo de visita y conclusión (si la requiere)
+    const requiereConclusion = ['AUDITORIA', 'RONDA', 'CONTRAMUESTRA'].includes(tipo);
+    if (requiereConclusion && !conclusion) {
+        return "";
+    }
+    
+    const proceso = (document.getElementById('proceso')?.value || '').trim();
+    const prenda = (document.getElementById('prenda')?.value || '').trim();
+    const genero = (document.getElementById('genero')?.value || '').trim();
+    const tejido = (document.getElementById('tejido')?.value || '').trim();
+    const avance = document.getElementById('avancePorcentaje')?.value || '0';
+    
+    // Obtener estilo elegido del dropdown
+    const estiloDropdown = document.getElementById('redaccionEstilo');
+    const estilo = estiloDropdown ? estiloDropdown.value : 'ESTANDAR';
+    
+    // Obtener conector de recomendación
+    const conectorDropdown = document.getElementById('conectorRedaccion');
+    const conectorTexto = conectorDropdown ? conectorDropdown.value : '';
+    
+    // Obtener destino del lote si aplica (SOLO EN AUDITORIA APROBADA)
+    const destinoTipoVal = document.getElementById('destinoTipo')?.value || '';
+    const destinoProcesoVal = document.getElementById('destinoProceso')?.value || '';
+    const destinoOtroVal = document.getElementById('destinoOtro')?.value || '';
+    const destinoPlantaVal = document.getElementById('destinoPlanta')?.value || '';
+    
+    let destinoTipoData = "";
+    let destinoProc = "";
+    let destinoPlan = "";
+    if (tipo === 'AUDITORIA' && conclusion === 'APROBADO' && destinoTipoVal) {
+        destinoTipoData = destinoTipoVal;
+        if (destinoTipoVal === 'PROCESO') {
+            destinoProc = (destinoProcesoVal === 'OTROS') ? destinoOtroVal.trim() : destinoProcesoVal;
+            destinoPlan = destinoPlantaVal.trim();
+        }
+    }
+    
+    const datos = {
+        tipo,
+        conclusion,
+        proceso,
+        prenda,
+        genero,
+        tejido,
+        avance,
+        destinoTipo: destinoTipoData,
+        destinoProceso: destinoProc,
+        destinoPlanta: destinoPlan
+    };
+    
+    // Delegar al módulo dedicado de plantillas premium
+    if (typeof generarRedaccionPlantilla === 'function') {
+        return generarRedaccionPlantilla(datos, estilo, conectorTexto);
+    }
+    
+    return "";
+}
+
+function actualizarPlantillaCalidadTextarea(forceUpdate = false) {
+    const textarea = document.getElementById('observacionesCalidad');
+    if (!textarea) return;
+    
+    const plantilla = autogenerarPlantillaCalidad() || "";
+    
+    // Actualizar placeholder en todo caso para guiar al usuario
+    if (plantilla) {
+        textarea.placeholder = `${plantilla}... (Escribe aquí los detalles y recomendaciones)`;
+    } else {
+        textarea.placeholder = "Detalla los hallazgos encontrados...";
+    }
+    
+    // Pre-escribir en el textarea si está vacío o si el valor actual coincide con una plantilla previa
+    const valActual = textarea.value.trim();
+    const plantillaPrevia = textarea.getAttribute('data-auto-generated') || "";
+    const esPlantillaPrevia = valActual === plantillaPrevia.trim();
+    
+    if (forceUpdate || !valActual || esPlantillaPrevia) {
+        textarea.value = plantilla;
+        textarea.setAttribute('data-auto-generated', plantilla);
+        if (typeof _autoResizeTextarea === 'function') {
+            _autoResizeTextarea(textarea);
+        }
+    }
+}
+
 function initCalidadForm() {
     const tipoVisita  = document.getElementById('tipoVisita');
+    const conclusion  = document.getElementById('conclusion');
     const avanceSlider  = document.getElementById('avanceSlider');
     const avanceValor   = document.getElementById('avanceValor');
     const avancePct     = document.getElementById('avancePorcentaje');
+    const redaccionEstilo = document.getElementById('redaccionEstilo');
+    const incluirRecomendaciones = document.getElementById('incluirRecomendaciones');
 
     if (!tipoVisita) return;
 
+    // Listener del slider de avance
     avanceSlider.addEventListener('input', () => {
         avanceValor.textContent = avanceSlider.value + '%';
         avancePct.value = avanceSlider.value;
+        actualizarPlantillaCalidadTextarea();
     });
 
-    tipoVisita.addEventListener('change', _actualizarCamposCalidad);
+    // Listeners para actualizar campos y plantilla
+    tipoVisita.addEventListener('change', () => {
+        _actualizarCamposCalidad();
+        actualizarPlantillaCalidadTextarea(true);
+    });
+    
+    if (conclusion) {
+        conclusion.addEventListener('change', () => {
+            _actualizarCamposCalidad();
+            actualizarPlantillaCalidadTextarea(true);
+        });
+    }
+
+    if (redaccionEstilo) {
+        redaccionEstilo.addEventListener('change', () => {
+            actualizarPlantillaCalidadTextarea(true);
+        });
+    }
+
+    const conectorRedaccion = document.getElementById('conectorRedaccion');
+    if (conectorRedaccion) {
+        conectorRedaccion.addEventListener('change', () => {
+            actualizarPlantillaCalidadTextarea(true);
+        });
+    }
+
+    const destinoTipo = document.getElementById('destinoTipo');
+    if (destinoTipo) {
+        destinoTipo.addEventListener('change', () => {
+            _actualizarCamposCalidad();
+            actualizarPlantillaCalidadTextarea(true);
+        });
+    }
+
+    const destinoProceso = document.getElementById('destinoProceso');
+    if (destinoProceso) {
+        destinoProceso.addEventListener('change', () => {
+            const destinoOtroSection = document.getElementById('destinoOtroSection');
+            const destinoOtro = document.getElementById('destinoOtro');
+            if (destinoProceso.value === 'OTROS') {
+                if (destinoOtroSection) destinoOtroSection.style.display = '';
+                if (destinoOtro) destinoOtro.required = true;
+            } else {
+                if (destinoOtroSection) destinoOtroSection.style.display = 'none';
+                if (destinoOtro) {
+                    destinoOtro.required = false;
+                    destinoOtro.value = '';
+                }
+            }
+            actualizarPlantillaCalidadTextarea(true);
+        });
+    }
+
+    const destinoOtro = document.getElementById('destinoOtro');
+    if (destinoOtro) {
+        destinoOtro.addEventListener('input', () => {
+            actualizarPlantillaCalidadTextarea(true);
+        });
+    }
+
+    const destinoPlanta = document.getElementById('destinoPlanta');
+    if (destinoPlanta) {
+        destinoPlanta.addEventListener('input', () => {
+            actualizarPlantillaCalidadTextarea(true);
+        });
+        destinoPlanta.addEventListener('blur', () => {
+            if (destinoPlanta.required && !destinoPlanta.value.trim()) {
+                destinoPlanta.value = 'CDI';
+            }
+            actualizarPlantillaCalidadTextarea();
+        });
+    }
+
     _actualizarCamposCalidad();
+    actualizarPlantillaCalidadTextarea();
     calcularAQL();
 
     // Recalcular AQL cada vez que cambia la cantidad del lote
@@ -172,6 +341,390 @@ function _actualizarCamposCalidad() {
         if (avanceValor) avanceValor.textContent = '0%';
         if (avancePct)   avancePct.value = '0';
     }
+
+    // ── Destino del Lote ──
+    const destinoSection = document.getElementById('destinoSection');
+    const destinoTipo = document.getElementById('destinoTipo');
+    const destinoProcesoContainer = document.getElementById('destinoProcesoContainer');
+    const destinoProceso = document.getElementById('destinoProceso');
+    const destinoOtroSection = document.getElementById('destinoOtroSection');
+    const destinoOtro = document.getElementById('destinoOtro');
+    const destinoPlanta = document.getElementById('destinoPlanta');
+
+    if (destinoSection) {
+        if (esAuditoria && conclusion && conclusion.value === 'APROBADO') {
+            destinoSection.style.display = '';
+            if (destinoTipo) destinoTipo.required = true;
+            
+            if (destinoTipo && destinoTipo.value === 'PROCESO') {
+                if (destinoProcesoContainer) destinoProcesoContainer.style.display = '';
+                if (destinoProceso) destinoProceso.required = true;
+                if (destinoPlanta) destinoPlanta.required = true;
+            } else {
+                if (destinoProcesoContainer) destinoProcesoContainer.style.display = 'none';
+                if (destinoProceso) { destinoProceso.required = false; destinoProceso.value = ''; }
+                if (destinoPlanta) { destinoPlanta.required = false; destinoPlanta.value = ''; }
+                if (destinoOtroSection) { destinoOtroSection.style.display = 'none'; }
+                if (destinoOtro) { destinoOtro.required = false; destinoOtro.value = ''; }
+            }
+        } else {
+            destinoSection.style.display = 'none';
+            if (destinoTipo) { destinoTipo.required = false; destinoTipo.value = ''; }
+            if (destinoProcesoContainer) destinoProcesoContainer.style.display = 'none';
+            if (destinoProceso) { destinoProceso.required = false; destinoProceso.value = ''; }
+            if (destinoPlanta) { destinoPlanta.required = false; destinoPlanta.value = ''; }
+            if (destinoOtroSection) { destinoOtroSection.style.display = 'none'; }
+            if (destinoOtro) { destinoOtro.required = false; destinoOtro.value = ''; }
+        }
+    }
+
+    // ── Novedades de Auditoría ──
+    const calidadNovedadesSection = document.getElementById('calidadNovedadesSection');
+    if (calidadNovedadesSection) {
+        calidadNovedadesSection.style.display = esAuditoria ? '' : 'none';
+        if (!esAuditoria) {
+            // Limpiar el estado de novedades si se cambia de tipo
+            window._novedadesCalidadState = [];
+            renderTarjetasNovedadesCalidad();
+        }
+    }
+}
+
+/* ── Novedades de Auditoría: Modal Constructor y Tarjetas Resumen ───────────────────────────── */
+
+window._novedadesCalidadState = [];
+window._novedadEditIndex = null;
+
+/**
+ * Abre el Modal Constructor de Novedades.
+ * Si se le pasa un index, precarga los datos para edición.
+ */
+function agregarBloqueNovedadCalidad(editIndex = null, subEditIndex = null) {
+    window._novedadEditIndex = editIndex;
+    window._novedadSubEditIndex = subEditIndex;
+    const modal = document.getElementById('novedadesCalidadModal');
+    const title = document.getElementById('novedadesModalTitle');
+    const selectTipo = document.getElementById('novedadModalTipo');
+    const sinProcesoCheck = document.getElementById('novedadModalSinProcesoCheck');
+    const codigosList = document.getElementById('novedadModalCodigosList');
+
+    // Limpiar modal
+    selectTipo.value = '';
+    selectTipo.disabled = false;
+    sinProcesoCheck.checked = false;
+    codigosList.innerHTML = '';
+    handleModalCalidadNovedadTipoChange();
+
+    if (editIndex !== null) {
+        const data = window._novedadesCalidadState[editIndex];
+        selectTipo.value = data.tipo;
+        
+        handleModalCalidadNovedadTipoChange();
+        if (data.tipo === 'PROMOCIONES') {
+            sinProcesoCheck.checked = data.sin_proceso;
+        }
+        
+        if (subEditIndex !== null) {
+            title.textContent = 'Editar Detalle';
+            agregarFilaModalNovedad(data.codigos[subEditIndex]);
+        } else {
+            title.textContent = 'Editar Grupo';
+            data.codigos.forEach(c => agregarFilaModalNovedad(c));
+        }
+    } else {
+        title.textContent = 'Reportar Novedad';
+        agregarFilaModalNovedad(); // Fila vacía inicial
+    }
+
+    modal.style.display = 'flex';
+}
+
+function cerrarModalNovedadCalidad() {
+    document.getElementById('novedadesCalidadModal').style.display = 'none';
+}
+
+function handleModalCalidadNovedadTipoChange() {
+    const tipo = document.getElementById('novedadModalTipo').value;
+    const sinProcesoDiv = document.getElementById('novedadModalSinProceso');
+    if (tipo === 'PROMOCIONES') {
+        sinProcesoDiv.style.display = 'block';
+    } else {
+        sinProcesoDiv.style.display = 'none';
+        document.getElementById('novedadModalSinProcesoCheck').checked = false;
+    }
+}
+
+function agregarFilaModalNovedad(datosIniciales = null) {
+    const listContainer = document.getElementById('novedadModalCodigosList');
+    const fila = document.createElement('div');
+    fila.className = 'insumo-fila mb-3 fila-3-cols';
+    
+    const tallasFiltradas = (typeof getFilteredSizes === 'function') ? getFilteredSizes() : (window.CODIGOS_TALLAS || CODIGOS_TALLAS_LIST || []);
+    const coloresFiltrados = CODIGOS_COLORES_LIST || [];
+
+    const valTalla = datosIniciales ? datosIniciales.talla : '';
+    const valColor = datosIniciales ? datosIniciales.color : '';
+    const valCant = datosIniciales ? datosIniciales.cantidad : '';
+
+    fila.innerHTML = `
+        <div class="campo-dinamico">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label-inline" style="font-size:0.7rem;">Talla: <span style="color:#ef4444;">*</span></label>
+                <button type="button" class="btn-eliminar-insumo btn-eliminar-mobile"
+                    onclick="eliminarFilaModalNovedad(this)" title="Eliminar"
+                    style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:6px;
+                           color:#ef4444; width:28px; height:28px; cursor:pointer; font-size:0.75rem;
+                           display:none; align-items:center; justify-content:center; transition:all 0.15s; padding:0;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="input-with-icon smart-select-container">
+                <i class="fas fa-ruler input-icon"></i>
+                <input type="text" class="form-control form-control-sm codigo-talla smart-select-input" 
+                    placeholder="Talla..." autocomplete="off" value="${valTalla}">
+                <div class="smart-select-dropdown hidden"></div>
+            </div>
+        </div>
+        <div class="campo-dinamico">
+            <label class="form-label-inline" style="font-size:0.7rem;">Color: <span style="color:#ef4444;">*</span></label>
+            <div class="input-with-icon smart-select-container">
+                <i class="fas fa-palette input-icon"></i>
+                <input type="text" class="form-control form-control-sm codigo-color smart-select-input" 
+                    placeholder="Color..." autocomplete="off" value="${valColor}">
+                <div class="smart-select-dropdown hidden"></div>
+            </div>
+        </div>
+        <div class="campo-dinamico">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                <label class="form-label-inline" style="font-size:0.7rem;">Cantidad: <span style="color:#ef4444;">*</span></label>
+                <button type="button" class="btn-eliminar-insumo btn-eliminar-desktop"
+                    onclick="eliminarFilaModalNovedad(this)" title="Eliminar"
+                    style="flex-shrink:0; background:none; border:1px solid #fca5a5; border-radius:6px;
+                           color:#ef4444; width:28px; height:28px; cursor:pointer; font-size:0.75rem;
+                           display:none; align-items:center; justify-content:center; transition:all 0.15s; padding:0;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="input-with-icon">
+                <i class="fas fa-hashtag input-icon"></i>
+                <input type="number" class="form-control form-control-sm codigo-cantidad" min="1" placeholder="Cant." value="${valCant}">
+            </div>
+        </div>`;
+
+    listContainer.appendChild(fila);
+    _actualizarBotonesEliminarModalNovedad();
+
+    const inputTalla = fila.querySelector('.codigo-talla');
+    const inputColor = fila.querySelector('.codigo-color');
+    if (typeof _setupSmartSelect === 'function') {
+        _setupSmartSelect(inputTalla, tallasFiltradas);
+        _setupSmartSelect(inputColor, coloresFiltrados);
+    }
+}
+
+function eliminarFilaModalNovedad(btn) {
+    const listContainer = document.getElementById('novedadModalCodigosList');
+    if (listContainer.children.length <= 1) return;
+    btn.closest('.insumo-fila').remove();
+    _actualizarBotonesEliminarModalNovedad();
+}
+
+function _actualizarBotonesEliminarModalNovedad() {
+    const filas = document.querySelectorAll('#novedadModalCodigosList .insumo-fila');
+    const hayMultiples = filas.length > 1;
+    filas.forEach(fila => {
+        fila.querySelectorAll('.btn-eliminar-insumo').forEach(btn => {
+            btn.style.display = hayMultiples ? 'flex' : 'none';
+        });
+    });
+}
+
+function _compactarCodigosNovedad(codigosArray) {
+    const map = {};
+    codigosArray.forEach(c => {
+        const key = `${c.talla.trim().toUpperCase()}|${c.color.trim().toUpperCase()}`;
+        if (!map[key]) {
+            map[key] = { talla: c.talla.trim().toUpperCase(), color: c.color.trim().toUpperCase(), cantidad: c.cantidad };
+        } else {
+            map[key].cantidad += c.cantidad;
+        }
+    });
+    return Object.values(map);
+}
+
+function guardarNovedadCalidad() {
+    const tipo = document.getElementById('novedadModalTipo').value;
+    if (!tipo) {
+        Swal.fire({ icon: 'warning', title: 'Falta Tipo', text: 'Selecciona el tipo de novedad.', confirmButtonColor: '#3F51B5' });
+        return;
+    }
+
+    const sinProceso = document.getElementById('novedadModalSinProcesoCheck').checked;
+    const filas = document.querySelectorAll('#novedadModalCodigosList .insumo-fila');
+    const codigos = [];
+
+    let valido = true;
+    filas.forEach(fila => {
+        const talla = fila.querySelector('.codigo-talla')?.value?.trim() || '';
+        const color = fila.querySelector('.codigo-color')?.value?.trim() || '';
+        const cant = fila.querySelector('.codigo-cantidad')?.value || '';
+        if (!talla || !color || !cant) { valido = false; }
+        else { codigos.push({ talla, color, cantidad: Number(cant) }); }
+    });
+
+    if (!valido || codigos.length === 0) {
+        Swal.fire({ icon: 'warning', title: 'Datos incompletos', text: 'Completa talla, color y cantidad en todas las filas.', confirmButtonColor: '#3F51B5' });
+        return;
+    }
+
+    const codigosCompactados = _compactarCodigosNovedad(codigos);
+    const nuevaNovedad = { tipo, sin_proceso: (tipo === 'PROMOCIONES' && sinProceso), codigos: codigosCompactados };
+
+    // Si estamos editando un subdetalle, lo removemos del grupo original
+    if (window._novedadEditIndex !== null) {
+        const grupoOriginal = window._novedadesCalidadState[window._novedadEditIndex];
+        if (window._novedadSubEditIndex !== null && window._novedadSubEditIndex !== undefined) {
+            grupoOriginal.codigos.splice(window._novedadSubEditIndex, 1);
+        } else {
+            // Edición de grupo entero (legacy)
+            grupoOriginal.codigos = [];
+        }
+    }
+
+    // Buscamos si existe el grupo destino (puede ser el mismo si no cambió de tipo)
+    const isSinProceso = (tipo === 'PROMOCIONES' && sinProceso);
+    const destinoIndex = window._novedadesCalidadState.findIndex(n => n.tipo === tipo && !!n.sin_proceso === !!isSinProceso);
+    
+    if (destinoIndex >= 0) {
+        const destino = window._novedadesCalidadState[destinoIndex];
+        const combinados = destino.codigos.concat(codigosCompactados);
+        destino.codigos = _compactarCodigosNovedad(combinados);
+    } else {
+        window._novedadesCalidadState.push(nuevaNovedad);
+    }
+
+    // Eliminar cualquier grupo que se haya quedado sin códigos (ej. movimos el único ítem de un grupo a otro)
+    window._novedadesCalidadState = window._novedadesCalidadState.filter(g => g.codigos && g.codigos.length > 0);
+
+    cerrarModalNovedadCalidad();
+    renderTarjetasNovedadesCalidad();
+}
+
+function eliminarNovedadCalidad(index) {
+    window._novedadesCalidadState.splice(index, 1);
+    renderTarjetasNovedadesCalidad();
+}
+
+window.editarSubNovedadCalidad = function(tipoIndex, codigoIndex) {
+    agregarBloqueNovedadCalidad(tipoIndex, codigoIndex);
+}
+
+window.eliminarSubNovedadCalidad = function(tipoIndex, codigoIndex) {
+    const novedad = window._novedadesCalidadState[tipoIndex];
+    novedad.codigos.splice(codigoIndex, 1);
+    if (novedad.codigos.length === 0) {
+        window._novedadesCalidadState.splice(tipoIndex, 1);
+    }
+    renderTarjetasNovedadesCalidad();
+}
+
+function renderTarjetasNovedadesCalidad() {
+    const lista = document.getElementById('calidadNovedadesList');
+    const dropzone = document.getElementById('calidadNovedadesDropzone');
+    
+    lista.innerHTML = '';
+
+    if (window._novedadesCalidadState.length === 0) {
+        dropzone.style.display = '';
+        return;
+    }
+
+    dropzone.style.display = 'none';
+
+    window._novedadesCalidadState.forEach((novedad, index) => {
+        const totalUnidades = novedad.codigos.reduce((sum, c) => sum + c.cantidad, 0);
+
+        let colorTheme = '#3b82f6';
+        let bgTheme = '#eff6ff';
+        let iconName = 'fa-tag';
+        let displayTipo = novedad.tipo;
+        
+        if (novedad.tipo === 'SIN CONFECCIONAR') { colorTheme = '#ef4444'; bgTheme = '#fef2f2'; iconName = 'fa-cut'; }
+        if (novedad.tipo === 'PROMOCIONES') { 
+            if (novedad.sin_proceso) {
+                colorTheme = '#db2777'; // Pink for Sin Proceso
+                bgTheme = '#fdf2f8';
+                iconName = 'fa-exclamation-triangle';
+                displayTipo = 'PROM. SIN PROCESO';
+            } else {
+                colorTheme = '#f59e0b'; // Orange
+                bgTheme = '#fffbeb'; 
+                iconName = 'fa-percentage'; 
+            }
+        }
+        if (novedad.tipo === 'COBROS') { colorTheme = '#10b981'; bgTheme = '#ecfdf5'; iconName = 'fa-file-invoice-dollar'; }
+        if (novedad.tipo === 'LAVADO') { colorTheme = '#6366f1'; bgTheme = '#eef2ff'; iconName = 'fa-water'; }
+        
+        let codigosHtml = '';
+        novedad.codigos.forEach((c, codigoIndex) => {
+            const isLast = codigoIndex === novedad.codigos.length - 1;
+            const borderBottom = isLast ? '' : 'border-bottom:1px solid #f1f5f9;';
+            codigosHtml += `
+                <div style="display:grid; grid-template-columns: 2fr 4fr 2fr 2fr; align-items:center; padding:10px 14px; ${borderBottom} transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                    <div style="font-size:0.75rem; font-weight:800; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${c.talla}">${c.talla}</div>
+                    <div style="font-size:0.75rem; color:#334155; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:8px;" title="${c.color}">${c.color}</div>
+                    <div style="font-size:0.7rem; font-weight:700; color:${colorTheme}; text-align:center; background:${bgTheme}; border-radius:4px; padding:2px 0; margin-right:8px;">${c.cantidad}</div>
+                    <div style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button type="button" onclick="editarSubNovedadCalidad(${index}, ${codigoIndex})" title="Editar detalle" style="background:none; border:none; color:#94a3b8; cursor:pointer; padding:2px;" onmouseover="this.style.color='${colorTheme}';" onmouseout="this.style.color='#94a3b8';"><i class="fas fa-pen" style="font-size:0.8rem;"></i></button>
+                        <button type="button" onclick="eliminarSubNovedadCalidad(${index}, ${codigoIndex})" title="Eliminar detalle" style="background:none; border:none; color:#fca5a5; cursor:pointer; padding:2px;" onmouseover="this.style.color='#ef4444';" onmouseout="this.style.color='#fca5a5';"><i class="fas fa-trash" style="font-size:0.8rem;"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+
+        const tarjeta = document.createElement('div');
+        tarjeta.style.cssText = `background:#ffffff; border:1px solid #e2e8f0; border-top:4px solid ${colorTheme}; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.02); overflow:hidden;`;
+        
+        tarjeta.innerHTML = `
+            <!-- HEADER -->
+            <div style="display:flex; justify-content:space-between; align-items:center; background:${bgTheme}; padding:10px 14px; border-bottom:1px solid #e2e8f0;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <i class="fas ${iconName}" style="color:${colorTheme}; font-size:1.1rem;"></i>
+                    <span style="font-weight:800; font-size:0.85rem; color:#1e293b; text-transform:uppercase; letter-spacing:0.3px;">${displayTipo}</span>
+                </div>
+                <div style="font-size:0.75rem; font-weight:800; color:${colorTheme};">
+                    ${totalUnidades} UNDS.
+                </div>
+            </div>
+            
+            <!-- BODY / TABLE -->
+            <div style="padding:0;">
+                <!-- HEADERS MUY PEQUEÑOS -->
+                <div style="display:grid; grid-template-columns: 2fr 4fr 2fr 2fr; padding:8px 14px; background:#f8fafc; border-bottom:1px solid #f1f5f9; font-size:0.6rem; font-weight:800; color:#94a3b8; text-transform:uppercase; letter-spacing:0.5px;">
+                    <div>Talla</div>
+                    <div>Color</div>
+                    <div style="text-align:center;">Cant.</div>
+                    <div style="text-align:right;">Acción</div>
+                </div>
+                
+                <!-- ROWS -->
+                ${codigosHtml}
+            </div>
+        `;
+        lista.appendChild(tarjeta);
+    });
+    
+    // Añadir botón compacto al final para agregar más si ya hay tarjetas
+    if (window._novedadesCalidadState.length > 0) {
+        const addMore = document.createElement('div');
+        addMore.innerHTML = `
+            <button type="button" class="btn-action-muted" onclick="agregarBloqueNovedadCalidad()" style="width:100%; justify-content:center; padding:12px; border:2px dashed #e2e8f0; border-radius:12px; color:#64748b; font-size:0.8rem; font-weight:700; transition:all 0.2s;"
+            onmouseover="this.style.borderColor='#3F51B5'; this.style.color='#3F51B5'; this.style.background='#f8fafc';" onmouseout="this.style.borderColor='#e2e8f0'; this.style.color='#64748b'; this.style.background='none';">
+                <i class="fas fa-plus"></i> Reportar otra novedad
+            </button>
+        `;
+        lista.appendChild(addMore);
+    }
 }
 
 /**
@@ -227,6 +780,31 @@ async function handleCalidadSubmit(e) {
         if (window.FirmaTaller && !window.FirmaTaller.isEmpty()) {
             firmaSvg = window.FirmaTaller.getSVG();
         }
+        
+        // Obtener destino del lote si aplica (solo en Auditoria Aprobada)
+        const destinoTipoVal = document.getElementById('destinoTipo')?.value || '';
+        const destinoProcesoVal = document.getElementById('destinoProceso')?.value || '';
+        const destinoOtroVal = document.getElementById('destinoOtro')?.value || '';
+        const destinoPlantaVal = document.getElementById('destinoPlanta')?.value || '';
+        
+        let destino_proceso = "";
+        let destino_planta = "";
+        
+        if (tipoVisita.toUpperCase() === 'AUDITORIA' && conclusion === 'APROBADO') {
+            if (destinoTipoVal === 'CDI') {
+                destino_proceso = 'CDI';
+                destino_planta = 'CDI';
+            } else if (destinoTipoVal === 'PROCESO' && destinoProcesoVal) {
+                destino_proceso = (destinoProcesoVal === 'OTROS') ? destinoOtroVal.trim() : destinoProcesoVal;
+                destino_planta = destinoPlantaVal.trim() || "CDI";
+            }
+        }
+
+        // Recolectar novedades de auditoría (si existen)
+        let novedades_auditoria = null;
+        if (window._novedadesCalidadState && window._novedadesCalidadState.length > 0) {
+            novedades_auditoria = window._novedadesCalidadState;
+        }
 
         // 1. Enviar texto inmediatamente sin esperar el soporte
         const payload = {
@@ -237,10 +815,13 @@ async function handleCalidadSubmit(e) {
             tipoVisita,
             conclusion,
             avance,
+            destino_proceso, // Nuevo campo de destino de liberación
+            destino_planta,  // Nuevo campo de planta de destino
             observaciones: finalObservaciones,
             productora: (typeof currentUser !== 'undefined') ? (currentUser.ID_PRODUCTORA || currentUser.productora) : null,
             soporte: '',   // se actualizará en background
             ...(firmaSvg && { firma_svg: firmaSvg }),  // solo si hay firma
+            ...(novedades_auditoria && { novedades_auditoria: JSON.stringify(novedades_auditoria) }),
         };
 
         const result = await sendToGAS(payload);
@@ -279,6 +860,11 @@ async function handleCalidadSubmit(e) {
         // Limpiar firma canvas tras envío exitoso
         if (window.FirmaTaller) window.FirmaTaller.clear();
         if (typeof clearVersionHistory === 'function') clearVersionHistory();
+        
+        // Limpiar novedades de auditoría
+        window._novedadesCalidadState = [];
+        renderTarjetasNovedadesCalidad();
+        
         _actualizarCamposCalidad();
         hideSections();
 

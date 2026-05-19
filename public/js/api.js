@@ -117,7 +117,7 @@ async function fetchSupabaseData(tableName, options = {}) {
             }
             // Filtro por productora para usuarios internos
             if (!skipFilter && ['MASTER', 'PLANTAS', 'NOVEDADES', 'RUTERO', 'VISITAS'].includes(tableUpper) && sessionUser &&
-                ['USER-C', 'USER-I'].includes(sessionUser.ROL) &&
+                ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(sessionUser.ROL) &&
                 sessionUser.ID_PRODUCTORA) {
                 query = query.eq('productora', parseInt(sessionUser.ID_PRODUCTORA));
             }
@@ -216,15 +216,26 @@ async function fetchNovedadesData(soloFinalizados = false, incluirTodos = false)
     if (sessionUser?.ROL === 'GUEST' || sessionUser?.ROL === 'USER-P') {
         const isGuest = sessionUser.ROL === 'GUEST';
         const plantaNombre = isGuest ? (sessionUser.PLANTA || sessionUser.planta) : null;
-        const prodId       = isGuest ? (sessionUser.ID_PRODUCTORA || sessionUser.productora) : null;
+        const prodId       = sessionUser.ID_PRODUCTORA || sessionUser.productora;
 
-        // Fallback a localStorage si currentUser no tiene los datos (solo para GUEST)
+        // Fallback a localStorage si currentUser no tiene los datos
         let filtroPlanta = plantaNombre, filtroProductora = prodId;
-        if (isGuest && !filtroPlanta && !filtroProductora) {
+        if (!filtroPlanta && !filtroProductora) {
             try {
                 const univ = JSON.parse(localStorage.getItem('busint_universal_plant') || 'null');
                 filtroPlanta    = univ?.planta || univ?.PLANTA;
                 filtroProductora = univ?.productora || univ?.ID_PRODUCTORA;
+            } catch(e) {}
+        }
+
+        // Si sigue sin estar la productora y es USER-P, intentar buscarla en busint_productora
+        if (!filtroProductora && sessionUser.ROL === 'USER-P') {
+            try {
+                const prodRaw = localStorage.getItem('busint_productora');
+                if (prodRaw) {
+                    const prodObj = JSON.parse(prodRaw);
+                    filtroProductora = prodObj?.ID_PRODUCTORA || prodObj?.id_productora;
+                }
             } catch(e) {}
         }
 
@@ -279,7 +290,7 @@ async function fetchNovedadesData(soloFinalizados = false, incluirTodos = false)
 
     // Filtros para roles internos (GUEST ya fue manejado arriba)
     const internalUser = (typeof currentUser !== 'undefined') ? currentUser : null;
-    if (internalUser && ['USER-C', 'USER-I'].includes(internalUser.ROL) && internalUser.ID_PRODUCTORA) {
+    if (internalUser && ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(internalUser.ROL) && internalUser.ID_PRODUCTORA) {
         query = query.eq('productora', parseInt(internalUser.ID_PRODUCTORA));
     }
 

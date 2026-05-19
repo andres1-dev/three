@@ -46,22 +46,31 @@ function handleLotSelection(event) {
     // ── Verificar si la planta tiene datos completos ──
     verificarRegistroPlanta(lotData.PLANTA);
     
-    // ── Si es GUEST, activar automáticamente NOVEDADES y ocultar el resto ──
-    if (typeof currentUser !== 'undefined' && currentUser && currentUser.ROL === 'GUEST') {
-        setTimeout(() => {
-            const accionesSelect = DOM.accionesSelect();
-            if (accionesSelect) {
-                Array.from(accionesSelect.options).forEach(opt => {
+    // ── Configurar las opciones visibles en el select de acciones según rol tras la selección del lote ──
+    const currentRole = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.ROL : 'GUEST';
+    setTimeout(() => {
+        const accionesSelect = DOM.accionesSelect();
+        if (accionesSelect) {
+            Array.from(accionesSelect.options).forEach(opt => {
+                if (currentRole === 'GUEST' || currentRole === 'USER-P') {
                     if (opt.value === 'CALIDAD' || opt.value === 'RUTERO') {
                         opt.style.display = 'none';
                         opt.disabled = true;
+                    } else {
+                        opt.style.display = '';
+                        opt.disabled = false;
                     }
-                });
+                } else {
+                    opt.style.display = '';
+                    opt.disabled = false;
+                }
+            });
+            if (currentRole === 'GUEST' || currentRole === 'USER-P') {
                 accionesSelect.value = 'NOVEDADES';
                 toggleActionSections('NOVEDADES');
             }
-        }, 100);
-    }
+        }
+    }, 100);
 }
 
 /**
@@ -81,9 +90,17 @@ function verificarRegistroPlanta(plantaNombre) {
         const accionesContainer = DOM.accionesSelect().closest('.mb-3');
         const editBtn = DOM.editPlantaBtn();
         if (accionesContainer) accionesContainer.style.display = 'block';
-        DOM.accionesSelect().removeAttribute('disabled');
-        DOM.accionesSelect().value = '';
-        toggleActionSections('');
+        
+        if (role === 'USER-P') {
+            DOM.accionesSelect().value = 'NOVEDADES';
+            DOM.accionesSelect().setAttribute('disabled', 'disabled');
+            toggleActionSections('NOVEDADES');
+        } else {
+            DOM.accionesSelect().removeAttribute('disabled');
+            DOM.accionesSelect().value = '';
+            toggleActionSections('');
+        }
+
         if (editBtn) {
             editBtn.style.display = 'block';
             editBtn.onclick = () => {
@@ -122,11 +139,16 @@ function verificarRegistroPlanta(plantaNombre) {
     } else {
         // La planta ya tiene datos: Permitir flujo normal
         if (accionesContainer) accionesContainer.style.display = 'block';
-        DOM.accionesSelect().removeAttribute('disabled');
-
-        // Limpiar secciones anteriores (volver al inicio de selección de acción)
-        DOM.accionesSelect().value = '';
-        toggleActionSections('');
+        
+        if (role === 'GUEST') {
+            DOM.accionesSelect().value = 'NOVEDADES';
+            DOM.accionesSelect().setAttribute('disabled', 'disabled');
+            toggleActionSections('NOVEDADES');
+        } else {
+            DOM.accionesSelect().removeAttribute('disabled');
+            DOM.accionesSelect().value = '';
+            toggleActionSections('');
+        }
 
         // Mostrar botón de edición opcional y configurar su acción
         if (editBtn) {

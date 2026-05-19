@@ -2,6 +2,296 @@
    admin/usuarios.js — Módulo Standalone de Gestión de Usuarios y Plantas
    ========================================================================== */
 
+// Inyectar modal y estilos de pantalla completa para usuarios
+if (!document.getElementById('userFullscreenSigModalStyles')) {
+    const styleEl = document.createElement('style');
+    styleEl.id = 'userFullscreenSigModalStyles';
+    styleEl.textContent = `
+        #userFullscreenSigModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: transform 0.2s ease, width 0.2s ease, height 0.2s ease;
+        }
+        @media (orientation: portrait) {
+            #userFullscreenSigModal {
+                width: 100vh !important;
+                height: 100vw !important;
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) rotate(90deg) !important;
+                transform-origin: center center !important;
+            }
+        }
+    `;
+    document.head.appendChild(styleEl);
+}
+
+// Inyectar contenedor del modal si no existe
+if (!document.getElementById('userFullscreenSigModal')) {
+    const modalDiv = document.createElement('div');
+    modalDiv.id = 'userFullscreenSigModal';
+    modalDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+          <h2 style="font-size: 1.1rem; font-weight: 700; color: #1e293b; margin: 0;">Firma de Auditor / Empleado</h2>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="clearUserFsSigBtn" style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+              <i class="fas fa-eraser"></i> Limpiar
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="closeUserFsSigBtn" style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+              <i class="fas fa-times"></i> Cerrar
+            </button>
+          </div>
+        </div>
+
+        <div id="userFsCanvasWrapper" style="flex: 1; position: relative; margin: 20px 0; border: 2px dashed #cbd5e1; border-radius: 12px; background: #ffffff; overflow: hidden; cursor: crosshair;">
+          <canvas id="userFullscreenSigCanvas" style="position: absolute; top:0; left:0; width: 100%; height: 100%; touch-action: none; display: block;"></canvas>
+          <div class="position-absolute bottom-0 start-0 w-100 p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.02)); display: flex; justify-content: center; align-items: center; text-align: center; pointer-events: none;">
+            <span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;"><i class="fas fa-mobile-alt"></i> Firma fija en horizontal (Landscape)</span>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; align-items: center;">
+          <button type="button" class="btn btn-primary" id="saveUserFsSigBtn" style="width: 100%; max-width: 400px; padding: 12px 24px; font-weight: 700; font-size: 0.9rem;">
+            <i class="fas fa-check"></i> Aplicar Firma
+          </button>
+        </div>
+    `;
+    document.body.appendChild(modalDiv);
+}
+
+window.openUserFullscreenSignature = () => {
+    const fsModal = document.getElementById('userFullscreenSigModal');
+    const fsCanvas = document.getElementById('userFullscreenSigCanvas');
+    if (!fsModal || !fsCanvas) return;
+
+    fsModal.style.display = 'flex';
+    
+    // Iniciar trazos de pantalla completa vacíos o copiar los existentes
+    window.userFsStrokes = [...(window.userSignatureStrokes || [])];
+    
+    const ctx = fsCanvas.getContext('2d');
+
+    function resizeFsCanvas() {
+        const wrapper = document.getElementById('userFsCanvasWrapper');
+        const rect = wrapper ? wrapper.getBoundingClientRect() : fsCanvas.getBoundingClientRect();
+        fsCanvas.width = Math.round(rect.width * window.devicePixelRatio);
+        fsCanvas.height = Math.round(rect.height * window.devicePixelRatio);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 3.2;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+    }
+
+    // Dibujar trazos existentes si los hay
+    function redrawStrokes() {
+        ctx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+        if (!window.userFsStrokes || window.userFsStrokes.length === 0) return;
+        window.userFsStrokes.forEach(stroke => {
+            if (stroke.length < 2) return;
+            ctx.beginPath();
+            ctx.moveTo(stroke[0].x, stroke[0].y);
+            for(let i=1; i<stroke.length; i++) {
+                ctx.lineTo(stroke[i].x, stroke[i].y);
+            }
+            ctx.stroke();
+        });
+    }
+
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            resizeFsCanvas();
+            redrawStrokes();
+        }, 80);
+    });
+
+    function getPos(e) {
+        const rect = fsCanvas.getBoundingClientRect();
+        const touch = e.touches ? e.touches[0] : e;
+        const clientX = touch.clientX;
+        const clientY = touch.clientY;
+        
+        const isPortrait = window.innerHeight > window.innerWidth;
+        if (isPortrait) {
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const canvasX = (clientY - centerY) + (rect.height / 2);
+            const canvasY = -(clientX - centerX) + (rect.width / 2);
+            return { x: canvasX, y: canvasY };
+        }
+        
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    // Si los event listeners ya fueron añadidos, no volver a añadirlos
+    if (!fsCanvas._listenersAttached) {
+        let isDrawing = false;
+        let lastX = 0, lastY = 0;
+        let currentStroke = null;
+
+        fsCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const p = getPos(e);
+            lastX = p.x; lastY = p.y;
+            currentStroke = [p];
+        });
+
+        fsCanvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const p = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            lastX = p.x; lastY = p.y;
+            if (currentStroke) currentStroke.push(p);
+        });
+
+        const stopDrawing = () => {
+            if (isDrawing && currentStroke && currentStroke.length > 1) {
+                window.userFsStrokes.push(currentStroke);
+            }
+            currentStroke = null;
+            isDrawing = false;
+        };
+
+        fsCanvas.addEventListener('mouseup', stopDrawing);
+        fsCanvas.addEventListener('mouseleave', stopDrawing);
+
+        fsCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isDrawing = true;
+            const p = getPos(e);
+            lastX = p.x; lastY = p.y;
+            currentStroke = [p];
+        }, { passive: false });
+
+        fsCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const p = getPos(e);
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(p.x, p.y);
+            ctx.stroke();
+            lastX = p.x; lastY = p.y;
+            if (currentStroke) currentStroke.push(p);
+        }, { passive: false });
+
+        fsCanvas.addEventListener('touchend', stopDrawing);
+
+        document.getElementById('clearUserFsSigBtn').onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            ctx.clearRect(0, 0, fsCanvas.width, fsCanvas.height);
+            window.userFsStrokes = [];
+        };
+
+        document.getElementById('closeUserFsSigBtn').onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fsModal.style.display = 'none';
+        };
+
+        document.getElementById('saveUserFsSigBtn').onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            window.userSignatureStrokes = [...window.userFsStrokes];
+            
+            // Ocultar modal fullscreen PRIMERO
+            fsModal.style.display = 'none';
+            
+            // Copiar visualmente al canvas inline (después de cerrar el FS modal para que el inline sea visible)
+            setTimeout(() => {
+                const inlineCanvas = document.getElementById('user-signature-canvas');
+                if (inlineCanvas) {
+                    const inlineCtx = inlineCanvas.getContext('2d');
+                    const inlineRect = inlineCanvas.getBoundingClientRect();
+                    
+                    if (inlineRect.width > 0 && inlineRect.height > 0) {
+                        inlineCanvas.width = Math.round(inlineRect.width * window.devicePixelRatio);
+                        inlineCanvas.height = Math.round(inlineRect.height * window.devicePixelRatio);
+                        inlineCtx.setTransform(1, 0, 0, 1, 0, 0);
+                        inlineCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                        
+                        inlineCtx.clearRect(0, 0, inlineCanvas.width, inlineCanvas.height);
+                        
+                        if (window.userSignatureStrokes && window.userSignatureStrokes.length > 0) {
+                            inlineCtx.strokeStyle = '#1e293b';
+                            inlineCtx.lineWidth = 2.5;
+                            inlineCtx.lineCap = 'round';
+                            inlineCtx.lineJoin = 'round';
+                            
+                            // Calcular bounding box de los trazos para escalar correctamente
+                            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                            window.userSignatureStrokes.forEach(stroke => {
+                                stroke.forEach(p => {
+                                    if (p.x < minX) minX = p.x;
+                                    if (p.x > maxX) maxX = p.x;
+                                    if (p.y < minY) minY = p.y;
+                                    if (p.y > maxY) maxY = p.y;
+                                });
+                            });
+                            
+                            const sigW = maxX - minX;
+                            const sigH = maxY - minY;
+                            const padding = 8;
+                            const usableW = inlineRect.width - padding * 2;
+                            const usableH = inlineRect.height - padding * 2;
+                            
+                            const scaleX = sigW > 0 ? usableW / sigW : 1;
+                            const scaleY = sigH > 0 ? usableH / sigH : 1;
+                            const scale = Math.min(scaleX, scaleY, 1.5);
+                            
+                            const finalW = sigW * scale;
+                            const finalH = sigH * scale;
+                            const offsetX = (inlineRect.width - finalW) / 2;
+                            const offsetY = (inlineRect.height - finalH) / 2;
+                            
+                            window.userSignatureStrokes.forEach(stroke => {
+                                if (stroke.length < 2) return;
+                                inlineCtx.beginPath();
+                                inlineCtx.moveTo((stroke[0].x - minX) * scale + offsetX, (stroke[0].y - minY) * scale + offsetY);
+                                for(let i=1; i<stroke.length; i++) {
+                                    inlineCtx.lineTo((stroke[i].x - minX) * scale + offsetX, (stroke[i].y - minY) * scale + offsetY);
+                                }
+                                inlineCtx.stroke();
+                            });
+                        }
+                    }
+                }
+                
+                // Toast liviano sin usar Swal.fire (para no cerrar el modal padre de SweetAlert2)
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed;top:16px;right:16px;z-index:999999;background:#22c55e;color:#fff;padding:10px 20px;border-radius:10px;font-size:0.85rem;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,0.15);display:flex;align-items:center;gap:8px;animation:fadeIn 0.3s ease;';
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> Firma aplicada';
+                document.body.appendChild(toast);
+                setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.4s'; }, 1200);
+                setTimeout(() => toast.remove(), 1700);
+            }, 120);
+        };
+
+        fsCanvas._listenersAttached = true;
+    }
+};
+
 let gsUserList = [];
 let gsPlantList = [];
 let gsCurrentMode = 'USERS'; // 'USERS' o 'PLANTS'
@@ -162,7 +452,10 @@ function renderTable(dataToRender) {
                         <i class="fas ${isPlant ? 'fa-user-secret' : meta.icon}"></i>
                     </div>
                     <div style="flex:1; min-width:0;">
-                        <div style="font-weight:800; font-size:0.88rem; color:#0f172a; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</div>
+                        <div style="font-weight:800; font-size:0.88rem; color:#0f172a; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:flex; align-items:center; gap:6px;">
+                            ${name}
+                            ${(!isPlant && item.FIRMA_SVG) ? `<span title="Firma Registrada" style="color:#22c55e; font-size:0.8rem; display:inline-flex; align-items:center;"><i class="fas fa-file-signature"></i></span>` : ''}
+                        </div>
                         <div style="font-family:'JetBrains Mono', monospace; font-size:0.65rem; color:#94a3b8; font-weight:600;"># ${id}</div>
                     </div>
                     <span style="background:${meta.bg}; color:${meta.color}; border:1px solid ${meta.border}; padding:3px 9px; border-radius:20px; font-size:0.6rem; font-weight:800; text-transform:uppercase;">
@@ -450,6 +743,40 @@ async function openEditModal(targetId) {
                     </div>
                 </div>
             </div>
+
+            <div class="fields-section" style="margin-top:12px; margin-bottom:0;">
+                <div class="fields-section-title"><i class="fas fa-file-signature"></i> Firma Digital</div>
+                <div class="field-container-lux" style="margin-bottom:0">
+                    <div id="edit-firma-preview-container" style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                        ${entry.FIRMA_SVG ? `
+                            <div id="user-firma-svg-view" style="border:1.5px solid #e2e8f0; border-radius:10px; padding:10px; background:#fff; width:100%; display:flex; align-items:center; justify-content:center; max-height:80px; box-sizing:border-box;">
+                                ${entry.FIRMA_SVG.replace(/<svg/g, '<svg style="max-height: 60px; width: auto;"')}
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" style="font-size:0.75rem; font-weight:700;" onclick="
+                                document.getElementById('user-firma-svg-view').style.display = 'none';
+                                this.style.display = 'none';
+                                document.getElementById('user-signature-pad-wrapper').style.display = 'block';
+                                window.userSignatureCleared = true;
+                                window.initUserSignaturePad();
+                            ">✍ Restablecer Firma</button>
+                        ` : ''}
+                        
+                        <div id="user-signature-pad-wrapper" style="${entry.FIRMA_SVG ? 'display:none;' : ''} width:100%;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <span style="font-size:0.67rem; font-weight:700; color:#94a3b8; text-transform:uppercase;">Dibujar firma:</span>
+                                <div style="display: flex; gap: 4px;">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" style="font-size:0.65rem; padding:1px 6px;" onclick="window.openUserFullscreenSignature()">Pantalla Completa</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.65rem; padding:1px 6px;" onclick="window.clearUserSignaturePad()">Limpiar</button>
+                                </div>
+                            </div>
+                            <div style="border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; height:100px; position:relative; cursor:crosshair; box-sizing:border-box;">
+                                <canvas id="user-signature-canvas" style="width:100%; height:100%; display:block; touch-action:none;"></canvas>
+                            </div>
+                            <span style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:4px; display:block; text-align:center;">Dibuje aquí con su dedo o mouse</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             </div><!-- /modal-body-lux -->
         </div>
     `;
@@ -469,6 +796,105 @@ async function openEditModal(targetId) {
             if (container) container.style.padding = '0';
             const popup = document.querySelector('.edit-modal-popup');
             if (popup) { popup.style.margin = '0'; }
+
+            // Inicializador de firma digital de usuario
+            window.userSignatureStrokes = [];
+            window.userSignatureCleared = false;
+            
+            window.initUserSignaturePad = () => {
+                const canvas = document.getElementById('user-signature-canvas');
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+                let currentStroke = null;
+                
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = rect.height * window.devicePixelRatio;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                function getPos(e) {
+                    const r = canvas.getBoundingClientRect();
+                    const touch = e.touches ? e.touches[0] : e;
+                    return {
+                        x: touch.clientX - r.left,
+                        y: touch.clientY - r.top
+                    };
+                }
+                
+                canvas.addEventListener('mousedown', (e) => {
+                    isDrawing = true;
+                    const p = getPos(e);
+                    lastX = p.x; lastY = p.y;
+                    currentStroke = [p];
+                });
+                
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDrawing) return;
+                    const p = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                    lastX = p.x; lastY = p.y;
+                    if (currentStroke) currentStroke.push(p);
+                });
+                
+                const stopDrawing = () => {
+                    if (isDrawing && currentStroke && currentStroke.length > 1) {
+                        window.userSignatureStrokes.push(currentStroke);
+                    }
+                    currentStroke = null;
+                    isDrawing = false;
+                };
+                
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseleave', stopDrawing);
+                
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isDrawing = true;
+                    const p = getPos(e);
+                    lastX = p.x; lastY = p.y;
+                    currentStroke = [p];
+                }, { passive: false });
+                
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (!isDrawing) return;
+                    const p = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                    lastX = p.x; lastY = p.y;
+                    if (currentStroke) currentStroke.push(p);
+                }, { passive: false });
+                
+                canvas.addEventListener('touchend', stopDrawing);
+            };
+            
+            window.clearUserSignaturePad = () => {
+                const canvas = document.getElementById('user-signature-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                window.userSignatureStrokes = [];
+            };
+            
+            if (!entry.FIRMA_SVG) {
+                setTimeout(window.initUserSignaturePad, 100);
+            }
 
             const tel = document.getElementById('edit-telefono');
             const wrap = document.getElementById('phone-wrap');
@@ -553,6 +979,61 @@ async function openEditModal(targetId) {
             });
         },
         preConfirm: () => {
+            const getSVGFromStrokes = (strokes) => {
+                if (!strokes || strokes.length === 0) return null;
+                const W = 600;
+                const H = 150;
+                let minX = Infinity, maxX = -Infinity;
+                let minY = Infinity, maxY = -Infinity;
+                
+                strokes.forEach(stroke => {
+                    stroke.forEach(p => {
+                        if (p.x < minX) minX = p.x;
+                        if (p.x > maxX) maxX = p.x;
+                        if (p.y < minY) minY = p.y;
+                        if (p.y > maxY) maxY = p.y;
+                    });
+                });
+                
+                if (minX === Infinity || minY === Infinity) return null;
+                
+                const sigW = maxX - minX;
+                const sigH = maxY - minY;
+                const maxUsefulW = W - 40;
+                const maxUsefulH = H - 30;
+                
+                let scale = 1;
+                if (sigW > 0 || sigH > 0) {
+                    const scaleX = maxUsefulW / (sigW || 1);
+                    const scaleY = maxUsefulH / (sigH || 1);
+                    scale = Math.min(scaleX, scaleY, 1.5);
+                }
+                
+                const finalSigW = sigW * scale;
+                const finalSigH = sigH * scale;
+                const offsetX = (W - finalSigW) / 2;
+                const offsetY = (H - finalSigH) / 2;
+                
+                const paths = strokes.map(stroke => {
+                    if (stroke.length < 2) return '';
+                    const d = stroke.map((p, i) => {
+                        const x = ((p.x - minX) * scale + offsetX).toFixed(1);
+                        const y = ((p.y - minY) * scale + offsetY).toFixed(1);
+                        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                    }).join(' ');
+                    return `<path d="${d}" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+                }).join('');
+                
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}</svg>`;
+            };
+
+            let finalFirmaSvg = entry.FIRMA_SVG;
+            if (window.userSignatureCleared) {
+                finalFirmaSvg = getSVGFromStrokes(window.userSignatureStrokes);
+            } else if (!entry.FIRMA_SVG && window.userSignatureStrokes && window.userSignatureStrokes.length > 0) {
+                finalFirmaSvg = getSVGFromStrokes(window.userSignatureStrokes);
+            }
+
             return {
                 nuevoId: document.getElementById('edit-id').value.replace(/\./g, '').trim(),
                 nombre: document.getElementById('edit-nombre').value.trim(),
@@ -560,7 +1041,8 @@ async function openEditModal(targetId) {
                 telefono: document.getElementById('edit-telefono').value.replace(/\D/g, '').slice(0, 10),
                 direccion: isPlant ? document.getElementById('edit-direccion').value.trim() : null,
                 rol: document.getElementById('edit-rol').value,
-                password: document.getElementById('edit-password').value.trim()
+                password: document.getElementById('edit-password').value.trim(),
+                firma_svg: finalFirmaSvg
             };
         }
     });
@@ -581,7 +1063,8 @@ async function openEditModal(targetId) {
                 telefono: formValues.telefono,
                 direccion: formValues.direccion,
                 rol: formValues.rol,
-                password: formValues.password
+                password: formValues.password,
+                firma_svg: formValues.firma_svg
             };
 
             const response = await sendToGAS(payload);
@@ -704,6 +1187,25 @@ async function openCreateModal() {
                     </div>
                 </div>
             </div>
+
+            <div class="fields-section" style="margin-top:12px; margin-bottom:0;">
+                <div class="fields-section-title"><i class="fas fa-file-signature"></i> Firma Digital</div>
+                <div class="field-container-lux" style="margin-bottom:0">
+                    <div id="user-signature-pad-wrapper" style="width:100%;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size:0.67rem; font-weight:700; color:#94a3b8; text-transform:uppercase;">Dibujar firma:</span>
+                            <div style="display: flex; gap: 4px;">
+                                <button type="button" class="btn btn-sm btn-outline-primary" style="font-size:0.65rem; padding:1px 6px;" onclick="window.openUserFullscreenSignature()">Pantalla Completa</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" style="font-size:0.65rem; padding:1px 6px;" onclick="window.clearUserSignaturePad()">Limpiar</button>
+                            </div>
+                        </div>
+                        <div style="border:1.5px dashed #cbd5e1; border-radius:10px; background:#fff; height:100px; position:relative; cursor:crosshair; box-sizing:border-box;">
+                            <canvas id="user-signature-canvas" style="width:100%; height:100%; display:block; touch-action:none;"></canvas>
+                        </div>
+                        <span style="font-size:0.65rem; color:#94a3b8; font-style:italic; margin-top:4px; display:block; text-align:center;">Dibuje aquí con su dedo o mouse</span>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 
@@ -715,6 +1217,103 @@ async function openCreateModal() {
         width: '380px',
         customClass: { popup: 'edit-modal-popup' },
         didOpen: () => {
+            // Inicializador de firma digital de usuario
+            window.userSignatureStrokes = [];
+            window.userSignatureCleared = false;
+            
+            window.initUserSignaturePad = () => {
+                const canvas = document.getElementById('user-signature-canvas');
+                if (!canvas) return;
+                
+                const ctx = canvas.getContext('2d');
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+                let currentStroke = null;
+                
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width * window.devicePixelRatio;
+                canvas.height = rect.height * window.devicePixelRatio;
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+                
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 2.5;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                function getPos(e) {
+                    const r = canvas.getBoundingClientRect();
+                    const touch = e.touches ? e.touches[0] : e;
+                    return {
+                        x: touch.clientX - r.left,
+                        y: touch.clientY - r.top
+                    };
+                }
+                
+                canvas.addEventListener('mousedown', (e) => {
+                    isDrawing = true;
+                    const p = getPos(e);
+                    lastX = p.x; lastY = p.y;
+                    currentStroke = [p];
+                });
+                
+                canvas.addEventListener('mousemove', (e) => {
+                    if (!isDrawing) return;
+                    const p = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                    lastX = p.x; lastY = p.y;
+                    if (currentStroke) currentStroke.push(p);
+                });
+                
+                const stopDrawing = () => {
+                    if (isDrawing && currentStroke && currentStroke.length > 1) {
+                        window.userSignatureStrokes.push(currentStroke);
+                    }
+                    currentStroke = null;
+                    isDrawing = false;
+                };
+                
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseleave', stopDrawing);
+                
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    isDrawing = true;
+                    const p = getPos(e);
+                    lastX = p.x; lastY = p.y;
+                    currentStroke = [p];
+                }, { passive: false });
+                
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    if (!isDrawing) return;
+                    const p = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.stroke();
+                    lastX = p.x; lastY = p.y;
+                    if (currentStroke) currentStroke.push(p);
+                }, { passive: false });
+                
+                canvas.addEventListener('touchend', stopDrawing);
+            };
+            
+            window.clearUserSignaturePad = () => {
+                const canvas = document.getElementById('user-signature-canvas');
+                if (canvas) {
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                window.userSignatureStrokes = [];
+            };
+            
+            setTimeout(window.initUserSignaturePad, 100);
+
             const tel = document.getElementById('create-telefono');
             if (tel) {
                 tel.addEventListener('input', (e) => {
@@ -726,6 +1325,54 @@ async function openCreateModal() {
             }
         },
         preConfirm: () => {
+            const getSVGFromStrokes = (strokes) => {
+                if (!strokes || strokes.length === 0) return null;
+                const W = 600;
+                const H = 150;
+                let minX = Infinity, maxX = -Infinity;
+                let minY = Infinity, maxY = -Infinity;
+                
+                strokes.forEach(stroke => {
+                    stroke.forEach(p => {
+                        if (p.x < minX) minX = p.x;
+                        if (p.x > maxX) maxX = p.x;
+                        if (p.y < minY) minY = p.y;
+                        if (p.y > maxY) maxY = p.y;
+                    });
+                });
+                
+                if (minX === Infinity || minY === Infinity) return null;
+                
+                const sigW = maxX - minX;
+                const sigH = maxY - minY;
+                const maxUsefulW = W - 40;
+                const maxUsefulH = H - 30;
+                
+                let scale = 1;
+                if (sigW > 0 || sigH > 0) {
+                    const scaleX = maxUsefulW / (sigW || 1);
+                    const scaleY = maxUsefulH / (sigH || 1);
+                    scale = Math.min(scaleX, scaleY, 1.5);
+                }
+                
+                const finalSigW = sigW * scale;
+                const finalSigH = sigH * scale;
+                const offsetX = (W - finalSigW) / 2;
+                const offsetY = (H - finalSigH) / 2;
+                
+                const paths = strokes.map(stroke => {
+                    if (stroke.length < 2) return '';
+                    const d = stroke.map((p, i) => {
+                        const x = ((p.x - minX) * scale + offsetX).toFixed(1);
+                        const y = ((p.y - minY) * scale + offsetY).toFixed(1);
+                        return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+                    }).join(' ');
+                    return `<path d="${d}" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+                }).join('');
+                
+                return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}</svg>`;
+            };
+
             const id = document.getElementById('create-id').value.replace(/\./g, '').trim();
             const name = document.getElementById('create-nombre').value.trim();
             const email = document.getElementById('create-correo').value.trim();
@@ -739,7 +1386,8 @@ async function openCreateModal() {
             }
             return {
                 id, name, email, phone, pass, rol,
-                direccion: isPlant ? document.getElementById('create-direccion').value.trim() : null
+                direccion: isPlant ? document.getElementById('create-direccion').value.trim() : null,
+                firma_svg: getSVGFromStrokes(window.userSignatureStrokes)
             };
         }
     });
@@ -758,7 +1406,8 @@ async function openCreateModal() {
                 telefono: formValues.phone,
                 direccion: formValues.direccion,
                 rol: formValues.rol,
-                password: formValues.pass
+                password: formValues.pass,
+                firma_svg: formValues.firma_svg
             };
 
             const response = await sendToGAS(payload);

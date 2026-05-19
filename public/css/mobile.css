@@ -297,7 +297,8 @@
     #insumosList .insumo-fila,
     #corteList .insumo-fila,
     #telasList .insumo-fila,
-    #codigosList .insumo-fila {
+    #codigosList .insumo-fila,
+    #novedadModalCodigosList .insumo-fila {
         background: #f8fafc;
         padding: 0.85rem;
         border-radius: 10px;
@@ -339,6 +340,23 @@
         width: 26px !important;
         height: 26px !important;
         font-size: 0.7rem !important;
+    }
+    
+    /* Layout compacto especial para el Modal de Novedades en móvil */
+    #novedadesModalContent {
+        padding: 16px !important;
+        max-width: calc(100vw - 16px) !important;
+    }
+    
+    #novedadModalCodigosList .fila-3-cols {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+    }
+    
+    /* El tercer campo (Cantidad) ocupa el 100% (las 2 columnas) */
+    #novedadModalCodigosList .fila-3-cols .campo-dinamico:nth-child(3) {
+        grid-column: 1 / -1;
     }
 }
 

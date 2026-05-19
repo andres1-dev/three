@@ -104,9 +104,13 @@ async function cargarDatos(soloFinalizados = false) {
     try {
         await fetchSecureConfig();
 
-        const [novedades, plantas] = await Promise.all([
+        const [novedades, plantas, masterLots] = await Promise.all([
             globalNovedadesPromise || fetchNovedadesData(soloFinalizados),
-            globalPlantasPromise || fetchPlantasData()
+            globalPlantasPromise || fetchPlantasData(),
+            fetchSupabaseData('master').catch(err => {
+                console.error('[RESOLUCION] Error precargando lotes master:', err);
+                return [];
+            })
         ]);
         
         // Limpiar para que en reloads manuales se haga el fetch normal
@@ -115,7 +119,8 @@ async function cargarDatos(soloFinalizados = false) {
 
         gsNovedades = novedades;
         gsPlantas = plantas;
-        console.log("[RESOLUCION] Datos cargados:", { totalNovedades: gsNovedades.length, totalPlantas: gsPlantas.length });
+        window.gsMasterLots = masterLots || [];
+        console.log("[RESOLUCION] Datos cargados:", { totalNovedades: gsNovedades.length, totalPlantas: gsPlantas.length, totalMaster: window.gsMasterLots.length });
 
         // Verificar si hay datos
         if (!gsNovedades || gsNovedades.length === 0) {
@@ -326,7 +331,10 @@ function renderTabla(data = gsNovedades) {
         renderPaginacion(totalRecords, data);
     }
 
-    paginatedData.forEach((nov) => {
+    paginatedData.forEach((rawNov) => {
+        // Normalización case-insensitive y unificación de aliases
+        const nov = normalizeRecordKeys(rawNov);
+
         const dtIngreso = parsearFechaLatina(nov.FECHA);
         const dtSalida = nov.SALIDA ? parsearFechaLatina(nov.SALIDA) : null;
         const estadoActual = nov.ESTADO || 'PENDIENTE';
@@ -336,11 +344,20 @@ function renderTabla(data = gsNovedades) {
         // Esto mide si la planta reportó a tiempo (debe ser máximo 2 días hábiles)
         const totalDias = (dtSalida && dtIngreso) ? calcularDiasHabiles(dtSalida, dtIngreso) : 0;
 
+        // Comprobación de datos faltantes contra master
+        const loteVal = nov.LOTE || '';
+        const masterRecord = window.gsMasterLots ? window.gsMasterLots.find(m => {
+            const mNorm = normalizeRecordKeys(m);
+            return mNorm && String(mNorm.LOTE) === String(loteVal);
+        }) : null;
+        const missingData = checkMissingMasterData(nov, masterRecord);
+        const isLocked = !!missingData;
+
         const card = document.createElement('div');
         const statusClass = `status-${estadoActual.toLowerCase()}`;
-        card.className = `novedad-card-ultra ${statusClass} ${estadoActual === 'FINALIZADO' ? 'is-finalized' : ''}`;
+        card.className = `novedad-card-ultra ${statusClass} ${estadoActual === 'FINALIZADO' ? 'is-finalized' : ''} ${isLocked ? 'is-locked' : ''}`;
         card.dataset.novedadId = nov.ID_NOVEDAD;
-        card.dataset.lote      = nov.id || nov.ID || nov.LOTE || '';
+        card.dataset.lote      = loteVal;
         card.dataset.planta    = nov.PLANTA  || '';
 
         let sIcon = 'clock', sClass = 'p', sLab = 'PENDIENTE';
@@ -366,11 +383,34 @@ function renderTabla(data = gsNovedades) {
             opcionesEstado = `<option value="FINALIZADO" selected>FINALIZADO</option>`;
         }
 
-        // Deshabilitar botón de imprimir si está en PENDIENTE
-        const btnPrintDisabled = estadoActual === 'PENDIENTE' ? 'disabled' : '';
-        const btnPrintTitle = estadoActual === 'PENDIENTE' ? 'Debe cambiar a ELABORACIÓN para imprimir' : 'Imprimir documento';
+        // Deshabilitar botón de imprimir si está en PENDIENTE o si la tarjeta está bloqueada
+        const btnPrintDisabled = (estadoActual === 'PENDIENTE' || isLocked) ? 'disabled' : '';
+        const btnPrintTitle = isLocked ? 'Debe sincronizar los datos primero' : (estadoActual === 'PENDIENTE' ? 'Debe cambiar a ELABORACIÓN para imprimir' : 'Imprimir documento');
+
+        // Construir HTML del bloqueo si aplica
+        let overlayHTML = '';
+        if (isLocked) {
+            const missingDataStr = encodeURIComponent(JSON.stringify(missingData));
+            overlayHTML = `
+                <div class="locked-card-overlay">
+                    <div class="locked-card-content">
+                        <div class="locked-card-icon-container">
+                            <i class="fas fa-triangle-exclamation locked-card-warning-icon"></i>
+                        </div>
+                        <div class="locked-card-title">Datos Incompletos</div>
+                        <div class="locked-card-text">
+                            A este reporte le faltan datos técnicos del lote que están disponibles en Master. Sincronízalos para continuar.
+                        </div>
+                        <button class="btn-locked-sync" onclick="syncMissingMasterData('${nov.ID_NOVEDAD}', '${missingDataStr}', this)">
+                            <i class="fas fa-sync-alt"></i> Actualizar Datos
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
 
         card.innerHTML = `
+            ${overlayHTML}
             <div class="card-visual-ultra" onclick="${nov.IMAGEN ? `window.open('${nov.IMAGEN}', '_blank')` : ''}">
                 ${nov.IMAGEN ? `<img src="${nov.IMAGEN}">` : `
                     <div class="no-image-placeholder h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); gap: 8px;">
@@ -2191,3 +2231,263 @@ document.addEventListener('click', function(e) {
         cerrarModalEditNovedad();
     }
 });
+
+/* ── Sincronización de Datos Técnicos desde Master ── */
+
+function normalizeRecordKeys(record) {
+    if (!record) return null;
+    const norm = {};
+    for (const key in record) {
+        norm[key.toUpperCase()] = record[key];
+    }
+    
+    // Distinguir si es novedad o master para mapear LOTE y campos técnicos
+    const isNov = (record.id_novedad !== undefined || record.ID_NOVEDAD !== undefined || record.idx !== undefined);
+    
+    if (isNov) {
+        // En novedades, LOTE está en 'id', 'ID' o 'LOTE'
+        const loteVal = record.id || record.ID || record.LOTE || record.lote;
+        if (loteVal !== undefined) norm.LOTE = String(loteVal);
+
+        // Mapear fecha a ENTRADA (ya que fecha es la fecha de entrada del reporte de la novedad)
+        const fechaVal = record.fecha || record.FECHA;
+        if (fechaVal !== undefined) norm.ENTRADA = fechaVal;
+
+        // Mapear cuento a LINEA
+        const cuentoVal = record.cuento || record.CUENTO;
+        if (cuentoVal !== undefined) norm.LINEA = cuentoVal;
+    } else {
+        // En master, LOTE está en 'LOTE', 'id_master' o 'ID_MASTER'
+        const loteVal = record.LOTE || record.id_master || record.ID_MASTER;
+        if (loteVal !== undefined) norm.LOTE = String(loteVal);
+
+        // Mapear fecha_entrega o fecha a ENTRADA
+        const fechaVal = record.fecha_entrega || record.FECHA_ENTREGA || record.fecha || record.FECHA;
+        if (fechaVal !== undefined) norm.ENTRADA = fechaVal;
+
+        // Mapear cuento, linea o LINEA a LINEA
+        const cuentoVal = record.cuento || record.CUENTO || record.linea || record.LINEA;
+        if (cuentoVal !== undefined) norm.LINEA = cuentoVal;
+    }
+
+    if (record.fecha_salida !== undefined) norm.SALIDA = record.fecha_salida;
+    if (record.nombre_planta !== undefined) norm.PLANTA = record.nombre_planta;
+    if (record.id_novedad !== undefined) norm.ID_NOVEDAD = record.id_novedad;
+    
+    return norm;
+}
+
+function checkMissingMasterData(rawNov, rawMaster) {
+    if (!rawMaster) return null;
+    const nov = normalizeRecordKeys(rawNov);
+    const masterRecord = normalizeRecordKeys(rawMaster);
+
+    const fieldsToSync = [
+        { key: 'REFERENCIA', dbKey: 'referencia', placeholders: ['--', 'N/A', 'NA', '', null, undefined] },
+        { key: 'PRENDA', dbKey: 'prenda', placeholders: ['--', 'N/A', 'NA', '', null, undefined] },
+        { key: 'GENERO', dbKey: 'genero', placeholders: ['--', 'N/A', 'NA', '', null, undefined] },
+        { key: 'TEJIDO', dbKey: 'tejido', placeholders: ['--', 'N/A', 'NA', '', null, undefined] },
+        { key: 'LINEA', dbKey: 'cuento', placeholders: ['--', 'N/A', 'NA', '', null, undefined] }, // Sincroniza en la columna 'cuento' de la base de datos
+        { key: 'CANTIDAD', dbKey: 'cantidad', placeholders: ['0', 0, '--', '', null, undefined] },
+        { key: 'PROCESO', dbKey: 'proceso', placeholders: ['--', 'N/A', 'NA', '', null, undefined] },
+        { key: 'SALIDA', dbKey: 'salida', placeholders: ['--', 'N/A', 'NA', '', null, undefined] },
+        { key: 'PRODUCTORA', dbKey: 'productora', placeholders: ['', null, undefined] },
+        { key: 'PLANTA', dbKey: 'planta', placeholders: ['--', 'N/A', 'NA', '', null, undefined] }
+    ];
+
+    const missingData = {};
+    let hasMissing = false;
+
+    fieldsToSync.forEach(field => {
+        const valNov = nov[field.key];
+        const valMaster = masterRecord[field.key];
+
+        // Validar si el valor de nov es un placeholder o está vacío
+        const isNovPlaceholder = valNov === undefined || valNov === null || 
+            field.placeholders.some(p => String(valNov).trim().toUpperCase() === String(p).toUpperCase());
+
+        // Validar si el masterRecord tiene un valor real (no vacío y no placeholder)
+        const isMasterValid = valMaster !== undefined && valMaster !== null && 
+            String(valMaster).trim() !== '' &&
+            !field.placeholders.some(p => String(valMaster).trim().toUpperCase() === String(p).toUpperCase());
+
+        if (isNovPlaceholder && isMasterValid) {
+            // El master tiene el dato real, pero la novedad no lo tiene. Lo marcamos para sincronizar
+            missingData[field.dbKey] = valMaster;
+            hasMissing = true;
+        }
+    });
+
+    return hasMissing ? missingData : null;
+}
+
+async function syncMissingMasterData(idNovedad, missingDataStr, btnElement) {
+    if (!idNovedad || !missingDataStr) return;
+    
+    let missingData = {};
+    try {
+        missingData = JSON.parse(decodeURIComponent(missingDataStr));
+    } catch(e) {
+        console.error('[SYNC] Error al parsear missingData:', e);
+        return;
+    }
+
+    const originalHTML = btnElement.innerHTML;
+    btnElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+    btnElement.disabled = true;
+
+    try {
+        console.log('[SYNC] Sincronizando campos faltantes desde Master para Novedad:', idNovedad, missingData);
+        
+        let success = false;
+        let errorMsg = '';
+
+        // Estrategia 1: Actualización directa del SDK de Supabase (más rápida)
+        try {
+            const sb = getSupabaseClient();
+            if (sb) {
+                // Convertir claves a mayúsculas para inserción directa en Supabase
+                const upperFields = {};
+                for (const [k, v] of Object.entries(missingData)) {
+                    upperFields[k.toUpperCase()] = v;
+                }
+
+                const { data, error } = await sb
+                    .from('NOVEDADES')
+                    .update(upperFields)
+                    .eq('ID_NOVEDAD', idNovedad);
+
+                if (!error) {
+                    success = true;
+                    console.log('[SYNC] Sincronización exitosa vía direct SDK!');
+                } else {
+                    console.warn('[SYNC] Falló direct SDK, intentando Edge Function. Detalle:', error);
+                    errorMsg = error.message;
+                }
+            }
+        } catch (sdkErr) {
+            console.warn('[SYNC] Error intentando direct SDK, intentando Edge Function...', sdkErr);
+        }
+
+        // Estrategia 2: Fallback a Edge Function con bypass de RLS
+        if (!success) {
+            const payload = {
+                accion: 'UPDATE_NOVEDAD',
+                timestampId: idNovedad,
+                ...missingData
+            };
+            const result = await sendToSupabase(payload);
+            if (result && result.success) {
+                success = true;
+                console.log('[SYNC] Sincronización exitosa vía Edge Function!');
+            } else {
+                throw new Error(result?.message || errorMsg || 'Error desconocido');
+            }
+        }
+
+        if (success) {
+            // Obtener registro antes de actualizar la memoria para saber qué valor tenía (búsqueda case-insensitive)
+            const rawNovRecord = gsNovedades.find(n => {
+                const nID = n.id_novedad || n.ID_NOVEDAD;
+                return String(nID).toUpperCase() === String(idNovedad).toUpperCase();
+            });
+            const novRecord = normalizeRecordKeys(rawNovRecord);
+
+            // Mapeo amigable para el SweetAlert
+            const labelMap = {
+                'referencia': 'Referencia',
+                'prenda': 'Prenda/Descripción',
+                'genero': 'Género',
+                'tejido': 'Tejido',
+                'cuento': 'Línea/Cuento',
+                'cantidad': 'Cantidad de Lote',
+                'proceso': 'Proceso',
+                'salida': 'Fecha Salida',
+                'productora': 'Productora',
+                'planta': 'Planta/Taller'
+            };
+
+            const updatedFieldsHTML = Object.entries(missingData).map(([key, val]) => {
+                const label = labelMap[key] || key;
+                // Mapear la clave del payload a su clave unificada de novRecord en mayúscula
+                let lookupKey = key.toUpperCase();
+                if (lookupKey === 'CUENTO') lookupKey = 'LINEA';
+
+                const rawPrevVal = novRecord ? novRecord[lookupKey] : '';
+                const prevValDisplay = (!rawPrevVal || String(rawPrevVal).trim() === '' || String(rawPrevVal).trim() === '--') 
+                    ? '<span style="color: #94a3b8; font-style: italic;">(vacío)</span>' 
+                    : `<span style="color: #ef4444; text-decoration: line-through; font-weight: 500;">"${rawPrevVal}"</span>`;
+
+                return `
+                    <li style="margin-bottom: 8px;">
+                        <b>${label}:</b> ${prevValDisplay} 
+                        <i class="fas fa-arrow-right" style="color: #94a3b8; font-size: 0.75rem; margin: 0 8px;"></i> 
+                        <span style="color: #10b981; font-weight: 700;">"${val}"</span>
+                    </li>
+                `;
+            }).join('');
+
+            // Ahora sí, actualizar los datos en memoria local (case-insensitive y con aliases para coherencia de renderizado)
+            const novIndex = gsNovedades.findIndex(n => {
+                const nID = n.id_novedad || n.ID_NOVEDAD;
+                return String(nID).toUpperCase() === String(idNovedad).toUpperCase();
+            });
+            if (novIndex !== -1) {
+                for (const [k, v] of Object.entries(missingData)) {
+                    const upperK = k.toUpperCase();
+                    const lowerK = k.toLowerCase();
+                    gsNovedades[novIndex][upperK] = v;
+                    gsNovedades[novIndex][lowerK] = v;
+
+                    // Si actualizamos cuento, actualizar también sus aliases
+                    if (upperK === 'CUENTO') {
+                        gsNovedades[novIndex]['LINEA'] = v;
+                        gsNovedades[novIndex]['linea'] = v;
+                    }
+                }
+            }
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Sincronización Exitosa!',
+                html: `
+                    <div style="text-align: left; font-size: 0.88rem; line-height: 1.5; color: #334155; margin-top: 10px;">
+                        <p style="margin-bottom: 12px; font-weight: 600; color: #1e293b;">Se han importado los siguientes datos corregidos desde Master:</p>
+                        <ul style="padding-left: 18px; margin-bottom: 0; list-style-type: square; line-height: 1.6;">
+                            ${updatedFieldsHTML}
+                        </ul>
+                    </div>
+                `,
+                confirmButtonText: 'ENTENDIDO',
+                confirmButtonColor: '#f59e0b'
+            });
+
+            // Encontrar la tarjeta en el DOM y aplicar un desvanecimiento suave antes de re-renderizar
+            const cardEl = btnElement.closest('.novedad-card-ultra');
+            if (cardEl) {
+                cardEl.style.transition = 'all 0.4s ease';
+                cardEl.style.opacity = '0.5';
+                cardEl.style.transform = 'scale(0.98)';
+                const overlay = cardEl.querySelector('.locked-card-overlay');
+                if (overlay) {
+                    overlay.style.opacity = '0';
+                }
+            }
+
+            setTimeout(() => {
+                renderTabla();
+            }, 400);
+
+        }
+    } catch (err) {
+        console.error('[SYNC] Error al sincronizar:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Sincronización Fallida',
+            text: err.message || 'No se pudieron sincronizar los datos de Master. Intente de nuevo.',
+            confirmButtonText: 'OK'
+        });
+        btnElement.innerHTML = originalHTML;
+        btnElement.disabled = false;
+    }
+}

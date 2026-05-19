@@ -84,6 +84,9 @@ function hideSections() {
     DOM.ruteroSection()?.classList.add('hidden');
     DOM.errorMessage().classList.add('hidden');
 
+    const previosSection = document.getElementById('previosCalidadSection');
+    if (previosSection) previosSection.classList.add('hidden');
+
     // Limpiar campos del formulario de novedades
     const area = document.getElementById('area');
     const cantidadSolicitada = document.getElementById('cantidadSolicitada');
@@ -154,17 +157,52 @@ function showError(message) {
  * @param {Object[]} lots
  */
 function populatePlantaOptions(lots) {
-    const select = DOM.plantaSelect();
-    const unique = [...new Set(lots.map((l) => l.PLANTA).filter(Boolean))];
+    const datalist = document.getElementById('plantasDatalist');
+    if (!datalist) return;
 
-    select.innerHTML = '<option value="">Seleccione una planta...</option>';
+    let nombres = [];
+    // 1. Agregar plantas registradas
+    if (typeof currentPlantas !== 'undefined' && Array.isArray(currentPlantas)) {
+        currentPlantas.forEach(p => {
+            const nombre = p.PLANTA || p.planta || p.nombre || p.nombre_planta;
+            if (nombre) nombres.push(nombre.trim().toUpperCase());
+        });
+    }
+    // 2. Agregar plantas de los lotes (por si hay alguna que no esté en currentPlantas)
+    if (Array.isArray(lots)) {
+        lots.forEach(l => {
+            if (l.PLANTA) nombres.push(l.PLANTA.trim().toUpperCase());
+        });
+    }
+    // 3. CDI por defecto siempre debe existir
+    nombres.push('CDI');
 
-    unique.forEach((planta) => {
+    const uniqueNombres = [...new Set(nombres)].sort();
+
+    datalist.innerHTML = '';
+    uniqueNombres.forEach((planta) => {
         const option = document.createElement('option');
         option.value = planta;
-        option.textContent = planta;
-        select.appendChild(option);
+        datalist.appendChild(option);
     });
+
+    // Configurar el input para auto-llenar CDI
+    const plantaInput = document.getElementById('planta');
+    if (plantaInput) {
+        if (!plantaInput.value) {
+            plantaInput.value = 'CDI';
+        }
+
+        // Listener de blur para asegurar que CDI sea el valor por defecto
+        if (!plantaInput.dataset.hasCDIListener) {
+            plantaInput.addEventListener('blur', () => {
+                if (!plantaInput.value.trim()) {
+                    plantaInput.value = 'CDI';
+                }
+            });
+            plantaInput.dataset.hasCDIListener = 'true';
+        }
+    }
 }
 
 /**
@@ -174,7 +212,7 @@ function populatePlantaOptions(lots) {
 function fillLotDetails(lotData) {
     // Ocultar mensaje vacío cuando se selecciona un lote
     hideEmptyState();
-    
+
     document.getElementById('lote').value = lotData.LOTE || '';
     document.getElementById('referencia').value = lotData.REFERENCIA || '';
     document.getElementById('cantidad').value = lotData.CANTIDAD || '';
@@ -214,7 +252,488 @@ function fillLotDetails(lotData) {
     if (ruteroCantidad) ruteroCantidad.value = lotData.CANTIDAD || '';
 
     DOM.detailsSection().classList.remove('hidden');
+
+    // Cargar y mostrar reportes previos de calidad
+    if (typeof fetchAndRenderPreviousReports === 'function') {
+        fetchAndRenderPreviousReports(lotData.LOTE);
+    }
 }
+
+let _loadedPreviousReports = []; // Cache en memoria para ver/descargar rápido
+
+async function fetchAndRenderPreviousReports(loteNum) {
+    const listContainer = document.getElementById('previosCalidadList');
+    const countBadge = document.getElementById('previosCalidadCount');
+    const sectionContainer = document.getElementById('previosCalidadSection');
+
+    if (!listContainer || !sectionContainer) return;
+
+    // Mostrar estado de carga inicial
+    sectionContainer.classList.remove('hidden');
+    countBadge.textContent = '...';
+    listContainer.innerHTML = `
+        <div class="d-flex align-items-center justify-content-center p-4 text-muted" style="gap: 8px;">
+            <i class="fas fa-spinner fa-spin text-primary" style="color: #3F51B5 !important;"></i> 
+            <span style="font-size: 0.85rem; font-weight: 500;">Buscando reportes de calidad previos...</span>
+        </div>
+    `;
+
+    try {
+        // Consultar reportes para este Lote/OP
+        const reports = await fetchSupabaseData('reportes', {
+            filters: [{ column: 'id', type: 'eq', value: String(loteNum) }],
+            noCache: true
+        });
+
+        if (!reports || reports.length === 0) {
+            sectionContainer.classList.add('hidden');
+            _loadedPreviousReports = [];
+            return;
+        }
+
+        // Guardar en cache local para acceso rápido
+        _loadedPreviousReports = reports;
+
+        // Ordenar por fecha descendente
+        reports.sort((a, b) => {
+            const dateA = new Date(a.FECHA || a.fecha || 0);
+            const dateB = new Date(b.FECHA || b.fecha || 0);
+            return dateB - dateA;
+        });
+
+        countBadge.textContent = reports.length;
+        listContainer.innerHTML = '';
+
+        reports.forEach(report => {
+            const conclusion = (report.CONCLUSION || 'APROBADO').toUpperCase();
+            let bgConclusion = '#e8f5e9';
+            let colorConclusion = '#2e7d32';
+            let iconConclusion = 'fa-check-circle';
+
+            if (conclusion.includes('RECHAZADO')) {
+                bgConclusion = '#ffebee';
+                colorConclusion = '#c62828';
+                iconConclusion = 'fa-times-circle';
+            } else if (conclusion.includes('CONDICION') || conclusion.includes('PENDIENTE')) {
+                bgConclusion = '#fff3e0';
+                colorConclusion = '#ef6c00';
+                iconConclusion = 'fa-exclamation-circle';
+            }
+
+            const rawFecha = report.FECHA || report.fecha || '';
+            let fechaFormateada = rawFecha;
+            try {
+                if (rawFecha) {
+                    const dateObj = new Date(rawFecha);
+                    const options = {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true
+                    };
+                    fechaFormateada = dateObj.toLocaleString('es-CO', options);
+                }
+            } catch (e) { }
+
+            const item = document.createElement('div');
+            item.className = 'previo-reporte-item d-flex align-items-center justify-content-between p-3 border-bottom';
+            item.style.cssText = 'border-bottom: 1px solid #f1f5f9; gap: 12px; font-size: 0.9rem; transition: background 0.2s; cursor: pointer;';
+            item.addEventListener('mouseenter', () => item.style.background = '#f8fafc');
+            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+
+            item.innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${bgConclusion}; color: ${colorConclusion}; font-size: 1.1rem; flex-shrink: 0;">
+                        <i class="fas ${iconConclusion}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 700; color: #1e293b; font-size: 0.85rem;">
+                            ${report.TIPO_VISITA || 'AUDITORÍA'} 
+                            <span style="font-weight: 500; color: #64748b; font-size: 0.75rem; margin-left: 5px;">
+                                (${report.PROCESO || 'CONFECCIÓN'})
+                            </span>
+                        </div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+                            <i class="far fa-clock"></i> ${fechaFormateada}
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1" style="flex-shrink: 0;">
+                    <span class="badge" style="background: ${bgConclusion}; color: ${colorConclusion}; border-radius: 12px; font-size: 0.7rem; padding: 4px 8px; font-weight: 700; margin-right: 4px;">
+                        ${conclusion}
+                    </span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="verDescargarReportePrevio('${report.ID_REPORTE}')" style="border-radius: 6px; padding: 4px 12px; font-size: 0.75rem; border-color: #3F51B5; color: #3F51B5; font-weight: 700; display: flex; align-items: center; gap: 4px; background: transparent; transition: all 0.2s; cursor: pointer;" title="Ver Reporte">
+                        <i class="fas fa-eye"></i> Ver Reporte
+                    </button>
+                </div>
+            `;
+            listContainer.appendChild(item);
+        });
+
+    } catch (error) {
+        console.error('[Previos Calidad] Error al cargar reportes:', error);
+        listContainer.innerHTML = `
+            <div class="p-3 text-center text-danger" style="font-size: 0.8rem;">
+                <i class="fas fa-triangle-exclamation"></i> Error al cargar reportes previos
+            </div>
+        `;
+    }
+}
+
+async function uiObtenerDatosPlanta(plantaNombre) {
+    if (!plantaNombre) return { nombre: 'N/A', cedula: 'N/A' };
+    try {
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
+            },
+            body: JSON.stringify({
+                accion: 'GET_DATOS_PLANTA',
+                planta: plantaNombre
+            })
+        });
+        if (!response.ok) throw new Error('Error HTTP ' + response.status);
+        const result = await response.json();
+        if (result.success && result.data) {
+            return {
+                nombre: result.data.nombre || plantaNombre,
+                cedula: result.data.nit_cedula || 'N/A'
+            };
+        }
+        return { nombre: plantaNombre, cedula: 'N/A' };
+    } catch(e) {
+        console.error("Error al obtener datos de la planta:", e);
+        return { nombre: plantaNombre, cedula: 'N/A' };
+    }
+}
+
+async function uiObtenerDatosAuditor(email) {
+    if (!email) return { nombre: 'N/A', cedula: 'N/A' };
+    try {
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
+            },
+            body: JSON.stringify({ accion: 'RESOLVER_USUARIOS_LOGIN' })
+        });
+        if (!response.ok) throw new Error('Error HTTP ' + response.status);
+        const result = await response.json();
+        const users = result.users || [];
+        const foundUser = users.find(u => String(u.CORREO || '').toLowerCase() === String(email).toLowerCase());
+        if (foundUser) {
+            return {
+                nombre: foundUser.NOMBRE || email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                cedula: foundUser.ID_USUARIO || 'N/A'
+            };
+        }
+        const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return { nombre: username, cedula: 'N/A' };
+    } catch(e) {
+        console.error("Error al obtener datos de auditor:", e);
+        const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return { nombre: username, cedula: 'N/A' };
+    }
+}
+
+async function uiObtenerNombreProductora(productoraId) {
+    if (!productoraId) return 'N/A';
+    try {
+        const projectUrl = CONFIG.FUNCTIONS_URL.split('/functions/')[0];
+        const response = await fetch(`${projectUrl}/rest/v1/productoras?select=productora&id_productora=eq.${parseInt(productoraId)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'apikey': SUPABASE_KEY
+            }
+        });
+        if (!response.ok) throw new Error('Error HTTP ' + response.status);
+        const result = await response.json();
+        return result[0]?.productora || 'N/A';
+    } catch(e) {
+        console.error("Error al obtener productora:", e);
+        return 'N/A';
+    }
+}
+
+async function generarHtmlStandalone(reportObj) {
+    const reportNormalized = {};
+    for (const key in reportObj) {
+        reportNormalized[key.toLowerCase()] = reportObj[key];
+    }
+    
+    // Pre-fetch all metadata details
+    const productoraNombre = await uiObtenerNombreProductora(reportObj.PRODUCTORA || reportObj.productora);
+    const auditorDatos = await uiObtenerDatosAuditor(reportObj.EMAIL || reportObj.email);
+    const plantaDatos = await uiObtenerDatosPlanta(reportObj.PLANTA || reportObj.planta);
+    
+    // 1. Fetch & Base64-encode the logo to make it offline-safe and loadable in iframe
+    let logoBase64 = 'icons/app.svg';
+    try {
+        const logoResp = await fetch('icons/app.svg');
+        if (logoResp.ok) {
+            const logoBlob = await logoResp.blob();
+            logoBase64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(logoBlob);
+            });
+        }
+    } catch(e) {
+        console.error("Error al obtener logo Base64:", e);
+    }
+    
+    // 2. Fetch & Base64-encode the static map if coordinates exist, bypassing CORS/Iframe canvas issues
+    let mapBase64 = '';
+    const locStr = String(reportObj.LOCALIZACION || reportObj.localizacion || '');
+    if (locStr && locStr.includes(',')) {
+        const coords = locStr.split(',');
+        const lat = coords[0]?.trim();
+        const lon = coords[1]?.trim();
+        if (lat && lon) {
+            try {
+                const mapUrl = `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=16&l=map&size=650,300&pt=${lon},${lat},pm2rdl`;
+                const mapResp = await fetch(mapUrl);
+                if (mapResp.ok) {
+                    const mapBlob = await mapResp.blob();
+                    mapBase64 = await new Promise((resolve) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.readAsDataURL(mapBlob);
+                    });
+                }
+            } catch(e) {
+                console.error("Error al obtener mapa estático Base64:", e);
+            }
+        }
+    }
+    
+    const preloadedDatos = {
+        productoraNombre: productoraNombre,
+        auditorNombre: auditorDatos.nombre,
+        auditorCedula: auditorDatos.cedula,
+        plantaNombre: plantaDatos.nombre,
+        plantaCedula: plantaDatos.cedula,
+        mapImageBase64: mapBase64
+    };
+    
+    const response = await fetch('plantilla-impresion-calidad.html');
+    if (!response.ok) throw new Error("No se pudo cargar la plantilla de impresión.");
+    let htmlText = await response.text();
+    
+    // Inyectar el logo Base64
+    htmlText = htmlText.replace('src="icons/app.svg"', `src="${logoBase64}"`);
+    
+    // Inject the actual static report data instead of localStorage
+    const replacement = `const dataRaw = ${JSON.stringify(JSON.stringify(reportNormalized))};`;
+    htmlText = htmlText.replace("const dataRaw = localStorage.getItem('printReporteCalidad');", replacement);
+    
+    // Inject the preloadedDatos script tag right before </head>
+    const preloadedScript = `<script>window.preloadedDatos = ${JSON.stringify(preloadedDatos)};</script>`;
+    htmlText = htmlText.replace("</head>", `${preloadedScript}\n</head>`);
+    
+    return htmlText;
+}
+
+async function descargarReporteHTMLDirecto(idReporte) {
+    const reportObj = _loadedPreviousReports.find(r => r.ID_REPORTE === idReporte);
+    if (!reportObj) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se encontraron los datos del reporte.' });
+        return;
+    }
+    
+    try {
+        Swal.fire({
+            title: 'Generando HTML...',
+            html: 'Por favor espere mientras compilamos el reporte...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+        
+        const htmlContent = await generarHtmlStandalone(reportObj);
+        
+        const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_Calidad_OP_${reportObj.OP || reportObj.ID || 'Novedad'}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        Swal.close();
+    } catch(e) {
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el reporte en HTML: ' + e.message
+        });
+    }
+}
+
+async function descargarReportePDFDirecto(idReporte) {
+    const reportObj = _loadedPreviousReports.find(r => r.ID_REPORTE === idReporte);
+    if (!reportObj) {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'No se encontraron los datos del reporte.' });
+        return;
+    }
+    
+    try {
+        Swal.fire({
+            title: 'Generando PDF...',
+            html: 'Renderizando reporte en alta definición...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+        
+        // Cargar html2canvas y jsPDF si no están presentes
+        if (typeof html2canvas === 'undefined') {
+            await new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                script.onload = resolve;
+                document.head.appendChild(script);
+            });
+        }
+        if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined') {
+            await new Promise((resolve) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = resolve;
+                document.head.appendChild(script);
+            });
+        }
+        
+        const htmlContent = await generarHtmlStandalone(reportObj);
+        
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'fixed';
+        iframe.style.top = '-9999px';
+        iframe.style.left = '-9999px';
+        iframe.style.width = '800px';
+        iframe.style.height = '1600px'; 
+        document.body.appendChild(iframe);
+        
+        const doc = iframe.contentWindow.document;
+        doc.open();
+        doc.write(htmlContent);
+        doc.close();
+        
+        setTimeout(async () => {
+            const element = doc.getElementById('reporteContenedor');
+            if (!element) {
+                iframe.remove();
+                Swal.fire({ icon: 'error', title: 'Error', text: 'No se pudo encontrar el contenedor del reporte.' });
+                return;
+            }
+            
+            const buttons = doc.querySelectorAll('.no-print, button, .print-btn-area');
+            buttons.forEach(b => b.style.display = 'none');
+            
+            element.style.boxShadow = 'none';
+            element.style.margin = '0';
+            element.style.padding = '4px';
+            element.style.background = '#ffffff';
+            
+            try {
+                const canvas = await html2canvas(element, {
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = imgWidth / imgHeight;
+                
+                const pdfWidth = 215.9; // Ancho carta estándar (8.5 pulgadas en mm)
+                const margin = 5; // Margen mínimo de 5mm alrededor del reporte
+                
+                const printableWidth = pdfWidth - (margin * 2);
+                const printableHeight = printableWidth / ratio;
+                const pdfHeight = printableHeight + (margin * 2);
+                
+                const { jsPDF } = window.jspdf || window;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [pdfWidth, pdfHeight] // Tamaño de lienzo proporcional + márgenes mínimos
+                });
+                
+                pdf.addImage(imgData, 'JPEG', margin, margin, printableWidth, printableHeight, undefined, 'FAST');
+                
+                pdf.save(`Reporte_Calidad_OP_${reportObj.OP || reportObj.ID || 'Novedad'}.pdf`);
+                
+                iframe.remove();
+                Swal.close();
+                
+            } catch (err) {
+                console.error(err);
+                iframe.remove();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Error al generar la imagen del PDF: ' + err.message
+                });
+            }
+        }, 3000);
+        
+    } catch(e) {
+        console.error(e);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo generar el reporte en PDF: ' + e.message
+        });
+    }
+}
+
+function verDescargarReportePrevio(idReporte) {
+    const reportObj = _loadedPreviousReports.find(r => r.ID_REPORTE === idReporte);
+    if (!reportObj) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'No se pudo cargar el detalle del reporte.',
+            timer: 2000
+        });
+        return;
+    }
+
+    // Normalizar a minúsculas para que la plantilla lo lea correctamente
+    const reportNormalized = {};
+    for (const key in reportObj) {
+        reportNormalized[key.toLowerCase()] = reportObj[key];
+    }
+
+    // Guardar en localStorage con el formato esperado por la plantilla
+    localStorage.setItem('printReporteCalidad', JSON.stringify(reportNormalized));
+
+    // Abrir plantilla en pestaña nueva
+    window.open('plantilla-impresion-calidad.html', '_blank');
+}
+
+// Exponer funciones globalmente
+window.fetchAndRenderPreviousReports = fetchAndRenderPreviousReports;
+window.verDescargarReportePrevio = verDescargarReportePrevio;
+window.generarHtmlStandalone = generarHtmlStandalone;
+window.descargarReporteHTMLDirecto = descargarReporteHTMLDirecto;
+window.descargarReportePDFDirecto = descargarReportePDFDirecto;
+
 
 /**
  * Renderiza las sugerencias filtradas.
@@ -554,22 +1073,22 @@ function fillPlantaName() {
     } else {
         plantaValue = DOM.plantaSelect().value;
     }
-    
+
     DOM.nombrePlanta().value = plantaValue || '';
 
-    const cedulaInput   = document.getElementById('cedulaPlanta');
-    const direccionInput= document.getElementById('direccionPlanta');
+    const cedulaInput = document.getElementById('cedulaPlanta');
+    const direccionInput = document.getElementById('direccionPlanta');
     const telefonoInput = document.getElementById('telefonoPlanta');
-    const emailInput    = document.getElementById('emailPlanta');
-    
+    const emailInput = document.getElementById('emailPlanta');
+
     // Nuevos campos de ubicación
-    const paisInput         = document.getElementById('paisPlanta');
+    const paisInput = document.getElementById('paisPlanta');
     const departamentoInput = document.getElementById('departamentoPlanta');
-    const ciudadInput       = document.getElementById('ciudadPlanta');
-    const barrioInput       = document.getElementById('barrioPlanta');
+    const ciudadInput = document.getElementById('ciudadPlanta');
+    const barrioInput = document.getElementById('barrioPlanta');
     const barrioManualInput = document.getElementById('barrioPlantaManual');
-    const comunaInput       = document.getElementById('comunaPlanta');
-    const contactoInput     = document.getElementById('contactoPlanta');
+    const comunaInput = document.getElementById('comunaPlanta');
+    const contactoInput = document.getElementById('contactoPlanta');
     const localizacionInput = document.getElementById('localizacionPlanta');
 
     // Pre-llenar cédula desde currentUser (bloqueado, no editable)
@@ -584,7 +1103,7 @@ function fillPlantaName() {
         plantaData = currentPlantas.find(p =>
             (p.PLANTA || '').toString().trim().toLowerCase() === plantaValue.trim().toLowerCase()
         );
-        
+
         if (!plantaData) {
             // Planta no encontrada en currentPlantas
         }
@@ -597,39 +1116,39 @@ function fillPlantaName() {
             // NO parsear ni mostrar constructor automáticamente
             // Solo mostrar el input con la dirección guardada y el icono de edición
         }
-        if (emailInput)     emailInput.value     = plantaData.EMAIL     || '';
+        if (emailInput) emailInput.value = plantaData.EMAIL || '';
 
         const tel = String(plantaData.TELEFONO || '').replace(/\D/g, '');
         if (telefonoInput) {
             telefonoInput.value = tel.length === 10
-                ? `(${tel.slice(0,3)}) ${tel.slice(3,6)}-${tel.slice(6,10)}`
+                ? `(${tel.slice(0, 3)}) ${tel.slice(3, 6)}-${tel.slice(6, 10)}`
                 : tel;
         }
 
         // Pre-llenar campos de ubicación con timeouts escalonados
         if (paisInput) paisInput.value = plantaData.PAIS || 'Colombia';
-        
+
         if (contactoInput) contactoInput.value = plantaData.CONTACTO || '';
-        
+
         // Departamento
         if (departamentoInput && plantaData.DEPARTAMENTO) {
             departamentoInput.value = plantaData.DEPARTAMENTO;
             departamentoInput.dispatchEvent(new Event('change', { bubbles: true }));
-            
+
             // Ciudad (esperar a que se carguen las opciones)
             if (plantaData.CIUDAD) {
                 setTimeout(() => {
                     if (ciudadInput) {
                         ciudadInput.value = plantaData.CIUDAD;
                         ciudadInput.dispatchEvent(new Event('change', { bubbles: true }));
-                        
+
                         // Barrio (esperar a que se carguen las opciones)
                         if (plantaData.BARRIO) {
                             setTimeout(() => {
                                 if (barrioInput) {
                                     // Verificar si el barrio existe en el selector
                                     const barrioExists = Array.from(barrioInput.options).some(opt => opt.value === plantaData.BARRIO);
-                                    
+
                                     if (barrioExists) {
                                         barrioInput.value = plantaData.BARRIO;
                                         barrioInput.dispatchEvent(new Event('change', { bubbles: true }));
@@ -640,7 +1159,7 @@ function fillPlantaName() {
                                         barrioManualInput.style.display = 'block';
                                         barrioManualInput.required = true;
                                         barrioManualInput.value = plantaData.BARRIO;
-                                        
+
                                         // Si hay comuna y la ciudad la maneja, hacer el campo editable
                                         if (plantaData.COMUNA && typeof ciudadTieneComunas !== 'undefined' && ciudadTieneComunas(plantaData.CIUDAD)) {
                                             if (comunaInput) {
@@ -650,7 +1169,7 @@ function fillPlantaName() {
                                         }
                                     }
                                 }
-                                
+
                                 // Comuna
                                 if (comunaInput && plantaData.COMUNA) {
                                     comunaInput.value = plantaData.COMUNA;
@@ -673,38 +1192,38 @@ function fillPlantaName() {
                 }
             }, 150);
         }
-        
+
         // Coordenadas GPS y mapa
         if (localizacionInput) localizacionInput.value = plantaData.LOCALIZACION || '';
-        
+
         // Pre-llenar checkbox de notificaciones si existe el dato
         const checkNotificaciones = document.getElementById('checkNotificaciones');
         if (checkNotificaciones && plantaData.NOTIFICACIONES !== undefined) {
             checkNotificaciones.checked = plantaData.NOTIFICACIONES === true || plantaData.NOTIFICACIONES === 'true';
         }
-        
+
         // Si hay coordenadas GPS guardadas, mostrarlas en el mapa
         if (plantaData.LOCALIZACION) {
             setTimeout(() => {
                 const locInputContainer = document.getElementById('localizacionInputContainer');
                 const preguntaCard = document.getElementById('gps-pregunta-card');
                 const mapaCard = document.getElementById('gps-planta-card');
-                
+
                 if (locInputContainer) locInputContainer.style.display = 'block';
                 if (preguntaCard) preguntaCard.style.display = 'none';
-                
+
                 // Parsear coordenadas y mostrar mapa
                 const coords = plantaData.LOCALIZACION.split(',').map(c => c.trim());
                 if (coords.length === 2 && mapaCard) {
                     const lat = coords[0];
                     const lng = coords[1];
-                    
+
                     const delta = 0.0045;
                     const minLng = (parseFloat(lng) - delta).toFixed(6);
                     const minLat = (parseFloat(lat) - delta).toFixed(6);
                     const maxLng = (parseFloat(lng) + delta).toFixed(6);
                     const maxLat = (parseFloat(lat) + delta).toFixed(6);
-                    
+
                     mapaCard.style.display = 'block';
                     mapaCard.innerHTML = `
                         <div style="text-align:center;">
@@ -748,7 +1267,7 @@ function fillPlantaName() {
                 ciudadInput.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }, 150);
-        
+
         // Checkbox de notificaciones sin marcar por defecto
         const checkNotificaciones = document.getElementById('checkNotificaciones');
         if (checkNotificaciones) {
@@ -767,7 +1286,7 @@ function updateDateTime() {
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
-    
+
     DOM.fecha().value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
@@ -799,7 +1318,7 @@ let versionHistory = {};
  */
 function clearVersionHistory() {
     versionHistory = {};
-    
+
     // Ocultar todos los botones de restaurar y menús
     document.querySelectorAll('.btn-restore-text').forEach(btn => btn.style.display = 'none');
     document.querySelectorAll('.ai-history-menu').forEach(menu => menu.remove());
@@ -813,7 +1332,7 @@ function clearVersionHistory() {
 function addToHistory(fieldId, text) {
     if (!text) return;
     if (!versionHistory[fieldId]) versionHistory[fieldId] = [];
-    
+
     // Mantenemos solo las últimas 5 versiones
     if (versionHistory[fieldId].includes(text)) return;
     versionHistory[fieldId].unshift(text);
@@ -832,7 +1351,7 @@ function showHistoryMenu(fieldId, buttonEl) {
 
     const menu = document.createElement('div');
     menu.className = 'ai-history-menu';
-    
+
     // Posicionamiento dinámico cerca del botón
     const rect = buttonEl.getBoundingClientRect();
     menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
@@ -870,7 +1389,7 @@ function restaurarVersion(fieldId, index) {
     if (!textarea || !versionHistory[fieldId]) return;
 
     const selectedText = versionHistory[fieldId][index];
-    
+
     // Antes de pisar, guardamos la actual en el historial si no es igual
     const current = textarea.value.trim();
     if (current && current !== selectedText) {
@@ -878,7 +1397,7 @@ function restaurarVersion(fieldId, index) {
     }
 
     textarea.value = selectedText;
-    
+
     // Limpiar menú
     document.querySelectorAll('.ai-history-menu').forEach(menu => menu.remove());
 }
@@ -991,7 +1510,7 @@ function restaurarTextoOriginal(fieldId) {
 function initGuestCardsView() {
     const toggle = document.getElementById('viewToggle');
     const plantaFilter = document.getElementById('plantaFilter');
-    
+
     // Mostrar u ocultar el toggle y filtro según el rol (inmediatamente)
     if (currentUser && currentUser.ROL === 'GUEST') {
         if (toggle) toggle.style.display = 'flex';
@@ -1022,55 +1541,55 @@ function handlePlantaFilterSearch() {
     const input = document.getElementById('plantaFilterInput');
     const suggestions = document.getElementById('plantaSuggestions');
     const summaryPanel = document.getElementById('summaryPanel');
-    
+
     if (!input || !suggestions) return;
-    
+
     const query = input.value.toLowerCase().trim();
-    
+
     // Validar que currentLots esté disponible
     if (typeof currentLots === 'undefined' || !currentLots || currentLots.length === 0) {
         suggestions.classList.add('hidden');
         return;
     }
-    
+
     // Si no hay query, limpiar sugerencias y NO mostrar tarjetas
     if (!query) {
         suggestions.classList.add('hidden');
         suggestions.innerHTML = '';
-        
+
         // Ocultar panel de resumen
         if (summaryPanel) summaryPanel.classList.add('hidden');
-        
+
         // Limpiar tarjetas también
         const container = document.getElementById('lotesCards');
         if (container) container.innerHTML = '';
-        
+
         // Mostrar mensajes según el rol
         const isGuest = currentUser && currentUser.ROL === 'GUEST';
         const welcomeCollapse = document.querySelector('.welcome-collapse');
         const emptyStateAdmin = document.getElementById('emptyStateMessageAdmin');
-        
+
         if (isGuest) {
             if (emptyStateAdmin) emptyStateAdmin.style.display = 'none';
         } else {
             // Para ADMIN mostrar mensaje fijo
             if (emptyStateAdmin) emptyStateAdmin.style.display = 'flex';
         }
-        
+
         return;
     }
-    
+
     // Obtener plantas únicas
     const todasPlantas = [...new Set(currentLots.map(l => l.PLANTA || l.nombre_planta).filter(Boolean))];
-    
+
     // Filtrar por coincidencias
-    const plantasFiltradas = todasPlantas.filter(planta => 
+    const plantasFiltradas = todasPlantas.filter(planta =>
         planta.toLowerCase().includes(query)
     ).sort();
-    
+
     // Mostrar sugerencias
     if (plantasFiltradas.length > 0) {
-        suggestions.innerHTML = plantasFiltradas.map(planta => 
+        suggestions.innerHTML = plantasFiltradas.map(planta =>
             `<li onclick="selectPlantaFromSuggestion('${planta}')">${planta}</li>`
         ).join('');
         suggestions.classList.remove('hidden');
@@ -1086,14 +1605,14 @@ function handlePlantaFilterSearch() {
 function showPlantaSuggestions() {
     const input = document.getElementById('plantaFilterInput');
     const suggestions = document.getElementById('plantaSuggestions');
-    
+
     if (!input || !suggestions) return;
-    
+
     // Validar que currentLots esté disponible
     if (typeof currentLots === 'undefined' || !currentLots || currentLots.length === 0) {
         return;
     }
-    
+
     // Solo mostrar sugerencias si hay texto en el input
     const query = input.value.trim();
     if (query) {
@@ -1107,22 +1626,22 @@ function showPlantaSuggestions() {
 function selectPlantaFromSuggestion(planta) {
     const input = document.getElementById('plantaFilterInput');
     const suggestions = document.getElementById('plantaSuggestions');
-    
+
     if (input) input.value = planta;
     if (suggestions) {
         suggestions.classList.add('hidden');
         suggestions.innerHTML = '';
     }
-    
+
     // Renderizar tarjetas filtradas
     renderLotesCards(planta);
 }
 
 // Cerrar sugerencias al hacer click fuera
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const suggestions = document.getElementById('plantaSuggestions');
     const input = document.getElementById('plantaFilterInput');
-    
+
     if (suggestions && input && !input.contains(e.target) && !suggestions.contains(e.target)) {
         suggestions.classList.add('hidden');
     }
@@ -1143,17 +1662,17 @@ function switchLoteView(view) {
     const emptyState = document.getElementById('emptyStateMessage');
     const buttons = document.querySelectorAll('.view-toggle-btn');
     const emptyStateAdmin = document.getElementById('emptyStateMessageAdmin');
-    
+
     // Actualizar botones activos
     buttons.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.view === view);
     });
-    
+
     if (view === 'search') {
         // Mostrar búsqueda
         searchView.style.display = 'block';
         cardsView.style.display = 'none';
-        
+
         // Solo mostrar mensaje vacío si el input está vacío
         const loteInput = DOM.loteInput();
         if (loteInput && loteInput.value.trim()) {
@@ -1168,7 +1687,7 @@ function switchLoteView(view) {
         } else {
             emptyState.classList.remove('hidden');
         }
-        
+
         // Hacer focus en el input de búsqueda de lote
         setTimeout(() => {
             if (loteInput) loteInput.focus();
@@ -1189,10 +1708,10 @@ function switchLoteView(view) {
         DOM.calidadSection().classList.add('hidden');
         DOM.actualizarDatosSection().classList.add('hidden');
         DOM.ruteroSection()?.classList.add('hidden');
-        
+
         // Mostrar/ocultar mensajes según el rol
         const isGuest = currentUser && currentUser.ROL === 'GUEST';
-        
+
         if (isGuest) {
             // GUEST: ocultar mensaje de ADMIN
             if (emptyStateAdmin) emptyStateAdmin.style.display = 'none';
@@ -1201,11 +1720,11 @@ function switchLoteView(view) {
         } else {
             // ADMIN y otros: mostrar mensaje fijo
             if (emptyStateAdmin) emptyStateAdmin.style.display = 'flex';
-            
+
             // Limpiar tarjetas
             const container = document.getElementById('lotesCards');
             if (container) container.innerHTML = '';
-            
+
             // Hacer focus en el input de filtro de planta para ADMIN
             setTimeout(() => {
                 const plantaInput = document.getElementById('plantaFilterInput');
@@ -1222,16 +1741,16 @@ function switchLoteView(view) {
 function renderLotesCards(plantaFilter = null) {
     const container = document.getElementById('lotesCards');
     if (!container) return;
-    
+
     // Validar que currentLots esté disponible
     if (typeof currentLots === 'undefined' || !currentLots) {
         container.innerHTML = '';
         return;
     }
-    
+
     // Obtener lotes (ya filtrados por planta para GUEST en api.js)
     let lotesToShow = currentLots || [];
-    
+
     // Si hay filtro de planta (para ADMIN), aplicarlo
     if (plantaFilter) {
         lotesToShow = currentLots.filter(lote => {
@@ -1239,15 +1758,15 @@ function renderLotesCards(plantaFilter = null) {
             return lotePlanta.trim().toUpperCase() === plantaFilter.trim().toUpperCase();
         });
     }
-    
+
     // Referencias a los mensajes
     const emptyStateAdmin = document.getElementById('emptyStateMessageAdmin');
     const isGuest = currentUser && currentUser.ROL === 'GUEST';
-    
+
     if (lotesToShow.length === 0) {
         // Limpiar el contenedor de tarjetas
         container.innerHTML = '';
-        
+
         // Solo mostrar mensaje si NO hay filtro de planta activo
         if (!plantaFilter) {
             if (isGuest) {
@@ -1262,13 +1781,13 @@ function renderLotesCards(plantaFilter = null) {
         }
         return;
     }
-    
+
     // Si hay tarjetas, OCULTAR mensajes
     if (emptyStateAdmin) emptyStateAdmin.style.display = 'none';
-    
+
     // Actualizar resumen
     updateSummaryPanel(lotesToShow);
-    
+
     // Generar HTML de tarjetas
     container.innerHTML = lotesToShow.map(lote => {
         const lotNum = lote.LOTE || lote.OP || 'N/A';
@@ -1278,7 +1797,7 @@ function renderLotesCards(plantaFilter = null) {
         const proceso = lote.PROCESO || lote.proceso || 'Sin proceso';
         const salida = lote.SALIDA || lote.fecha_salida || '';
         const salidaFormatted = salida ? formatDate(salida) : 'Sin fecha';
-        
+
         return `
             <div class="lote-card" onclick="selectLoteFromCard('${lotNum}')">
                 <div class="lote-card-header">
@@ -1325,27 +1844,27 @@ function updateSummaryPanel(lotes) {
     const summaryPanel = document.getElementById('summaryPanel');
     const totalOPs = document.getElementById('totalOPs');
     const totalUnidades = document.getElementById('totalUnidades');
-    
+
     if (!summaryPanel || !totalOPs || !totalUnidades) return;
-    
+
     // Si no hay lotes, ocultar el panel
     if (!lotes || lotes.length === 0) {
         summaryPanel.classList.add('hidden');
         return;
     }
-    
+
     // Mostrar el panel
     summaryPanel.classList.remove('hidden');
-    
+
     // Calcular total de OPs
     totalOPs.textContent = lotes.length;
-    
+
     // Calcular total de unidades
     const sumaUnidades = lotes.reduce((sum, lote) => {
         const cantidad = parseInt(lote.CANTIDAD || lote.cantidad || 0);
         return sum + cantidad;
     }, 0);
-    
+
     totalUnidades.textContent = sumaUnidades.toLocaleString();
 }
 
@@ -1359,7 +1878,7 @@ function selectLoteFromCard(loteNum) {
         const lotId = l.LOTE || l.OP || '';
         return String(lotId).trim() === String(loteNum).trim();
     });
-    
+
     if (!lot) {
         Swal.fire({
             icon: 'error',
@@ -1369,19 +1888,19 @@ function selectLoteFromCard(loteNum) {
         });
         return;
     }
-    
+
     // Llenar el input de búsqueda
     DOM.loteInput().value = loteNum;
-    
+
     // Ocultar emptyStateMessage ya que hay contenido
     hideEmptyState();
-    
+
     // Llenar detalles del lote
     fillLotDetails(lot);
-    
+
     // Verificar registro de planta
     verificarRegistroPlanta(lot.PLANTA);
-    
+
     // Si es GUEST, activar automáticamente NOVEDADES
     if (currentUser && currentUser.ROL === 'GUEST') {
         setTimeout(() => {
@@ -1389,10 +1908,10 @@ function selectLoteFromCard(loteNum) {
             toggleActionSections('NOVEDADES');
         }, 100);
     }
-    
+
     // Cambiar a vista de búsqueda para mostrar el formulario
     switchLoteView('search');
-    
+
     // Scroll suave al formulario
     setTimeout(() => {
         const novedadesSection = document.getElementById('novedadesSection');
@@ -1432,4 +1951,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // Exponer función globalmente
-window.toggleWelcomeCollapse = () => {};
+window.toggleWelcomeCollapse = () => { };
