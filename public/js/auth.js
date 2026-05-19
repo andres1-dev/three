@@ -679,6 +679,11 @@ function createSidebar() {
             ` : ''}
         </div>
         <div class="sidebar-footer">
+            ${_PROD_SWITCH_ROLES.includes(user.ROL) ? `
+                <button onclick="window._forceChangeProductora && window._forceChangeProductora()" class="btn-change-prod">
+                    <i class="fa-solid fa-building-circle-arrow-right"></i> Cambiar Productora
+                </button>
+            ` : ''}
             <button onclick="logout()" class="btn-logout-full mb-3">
                 <i class="fas fa-power-off me-2"></i> Cerrar Sesión
             </button>
@@ -1076,3 +1081,154 @@ window.resetCredentials = async () => {
     sessionStorage.clear();
     location.reload();
 };
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Cambio de Productora — disponible en TODOS los módulos
+   Roles habilitados: ADMIN, MODERATOR, USER-C
+   ══════════════════════════════════════════════════════════════════════════ */
+
+const _PROD_SWITCH_ROLES = ['ADMIN', 'MODERATOR', 'USER-C'];
+
+/**
+ * Garantiza que el overlay de selección de productora exista en el DOM.
+ * Si ya está en el HTML (index.html) lo reutiliza; si no lo crea dinámicamente.
+ */
+function _ensureProdOverlayDOM() {
+    let overlay = document.getElementById('productora-overlay');
+    if (overlay) return overlay;
+
+    overlay = document.createElement('div');
+    overlay.id = 'productora-overlay';
+    overlay.className = 'productora-overlay';
+    overlay.style.display = 'none';
+    overlay.innerHTML = `
+        <div class="productora-container">
+            <div class="productora-header">
+                <img src="icons/app.svg" alt="Logo" class="productora-logo">
+                <h2>Seleccione su Productora</h2>
+                <p>Elige la productora con la que deseas trabajar.</p>
+            </div>
+            <div id="productora-list" class="productora-list"></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    return overlay;
+}
+
+/**
+ * Maneja la selección de una productora desde el overlay.
+ * Se expone globalmente para que el HTML inline pueda invocarlo.
+ */
+window._handleProductoraSelect = function(id, nombre) {
+    const user = window.currentUser;
+    if (!user) return;
+
+    user.ID_PRODUCTORA = parseInt(id);
+    user.PRODUCTORA    = nombre;
+
+    localStorage.setItem('busint_productora', JSON.stringify({
+        ID_PRODUCTORA: user.ID_PRODUCTORA,
+        PRODUCTORA:    user.PRODUCTORA
+    }));
+
+    // Invalidar caché para que la nueva productora se refleje
+    if (typeof invalidateCache === 'function') {
+        invalidateCache('master');
+        invalidateCache('plantas');
+    }
+
+    const overlay = document.getElementById('productora-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.25s';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            overlay.style.opacity = '';
+            overlay.style.transition = '';
+            document.body.style.overflow = '';
+
+            if (typeof window.updateAuthUI === 'function') window.updateAuthUI();
+            if (window._resolveProductora) window._resolveProductora();
+
+            // Si se llamó desde el atajo o el botón del sidebar → reload limpio
+            if (window._reloadOnProductoraSelect) {
+                window._reloadOnProductoraSelect = false;
+                window.location.reload();
+            }
+        }, 260);
+    }
+};
+
+/**
+ * Fuerza el cambio de productora mostrando el overlay bloqueante.
+ * Funciona en CUALQUIER módulo donde se cargue auth.js.
+ */
+async function _forceChangeProductora() {
+    const user = window.currentUser;
+    if (!user || !_PROD_SWITCH_ROLES.includes(user.ROL)) return;
+
+    const overlay = _ensureProdOverlayDOM();
+    const list    = document.getElementById('productora-list');
+    if (!list) return;
+
+    window._reloadOnProductoraSelect = true;
+
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+    document.body.style.overflow = 'hidden';
+
+    list.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;color:#64748b;width:100%;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem;margin-bottom:1rem;color:#3b82f6;"></i>
+            <span style="font-size:0.9rem;font-weight:500;">Cargando productoras...</span>
+        </div>
+    `;
+
+    try {
+        const anonKey = (typeof SUPABASE_KEY !== 'undefined') ? SUPABASE_KEY : '';
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': anonKey },
+            body: JSON.stringify({ accion: 'LISTAR_PRODUCTORAS' })
+        });
+        const result = response.ok ? await response.json() : { productoras: [] };
+        const prods  = result.productoras || [];
+
+        if (prods.length === 0) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            return;
+        }
+
+        list.innerHTML = prods.map(p => `
+            <div class="productora-item" onclick="_handleProductoraSelect('${p.id_productora}', '${p.productora}')">
+                <i class="fa-solid fa-building productora-bg-icon"></i>
+                <div class="productora-item-info">
+                    <span class="productora-name">${p.productora}</span>
+                    <span class="productora-nit">NIT: ${p.nit || 'N/A'}</span>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {
+        list.innerHTML = `<div style="color:#ef4444;padding:1rem;text-align:center;">Error al cargar productoras.<br>Intenta de nuevo.</div>`;
+    }
+}
+
+window._forceChangeProductora = _forceChangeProductora;
+
+// Atajo Ctrl+S / Cmd+S → cambiar productora (ADMIN, MODERATOR, USER-C)
+if (!window.__prodSwitchKeyListenerAdded) {
+    window.__prodSwitchKeyListenerAdded = true;
+    window.addEventListener('keydown', function(e) {
+        const isMac      = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifier   = isMac ? e.metaKey : e.ctrlKey;
+        if (modifier && e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            const user = window.currentUser;
+            if (user && _PROD_SWITCH_ROLES.includes(user.ROL)) {
+                _forceChangeProductora();
+            }
+        }
+    });
+}
+

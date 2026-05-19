@@ -184,48 +184,13 @@ async function _ensureProductora() {
     }
 }
 
-/**
- * Maneja la selección de una productora desde el overlay.
- */
-window._handleProductoraSelect = function(id, nombre) {
-    const user = window.currentUser;
-    if (!user) return;
-
-    user.ID_PRODUCTORA = parseInt(id);
-    user.PRODUCTORA    = nombre;
-
-    // Persistir
-    localStorage.setItem('busint_productora', JSON.stringify({
-        ID_PRODUCTORA: user.ID_PRODUCTORA,
-        PRODUCTORA:    user.PRODUCTORA
-    }));
-
-    // Invalidar caché porque la productora acaba de cambiar manualmente
-    if (typeof invalidateCache === 'function') {
-        invalidateCache('master');
-        invalidateCache('plantas');
-    }
-
-    // Ocultar overlay
-    const overlay = document.getElementById('productora-overlay');
-    if (overlay) {
-        overlay.style.opacity = '0';
-        setTimeout(() => {
-            overlay.style.display = 'none';
-            document.body.style.overflow = '';
-            
-            // ACTUALIZACIÓN CRÍTICA: Refrescar la UI de navegación con la productora seleccionada
-            if (typeof window.updateAuthUI === 'function') {
-                window.updateAuthUI();
-            }
-            
-            if (window._resolveProductora) window._resolveProductora();
-        }, 300);
-    }
-};
+// _handleProductoraSelect, _forceChangeProductora y el listener Ctrl+S
+// están ahora centralizados en auth.js (disponibles en todos los módulos).
 
 function _selectProductora(prod) {
-    window._handleProductoraSelect(prod.id_productora, prod.productora);
+    if (typeof window._handleProductoraSelect === 'function') {
+        window._handleProductoraSelect(prod.id_productora, prod.productora);
+    }
 }
 
 /**
