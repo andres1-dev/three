@@ -85,8 +85,14 @@ window.openUserFullscreenSignature = () => {
     function resizeFsCanvas() {
         const wrapper = document.getElementById('userFsCanvasWrapper');
         const rect = wrapper ? wrapper.getBoundingClientRect() : fsCanvas.getBoundingClientRect();
-        fsCanvas.width = Math.round(rect.width * window.devicePixelRatio);
-        fsCanvas.height = Math.round(rect.height * window.devicePixelRatio);
+        if (!rect.width || !rect.height) return;
+
+        const isPortrait = window.innerHeight > window.innerWidth;
+        const w = isPortrait ? rect.height : rect.width;
+        const h = isPortrait ? rect.width : rect.height;
+
+        fsCanvas.width = Math.round(w * window.devicePixelRatio);
+        fsCanvas.height = Math.round(h * window.devicePixelRatio);
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         ctx.strokeStyle = '#1e293b';
@@ -335,6 +341,7 @@ function switchAdminMode(mode) {
 function cargarDatosLocales() {
     const loader = document.getElementById('loader');
     const dataSection = document.getElementById('dataSection');
+    const controls = document.getElementById('usuariosHeaderControls');
     if (!loader || !dataSection) return;
 
     try {
@@ -349,6 +356,7 @@ function cargarDatosLocales() {
 
         if (loader) loader.style.display = 'none';
         if (dataSection) dataSection.style.display = 'block';
+        if (controls) controls.style.display = 'block';
     } catch (error) {
         console.error("[USUARIOS-UI] Error al cargar datos en la interfaz:", error);
     }
@@ -552,6 +560,19 @@ async function openEditModal(targetId) {
         return;
     }
 
+    let productorasList = [];
+    try {
+        productorasList = JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+    } catch(_) {}
+    if (!productorasList.length) {
+        productorasList = [
+            { id_productora: 1, productora: 'TEXTILES Y CREACIONES EL UNIVERSO S.A.S.' },
+            { id_productora: 2, productora: 'TEXTILES Y CREACIONES LOS ANGELES S.A.S.' },
+            { id_productora: 3, productora: 'HACEMOS MODA S.A.S.' },
+            { id_productora: 4, productora: 'INVERSIONES URBANA S.A.S.' }
+        ];
+    }
+
     // Para usuarios, continuar con el modal actual
     const dataList = gsUserList;
 
@@ -727,6 +748,20 @@ async function openEditModal(targetId) {
                     </div>
                     `}
                 </div>
+
+                ${!isPlant ? `
+                <div class="field-container-lux" style="margin-top: 10px;">
+                    <label class="label-lux"><i class="fas fa-building"></i> Productora / Planta</label>
+                    <select id="edit-productora" class="input-lux">
+                        <option value="">-- Sin Productora Asignada --</option>
+                        ${productorasList.map(p => `
+                            <option value="${p.id_productora}" ${String(entry.ID_PRODUCTORA || entry.id_productora || '').trim() === String(p.id_productora).trim() ? 'selected' : ''}>
+                                ${p.productora}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+                ` : ''}
 
                 <div class="field-container-lux" style="margin-bottom:0">
                     <label class="label-lux"><i class="fas fa-key"></i> Contraseña</label>
@@ -1042,7 +1077,8 @@ async function openEditModal(targetId) {
                 direccion: isPlant ? document.getElementById('edit-direccion').value.trim() : null,
                 rol: document.getElementById('edit-rol').value,
                 password: document.getElementById('edit-password').value.trim(),
-                firma_svg: finalFirmaSvg
+                firma_svg: finalFirmaSvg,
+                id_productora: document.getElementById('edit-productora') ? document.getElementById('edit-productora').value : null
             };
         }
     });
@@ -1064,7 +1100,9 @@ async function openEditModal(targetId) {
                 direccion: formValues.direccion,
                 rol: formValues.rol,
                 password: formValues.password,
-                firma_svg: formValues.firma_svg
+                firma_svg: formValues.firma_svg,
+                id_productora: formValues.id_productora ? parseInt(formValues.id_productora) : null,
+                productora: formValues.id_productora ? (productorasList.find(p => String(p.id_productora) === String(formValues.id_productora))?.productora || null) : null
             };
 
             const response = await sendToGAS(payload);
@@ -1094,6 +1132,19 @@ async function openCreateModal() {
     if (isPlant) {
         window.location.href = 'gestion-planta.html';
         return;
+    }
+
+    let productorasList = [];
+    try {
+        productorasList = JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+    } catch(_) {}
+    if (!productorasList.length) {
+        productorasList = [
+            { id_productora: 1, productora: 'TEXTILES Y CREACIONES EL UNIVERSO S.A.S.' },
+            { id_productora: 2, productora: 'TEXTILES Y CREACIONES LOS ANGELES S.A.S.' },
+            { id_productora: 3, productora: 'HACEMOS MODA S.A.S.' },
+            { id_productora: 4, productora: 'INVERSIONES URBANA S.A.S.' }
+        ];
     }
 
     // Para usuarios, continuar con el modal actual
@@ -1181,6 +1232,17 @@ async function openCreateModal() {
                             `}
                         </select>
                     </div>
+                    ${!isPlant ? `
+                    <div class="field-container-lux">
+                        <label class="label-lux"><i class="fas fa-building"></i> Productora / Planta</label>
+                        <select id="create-productora" class="input-lux">
+                            <option value="">-- Sin Productora Asignada --</option>
+                            ${productorasList.map(p => `
+                                <option value="${p.id_productora}">${p.productora}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    ` : ''}
                     <div class="field-container-lux" style="margin-bottom:0">
                         <label class="label-lux"><i class="fas fa-lock"></i> Contraseña</label>
                         <input type="password" id="create-password" class="input-lux" placeholder="Defina una clave">
@@ -1387,7 +1449,8 @@ async function openCreateModal() {
             return {
                 id, name, email, phone, pass, rol,
                 direccion: isPlant ? document.getElementById('create-direccion').value.trim() : null,
-                firma_svg: getSVGFromStrokes(window.userSignatureStrokes)
+                firma_svg: getSVGFromStrokes(window.userSignatureStrokes),
+                id_productora: document.getElementById('create-productora') ? document.getElementById('create-productora').value : null
             };
         }
     });
@@ -1407,7 +1470,9 @@ async function openCreateModal() {
                 direccion: formValues.direccion,
                 rol: formValues.rol,
                 password: formValues.pass,
-                firma_svg: formValues.firma_svg
+                firma_svg: formValues.firma_svg,
+                id_productora: formValues.id_productora ? parseInt(formValues.id_productora) : null,
+                productora: formValues.id_productora ? (productorasList.find(p => String(p.id_productora) === String(formValues.id_productora))?.productora || null) : null
             };
 
             const response = await sendToGAS(payload);

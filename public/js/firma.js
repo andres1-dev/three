@@ -160,8 +160,12 @@ const FirmaTaller = {
             const rect    = wrapper ? wrapper.getBoundingClientRect() : self.fsCanvas.getBoundingClientRect();
             if (!rect.width || !rect.height) return;
 
-            self.fsCanvas.width  = Math.round(rect.width  * window.devicePixelRatio);
-            self.fsCanvas.height = Math.round(rect.height * window.devicePixelRatio);
+            const isPortrait = window.innerHeight > window.innerWidth;
+            const w = isPortrait ? rect.height : rect.width;
+            const h = isPortrait ? rect.width : rect.height;
+
+            self.fsCanvas.width  = Math.round(w  * window.devicePixelRatio);
+            self.fsCanvas.height = Math.round(h * window.devicePixelRatio);
             self.fsCtx.setTransform(1, 0, 0, 1, 0, 0);
             self.fsCtx.scale(window.devicePixelRatio, window.devicePixelRatio);
             self.fsCtx.strokeStyle = '#1e293b';

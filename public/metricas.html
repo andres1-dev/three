@@ -77,9 +77,60 @@
 </head>
 <body>
     <div id="loaderOverlay">
-        <i class="fas fa-circle-notch fa-spin" style="font-size: 3rem; color: #3b82f6; margin-bottom: 1rem;"></i>
-        <h3 style="font-weight: 700; color: #1e293b; margin: 0;">Cargando Métricas...</h3>
-        <p style="color: #64748b;">Obteniendo datos completos del sistema.</p>
+        <style>
+            @keyframes skeleton-loading {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+            .skeleton-box {
+                background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+                border-radius: 8px;
+            }
+        </style>
+        <div style="width: 90%; max-width: 1200px; padding: 2rem; display: flex; flex-direction: column; gap: 24px;">
+            <!-- Header skeleton -->
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div class="skeleton-box" style="width: 250px; height: 32px; margin-bottom: 8px;"></div>
+                    <div class="skeleton-box" style="width: 400px; height: 16px;"></div>
+                </div>
+                <div class="skeleton-box" style="width: 150px; height: 36px; border-radius: 20px;"></div>
+            </div>
+
+            <!-- Stats grid skeleton -->
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display:flex; flex-direction:column; gap:10px;">
+                    <div class="skeleton-box" style="width: 60%; height: 12px;"></div>
+                    <div class="skeleton-box" style="width: 40%; height: 28px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display:flex; flex-direction:column; gap:10px;">
+                    <div class="skeleton-box" style="width: 70%; height: 12px;"></div>
+                    <div class="skeleton-box" style="width: 50%; height: 28px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display:flex; flex-direction:column; gap:10px;">
+                    <div class="skeleton-box" style="width: 50%; height: 12px;"></div>
+                    <div class="skeleton-box" style="width: 30%; height: 28px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display:flex; flex-direction:column; gap:10px;">
+                    <div class="skeleton-box" style="width: 80%; height: 12px;"></div>
+                    <div class="skeleton-box" style="width: 45%; height: 28px;"></div>
+                </div>
+            </div>
+
+            <!-- Charts skeleton -->
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px;">
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 20px; height: 350px; display:flex; flex-direction:column; gap:15px;">
+                    <div class="skeleton-box" style="width: 40%; height: 16px; margin-bottom:10px;"></div>
+                    <div class="skeleton-box" style="width: 100%; flex:1; border-radius:12px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 20px; height: 350px; display:flex; flex-direction:column; gap:15px;">
+                    <div class="skeleton-box" style="width: 30%; height: 16px; margin-bottom:10px;"></div>
+                    <div class="skeleton-box" style="width: 100%; flex:1; border-radius:12px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="wrapper-dashboard" style="display: none;" id="mainDashboard">

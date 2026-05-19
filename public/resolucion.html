@@ -1430,61 +1430,128 @@
 
 
     <div class="wrapper-dashboard">
-        <!-- ── KPI Chips ── -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
-                <span>Indicadores</span>
-                <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="kpiChevron"></i>
-            </button>
-            <div style="display:flex; gap:12px;">
-                <a href="metricas.html" id="btn-metricas" title="Ver Dashboard de Métricas" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px 0;color:#3b82f6;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;-webkit-tap-highlight-color:transparent;" data-role-min="USER-P">
-                    <i class="fas fa-chart-pie"></i>
-                    <span>Dashboard</span>
-                </a>
-                <button onclick="gsCurrentPage=1;_toggleFinalizados()" id="btn-toggle-cerradas" title="Ver cerradas" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;-webkit-tap-highlight-color:transparent;">
-                    <i class="fas fa-eye" id="icon-toggle-cerradas"></i>
-                    <span id="label-toggle-cerradas">Cerradas</span>
+        <!-- Controles de Filtros y KPIs agrupados (ocultos durante la carga inicial) -->
+        <div id="resolucionHeaderControls" style="display: none;">
+            <!-- ── KPI Chips ── -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()" style="display:flex;align-items:center;gap:6px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">
+                    <span>Indicadores</span>
+                    <i class="fas fa-chevron-down" style="font-size:0.6rem;transition:transform 0.2s;" id="kpiChevron"></i>
                 </button>
+                <div style="display:flex; gap:12px;">
+                    <a href="metricas.html" id="btn-metricas" title="Ver Dashboard de Métricas" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px 0;color:#3b82f6;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;text-decoration:none;-webkit-tap-highlight-color:transparent;" data-role-min="USER-P">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <button onclick="gsCurrentPage=1;_toggleFinalizados()" id="btn-toggle-cerradas" title="Ver cerradas" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:4px 0;color:#94a3b8;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;-webkit-tap-highlight-color:transparent;">
+                        <i class="fas fa-eye" id="icon-toggle-cerradas"></i>
+                        <span id="label-toggle-cerradas">Cerradas</span>
+                    </button>
+                </div>
             </div>
+
+            <div id="kpiContainer" style="display:none;grid-template-columns:repeat(3,1fr);gap:1px;margin-bottom:20px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
+                <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                    <span style="font-size:1.1rem;font-weight:800;color:#f59e0b;" id="stat-pending">0</span>
+                    <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Pendientes</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
+                    <span style="font-size:1.1rem;font-weight:800;color:#3b82f6;" id="stat-process">0</span>
+                    <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Elaboración</span>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
+                    <span style="font-size:1.1rem;font-weight:800;color:#10b981;" id="stat-done">0</span>
+                    <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Cerradas</span>
+                </div>
+            </div>
+
+            <!-- IDs de compatibilidad ocultos para el JS existente -->
+            <span id="stat-pending-qty" style="display:none;">0</span>
+            <span id="stat-process-qty" style="display:none;">0</span>
+            <span id="stat-done-qty" style="display:none;">0</span>
+            <span id="m-stat-pending" style="display:none;">0</span>
+            <span id="m-stat-process" style="display:none;">0</span>
+            <span id="m-stat-done" style="display:none;">0</span>
+
+            <!-- ── Search ── -->
+            <div class="input-with-icon mb-3">
+                <i class="codicon codicon-search input-icon"></i>
+                <input type="text" id="searchInput" class="form-control" style="border-radius:20px;"
+                    placeholder="Filtrar por lote, planta, radicado o descripción..." oninput="handleFilter()">
+            </div>
+
+            <!-- input oculto para compatibilidad con JS -->
+            <input type="checkbox" id="toggleFinalizados" style="display:none;" onchange="gsCurrentPage=1; renderTabla()">
         </div>
-
-        <div id="kpiContainer" style="display:none;grid-template-columns:repeat(3,1fr);gap:1px;margin-bottom:20px;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;">
-            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
-                <span style="font-size:1.1rem;font-weight:800;color:#f59e0b;" id="stat-pending">0</span>
-                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Pendientes</span>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;border-right:1px solid #e2e8f0;">
-                <span style="font-size:1.1rem;font-weight:800;color:#3b82f6;" id="stat-process">0</span>
-                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Elaboración</span>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;padding:10px 8px;gap:2px;">
-                <span style="font-size:1.1rem;font-weight:800;color:#10b981;" id="stat-done">0</span>
-                <span style="font-size:0.58rem;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.04em;">Cerradas</span>
-            </div>
-        </div>
-
-        <!-- IDs de compatibilidad ocultos para el JS existente -->
-        <span id="stat-pending-qty" style="display:none;">0</span>
-        <span id="stat-process-qty" style="display:none;">0</span>
-        <span id="stat-done-qty" style="display:none;">0</span>
-        <span id="m-stat-pending" style="display:none;">0</span>
-        <span id="m-stat-process" style="display:none;">0</span>
-        <span id="m-stat-done" style="display:none;">0</span>
-
-        <!-- ── Search ── -->
-        <div class="input-with-icon mb-3">
-            <i class="codicon codicon-search input-icon"></i>
-            <input type="text" id="searchInput" class="form-control" style="border-radius:20px;"
-                placeholder="Filtrar por lote, planta, radicado o descripción..." oninput="handleFilter()">
-        </div>
-
-        <!-- input oculto para compatibilidad con JS -->
-        <input type="checkbox" id="toggleFinalizados" style="display:none;" onchange="gsCurrentPage=1; renderTabla()">
 
         <!-- ── Main Feed ── -->
-        <div id="loader" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-3 text-muted fw-bold">SINCRONIZANDO DATOS...</p>
+        <div id="loader" class="py-3">
+            <style>
+                @keyframes skeleton-loading {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+                .skeleton-card {
+                    background: white;
+                    border: 1px solid #f1f5f9;
+                    border-radius: 16px;
+                    padding: 1.25rem;
+                    margin-bottom: 16px;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+                }
+                .skeleton-line {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+            </style>
+
+            <!-- Top Controls Row Skeleton -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div class="skeleton-line" style="width: 100px; height: 24px; border-radius: 12px;"></div>
+                <div style="display: flex; gap: 8px;">
+                    <div class="skeleton-line" style="width: 80px; height: 24px; border-radius: 12px;"></div>
+                    <div class="skeleton-line" style="width: 80px; height: 24px; border-radius: 12px;"></div>
+                </div>
+            </div>
+
+            <!-- KPI Cards Skeleton -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px;">
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; display:flex; flex-direction:column; gap:6px; align-items:center;">
+                    <div class="skeleton-line" style="width: 30%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 50%; height: 10px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; display:flex; flex-direction:column; gap:6px; align-items:center;">
+                    <div class="skeleton-line" style="width: 30%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 50%; height: 10px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 10px; border-radius: 12px; display:flex; flex-direction:column; gap:6px; align-items:center;">
+                    <div class="skeleton-line" style="width: 30%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 50%; height: 10px;"></div>
+                </div>
+            </div>
+
+            <!-- Search Bar Skeleton -->
+            <div class="skeleton-line" style="width: 100%; height: 45px; margin-bottom: 24px; border-radius: 20px;"></div>
+            <div class="skeleton-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                    <div class="skeleton-line" style="width: 30%; height: 16px;"></div>
+                    <div class="skeleton-line" style="width: 15%; height: 16px;"></div>
+                </div>
+                <div class="skeleton-line" style="width: 80%; height: 24px; margin-bottom:12px;"></div>
+                <div class="skeleton-line" style="width: 100%; height: 14px; margin-bottom:8px;"></div>
+                <div class="skeleton-line" style="width: 60%; height: 14px;"></div>
+            </div>
+            <div class="skeleton-card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+                    <div class="skeleton-line" style="width: 25%; height: 16px;"></div>
+                    <div class="skeleton-line" style="width: 20%; height: 16px;"></div>
+                </div>
+                <div class="skeleton-line" style="width: 70%; height: 24px; margin-bottom:12px;"></div>
+                <div class="skeleton-line" style="width: 90%; height: 14px; margin-bottom:8px;"></div>
+                <div class="skeleton-line" style="width: 45%; height: 14px;"></div>
+            </div>
         </div>
 
         <div id="dataSection" style="display: none;">

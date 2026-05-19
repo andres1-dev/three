@@ -122,8 +122,10 @@ function hideSections() {
  * Muestra el indicador de sincronización y oculta el error.
  */
 function showLoader() {
-    const el = DOM.loader();
+    const el = document.getElementById('index-skeleton');
     if (el) el.style.display = 'block';
+    const form = DOM.mainForm();
+    if (form) form.style.display = 'none';
     const err = DOM.errorMessage();
     if (err) err.classList.add('hidden');
 }
@@ -132,8 +134,10 @@ function showLoader() {
  * Oculta el indicador de sincronización.
  */
 function hideLoaderShowForm() {
-    const el = DOM.loader();
+    const el = document.getElementById('index-skeleton');
     if (el) el.style.display = 'none';
+    const form = DOM.mainForm();
+    if (form) form.style.display = 'block';
 }
 
 /**
@@ -146,8 +150,8 @@ function showError(message) {
         el.textContent = message;
         el.classList.remove('hidden');
     }
-    const loader = DOM.loader();
-    if (loader) loader.style.display = 'none';
+    const skel = document.getElementById('index-skeleton');
+    if (skel) skel.style.display = 'block';
 }
 
 /* ── Poblar elementos del DOM ── */
@@ -272,9 +276,42 @@ async function fetchAndRenderPreviousReports(loteNum) {
     sectionContainer.classList.remove('hidden');
     countBadge.textContent = '...';
     listContainer.innerHTML = `
-        <div class="d-flex align-items-center justify-content-center p-4 text-muted" style="gap: 8px;">
-            <i class="fas fa-spinner fa-spin text-primary" style="color: #3F51B5 !important;"></i> 
-            <span style="font-size: 0.85rem; font-weight: 500;">Buscando reportes de calidad previos...</span>
+        <div class="skeleton-previous-reports" style="padding:10px 0; width:100%; display:flex; flex-direction:column; gap:10px;">
+            <style>
+                @keyframes skeleton-loading {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+                .skeleton-report-card {
+                    background: white;
+                    border-radius: 8px;
+                    border: 1px solid #e2e8f0;
+                    padding: 12px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .skeleton-line {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 4px;
+                }
+            </style>
+            <div class="skeleton-report-card">
+                <div style="flex:1;">
+                    <div class="skeleton-line" style="width:60%; height:14px; margin-bottom:6px;"></div>
+                    <div class="skeleton-line" style="width:40%; height:11px;"></div>
+                </div>
+                <div class="skeleton-line" style="width:70px; height:20px; border-radius:12px;"></div>
+            </div>
+            <div class="skeleton-report-card">
+                <div style="flex:1;">
+                    <div class="skeleton-line" style="width:50%; height:14px; margin-bottom:6px;"></div>
+                    <div class="skeleton-line" style="width:30%; height:11px;"></div>
+                </div>
+                <div class="skeleton-line" style="width:70px; height:20px; border-radius:12px;"></div>
+            </div>
         </div>
     `;
 

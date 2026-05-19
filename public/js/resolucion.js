@@ -100,6 +100,9 @@ function toggleCompactView() {
 async function cargarDatos(soloFinalizados = false) {
     const loader = document.getElementById('loader');
     const section = document.getElementById('dataSection');
+    const headerControls = document.getElementById('resolucionHeaderControls');
+
+    if (headerControls) headerControls.style.display = 'none';
 
     try {
         await fetchSecureConfig();
@@ -150,6 +153,7 @@ async function cargarDatos(soloFinalizados = false) {
         renderTabla(gsNovedades);
         if (loader) loader.style.display = 'none';
         if (section) section.style.display = 'block';
+        if (headerControls) headerControls.style.display = 'block';
 
         // Iniciar badges de chat no leídos para USER-P/ADMIN
         if (typeof initChatBadges === 'function') {

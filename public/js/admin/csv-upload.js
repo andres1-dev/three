@@ -8,8 +8,8 @@ let csvUploadModal = null;
    Botón flotante CSV (solo para ADMIN)
    ══════════════════════════════════════════════════════════════════════════ */
 function createFloatingCSVButton() {
-  // Solo crear si el usuario es ADMIN
-  if (!currentUser || currentUser.ROL !== 'ADMIN') return;
+  // Solo crear si el usuario es ADMIN o USER-P
+  if (!currentUser || (currentUser.ROL !== 'ADMIN' && currentUser.ROL !== 'USER-P')) return;
 
   // Verificar si ya existe
   if (document.getElementById('floating-csv-btn-main')) return;

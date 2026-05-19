@@ -252,72 +252,181 @@
         <div class="text-center text-lg-start mb-3">
         </div>
 
-        <!-- ── KPI Row ── -->
-        <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()">
-            <span>Indicadores</span>
-            <i class="fas fa-chevron-down"></i>
-        </button>
+        <!-- Controles de Filtros y KPIs agrupados (ocultos durante la carga inicial) -->
+        <div id="calidadHeaderControls" style="display: none;">
+            <!-- ── KPI Row ── -->
+            <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()">
+                <span>Indicadores</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
 
-        <div class="kpi-compact-row" id="kpiContainer">
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" id="kpi-total">0</span>
-                <span class="kpi-chip-lab">Total</span>
+            <div class="kpi-compact-row" id="kpiContainer">
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" id="kpi-total">0</span>
+                    <span class="kpi-chip-lab">Total</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#10b981;" id="kpi-ok">0</span>
+                    <span class="kpi-chip-lab">Aprobados</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#ef4444;" id="kpi-rejected">0</span>
+                    <span class="kpi-chip-lab">Rechazados</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#f97316;" id="kpi-plants">0</span>
+                    <span class="kpi-chip-lab">Plantas</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#8b5cf6;" id="kpi-audit">0</span>
+                    <span class="kpi-chip-lab">Auditorías</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#06b6d4;" id="kpi-ronda">0</span>
+                    <span class="kpi-chip-lab">Rondas</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#f59e0b;" id="kpi-contramuestra">0</span>
+                    <span class="kpi-chip-lab">Contramuestras</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#ec4899;" id="kpi-seguimiento">0</span>
+                    <span class="kpi-chip-lab">Seguimientos</span>
+                </div>
             </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#10b981;" id="kpi-ok">0</span>
-                <span class="kpi-chip-lab">Aprobados</span>
-            </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#ef4444;" id="kpi-rejected">0</span>
-                <span class="kpi-chip-lab">Rechazados</span>
-            </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#f97316;" id="kpi-plants">0</span>
-                <span class="kpi-chip-lab">Plantas</span>
-            </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#8b5cf6;" id="kpi-audit">0</span>
-                <span class="kpi-chip-lab">Auditorías</span>
-            </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#06b6d4;" id="kpi-ronda">0</span>
-                <span class="kpi-chip-lab">Rondas</span>
-            </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#f59e0b;" id="kpi-contramuestra">0</span>
-                <span class="kpi-chip-lab">Contramuestras</span>
-            </div>
-            <div class="kpi-chip">
-                <span class="kpi-chip-val" style="color:#ec4899;" id="kpi-seguimiento">0</span>
-                <span class="kpi-chip-lab">Seguimientos</span>
-            </div>
-        </div>
 
-        <!-- ── Toolbar with Filters ── -->
-        <div class="toolbar-container">
-            <div class="input-with-icon" style="flex:1;">
-                <i class="codicon codicon-search input-icon"></i>
-                <input type="text" id="searchInput" class="form-control"
-                    placeholder="Buscar por lote, referencia, planta..." oninput="handleSearch()">
-            </div>
-            <div class="input-with-icon" style="flex:1;">
-                <i class="codicon codicon-calendar input-icon"></i>
-                <input type="text" id="dateRangePicker" class="form-control"
-                    placeholder="Rango de fechas" readonly style="cursor:pointer;">
+            <!-- ── Toolbar with Filters ── -->
+            <div class="toolbar-container">
+                <div class="input-with-icon" style="flex:1;">
+                    <i class="codicon codicon-search input-icon"></i>
+                    <input type="text" id="searchInput" class="form-control"
+                        placeholder="Buscar por lote, referencia, planta..." oninput="handleSearch()">
+                </div>
+                <div class="input-with-icon" style="flex:1;">
+                    <i class="codicon codicon-calendar input-icon"></i>
+                    <input type="text" id="dateRangePicker" class="form-control"
+                        placeholder="Rango de fechas" readonly style="cursor:pointer;">
+                </div>
             </div>
         </div>
 
         <!-- ── Módulo Principal ── -->
-        <div id="initialLoader" class="text-center py-5">
-            <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-3 text-muted fw-bold">SINCRONIZANDO REPORTES...</p>
+        <div id="initialLoader" class="py-3">
+            <style>
+                @keyframes skeleton-loading {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+                .skeleton-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                    gap: 16px;
+                }
+                .skeleton-card-calidad {
+                    background: white;
+                    border: 1px solid #f1f5f9;
+                    border-radius: 16px;
+                    overflow: hidden;
+                    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+                }
+                .skeleton-line {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+                .skeleton-img {
+                    width: 100%;
+                    height: 220px;
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                }
+                .skeleton-info {
+                    padding: 1.25rem;
+                }
+            </style>
+
+            <!-- KPI Compact Row Skeleton -->
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <div class="skeleton-line" style="width: 120px; height: 32px; border-radius: 20px;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-line" style="width: 40%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 60%; height: 10px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-line" style="width: 30%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 50%; height: 10px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-line" style="width: 50%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 70%; height: 10px;"></div>
+                </div>
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-line" style="width: 35%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 55%; height: 10px;"></div>
+                </div>
+            </div>
+
+            <!-- Filters Bar Skeleton -->
+            <div style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+                <div class="skeleton-line" style="flex: 1; min-width: 200px; height: 45px; border-radius: 10px;"></div>
+                <div class="skeleton-line" style="flex: 1; min-width: 200px; height: 45px; border-radius: 10px;"></div>
+            </div>
+            <div class="skeleton-grid">
+                <div class="skeleton-card-calidad">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-line" style="width: 80%; height: 20px; margin-bottom:12px;"></div>
+                        <div class="skeleton-line" style="width: 50%; height: 14px; margin-bottom:8px;"></div>
+                        <div class="skeleton-line" style="width: 90%; height: 14px; margin-bottom:16px;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="skeleton-line" style="width: 30%; height: 14px;"></div>
+                            <div class="skeleton-line" style="width: 25%; height: 20px; border-radius:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton-card-calidad">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-line" style="width: 75%; height: 20px; margin-bottom:12px;"></div>
+                        <div class="skeleton-line" style="width: 60%; height: 14px; margin-bottom:8px;"></div>
+                        <div class="skeleton-line" style="width: 80%; height: 14px; margin-bottom:16px;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="skeleton-line" style="width: 25%; height: 14px;"></div>
+                            <div class="skeleton-line" style="width: 30%; height: 20px; border-radius:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="skeleton-card-calidad">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-info">
+                        <div class="skeleton-line" style="width: 85%; height: 20px; margin-bottom:12px;"></div>
+                        <div class="skeleton-line" style="width: 45%; height: 14px; margin-bottom:8px;"></div>
+                        <div class="skeleton-line" style="width: 85%; height: 14px; margin-bottom:16px;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="skeleton-line" style="width: 35%; height: 14px;"></div>
+                            <div class="skeleton-line" style="width: 25%; height: 20px; border-radius:10px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="qualityFeed" style="display: none;"></div>
 
-        <div id="scrollLoader" style="display: none;">
-            <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
-            <span class="text-muted small fw-bold">Cargando más registros...</span>
+        <div id="scrollLoader" style="display: none; padding: 1rem 0;">
+            <style>
+                .skeleton-scroll {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+            </style>
+            <div class="skeleton-scroll" style="width: 150px; height: 16px; margin: 0 auto;"></div>
         </div>
     </div>
 

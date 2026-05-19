@@ -51,8 +51,10 @@ function toggleKPIs() {
 async function cargarDatosCalidadLocal(reportesPromise) {
     const loader = document.getElementById('initialLoader');
     const dataSection = document.getElementById('qualityFeed');
+    const controls = document.getElementById('calidadHeaderControls');
     
     if (loader) loader.style.display = 'block';
+    if (controls) controls.style.display = 'none';
 
     try {
         gsReportes = await (reportesPromise || fetchReportesData());
@@ -84,6 +86,7 @@ async function cargarDatosCalidadLocal(reportesPromise) {
         
         if (loader) loader.style.display = 'none';
         if (dataSection) dataSection.style.display = 'grid';
+        if (controls) controls.style.display = 'block';
         
         // Reinicializar el date picker si existe
         if (dateRangePicker) {
@@ -111,9 +114,11 @@ async function cargarDatosCalidadLocal(reportesPromise) {
 async function recargarDatosCalidad() {
     const loader = document.getElementById('initialLoader');
     const dataSection = document.getElementById('qualityFeed');
+    const controls = document.getElementById('calidadHeaderControls');
     
     if (loader) loader.style.display = 'block';
     if (dataSection) dataSection.style.display = 'none';
+    if (controls) controls.style.display = 'none';
     
     try {
         if (typeof invalidateCache === 'function') invalidateCache('REPORTES');
@@ -153,6 +158,7 @@ async function recargarDatosCalidad() {
         
         if (loader) loader.style.display = 'none';
         if (dataSection) dataSection.style.display = 'grid';
+        if (controls) controls.style.display = 'block';
         
         Swal.fire({
             icon: 'success',
@@ -170,6 +176,7 @@ async function recargarDatosCalidad() {
             confirmButtonColor: '#3F51B5'
         });
         if (loader) loader.style.display = 'none';
+        if (controls) controls.style.display = 'block';
     }
 }
 

@@ -543,11 +543,11 @@ function updateAuthUI() {
     const iconClass = _getRoleIcon(user.ROL);
 
     navContainer.innerHTML = `
-        <div class="nav-brand-area">
-            <img src="icons/app.svg" alt="Logo TMD" class="nav-logo">
-            <span class="brand-tag">
-                <span style="display:block;font-weight:800;font-size:0.9rem;">${pageTitle}</span>
-                <span style="display:block;font-size:0.65rem;color:#94a3b8;font-weight:500;margin-top:1px;">${moduleDesc}</span>
+        <div class="nav-brand-area" style="flex: 1; min-width: 0; margin-right: 16px;">
+            <img src="icons/app.svg" alt="Logo TMD" class="nav-logo" style="flex-shrink: 0;">
+            <span class="brand-tag" style="display: block; flex: 1; min-width: 0;">
+                <span style="display:block;font-weight:800;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;">${pageTitle}</span>
+                <span style="display:block;font-size:0.65rem;color:#94a3b8;font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;" title="${moduleDesc}">${moduleDesc}</span>
             </span>
         </div>
         <div class="nav-user-area" style="display:flex;align-items:center;gap:6px;">
@@ -667,10 +667,12 @@ function createSidebar() {
                     <i class="fas fa-route"></i> Rutero
                 </a>
             ` : ''}
-            ${user.ROL === 'ADMIN' ? `
+            ${(user.ROL === 'ADMIN' || user.ROL === 'USER-P') ? `
                 <a href="upload.html" class="sidebar-link ${path.includes('upload.html') ? 'active' : ''}">
                     <i class="fas fa-file-import"></i> Actualizar
                 </a>
+            ` : ''}
+            ${user.ROL === 'ADMIN' ? `
                 <a href="usuarios.html" class="sidebar-link ${path.includes('usuarios.html') ? 'active' : ''}">
                     <i class="fas fa-users-cog"></i> Usuarios
                 </a>
@@ -800,22 +802,26 @@ async function handleLogin(email, password, isLoginPage = false, productora = nu
         }
     }
 
-    // Inyectar productora seleccionada en el login
-    if (productora && window.currentUser) {
-        // Buscar datos completos de la productora seleccionada
-        const allProds = window._allProductoras || [];
-        const prodData = allProds.find(p => String(p.id_productora) === String(productora));
-        window.currentUser.ID_PRODUCTORA = prodData ? prodData.id_productora : parseInt(productora);
-        window.currentUser.PRODUCTORA    = prodData ? prodData.productora    : productora;
-        // Persistir en clave dedicada — sobrevive a cualquier reconstrucción de currentUser
-        try {
-            localStorage.setItem('busint_productora', JSON.stringify({
-                ID_PRODUCTORA: window.currentUser.ID_PRODUCTORA,
-                PRODUCTORA:    window.currentUser.PRODUCTORA
-            }));
-        } catch(e) {}
-        // También en busint_user
-        try { localStorage.setItem('busint_user', JSON.stringify(window.currentUser)); } catch(e) {}
+    // Inyectar productora seleccionada en el login o cargada desde el perfil
+    if (window.currentUser) {
+        const activeProd = productora || window.currentUser.ID_PRODUCTORA;
+        if (activeProd) {
+            // Buscar datos completos de la productora
+            const allProds = window._allProductoras || JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+            const prodData = allProds.find(p => String(p.id_productora) === String(activeProd));
+            window.currentUser.ID_PRODUCTORA = prodData ? prodData.id_productora : parseInt(activeProd);
+            window.currentUser.PRODUCTORA    = prodData ? prodData.productora    : (window.currentUser.PRODUCTORA || String(activeProd));
+            
+            // Persistir en clave dedicada
+            try {
+                localStorage.setItem('busint_productora', JSON.stringify({
+                    ID_PRODUCTORA: window.currentUser.ID_PRODUCTORA,
+                    PRODUCTORA:    window.currentUser.PRODUCTORA
+                }));
+            } catch(e) {}
+            // También en busint_user
+            try { localStorage.setItem('busint_user', JSON.stringify(window.currentUser)); } catch(e) {}
+        }
     }
     console.log("[AUTH] Login exitoso, verificando biometría...", { isLoginPage, biometry: typeof BIOMETRY, supported: await BIOMETRY?.isSupported() });
 

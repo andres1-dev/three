@@ -109,6 +109,20 @@ async function _ensureProductora() {
         }
     } catch(e) {}
 
+    // 1.5. Si ya viene asignada desde el perfil de Supabase Auth
+    if (user.ID_PRODUCTORA) {
+        if (typeof _sanitizeProductora === 'function') {
+            _sanitizeProductora(user);
+        }
+        try {
+            localStorage.setItem('busint_productora', JSON.stringify({
+                ID_PRODUCTORA: user.ID_PRODUCTORA,
+                PRODUCTORA:    user.PRODUCTORA || String(user.ID_PRODUCTORA)
+            }));
+        } catch(e) {}
+        return;
+    }
+
     // 2. Si no hay productora, mostrar el overlay MANDATORIO
     const overlay = document.getElementById('productora-overlay');
     const list    = document.getElementById('productora-list');
