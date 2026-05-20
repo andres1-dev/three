@@ -390,6 +390,39 @@ async function fetchUsuariosData() {
  * Obtiene reportes de calidad.
  */
 async function fetchReportesData() {
+    const sessionUser = (typeof currentUser !== 'undefined') ? currentUser : null;
+    
+    // Si el rol es USER-C, leer via Edge Function para evitar restricciones de RLS
+    if (sessionUser && sessionUser.ROL === 'USER-C') {
+        let sessionToken = SUPABASE_KEY;
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.includes('-auth-token')) {
+                    const s = JSON.parse(localStorage.getItem(k));
+                    if (s?.access_token) { sessionToken = s.access_token; break; }
+                }
+            }
+        } catch(e) {}
+
+        const resp = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${sessionToken}`
+            },
+            body: JSON.stringify({
+                accion: 'LISTAR_REPORTES',
+                email: sessionUser.EMAIL || sessionUser.CORREO
+            })
+        });
+        if (!resp.ok) throw new Error('Error al obtener mis reportes');
+        const resJson = await resp.json();
+        const reportes = resJson.reportes || [];
+        return _normalizeSupabaseData(reportes, 'reportes');
+    }
+
     return fetchSupabaseData('reportes');
 }
 

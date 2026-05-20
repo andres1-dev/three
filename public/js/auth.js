@@ -710,6 +710,11 @@ function createSidebar() {
                     <i class="fas fa-route"></i> Rutero
                 </a>
             ` : ''}
+            ${(user.ROL === 'USER-C' || user.ROL === 'ADMIN') ? `
+                <a href="mis-reportes.html" class="sidebar-link ${path.includes('mis-reportes.html') ? 'active' : ''}">
+                    <i class="fas fa-clipboard-list"></i> Mis Reportes
+                </a>
+            ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'USER-P') ? `
                 <a href="upload.html" class="sidebar-link ${path.includes('upload.html') ? 'active' : ''}">
                     <i class="fas fa-file-import"></i> Actualizar

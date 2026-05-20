@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Mis Reportes - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"></noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"></noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"></noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --color-primary: #3f51b5;
+            --border-radius: 16px;
+        }
+
+        body {
+            padding-top: 0;
+            background-attachment: fixed;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ── KPI Chips ── */
+        .kpi-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 0;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .kpi-toggle-btn i { transition: transform 0.2s; font-size: 0.6rem; }
+        .kpi-toggle-btn.open i { transform: rotate(180deg); }
+
+        .kpi-compact-row {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .kpi-compact-row.open { display: grid; }
+
+        .kpi-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 8px;
+            gap: 2px;
+            border-right: 1px solid #e2e8f0;
+        }
+        .kpi-chip:nth-child(4n) { border-right: none; }
+        .kpi-chip:nth-child(n+5) { border-top: 1px solid #e2e8f0; }
+        .kpi-chip-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1;
+        }
+        .kpi-chip-lab {
+            font-size: 0.58rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar-container { display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap; align-items: stretch; }
+
+        @media (max-width: 767px) {
+            .toolbar-container { flex-direction: column; gap: 8px; }
+        }
+
+        /* ── Grouped View by Type ── */
+        #myReportsFeed { margin-top: 20px; display: flex; flex-direction: column; gap: 24px; }
+
+        .report-group {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .group-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .group-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .group-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .group-count {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #e2e8f0;
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+
+        /* ── Report Table ── */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .report-table thead {
+            background: #f1f5f9;
+        }
+
+        .report-table th {
+            padding: 10px 14px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .report-table td {
+            padding: 10px 14px;
+            color: #1e293b;
+            font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .report-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .status-badge-sm {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            background: none;
+            transition: opacity 0.15s ease;
+            text-decoration: none;
+        }
+
+        .action-btn:hover { opacity: 0.6; }
+
+        .action-btn-ver { color: #3f51b5; }
+        .action-btn-print { color: #15803d; }
+
+        .planta-row-mobile { display: none; }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                padding: 1.25rem 0.75rem;
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 72px;
+            }
+
+            #myReportsFeed { gap: 18px; }
+
+            /* ── Swipe track for KPIs ── */
+            .kpi-toggle-btn {
+                margin-bottom: 6px;
+                padding-left: 4px;
+            }
+
+            .kpi-compact-row {
+                display: none; /* controlled by JS open class */
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                scroll-snap-type: x mandatory !important;
+                gap: 10px !important;
+                border: none !important;
+                background: transparent !important;
+                padding: 6px 4px 12px 4px !important;
+                margin-bottom: 12px !important;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .kpi-compact-row::-webkit-scrollbar {
+                display: none;
+            }
+            .kpi-compact-row.open {
+                display: flex !important;
+            }
+
+            .kpi-chip {
+                flex: 0 0 135px !important;
+                scroll-snap-align: start !important;
+                background: rgba(255, 255, 255, 0.95) !important;
+                backdrop-filter: blur(8px) !important;
+                border: 1px solid rgba(226, 232, 240, 0.8) !important;
+                border-radius: 14px !important;
+                padding: 12px 10px !important;
+                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+                text-align: center;
+                border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+                border-top: none !important;
+            }
+            .kpi-chip:active {
+                transform: scale(0.95);
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02) !important;
+            }
+            .kpi-chip:nth-child(4n) { border-right: 1px solid rgba(226, 232, 240, 0.8) !important; }
+            .kpi-chip:nth-child(2n) { border-right: 1px solid rgba(226, 232, 240, 0.8) !important; }
+            .kpi-chip:nth-child(n+3) { border-top: none !important; }
+
+            /* ── Modern inputs styling on mobile ── */
+            .toolbar-container {
+                flex-direction: column;
+                gap: 10px;
+                padding: 0 4px;
+            }
+            .toolbar-container input.form-control {
+                height: 46px !important;
+                border-radius: 12px !important;
+                border: 1px solid #cbd5e1 !important;
+                background: #ffffff !important;
+                font-size: 0.88rem !important;
+                transition: all 0.25s ease !important;
+            }
+            .toolbar-container input.form-control:focus {
+                border-color: #3f51b5 !important;
+                box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.12) !important;
+            }
+
+            /* ── Pure CSS Table-to-Card transformation ── */
+            .planta-row-mobile {
+                display: none !important; /* Hide native plant row since we show it inline */
+            }
+
+            .report-table, 
+            .report-table thead, 
+            .report-table tbody, 
+            .report-table tr, 
+            .report-table td {
+                display: block !important;
+            }
+
+            .report-table thead {
+                display: none !important; /* Hide column labels table header */
+            }
+
+            .report-table tbody {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 14px !important;
+                padding: 8px 4px !important;
+                background: transparent !important;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                background: #ffffff !important;
+                border: 1px solid rgba(226, 232, 240, 0.9) !important;
+                border-radius: 16px !important;
+                padding: 14px 16px !important;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                position: relative !important;
+                transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+                -webkit-tap-highlight-color: transparent;
+            }
+
+            .report-table tr:not(.planta-row-mobile):active {
+                transform: scale(0.985);
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02) !important;
+            }
+
+            /* Styling each field inside the card */
+            .report-table td {
+                padding: 6px 0 !important;
+                border-bottom: 1px solid #f1f5f9 !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                font-size: 0.85rem !important;
+                width: 100% !important;
+                text-align: left !important;
+                background: transparent !important;
+            }
+
+            /* Ordering cells for premium visual layout */
+            /* 1. Lote / ID */
+            .report-table td:nth-child(2) {
+                order: 1 !important;
+                font-size: 1.05rem !important;
+                font-weight: 800 !important;
+                color: #3f51b5 !important;
+                border-bottom: none !important;
+                padding-bottom: 0 !important;
+                padding-top: 0 !important;
+            }
+            .report-table td:nth-child(2)::before {
+                content: "Lote: " !important;
+                font-weight: 700 !important;
+                color: #64748b !important;
+                font-size: 0.72rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+            }
+
+            /* 2. Fecha */
+            .report-table td:nth-child(1) {
+                order: 2 !important;
+                font-size: 0.78rem !important;
+                color: #64748b !important;
+                font-weight: 500 !important;
+                padding-top: 0 !important;
+                padding-bottom: 8px !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+                margin-bottom: 4px !important;
+            }
+            .report-table td:nth-child(1)::before {
+                content: "Registrado" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.68rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.02em !important;
+            }
+
+            /* 3. Referencia */
+            .report-table td:nth-child(3) {
+                order: 3 !important;
+                display: flex !important;
+                font-weight: 600 !important;
+                color: #334155 !important;
+            }
+            .report-table td:nth-child(3)::before {
+                content: "Referencia" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+            }
+
+            /* 4. Planta */
+            .report-table td:nth-child(4) {
+                order: 4 !important;
+                display: flex !important;
+                font-weight: 600 !important;
+                color: #334155 !important;
+            }
+            .report-table td:nth-child(4)::before {
+                content: "Taller / Planta" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+            }
+
+            /* 5. Conclusion (Status badge) */
+            .report-table td:nth-child(5) {
+                order: 5 !important;
+                display: flex !important;
+            }
+            .report-table td:nth-child(5)::before {
+                content: "Resultado" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+            }
+            .status-badge-sm {
+                font-size: 0.6rem !important;
+                padding: 3px 8px !important;
+                font-weight: 700 !important;
+            }
+
+            /* 6. Acciones */
+            .report-table td:nth-child(6) {
+                order: 6 !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                border-bottom: none !important;
+                margin-top: 6px !important;
+                padding-top: 10px !important;
+                border-top: 1px dashed #e2e8f0 !important;
+            }
+            .report-table td:nth-child(6)::before {
+                content: "Acciones rápidas" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+            }
+
+            .action-btns {
+                flex-direction: row !important;
+                gap: 8px !important;
+            }
+
+            .action-btn {
+                font-size: 0.95rem !important;
+                padding: 6px 12px !important;
+                border-radius: 8px !important;
+                border: 1px solid #e2e8f0 !important;
+                background: #f8fafc !important;
+                transition: all 0.15s ease !important;
+            }
+            .action-btn:active {
+                transform: scale(0.9);
+                background: #e2e8f0 !important;
+            }
+            .action-btn-ver { color: #3f51b5 !important; }
+            .action-btn-print { color: #15803d !important; }
+
+            /* Modern Group Headers */
+            .group-header {
+                padding: 12px 14px !important;
+                background: rgba(248, 250, 252, 0.9) !important;
+                backdrop-filter: blur(5px) !important;
+            }
+            .group-icon { width: 32px !important; height: 32px !important; font-size: 0.8rem !important; border-radius: 8px !important; }
+            .group-title { font-size: 0.9rem !important; }
+            .group-count { font-size: 0.68rem !important; padding: 2px 10px !important; }
+        }
+
+        @media (max-width: 430px) {
+            .wrapper-dashboard { padding: 1rem 0.5rem; }
+            .report-table tr:not(.planta-row-mobile) { padding: 12px 12px !important; }
+            .report-table td { font-size: 0.8rem !important; }
+            .kpi-chip { flex: 0 0 120px !important; padding: 10px 8px !important; }
+            .kpi-chip-val { font-size: 1rem !important; }
+        }
+
+        #scrollLoader {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        /* ── Flatpickr — neutro ── */
+        .flatpickr-calendar {
+            border-radius: 12px !important;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+        .flatpickr-months {
+            border-radius: 12px 12px 0 0 !important;
+            background: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .flatpickr-current-month, .flatpickr-prev-month, .flatpickr-next-month {
+            color: #1e293b !important;
+        }
+        .flatpickr-prev-month svg, .flatpickr-next-month svg { fill: #64748b !important; }
+        .flatpickr-prev-month:hover svg, .flatpickr-next-month:hover svg { fill: #1e293b !important; }
+        .flatpickr-weekday { color: #94a3b8 !important; font-weight: 700 !important; font-size: 0.7rem !important; background: transparent !important; }
+        .flatpickr-day { border-radius: 8px !important; font-size: 0.82rem !important; color: #475569 !important; }
+        .flatpickr-day:hover { background: #f1f5f9 !important; border-color: #e2e8f0 !important; }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+            background: #1e293b !important;
+            border-color: #1e293b !important;
+            color: white !important;
+        }
+        .flatpickr-day.inRange {
+            background: #f1f5f9 !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            color: #475569 !important;
+        }
+        span.flatpickr-weekday { background: transparent !important; }
+
+        .swal2-container {
+            z-index: 9998 !important;
+        }
+
+        .swal2-popup {
+            margin-top: 80px !important;
+        }
+
+        @media (max-width: 768px) {
+            .swal2-popup {
+                margin-top: 70px !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper-dashboard">
+
+        <!-- ── Header ── -->
+        <div class="text-center text-lg-start mb-3">
+
+        </div>
+
+        <!-- Controles de Filtros y KPIs agrupados -->
+        <div id="reportsHeaderControls" style="display: none;">
+            <!-- ── KPI Row ── -->
+            <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()">
+                <span>Indicadores de Gestión</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <div class="kpi-compact-row" id="kpiContainer">
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" id="kpi-total">0</span>
+                    <span class="kpi-chip-lab">Total</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#10b981;" id="kpi-ok">0</span>
+                    <span class="kpi-chip-lab">Aprobados</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#ef4444;" id="kpi-rejected">0</span>
+                    <span class="kpi-chip-lab">Rechazados</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#8b5cf6;" id="kpi-audit">0</span>
+                    <span class="kpi-chip-lab">Auditorías</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#06b6d4;" id="kpi-ronda">0</span>
+                    <span class="kpi-chip-lab">Rondas</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#f59e0b;" id="kpi-contramuestra">0</span>
+                    <span class="kpi-chip-lab">Contramuestras</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#ec4899;" id="kpi-seguimiento">0</span>
+                    <span class="kpi-chip-lab">Seguimientos</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#64748b;" id="kpi-plants">0</span>
+                    <span class="kpi-chip-lab">Talleres</span>
+                </div>
+            </div>
+
+            <!-- ── Toolbar with Filters ── -->
+            <div class="toolbar-container">
+                <div class="input-with-icon" style="flex:1;">
+                    <i class="codicon codicon-search input-icon"></i>
+                    <input type="text" id="searchInput" class="form-control"
+                        placeholder="Buscar por lote, referencia, planta..." oninput="handleSearch()" style="border-radius: var(--radius-input); height: 45px; padding-left: 40px;">
+                </div>
+                <div class="input-with-icon" style="flex:1;">
+                    <i class="codicon codicon-calendar input-icon"></i>
+                    <input type="text" id="dateRangePicker" class="form-control"
+                        placeholder="Rango de fechas" readonly style="cursor:pointer; border-radius: var(--radius-input); height: 45px; padding-left: 40px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Módulo Principal Loader Skeleton ── -->
+        <div id="initialLoader" class="py-3">
+            <style>
+                @keyframes skeleton-loading {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+                .skeleton-line {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+            </style>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <div class="skeleton-line" style="width: 120px; height: 32px; border-radius: 20px;"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                <div style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-line" style="width: 40%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 60%; height: 10px;"></div>
+                </div>
+                <div class="skeleton-line" style="flex: 1; min-width: 200px; height: 45px; border-radius: 10px;"></div>
+                <div class="skeleton-line" style="flex: 1; min-width: 200px; height: 45px; border-radius: 10px;"></div>
+            </div>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
+                <div style="height: 50px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0 20px; display: flex; align-items: center;">
+                    <div class="skeleton-line" style="width: 150px; height: 18px;"></div>
+                </div>
+                <div style="padding: 14px 20px;">
+                    <div class="skeleton-line" style="width: 100%; height: 14px; margin-bottom: 10px;"></div>
+                    <div class="skeleton-line" style="width: 80%; height: 14px; margin-bottom: 10px;"></div>
+                    <div class="skeleton-line" style="width: 60%; height: 14px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="myReportsFeed" style="display: none;"></div>
+
+        <div id="scrollLoader" style="display: none; padding: 1rem 0;">
+            <style>
+                .skeleton-scroll {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+            </style>
+            <div class="skeleton-scroll" style="width: 150px; height: 16px; margin: 0 auto;"></div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/admin/mis-reportes.js"></script>
+</body>
+
+</html>
