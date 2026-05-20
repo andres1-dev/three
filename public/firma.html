@@ -372,12 +372,79 @@
     let lastX = 0;
     let lastY = 0;
     let selectedRole = 'TALLER';
+    
+    let _strokes = [];
+    let _currentStroke = null;
+    let canvasRefWidth = 0;
+    let canvasRefHeight = 0;
+
+    let originalWidth = 0;
+    let originalHeight = 0;
+    let _rawStrokes = [];
+
+    function transformStrokesClone(strokes, oldW, oldH, newW, newH) {
+      if (!strokes || strokes.length === 0) return [];
+      const s = Math.min(newW / oldW, newH / oldH);
+      const dx = (newW - oldW * s) / 2;
+      const dy = (newH - oldH * s) / 2;
+      
+      return strokes.map(stroke => {
+        return stroke.map(p => {
+          return {
+            x: p.x * s + dx,
+            y: p.y * s + dy
+          };
+        });
+      });
+    }
+
+    function inverseTransformStroke(stroke, origW, origH, newW, newH) {
+      const s = Math.min(newW / origW, newH / origH);
+      const dx = (newW - origW * s) / 2;
+      const dy = (newH - origH * s) / 2;
+      
+      return stroke.map(p => {
+        return {
+          x: (p.x - dx) / s,
+          y: (p.y - dy) / s
+        };
+      });
+    }
+
+    function redrawCanvas() {
+      if (!ctx || !_strokes || _strokes.length === 0) return;
+      ctx.clearRect(0, 0, canvasRefWidth, canvasRefHeight);
+      ctx.beginPath();
+      _strokes.forEach(stroke => {
+        if (stroke.length === 0) return;
+        ctx.moveTo(stroke[0].x, stroke[0].y);
+        for (let i = 1; i < stroke.length; i++) {
+          ctx.lineTo(stroke[i].x, stroke[i].y);
+        }
+      });
+      ctx.stroke();
+    }
 
     // Ajustar resolución del canvas para soporte de alta densidad
     function resizeCanvas() {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
+      const newW = rect.width;
+      const newH = rect.height;
+      if (!newW || !newH) return;
+
+      // Adaptar trazos si las dimensiones cambian
+      if (_rawStrokes.length > 0 && originalWidth && originalHeight) {
+        if (canvasRefWidth !== newW || canvasRefHeight !== newH) {
+          _strokes = transformStrokesClone(_rawStrokes, originalWidth, originalHeight, newW, newH);
+        }
+      }
+
+      canvasRefWidth = newW;
+      canvasRefHeight = newH;
+
+      canvas.width = newW * window.devicePixelRatio;
+      canvas.height = newH * window.devicePixelRatio;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
       
       // Configurar pincel premium
@@ -385,9 +452,15 @@
       ctx.lineWidth = 2.5;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
+
+      redrawCanvas();
     }
 
-    window.addEventListener('resize', resizeCanvas);
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(resizeCanvas, 150);
+    });
     setTimeout(resizeCanvas, 300);
 
     // Eventos de dibujo táctil y mouse
@@ -396,6 +469,7 @@
       const pos = getPos(e);
       lastX = pos.x;
       lastY = pos.y;
+      _currentStroke = [pos];
     }
 
     function draw(e) {
@@ -407,13 +481,28 @@
       ctx.stroke();
       lastX = pos.x;
       lastY = pos.y;
+      if (_currentStroke) _currentStroke.push(pos);
+    }
+
+    function stopDrawing() {
+      if (isDrawing && _currentStroke && _currentStroke.length > 1) {
+        if (_rawStrokes.length === 0) {
+          originalWidth = canvasRefWidth;
+          originalHeight = canvasRefHeight;
+        }
+        _strokes.push(_currentStroke);
+        const rawStroke = inverseTransformStroke(_currentStroke, originalWidth, originalHeight, canvasRefWidth, canvasRefHeight);
+        _rawStrokes.push(rawStroke);
+      }
+      _currentStroke = null;
+      isDrawing = false;
     }
 
     // Registrar Eventos del Canvas
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', () => isDrawing = false);
-    canvas.addEventListener('mouseleave', () => isDrawing = false);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
 
     canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
@@ -423,7 +512,7 @@
       e.preventDefault();
       draw(e);
     });
-    canvas.addEventListener('touchend', () => isDrawing = false);
+    canvas.addEventListener('touchend', stopDrawing);
 
     function getPos(e) {
       const rect = canvas.getBoundingClientRect();
@@ -437,8 +526,11 @@
 
     // Limpiar Canvas
     document.getElementById('clearBtn').addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      resizeCanvas();
+      _strokes = [];
+      _rawStrokes = [];
+      originalWidth = 0;
+      originalHeight = 0;
+      ctx.clearRect(0, 0, canvasRefWidth, canvasRefHeight);
     });
 
     // Cargar historial de localStorage
@@ -505,10 +597,7 @@
       }
 
       // Validar si el canvas está vacío
-      const blank = document.createElement('canvas');
-      blank.width = canvas.width;
-      blank.height = canvas.height;
-      if (canvas.toDataURL() === blank.toDataURL()) {
+      if (_strokes.length === 0) {
         Swal.fire({
           icon: 'warning',
           title: 'Firma vacía',

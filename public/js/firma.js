@@ -17,6 +17,19 @@ const FirmaTaller = {
     _currentStroke: null,
     _inlineReady: false,
 
+    originalWidth: 0,
+    originalHeight: 0,
+    _rawStrokes: [],
+    fsOriginalWidth: 0,
+    fsOriginalHeight: 0,
+    _fsRawStrokes: [],
+
+    // Dimensiones de referencia para redimensionado/rotación
+    canvasRefWidth: 0,
+    canvasRefHeight: 0,
+    fsCanvasRefWidth: 0,
+    fsCanvasRefHeight: 0,
+
     // Canvas e interfaz de Pantalla Completa
     fsCanvas: null,
     fsCtx: null,
@@ -57,7 +70,6 @@ const FirmaTaller = {
         `;
 
         // 2. Inyectar modal de pantalla completa si no existe
-        // 2. Inyectar modal de pantalla completa si no existe
         if (!document.getElementById('fullscreenSigModalStyles')) {
             const styleEl = document.createElement('style');
             styleEl.id = 'fullscreenSigModalStyles';
@@ -87,7 +99,7 @@ const FirmaTaller = {
                 'position: fixed', 'top: 0', 'left: 0',
                 'width: 100vw', 'height: 100vh',
                 'background: #ffffff', 'z-index: 9999',
-                'display: none',               // ← usamos display:none en lugar de class hidden
+                'display: none',
                 'flex-direction: column',
                 'justify-content: space-between',
                 'padding: 20px', 'box-sizing: border-box'
@@ -127,6 +139,12 @@ const FirmaTaller = {
         this.fsCtx    = this.fsCanvas.getContext('2d');
         this._inlineReady = false;
         
+        // Resetear dimensiones de referencia al iniciar
+        this.canvasRefWidth = 0;
+        this.canvasRefHeight = 0;
+        this.fsCanvasRefWidth = 0;
+        this.fsCanvasRefHeight = 0;
+        
         const self = this;
 
         // ── Resize helpers ──────────────────────────────────────────────
@@ -146,11 +164,26 @@ const FirmaTaller = {
             const rect    = wrapper ? wrapper.getBoundingClientRect() : self.canvas.getBoundingClientRect();
             if (!rect.width || !rect.height) return false;
 
-            self.canvas.width  = Math.round(rect.width  * window.devicePixelRatio);
-            self.canvas.height = Math.round(rect.height * window.devicePixelRatio);
+            const newW = rect.width;
+            const newH = rect.height;
+
+            // Si ya hay trazos y cambia la dimensión, adaptarlos
+            if (self._rawStrokes.length > 0 && self.originalWidth && self.originalHeight) {
+                if (self.canvasRefWidth !== newW || self.canvasRefHeight !== newH) {
+                    self._strokes = self.transformStrokesClone(self._rawStrokes, self.originalWidth, self.originalHeight, newW, newH);
+                }
+            }
+
+            self.canvasRefWidth  = newW;
+            self.canvasRefHeight = newH;
+
+            self.canvas.width  = Math.round(newW  * window.devicePixelRatio);
+            self.canvas.height = Math.round(newH * window.devicePixelRatio);
             self.ctx.setTransform(1, 0, 0, 1, 0, 0);  // reset
             self.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
             setupCtx(self.ctx);
+            
+            self.redrawInline();
             self._inlineReady = true;
             return true;
         }
@@ -164,6 +197,16 @@ const FirmaTaller = {
             const w = isPortrait ? rect.height : rect.width;
             const h = isPortrait ? rect.width : rect.height;
 
+            // Si ya hay trazos y cambia la dimensión, adaptarlos
+            if (self._fsRawStrokes.length > 0 && self.fsOriginalWidth && self.fsOriginalHeight) {
+                if (self.fsCanvasRefWidth !== w || self.fsCanvasRefHeight !== h) {
+                    self._fsStrokes = self.transformStrokesClone(self._fsRawStrokes, self.fsOriginalWidth, self.fsOriginalHeight, w, h);
+                }
+            }
+
+            self.fsCanvasRefWidth  = w;
+            self.fsCanvasRefHeight = h;
+
             self.fsCanvas.width  = Math.round(w  * window.devicePixelRatio);
             self.fsCanvas.height = Math.round(h * window.devicePixelRatio);
             self.fsCtx.setTransform(1, 0, 0, 1, 0, 0);
@@ -172,6 +215,8 @@ const FirmaTaller = {
             self.fsCtx.lineWidth   = 3.2;
             self.fsCtx.lineCap     = 'round';
             self.fsCtx.lineJoin    = 'round';
+
+            self.redrawFullscreen();
         }
 
         // Intentar resize inmediato; si el wrapper no es visible usar IntersectionObserver
@@ -186,8 +231,6 @@ const FirmaTaller = {
             }, { threshold: 0.01 });
             observer.observe(self.canvas);
         }
-
-        window.addEventListener('resize', resizeInlineCanvas);
 
         // ── Dibujo Inline ───────────────────────────────────────────────
         function getPos(e, canvas) {
@@ -238,7 +281,13 @@ const FirmaTaller = {
 
         const stopInline = () => {
             if (self.isDrawing && self._currentStroke && self._currentStroke.length > 1) {
+                if (self._rawStrokes.length === 0) {
+                    self.originalWidth = self.canvasRefWidth;
+                    self.originalHeight = self.canvasRefHeight;
+                }
                 self._strokes.push(self._currentStroke);
+                const rawStroke = self.inverseTransformStroke(self._currentStroke, self.originalWidth, self.originalHeight, self.canvasRefWidth, self.canvasRefHeight);
+                self._rawStrokes.push(rawStroke);
             }
             self._currentStroke = null;
             self.isDrawing = false;
@@ -295,7 +344,13 @@ const FirmaTaller = {
 
         const stopFs = () => {
             if (self.fsIsDrawing && self._fsCurrent && self._fsCurrent.length > 1) {
+                if (self._fsRawStrokes.length === 0) {
+                    self.fsOriginalWidth = self.fsCanvasRefWidth;
+                    self.fsOriginalHeight = self.fsCanvasRefHeight;
+                }
                 self._fsStrokes.push(self._fsCurrent);
+                const rawStroke = self.inverseTransformStroke(self._fsCurrent, self.fsOriginalWidth, self.fsOriginalHeight, self.fsCanvasRefWidth, self.fsCanvasRefHeight);
+                self._fsRawStrokes.push(rawStroke);
             }
             self._fsCurrent = null;
             self.fsIsDrawing = false;
@@ -330,12 +385,23 @@ const FirmaTaller = {
 
         document.getElementById('fullscreenFormSignatureBtn').addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
+            
+            // Copiar y clonar del inline al fullscreen
+            self.fsOriginalWidth = self.originalWidth || self.canvasRefWidth;
+            self.fsOriginalHeight = self.originalHeight || self.canvasRefHeight;
+            self._fsRawStrokes = JSON.parse(JSON.stringify(self._rawStrokes));
+            
             fsModal.style.display = 'flex';
             // Esperar a que el modal sea visible para medir dimensiones reales
             requestAnimationFrame(() => {
                 setTimeout(() => {
                     resizeFsCanvas();
-                    self.fsCtx.clearRect(0, 0, self.fsCanvas.width, self.fsCanvas.height);
+                    if (self._fsRawStrokes.length > 0 && self.fsOriginalWidth && self.fsOriginalHeight && self.fsCanvasRefWidth && self.fsCanvasRefHeight) {
+                        self._fsStrokes = self.transformStrokesClone(self._fsRawStrokes, self.fsOriginalWidth, self.fsOriginalHeight, self.fsCanvasRefWidth, self.fsCanvasRefHeight);
+                    } else {
+                        self._fsStrokes = [];
+                    }
+                    self.redrawFullscreen();
                 }, 80);
             });
         });
@@ -347,35 +413,36 @@ const FirmaTaller = {
 
         document.getElementById('clearFullscreenSigBtn').addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
-            self.fsCtx.clearRect(0, 0, self.fsCanvas.width, self.fsCanvas.height);
             self._fsStrokes = [];
-            resizeFsCanvas();
+            self._fsRawStrokes = [];
+            self.fsOriginalWidth = 0;
+            self.fsOriginalHeight = 0;
+            if (self.fsCtx) {
+                self.fsCtx.clearRect(0, 0, self.fsCanvasRefWidth || self.fsCanvas.width, self.fsCanvasRefHeight || self.fsCanvas.height);
+            }
         });
 
         // ── Aplicar Firma al Canvas Inline ───────────────────────────────
         document.getElementById('saveFullscreenSigBtn').addEventListener('click', (e) => {
             e.preventDefault(); e.stopPropagation();
 
-            // Copiar trazos del fullscreen al inline
-            self._strokes = [...self._fsStrokes];
+            // Guardamos las dimensiones originales de fullscreen como la referencia del inline
+            self.originalWidth = self.fsOriginalWidth || self.fsCanvasRefWidth;
+            self.originalHeight = self.fsOriginalHeight || self.fsCanvasRefHeight;
+            self._rawStrokes = JSON.parse(JSON.stringify(self._fsRawStrokes));
 
             // Asegurar que el canvas inline está correctamente dimensionado
             resizeInlineCanvas();
 
-            // Dimensiones lógicas (CSS) del inline canvas
-            const inlineRect = self.canvas.getBoundingClientRect();
+            // Transformar del espacio original al espacio inline actual
+            if (self._rawStrokes.length > 0 && self.originalWidth && self.originalHeight && self.canvasRefWidth && self.canvasRefHeight) {
+                self._strokes = self.transformStrokesClone(self._rawStrokes, self.originalWidth, self.originalHeight, self.canvasRefWidth, self.canvasRefHeight);
+            } else {
+                self._strokes = [];
+            }
 
-            // Limpiar el inline canvas y copiar la firma del fullscreen
-            self.ctx.clearRect(0, 0, self.canvas.width, self.canvas.height);
-
-            // Dibujar el fullscreen canvas escalado al tamaño del inline canvas
-            self.ctx.drawImage(
-                self.fsCanvas,
-                0, 0,
-                self.fsCanvas.width, self.fsCanvas.height,
-                0, 0,
-                inlineRect.width, inlineRect.height
-            );
+            // Redibujar
+            self.redrawInline();
 
             fsModal.style.display = 'none';
 
@@ -391,17 +458,102 @@ const FirmaTaller = {
             }
         });
 
+        // Evento resize unificado y debounceado
+        let resizeTimeout;
         window.addEventListener('resize', () => {
-            if (fsModal.style.display === 'flex') resizeFsCanvas();
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                resizeInlineCanvas();
+                if (fsModal.style.display === 'flex') {
+                    resizeFsCanvas();
+                }
+            }, 150);
         });
     },
 
     clear() {
-        if (this.canvas) {
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        if (this.canvas && this.ctx) {
+            this.ctx.clearRect(0, 0, this.canvasRefWidth || this.canvas.width, this.canvasRefHeight || this.canvas.height);
         }
         this._strokes  = [];
+        this._rawStrokes = [];
         this._fsStrokes = [];
+        this._fsRawStrokes = [];
+        this.originalWidth = 0;
+        this.originalHeight = 0;
+        this.fsOriginalWidth = 0;
+        this.fsOriginalHeight = 0;
+    },
+
+    transformStrokes(strokes, oldW, oldH, newW, newH) {
+        if (!strokes || strokes.length === 0) return;
+        const s = Math.min(newW / oldW, newH / oldH);
+        const dx = (newW - oldW * s) / 2;
+        const dy = (newH - oldH * s) / 2;
+        
+        strokes.forEach(stroke => {
+            stroke.forEach(p => {
+                p.x = p.x * s + dx;
+                p.y = p.y * s + dy;
+            });
+        });
+    },
+
+    transformStrokesClone(strokes, oldW, oldH, newW, newH) {
+        if (!strokes || strokes.length === 0) return [];
+        const s = Math.min(newW / oldW, newH / oldH);
+        const dx = (newW - oldW * s) / 2;
+        const dy = (newH - oldH * s) / 2;
+        
+        return strokes.map(stroke => {
+            return stroke.map(p => {
+                return {
+                    x: p.x * s + dx,
+                    y: p.y * s + dy
+                };
+            });
+        });
+    },
+
+    inverseTransformStroke(stroke, origW, origH, newW, newH) {
+        const s = Math.min(newW / origW, newH / origH);
+        const dx = (newW - origW * s) / 2;
+        const dy = (newH - origH * s) / 2;
+        
+        return stroke.map(p => {
+            return {
+                x: (p.x - dx) / s,
+                y: (p.y - dy) / s
+            };
+        });
+    },
+
+    redrawInline() {
+        if (!this.ctx || !this._strokes || this._strokes.length === 0) return;
+        this.ctx.clearRect(0, 0, this.canvasRefWidth, this.canvasRefHeight);
+        this.ctx.beginPath();
+        this._strokes.forEach(stroke => {
+            if (stroke.length === 0) return;
+            this.ctx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                this.ctx.lineTo(stroke[i].x, stroke[i].y);
+            }
+        });
+        this.ctx.stroke();
+    },
+
+    redrawFullscreen() {
+        if (!this.fsCtx || !this._fsStrokes || this._fsStrokes.length === 0) return;
+        this.fsCtx.clearRect(0, 0, this.fsCanvasRefWidth, this.fsCanvasRefHeight);
+        this.fsCtx.beginPath();
+        this._fsStrokes.forEach(stroke => {
+            if (stroke.length === 0) return;
+            this.fsCtx.moveTo(stroke[0].x, stroke[0].y);
+            for (let i = 1; i < stroke.length; i++) {
+                this.fsCtx.lineTo(stroke[i].x, stroke[i].y);
+            }
+        });
+        this.fsCtx.stroke();
     },
 
     isEmpty() {
