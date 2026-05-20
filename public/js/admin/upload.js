@@ -54,12 +54,12 @@ class HeaderDetector {
         const hasNombre = h.includes('tercero') || h.includes('nombre') || h.includes('nombre2');
         if (hasNit && hasNombre) return 'PLANTAS';
         if (this._hasAll(headers, HEADER_SETS.CONFECCION)) return 'CONFECCION';
-        if (this._hasAll(headers, HEADER_SETS.PROCESOS)) return 'PROCESOS';
+        if (this._hasAll(headers, HEADER_SETS.PROCESOS, ['Cant Minutos'])) return 'PROCESOS';
         if (this._hasAll(headers, HEADER_SETS.GENERAL_TDM)) return 'GENERAL_TDM';
         return 'UNKNOWN';
     }
-    _hasAll(headers, required) {
-        return required.every(r => headers.includes(r));
+    _hasAll(headers, required, optional = []) {
+        return required.every(r => optional.includes(r) || headers.includes(r));
     }
 }
 
