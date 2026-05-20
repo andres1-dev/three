@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Acceso - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+    <!-- ── Vendor CSS ── -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"></noscript>
+    <!-- ── App CSS ── -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body class="auth-shield-pass login-body">
+    <!-- ── Fondo de partículas ── -->
+    <div id="particles-js"></div>
+
+    <div class="login-page-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="icons/app.svg" alt="Logo TMD" class="login-logo">
+                <div class="brand-divider"></div>
+                <p class="login-subtitle">INGRESO</p>
+            </div>
+
+            <!-- ── SECCIÓN: INICIO DE SESIÓN ── -->
+            <div id="login-section" class="auth-section">
+
+                <!-- ── Botón Biometría (se muestra solo si hay credencial guardada) ── -->
+                <button class="btn-biometric hidden" id="biometricBtn" onclick="loginWithBiometric()" type="button">
+                    <div id="biometric-icon"></div>
+                    <span id="biometric-label">Usar biometría</span>
+                </button>
+                <a class="biometric-manual-link hidden" id="biometricManualLink" href="javascript:void(0)" onclick="showManualLogin()">Usar contraseña</a>
+
+                <div id="manual-fields">
+                <div class="form-floating-group">
+                    <i class="fas fa-envelope input-icon"></i>
+                    <input type="text" id="login-user" placeholder="Correo electrónico" required
+                        autocomplete="username">
+                </div>
+                <div class="form-floating-group">
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="login-pass" placeholder="Contraseña" required
+                        autocomplete="current-password">
+                    <i class="fas fa-eye toggle-pass" onclick="togglePassword('login-pass')"></i>
+                </div>
+
+                <!-- Selector de Productora -->
+                <div class="form-floating-group" id="productora-group" style="display:none;">
+                    <i class="fas fa-building input-icon"></i>
+                    <select id="login-productora">
+                        <option value="">Cargando productoras...</option>
+                    </select>
+                </div>
+
+                <!-- Campo de Cédula para Acceso Universal -->
+                <div class="form-floating-group" id="universal-cedula-group" style="display:none;">
+                    <i class="fas fa-id-card-clip input-icon"></i>
+                    <input type="text" id="login-universal-cedula" placeholder="Cédula o NIT de la Planta">
+                </div>
+
+                <button class="btn-auth-primary" id="loginBtn" onclick="processMultiLogin()">
+                    <span class="btn-text">INGRESAR</span>
+                    <i class="fas fa-right-to-bracket"></i>
+                </button>
+
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('reset')">¿Olvidó su contraseña?</a>
+                    <span class="dot-separator">•</span>
+                    <a href="javascript:void(0)" onclick="resetCredentials()">Limpiar credenciales</a>
+                </div>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: REGISTRO ── -->
+            <div id="register-section" class="auth-section hidden">
+                <div class="section-title">Solicitud de Acceso</div>
+                <p class="section-hint">Complete todos los campos para solicitar su ingreso.</p>
+
+                <div class="form-floating-group">
+                    <i class="fas fa-id-badge input-icon"></i>
+                    <input type="text" id="reg-id" placeholder="NIT o Cédula de Ciudadanía" required>
+                </div>
+
+                <button class="btn-auth-primary" id="btnCheckId" onclick="validateRegistrationId()">
+                    <span class="btn-text">CONTINUAR</span>
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+
+                <!-- Campos ocultos inicialmente -->
+                <div id="registration-details" class="hidden">
+                    <div class="form-floating-group">
+                        <i class="fas fa-user-edit input-icon"></i>
+                        <input type="text" id="reg-name" placeholder="Nombre completo" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="reg-email" placeholder="Correo electrónico" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="reg-tel" placeholder="Número Celular" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="reg-pass" placeholder="Defina su Contraseña" required>
+                        <i class="fas fa-eye toggle-pass" onclick="togglePassword('reg-pass')"></i>
+                    </div>
+
+                    <button class="btn-auth-primary" id="regBtn" onclick="requestRegister()">
+                        <span class="btn-text">ENVIAR SOLICITUD</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: REGISTRO PLANTA/TALLER ── -->
+            <div id="register-planta-section" class="auth-section hidden">
+                <div class="section-title">Actualización de Taller</div>
+                <p class="section-hint">Ingrese una Orden Activa para buscar su planta.</p>
+
+                <div class="form-floating-group">
+                    <i class="fas fa-barcode input-icon"></i>
+                    <input type="text" id="reg-planta-op" placeholder="Número de OP o Lote" required>
+                </div>
+
+                <button class="btn-auth-primary" id="btnCheckOP" onclick="validateOpForRegister()">
+                    <span class="btn-text">BUSCAR TALLER</span>
+                    <i class="fas fa-search"></i>
+                </button>
+
+                <!-- Campos ocultos inicialmente tras verificar la OP -->
+                <div id="planta-registration-details" class="hidden">
+                    <div
+                        style="background:#e8eaf6; padding:12px; border-radius:8px; margin-bottom:15px; border-left:4px solid #3f51b5; font-size:13px; color:#1a237e; text-align: left;">
+                        <i class="fas fa-info-circle"></i> Verifique el nombre y complete sus datos. De ser correctos se
+                        actualizará su acceso.
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-industry input-icon"></i>
+                        <select id="reg-planta-names" required title="Planta">
+                            <!-- Opciones cargadas dinámicamente -->
+                        </select>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-id-card input-icon"></i>
+                        <input type="text" id="reg-planta-documento" placeholder="NIT o Cédula (Su ID de acceso)"
+                            required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-map-marker-alt input-icon"></i>
+                        <input type="text" id="reg-planta-direccion" placeholder="Dirección Completa" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-phone input-icon"></i>
+                        <input type="tel" id="reg-planta-tel" placeholder="Número Celular" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="reg-planta-email" placeholder="Correo electrónico" required>
+                    </div>
+
+                    <div class="form-floating-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="reg-planta-pass" placeholder="Defina su Contraseña" required>
+                        <i class="fas fa-eye toggle-pass" onclick="togglePassword('reg-planta-pass')"></i>
+                    </div>
+
+                    <button class="btn-auth-primary" id="regPlantaBtn" onclick="requestRegisterPlanta()">
+                        <span class="btn-text">ACTUALIZAR Y ACCEDER</span>
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
+                </div>
+            </div>
+
+            <!-- ── SECCIÓN: RECUPERACIÓN ── -->
+            <div id="reset-section" class="auth-section hidden">
+                <div class="section-title">Recuperar Acceso</div>
+                <p class="section-hint">Ingrese su identificación para enviarle un token de recuperación a su correo.
+                </p>
+                <div class="form-floating-group">
+                    <i class="fas fa-id-card input-icon"></i>
+                    <input type="text" id="reset-id" placeholder="Número de Identificación">
+                </div>
+                <button class="btn-auth-primary" id="resetBtn" onclick="requestReset()">
+                    <span class="btn-text">ENVIAR TOKEN</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+                <div class="auth-footer-links">
+                    <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
+                </div>
+            </div>
+
+
+        </div>
+
+        <!-- ── Modal Biometría ── -->
+        <div id="biometric-modal" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.35); backdrop-filter:blur(6px); align-items:center; justify-content:center;">
+            <div class="biometric-modal-card">
+                <div class="bm-icon-wrap" id="bm-icon-wrap"></div>
+                <h3 class="bm-title" id="bm-title">Activar Touch ID</h3>
+                <p class="bm-desc" id="bm-desc">Ingresa más rápido la próxima vez sin escribir tu contraseña.</p>
+                <div class="bm-actions">
+                    <button class="bm-btn-skip"    id="bm-skip">Ahora no</button>
+                    <button class="bm-btn-activate" id="bm-activate">Activar</button>
+                </div>
+            </div>
+        </div>
+        <div class="login-footer-credits">
+            <p>Developed by Andrés Mendoza © 2026</p>
+            <p class="system-version">v2.4.0 • Enterprise Edition</p>
+        </div>
+    </div>
+
+    <!-- ── Vendor Scripts ── -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <!-- ── App Logic ── -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js?v=2"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/core/biometry.js"></script>
+
+    <script>
+        // Inicialización al cargar (MAP Style)
+        window.onload = async () => {
+            if (typeof initParticles === 'function') initParticles();
+
+            try {
+                // 1. Verificar sesión activa (Robust MAP Style)
+                let hasSession = false;
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && key.includes('-auth-token')) {
+                        try {
+                            const raw = localStorage.getItem(key);
+                            if (raw && raw !== 'undefined' && raw !== 'null') {
+                                const session = JSON.parse(raw);
+                                if (session && session.access_token) {
+                                    hasSession = true;
+                                    break;
+                                }
+                            }
+                        } catch(e) {}
+                    }
+                }
+                if (hasSession) {
+                    window.location.replace('index.html');
+                    return;
+                }
+
+                // 2. Inicializar Biometría
+                console.log("[BIOMETRY] Verificando soporte...");
+                if (typeof BIOMETRY !== 'undefined' && await BIOMETRY.isSupported()) {
+                    const map = JSON.parse(localStorage.getItem('busint_biometric_ids') || '{}');
+                    const keys = Object.keys(map);
+                    console.log("[BIOMETRY] Llaves encontradas:", keys);
+                    
+                    if (keys.length > 0) {
+                        const btn = document.getElementById('biometricBtn');
+                        const iconEl = document.getElementById('biometric-icon');
+                        const labelEl = document.getElementById('biometric-label');
+                        const manualFields = document.getElementById('manual-fields');
+                        const manualLink = document.getElementById('biometricManualLink');
+
+                        if (btn && iconEl && labelEl) {
+                            console.log("[BIOMETRY] Mostrando botón de acceso biométrico...");
+                            iconEl.innerHTML = BIOMETRY.getSVGForType();
+                            labelEl.textContent = `Ingresar con ${BIOMETRY.getLabelForType()}`;
+                            btn.classList.remove('hidden');
+                            if (manualLink) manualLink.classList.remove('hidden');
+                            if (manualFields) manualFields.style.display = 'none';
+                            
+                            window._biometricUserId = keys[0];
+                            // Auto-trigger biometría
+                            setTimeout(() => loginWithBiometric(), 600);
+                        } else {
+                            console.warn("[BIOMETRY] Elementos de UI no encontrados:", { btn:!!btn, iconEl:!!iconEl, labelEl:!!labelEl });
+                        }
+                    }
+                } else {
+                    console.warn("[BIOMETRY] No soportada o BIOMETRY undefined");
+                }
+
+                // 3. Cargar datos necesarios en background
+                await loadUsers();
+                await _loadProductoras();
+
+                // 4. Listener para detectar Acceso Universal
+                const userField = document.getElementById('login-user');
+                if (userField) {
+                    userField.addEventListener('input', (e) => {
+                        const val = e.target.value.trim().toLowerCase();
+                        const isUniversal = (val === '222.222.222' || val === 'plantas@grupotdm.com.co');
+                        
+                        const prodGroup = document.getElementById('productora-group');
+                        const cedGroup = document.getElementById('universal-cedula-group');
+                        
+                        if (isUniversal) {
+                            if (prodGroup) prodGroup.style.display = 'none';
+                            if (cedGroup) cedGroup.style.display = 'block';
+                        } else {
+                            if (prodGroup) prodGroup.style.display = 'none';
+                            if (cedGroup) cedGroup.style.display = 'none';
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Error en inicialización:", err);
+            }
+        };
+
+        // El login con biometría ahora usa la función centralizada en auth.js
+        // window.loginWithBiometric se hereda de js/auth.js
+
+
+        // Funciones de utilidad ahora centralizadas en auth.js o simplificadas
+        function showManualLogin() {
+            document.getElementById('biometricBtn')?.classList.add('hidden');
+            document.getElementById('biometricManualLink')?.classList.add('hidden');
+            const fields = document.getElementById('manual-fields');
+            if (fields) {
+                fields.style.display = 'block';
+                fields.style.animation = 'fadeIn 0.5s ease forwards';
+            }
+        }
+
+
+        function switchAuth(target) {
+            const sections = document.querySelectorAll('.auth-section');
+            sections.forEach(s => s.classList.add('hidden'));
+
+            if (target === 'register') {
+                document.getElementById('registration-details')?.classList.add('hidden');
+                document.getElementById('btnCheckId')?.classList.remove('hidden');
+                const idInput = document.getElementById('reg-id');
+                if (idInput) { idInput.readOnly = false; idInput.value = ''; }
+            } else if (target === 'register-planta') {
+                document.getElementById('planta-registration-details')?.classList.add('hidden');
+                document.getElementById('btnCheckOP')?.classList.remove('hidden');
+                const opInput = document.getElementById('reg-planta-op');
+                if (opInput) { opInput.readOnly = false; opInput.value = ''; }
+            }
+
+            document.getElementById(target + '-section')?.classList.remove('hidden');
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            const icon = event.target;
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        async function processMultiLogin() {
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            const productoraEl = document.getElementById('login-productora');
+            const productora = productoraEl ? productoraEl.value.trim() : '';
+            const btn = document.getElementById('loginBtn');
+
+            if (!user || !pass) {
+                Swal.fire('Atención', 'Ingrese su identificación y contraseña.', 'warning');
+                return;
+            }
+
+            // Selector de productora desactivado en pantalla de login (se decide en index.html)
+            const needsProductora = false;
+            if (needsProductora && !productora) {
+                Swal.fire('Atención', 'Seleccione una productora para continuar.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDANDO...';
+
+            try {
+                // --- MAP STYLE: Resolución de Email desde Identificación ---
+                let realEmail = user;
+                const foundUser = allUsers.find(u => String(u.ID_USUARIO || u.ID || '').trim().toLowerCase() === user.toLowerCase()) ||
+                                  allPlantas.find(p => String(p.ID_PLANTA || p.id || '').trim().toLowerCase() === user.toLowerCase());
+                
+                if (foundUser) {
+                    realEmail = foundUser.CORREO || foundUser.EMAIL || foundUser.email || user;
+                    if (!realEmail.includes('@') && foundUser.CORREO) realEmail = foundUser.CORREO;
+                }
+
+                // Capturar cédula universal si aplica
+                const cedulaUniversal = document.getElementById('login-universal-cedula')?.value.trim();
+                if (realEmail === 'plantas@grupotdm.com.co' && !cedulaUniversal) {
+                    Swal.fire('Atención', 'Por favor ingrese la Cédula/NIT de la planta.', 'warning');
+                    return;
+                }
+                if (cedulaUniversal) window._universalCedula = cedulaUniversal;
+
+                await handleLogin(realEmail, pass, true, productora);
+            } catch (err) {
+                console.error("Error en login:", err);
+                Swal.fire('Error', err.message || 'Error al iniciar sesión', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">INGRESAR</span><i class="fas fa-right-to-bracket"></i>';
+            }
+        }
+
+        // Carga las productoras en background para la caché del sistema
+        async function _loadProductoras() {
+            try {
+                const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+                    body: JSON.stringify({ accion: 'LISTAR_PRODUCTORAS' })
+                });
+                if (!response.ok) return;
+                const result = await response.json();
+                const data = result.productoras || [];
+                if (data.length === 0) return;
+
+                window._allProductoras = data;
+                localStorage.setItem('busint_productoras_cache', JSON.stringify(data));
+
+                const sel = document.getElementById('login-productora');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Seleccione productora...</option>';
+                data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id_productora;
+                    opt.dataset.nit = p.nit;
+                    opt.dataset.nombre = p.productora;
+                    opt.textContent = p.productora;
+                    sel.appendChild(opt);
+                });
+
+                // Se mantiene el contenedor oculto en el login
+                document.getElementById('productora-group').style.display = 'none';
+                if (data.length === 1) sel.value = data[0].id_productora;
+            } catch (e) {
+                console.warn('[LOGIN] No se pudieron cargar productoras:', e.message);
+            }
+        }
+
+        async function requestRegister() {
+            const id = document.getElementById('reg-id').value.trim();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const tel = document.getElementById('reg-tel').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
+            const btn = document.getElementById('regBtn');
+
+            if (!id || !name || !email || !tel || !pass) {
+                Swal.fire('Atención', 'Todos los campos son obligatorios para el registro.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> PROCESANDO...';
+
+            try {
+                // Insertar usuario usando la Edge Function segura para evitar bloqueos por RLS
+                const result = await sendToSupabase({
+                    accion: 'CREAR_USUARIO',
+                    id: id,
+                    usuario: name,
+                    correo: email,
+                    telefono: tel,
+                    rol: 'PENDIENTE',
+                    password: pass
+                });
+
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡SOLICITUD ENVIADA!',
+                        text: 'Sus datos han sido registrados. El administrador le asignará un rol pronto.',
+                        icon: 'success',
+                        confirmButtonColor: '#3F51B5'
+                    }).then(() => {
+                        switchAuth('login');
+                        // Limpiar campos
+                        document.getElementById('reg-id').value = '';
+                        document.getElementById('reg-name').value = '';
+                        document.getElementById('reg-email').value = '';
+                        document.getElementById('reg-tel').value = '';
+                        document.getElementById('reg-pass').value = '';
+                    });
+                } else {
+                    // Aquí mostramos el mensaje de validación del servidor (ej: "Su solicitud está PENDIENTE")
+                    Swal.fire({
+                        title: 'Atención',
+                        text: result.message || 'No se pudo completar el registro.',
+                        icon: 'info',
+                        confirmButtonColor: '#3F51B5'
+                    });
+                }
+
+            } catch (error) {
+                console.error("Error al registrar usuario:", error);
+                Swal.fire('Error', 'No se pudo enviar la solicitud. Intente nuevamente.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">ENVIAR SOLICITUD</span><i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        async function validateRegistrationId() {
+            const idInput = document.getElementById('reg-id');
+            const detailsDiv = document.getElementById('registration-details');
+            const btnCheck = document.getElementById('btnCheckId');
+            const id = idInput.value.trim();
+
+            if (!id) {
+                Swal.fire('Atención', 'Por favor ingrese su identificación', 'warning');
+                return;
+            }
+
+            if (allUsers.length === 0) {
+                await loadUsers(); // Asegurar datos cargados
+            }
+
+            const existingUser = allUsers.find(u => {
+                const dbId = String(u.ID_USUARIO || u.ID || '').trim();
+                return dbId === String(id);
+            });
+
+            if (existingUser) {
+                detailsDiv.classList.add('hidden');
+                btnCheck.classList.remove('hidden');
+
+                let text = "Usted ya se encuentra registrado.";
+                if (existingUser.ROL === 'PENDIENTE') {
+                    text = "Su solicitud aún está PENDIENTE de aprobación por el administrador.";
+                } else {
+                    text = `Ya tiene una cuenta activa con el rol: ${existingUser.ROL}. Por favor inicie sesión.`;
+                }
+
+                Swal.fire({
+                    title: 'Identificación ya registrada',
+                    text: text,
+                    icon: 'info',
+                    confirmButtonColor: '#3F51B5'
+                });
+            } else {
+                // USUARIO NUEVO -> Mostrar resto del formulario
+                detailsDiv.classList.remove('hidden');
+                btnCheck.classList.add('hidden');
+                idInput.readOnly = true; // Bloquear ID para evitar cambios después de validar
+
+                // Animación css-native enfocando el siguiente input
+                setTimeout(() => {
+                    const nameInput = document.getElementById('reg-name');
+                    if (nameInput) nameInput.focus();
+                }, 50);
+            }
+        }
+
+        async function validateOpForRegister() {
+            const opInput = document.getElementById('reg-planta-op').value.trim().toUpperCase();
+            if (!opInput) {
+                Swal.fire('Atención', 'Ingrese la OP o Lote', 'warning');
+                return;
+            }
+
+            const btn = document.getElementById('btnCheckOP');
+            const prevHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> BUSCANDO...';
+
+            try {
+                if (!window.allLots || window.allLots.length === 0) {
+                    const data = await fetchAllData();
+                    window.allLots = data.lots;
+                }
+
+                // Normalizar entrada para búsqueda
+                const cleanInput = opInput.trim().toUpperCase();
+
+                const allMatching = window.allLots.filter(l => {
+                    const dbLote = String(l.LOTE || '').trim().toUpperCase();
+                    return dbLote === cleanInput;
+                });
+
+                if (allMatching.length === 0) {
+                    Swal.fire('Sin resultados', 'No se encontró la OP "' + cleanInput + '" en la base de datos.', 'info');
+                    return;
+                }
+
+                // Extraer plantas únicas referenciadas
+                const rawPlantNames = [...new Set(allMatching.map(l => {
+                    const p = l.PLANTA || l.planta || l['PLANTA'] || '';
+                    return String(p).trim();
+                }))].filter(Boolean);
+
+                if (rawPlantNames.length === 0) {
+                    Swal.fire('Error', 'La OP existe pero no tiene ninguna Planta/Taller asignado.', 'error');
+                    return;
+                }
+
+                // Cargar plantas registradas para validar duplicados
+                if (!window.allPlantas || window.allPlantas.length === 0) {
+                    const data = await fetchAllData();
+                    window.allPlantas = data.plantas;
+                }
+
+                const registeredPlants = window.allPlantas || [];
+
+                // Clasificar plantas
+                const availablePlantNames = rawPlantNames.filter(name => {
+                    const exists = registeredPlants.some(p => String(p.PLANTA).trim().toUpperCase() === name.toUpperCase());
+                    return !exists;
+                });
+
+                if (availablePlantNames.length === 0) {
+                    Swal.fire({
+                        title: 'Acceso Activo',
+                        text: 'Este taller ya cuenta con un registro en el sistema. Por favor, inicie sesión.',
+                        icon: 'info',
+                        confirmButtonText: 'IR AL LOGIN',
+                        confirmButtonColor: '#3F51B5'
+                    }).then(() => {
+                        setLoginType('planta');
+                        switchAuth('login');
+                    });
+                    return;
+                }
+
+                const select = document.getElementById('reg-planta-names');
+                select.innerHTML = '';
+                availablePlantNames.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    select.appendChild(opt);
+                });
+
+                if (availablePlantNames.length === 1) select.disabled = true;
+                else select.disabled = false;
+
+                document.getElementById('planta-registration-details').classList.remove('hidden');
+                btn.classList.add('hidden');
+                document.getElementById('reg-planta-op').readOnly = true;
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Error al consultar la base de datos.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = prevHtml;
+            }
+        }
+
+        async function requestRegisterPlanta() {
+            const op = document.getElementById('reg-planta-op').value.trim().toUpperCase();
+            const plantaName = document.getElementById('reg-planta-names').value;
+            const documentId = document.getElementById('reg-planta-documento').value.trim();
+            const address = document.getElementById('reg-planta-direccion').value.trim();
+            const tel = document.getElementById('reg-planta-tel').value.trim();
+            const email = document.getElementById('reg-planta-email').value.trim();
+            const pass = document.getElementById('reg-planta-pass').value.trim();
+            const btn = document.getElementById('regPlantaBtn');
+
+            if (!documentId || !address || !tel || !email || !pass) {
+                Swal.fire('Atención', 'Complete todos los campos solicitados.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VALIDANDO...';
+
+            // Doble validación local contra duplicados por ID
+            const registeredPlants = window.allPlantas || [];
+            const idExists = registeredPlants.some(p => String(p.ID_PLANTA || p.id || '').trim().toUpperCase() === documentId.toUpperCase());
+
+            if (idExists) {
+                Swal.fire({
+                    title: 'ID Registrada',
+                    text: 'Esta identificación ya está vinculada a una cuenta activa. Por favor, inicie sesión.',
+                    icon: 'info',
+                    confirmButtonText: 'IR AL LOGIN',
+                    confirmButtonColor: '#3F51B5'
+                }).then(() => {
+                    setLoginType('planta');
+                    switchAuth('login');
+                });
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">TERMINAR REGISTRO</span><i class="fas fa-check-circle"></i>';
+                return;
+            }
+
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ESCRIBIENDO...';
+
+            try {
+                // Actualizar o insertar planta usando la Edge Function segura
+                const result = await sendToSupabase({
+                    accion: 'CREAR_PLANTA',
+                    id: documentId,
+                    planta: plantaName,
+                    direccion: address,
+                    telefono: tel,
+                    email: email,
+                    password: pass,
+                    rol: 'GUEST'
+                });
+
+                if (result.success) {
+                    Swal.fire({
+                        title: '¡Acceso Creado!',
+                        text: 'Tus credenciales y datos han sido guardados correctamente. Ingresando al sistema...',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+
+                    setTimeout(() => {
+                        window.location.reload(); // Recarga y fuerza el login de la manera más limpia
+                    }, 2000);
+                } else {
+                    Swal.fire('Error', result.message || 'No se pudo completar el registro.', 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Error de conexión', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">ACTUALIZAR Y ACCEDER</span><i class="fas fa-check"></i>';
+            }
+        }
+
+        async function requestReset() {
+            const idInput = document.getElementById('reset-id').value.trim();
+            const btn = document.getElementById('resetBtn');
+
+            if (!idInput) {
+                Swal.fire('Atención', 'Debe ingresar su identificación.', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> VERIFICANDO...';
+
+            try {
+                if (allUsers.length === 0 || allPlantas.length === 0) {
+                    const [usersData, plantasData] = await Promise.all([
+                        fetchUsuariosData(),
+                        fetchPlantasData()
+                    ]);
+                    allUsers = usersData || [];
+                    allPlantas = plantasData || [];
+                }
+
+                // Buscar en USUARIOS primero, luego en PLANTAS
+                let existingUser = allUsers.find(u =>
+                    String(u.ID_USUARIO || u.ID || '').trim() === String(idInput)
+                );
+                let sheetType = 'USUARIOS';
+
+                if (!existingUser) {
+                    existingUser = allPlantas.find(u =>
+                        String(u.ID_PLANTA || u.id || u.cedula || '').trim() === String(idInput)
+                    );
+                    if (existingUser) sheetType = 'PLANTAS';
+                }
+
+                if (!existingUser) {
+                    throw new Error('No se encontró una cuenta con esta identificación.');
+                }
+
+                const dbEmail = String(existingUser.CORREO || existingUser.EMAIL || '').trim();
+                
+                // Si es una PLANTA sin correo, mostrar mensaje especial
+                if (!dbEmail && sheetType === 'PLANTAS') {
+                    const nombrePlanta = String(existingUser.PLANTA || existingUser.planta || 'su taller').trim();
+                    Swal.fire({
+                        title: 'Recordatorio de Acceso',
+                        html: `
+                            <div style="text-align:left; padding:0 1.5rem; line-height:1.8; color:#334155;">
+                                <p style="margin-bottom:1.5rem; font-size:0.95rem;">
+                                    Hola, <strong style="color:#1e293b;">${nombrePlanta}</strong>. Su contraseña predeterminada es su <strong>número de identificación</strong> (NIT o Cédula) registrada en el sistema.
+                                </p>
+                                <div style="background:#f8fafc; border-left:3px solid #3b82f6; padding:1rem; border-radius:6px; margin-top:1.5rem;">
+                                    <p style="margin:0; font-size:0.9rem; color:#475569;">
+                                        Por razones de seguridad, le recomendamos cambiar su contraseña desde el módulo <strong>"Gestión de Planta"</strong> una vez ingrese al sistema.
+                                    </p>
+                                </div>
+                            </div>
+                        `,
+                        icon: 'info',
+                        confirmButtonText: 'Entendido',
+                        confirmButtonColor: '#3F51B5',
+                        width: '500px'
+                    }).then(() => switchAuth('login'));
+                    return;
+                }
+                
+                if (!dbEmail) {
+                    throw new Error('Esta cuenta no tiene un correo electrónico asociado.');
+                }
+
+                // Guardar datos para el paso de confirmación
+                window.resetTempData = { id: idInput, hoja: sheetType };
+
+                // Ofuscar correo para mostrar
+                 // Llamar a la Edge Function de Supabase
+                const supabase = window.getSupabaseClient();
+                const { data, error: functionError } = await supabase.functions.invoke('password-reset', {
+                    body: {
+                        action: 'SOLICITAR_RESETEO',
+                        hoja: sheetType,
+                        id: idInput
+                    }
+                });
+
+                if (functionError) throw new Error(functionError.message || 'Error al conectar con el servidor');
+                if (!data.success) throw new Error(data.message || 'Error al procesar la solicitud');
+
+                Swal.fire({
+                    title: '¡Enlace Enviado!',
+                    html: `Hemos enviado un enlace de recuperación a <b>${obscuredEmail}</b>.<br><span style="font-size:0.85rem;color:#64748b;">Revisa tu bandeja de entrada o SPAM. El enlace expira en 5 minutos.</span>`,
+                    icon: 'success',
+                    confirmButtonColor: '#3F51B5'
+                }).then(() => switchAuth('login'));
+
+            } catch (error) {
+                Swal.fire('Error', error.message || 'Error al procesar la solicitud.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="btn-text">ENVIAR ENLACE</span><i class="fas fa-paper-plane"></i>';
+            }
+        }
+
+        async function validateResetToken() {
+            // Esta función ya no se usa porque ahora se redirige a reset.html
+            // Pero la mantenemos limpia por si acaso hay referencias legacy
+            switchAuth('login');
+        }
+    </script>
+</body>
+
+</html>
