@@ -96,40 +96,57 @@ async function fetchSupabaseData(tableName, options = {}) {
             const sb = getSupabaseClient();
             if (!sb) throw new Error('Supabase client no disponible');
 
-            let query = sb.from(finalTable).select(options.select || '*');
+            let allData = [];
+            let from = 0;
+            const limit = 1000;
+            let keepFetching = true;
 
-            // Aplicar filtros opcionales
-            if (hasFilters) {
-                options.filters.forEach(f => {
-                    const col = f.column.toLowerCase();
-                    if (f.type === 'eq')  query = query.eq(col, f.value);
-                    if (f.type === 'neq') query = query.neq(col, f.value);
-                    if (f.type === 'in')  query = query.in(col, f.value.split(','));
-                });
-            }
+            while (keepFetching) {
+                let query = sb.from(finalTable).select(options.select || '*').range(from, from + limit - 1);
 
-            // Filtro GUEST directo en la query (RLS lo refuerza en el servidor)
-            const sessionUser = (typeof currentUser !== 'undefined') ? currentUser : null;
-            const skipFilter = ['CHAT'].includes(tableUpper);
-            if (!skipFilter && sessionUser && sessionUser.ROL === 'GUEST' && sessionUser.PLANTA) {
-                const plantCol = (tableUpper === 'MASTER' || tableUpper === 'BUSINT') ? 'nombre_planta' : 'planta';
-                query = query.eq(plantCol, sessionUser.PLANTA);
-            }
-            // Filtro por productora para usuarios internos
-            if (!skipFilter && ['MASTER', 'PLANTAS', 'NOVEDADES', 'RUTERO', 'VISITAS'].includes(tableUpper) && sessionUser &&
-                ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(sessionUser.ROL) &&
-                sessionUser.ID_PRODUCTORA) {
-                query = query.eq('productora', parseInt(sessionUser.ID_PRODUCTORA));
-            }
+                // Aplicar filtros opcionales
+                if (hasFilters) {
+                    options.filters.forEach(f => {
+                        const col = f.column.toLowerCase();
+                        if (f.type === 'eq')  query = query.eq(col, f.value);
+                        if (f.type === 'neq') query = query.neq(col, f.value);
+                        if (f.type === 'in')  query = query.in(col, f.value.split(','));
+                    });
+                }
 
-            const { data, error } = await query;
-            if (error) throw error;
+                // Filtro GUEST directo en la query (RLS lo refuerza en el servidor)
+                const sessionUser = (typeof currentUser !== 'undefined') ? currentUser : null;
+                const skipFilter = ['CHAT'].includes(tableUpper);
+                if (!skipFilter && sessionUser && sessionUser.ROL === 'GUEST' && sessionUser.PLANTA) {
+                    const plantCol = (tableUpper === 'MASTER' || tableUpper === 'BUSINT') ? 'nombre_planta' : 'planta';
+                    query = query.eq(plantCol, sessionUser.PLANTA);
+                }
+                // Filtro por productora para usuarios internos
+                if (!skipFilter && ['MASTER', 'PLANTAS', 'NOVEDADES', 'RUTERO', 'VISITAS'].includes(tableUpper) && sessionUser &&
+                    ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(sessionUser.ROL) &&
+                    sessionUser.ID_PRODUCTORA) {
+                    query = query.eq('productora', parseInt(sessionUser.ID_PRODUCTORA));
+                }
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    allData = allData.concat(data);
+                }
+
+                if (data && data.length === limit) {
+                    from += limit;
+                } else {
+                    keepFetching = false;
+                }
+            }
 
             if (!hasFilters) {
-                _memCache.set(tableUpper, { data: data || [], ts: Date.now() });
+                _memCache.set(tableUpper, { data: allData, ts: Date.now() });
             }
 
-            return _normalizeSupabaseData(data || [], tableName);
+            return _normalizeSupabaseData(allData, tableName);
         } catch (error) {
             console.error(`[API] Error en fetchSupabaseData (${tableName}):`, error);
             throw error;
@@ -278,26 +295,16 @@ async function fetchNovedadesData(soloFinalizados = false, incluirTodos = false)
         return _normalizeSupabaseData(novedades, 'novedades');
     }
 
-    // ── Roles internos: Supabase client directo ──
-    let query = sb.from('novedades').select('*');
+    // ── Roles internos: Usar fetchSupabaseData que ya maneja paginación y filtros de productora/GUEST ──
+    const filters = [];
     if (!incluirTodos) {
         if (soloFinalizados) {
-            query = query.eq('estado', 'FINALIZADO');
+            filters.push({ column: 'estado', type: 'eq', value: 'FINALIZADO' });
         } else {
-            query = query.neq('estado', 'FINALIZADO');
+            filters.push({ column: 'estado', type: 'neq', value: 'FINALIZADO' });
         }
     }
-
-    // Filtros para roles internos (GUEST ya fue manejado arriba)
-    const internalUser = (typeof currentUser !== 'undefined') ? currentUser : null;
-    if (internalUser && ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(internalUser.ROL) && internalUser.ID_PRODUCTORA) {
-        query = query.eq('productora', parseInt(internalUser.ID_PRODUCTORA));
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    return _normalizeSupabaseData(data || [], 'novedades');
+    return fetchSupabaseData('novedades', { filters, noCache: true });
 }
 
 /**

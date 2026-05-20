@@ -395,18 +395,29 @@
                         <!-- Información del Taller / Planta -->
                         <div class="section section-dashed" style="flex: 1; margin: 0;">
                             <h3>Información del Taller</h3>
-                            ${infoPlanta ? `
-                                <table class="table-data">
-                                    ${(infoPlanta.PLANTA || nov.PLANTA) ? `<tr><td colspan="2"><strong>Planta:</strong> ${infoPlanta.PLANTA || nov.PLANTA}</td></tr>` : ''}
-                                    ${infoPlanta.ID_PLANTA ? `<tr><td colspan="2"><strong>Nit ó Cédula:</strong> ${formatearCedulaNit(infoPlanta.ID_PLANTA)}</td></tr>` : ''}
-                                    ${infoPlanta.TELEFONO ? `<tr><td colspan="2"><strong>Teléfono:</strong> ${formatearTelefono(infoPlanta.TELEFONO)}</td></tr>` : ''}
-                                    ${(infoPlanta.EMAIL || infoPlanta.CORREO) ? `<tr><td colspan="2"><strong>Correo:</strong> ${infoPlanta.EMAIL || infoPlanta.CORREO}</td></tr>` : ''}
-                                </table>
-                            ` : `
-                                <div style="padding: 8px; background: #fff3f3; border: 1px solid #ffcdd2; color: #b71c1c; border-radius: 4px; font-size: 10px;">
-                                    <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron datos de contacto registrados para esta planta.
-                                </div>
-                            `}
+                            ${(() => {
+                                const plantaNombre = (infoPlanta && infoPlanta.PLANTA) || nov.PLANTA || '';
+                                const nitCedula = (infoPlanta && infoPlanta.ID_PLANTA) || '';
+                                const telefono = (infoPlanta && infoPlanta.TELEFONO) || '';
+                                const correo = (infoPlanta && (infoPlanta.EMAIL || infoPlanta.CORREO)) || '';
+
+                                if (!plantaNombre && !nitCedula && !telefono && !correo) {
+                                    return `
+                                        <div style="padding: 8px; background: #fff3f3; border: 1px solid #ffcdd2; color: #b71c1c; border-radius: 4px; font-size: 10px;">
+                                            <i class="fas fa-exclamation-triangle me-2"></i> No se encontraron datos de contacto registrados para esta planta.
+                                        </div>
+                                    `;
+                                }
+
+                                return `
+                                    <table class="table-data">
+                                        ${plantaNombre ? `<tr><td colspan="2"><strong>Planta:</strong> ${plantaNombre}</td></tr>` : ''}
+                                        ${nitCedula ? `<tr><td colspan="2"><strong>Nit ó Cédula:</strong> ${formatearCedulaNit(nitCedula)}</td></tr>` : ''}
+                                        ${telefono ? `<tr><td colspan="2"><strong>Teléfono:</strong> ${formatearTelefono(telefono)}</td></tr>` : ''}
+                                        ${correo ? `<tr><td colspan="2"><strong>Correo:</strong> ${correo}</td></tr>` : ''}
+                                    </table>
+                                `;
+                            })()}
                         </div>
                     </div>
 
