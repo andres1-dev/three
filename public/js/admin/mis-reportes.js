@@ -515,11 +515,13 @@ function enviarWhatsApp() {
     // HEADER
     // =========================
 
-    let message = '*MI REPORTE DIARIO:*\n';
+    let message = '*MI REPORTE DIARIO:*\n\n';
 
-    // MONOESPACIADO + NEGRITA
+    // =========================
+    // USUARIO
+    // =========================
 
-    message += `*\`${user.NOMBRE || user.NAME || 'Usuario'}\`*\n\n`;
+    message += `*\`${user.NOMBRE || user.NAME || 'Usuario'}\`*\n`;
 
     // =========================
     // FECHAS DINAMICAS
@@ -579,11 +581,11 @@ function enviarWhatsApp() {
                 fechaLarga.charAt(0).toUpperCase() +
                 fechaLarga.slice(1);
 
-            message += `*${fechaCapitalizada}*\n`;
+            message += `*${fechaCapitalizada}*\n\n`;
 
         } else {
 
-            message += `*Periodo:* ${startDate} - ${endDate}\n`;
+            message += `*Periodo:* ${startDate} - ${endDate}\n\n`;
         }
 
     } else {
@@ -605,14 +607,16 @@ function enviarWhatsApp() {
             fechaLarga.charAt(0).toUpperCase() +
             fechaLarga.slice(1);
 
-        message += `*${fechaCapitalizada}*\n`;
+        message += `*${fechaCapitalizada}*\n\n`;
     }
 
     // =========================
     // TOTAL REPORTES
     // =========================
 
-    message += `Total de reportes del dia: *${gsFilteredReportes.length}*\n\n`;
+    message += `*Total Reportes:*\n`;
+
+    message += `> ${gsFilteredReportes.length}\n\n`;
 
     // =========================
     // AGRUPAR REPORTES
@@ -703,7 +707,7 @@ function enviarWhatsApp() {
             // TITULO REPORTE
             // =========================
 
-            message += `*(${idx + 1}.)* *${planta}*\n`;
+            message += `*${idx + 1}.* *${planta}*\n`;
 
             // =========================
             // DATOS
