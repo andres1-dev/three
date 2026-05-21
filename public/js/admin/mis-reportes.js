@@ -467,7 +467,34 @@ function escapeWhatsAppFormatting(text) {
         .replace(/\./g, '\\.');
 }
 
-function enviarWhatsApp() {
+async function obtenerProductoras() {
+    try {
+        const cached = localStorage.getItem('busint_productoras_cache');
+        if (cached) {
+            return JSON.parse(cached);
+        }
+        const res = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+            body: JSON.stringify({ accion: 'LISTAR_PRODUCTORAS' })
+        });
+        if (!res.ok) return [];
+        const r = await res.json();
+        const productoras = r.productoras || [];
+        localStorage.setItem('busint_productoras_cache', JSON.stringify(productoras));
+        return productoras;
+    } catch(e) {
+        return [];
+    }
+}
+
+function obtenerNombreProductora(productoraId, productorasList) {
+    if (!productoraId) return 'SIN PRODUCTORA';
+    const prod = productorasList.find(p => String(p.id_productora) === String(productoraId));
+    return prod ? prod.productora : productoraId;
+}
+
+async function enviarWhatsApp() {
 
     const user = window.currentUser || {};
 
@@ -510,6 +537,12 @@ function enviarWhatsApp() {
 
         return;
     }
+
+    // =========================
+    // OBTENER PRODUCTORAS
+    // =========================
+
+    const productorasList = await obtenerProductoras();
 
     // =========================
     // HEADER
@@ -619,59 +652,38 @@ function enviarWhatsApp() {
     message += `> ${gsFilteredReportes.length}\n\n`;
 
     // =========================
-    // AGRUPAR REPORTES
+    // AGRUPAR REPORTES POR PRODUCTORA
     // =========================
 
-    const groups = {
-        AUDITORIA: [],
-        RONDA: [],
-        CONTRAMUESTRA: [],
-        SEGUIMIENTO: []
-    };
+    const productoraGroups = {};
 
     gsFilteredReportes.forEach(r => {
 
-        const tipo =
-            (r.TIPO_VISITA || 'RONDA')
-            .toUpperCase()
-            .trim();
+        const productoraId = r.PRODUCTORA || r.productora || 'SIN PRODUCTORA';
+        const productoraNombre = obtenerNombreProductora(productoraId, productorasList);
 
-        if (groups[tipo]) {
-
-            groups[tipo].push(r);
-
-        } else {
-
-            groups.RONDA.push(r);
+        if (!productoraGroups[productoraNombre]) {
+            productoraGroups[productoraNombre] = [];
         }
+
+        productoraGroups[productoraNombre].push(r);
     });
 
     // =========================
-    // LABELS
+    // RENDER REPORTES POR PRODUCTORA
     // =========================
 
-    const tipoLabels = {
-        AUDITORIA: 'AUDITORÍAS',
-        RONDA: 'RONDAS',
-        CONTRAMUESTRA: 'CONTRAMUESTRAS',
-        SEGUIMIENTO: 'SEGUIMIENTOS'
-    };
+    Object.keys(productoraGroups).forEach(productoraNombre => {
 
-    // =========================
-    // RENDER REPORTES
-    // =========================
-
-    Object.keys(groups).forEach(tipo => {
-
-        const reports = groups[tipo];
+        const reports = productoraGroups[productoraNombre];
 
         if (reports.length === 0) return;
 
         // =========================
-        // TITULO DEL GRUPO
+        // TITULO DEL GRUPO PRODUCTORA
         // =========================
 
-        message += `*${tipoLabels[tipo]} (${reports.length})*\n\n`;
+        message += `*${productoraNombre} (${reports.length})*\n\n`;
 
         reports.forEach((r, idx) => {
 
