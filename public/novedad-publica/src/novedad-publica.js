@@ -1102,10 +1102,146 @@ function handleFileDrop(e) {
     }
 }
 function continuarAdicional() {
+    // Validar que se haya seleccionado un área
+    const area = document.getElementById('area').value;
+    if (!area) {
+        showError(document.getElementById('area'), document.getElementById('areaError'), 'Por favor selecciona un área');
+        return;
+    }
+
+    // Validar tipo de novedad si es visible
+    const tipoGroup = document.getElementById('tipoNovedadGroup');
+    if (!tipoGroup.classList.contains('hidden')) {
+        const tipo = document.getElementById('tipoNovedad').value;
+        if (!tipo) {
+            showError(document.getElementById('tipoNovedad'), document.getElementById('tipoError'), 'Por favor selecciona un tipo de novedad');
+            return;
+        }
+    }
+
+    // Validar campos dinámicos según el área
+    if (area === 'INSUMOS') {
+        if (!validarFilasDinamicas('insumosList')) {
+            return;
+        }
+    } else if (area === 'CORTE') {
+        if (!validarFilasDinamicas('corteList')) {
+            return;
+        }
+    } else if (area === 'TELAS') {
+        if (!validarFilasDinamicas('telasList')) {
+            return;
+        }
+    } else if (area === 'CODIGOS') {
+        const tipoSolicitud = document.getElementById('codigosTipoSolicitud');
+        if (!tipoSolicitud.value) {
+            tipoSolicitud.classList.add('error');
+            tipoSolicitud.focus();
+            tipoSolicitud.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        if (tipoSolicitud.value === 'UNIDADES') {
+            if (!validarFilasCodigos()) {
+                return;
+            }
+        }
+    } else if (area !== 'DISEÑO' && area !== 'TELAS') {
+        // Para áreas con cantidad normal (OTROS)
+        const cantidadNormal = document.getElementById('cantidadNormal');
+        const cantidadGroup = document.getElementById('cantidadNormalGroup');
+        if (cantidadNormal && !cantidadGroup.classList.contains('hidden')) {
+            const cantidad = cantidadNormal.value;
+            if (!cantidad || cantidad <= 0) {
+                cantidadNormal.classList.add('error');
+                cantidadNormal.focus();
+                cantidadNormal.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+        }
+    }
+
+    // Mostrar sección adicional
     document.getElementById('seccionNovedadDetalles').classList.add('hidden');
     document.getElementById('seccionAdicional').classList.remove('hidden');
     updateStepIndicator(4);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function validarFilasDinamicas(listId) {
+    const filas = document.querySelectorAll(`#${listId} .dynamic-item`);
+    let primerError = null;
+
+    filas.forEach(fila => {
+        const tipoInput = fila.querySelector('.item-tipo');
+        const cantInput = fila.querySelector('.item-cantidad');
+
+        // Validar tipo
+        if (!tipoInput.value.trim()) {
+            tipoInput.classList.add('error');
+            if (!primerError) primerError = tipoInput;
+        } else {
+            tipoInput.classList.remove('error');
+        }
+
+        // Validar cantidad
+        if (!cantInput.value || cantInput.value <= 0) {
+            cantInput.classList.add('error');
+            if (!primerError) primerError = cantInput;
+        } else {
+            cantInput.classList.remove('error');
+        }
+    });
+
+    if (primerError) {
+        primerError.focus();
+        primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+
+    return true;
+}
+
+function validarFilasCodigos() {
+    const filas = document.querySelectorAll('#codigosList .dynamic-item');
+    let primerError = null;
+
+    filas.forEach(fila => {
+        const tallaSelect = fila.querySelector('.codigo-talla');
+        const colorSelect = fila.querySelector('.codigo-color');
+        const cantInput = fila.querySelector('.codigo-cantidad');
+
+        // Validar talla
+        if (!tallaSelect.value) {
+            tallaSelect.classList.add('error');
+            if (!primerError) primerError = tallaSelect;
+        } else {
+            tallaSelect.classList.remove('error');
+        }
+
+        // Validar color
+        if (!colorSelect.value) {
+            colorSelect.classList.add('error');
+            if (!primerError) primerError = colorSelect;
+        } else {
+            colorSelect.classList.remove('error');
+        }
+
+        // Validar cantidad
+        if (!cantInput.value || cantInput.value <= 0) {
+            cantInput.classList.add('error');
+            if (!primerError) primerError = cantInput;
+        } else {
+            cantInput.classList.remove('error');
+        }
+    });
+
+    if (primerError) {
+        primerError.focus();
+        primerError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return false;
+    }
+
+    return true;
 }
 function volverDetalles() {
     document.getElementById('seccionAdicional').classList.add('hidden');
