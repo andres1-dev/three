@@ -468,59 +468,183 @@ function escapeWhatsAppFormatting(text) {
 }
 
 function enviarWhatsApp() {
+
     const user = window.currentUser || {};
-    // Intentar obtener el teléfono desde múltiples fuentes (Supabase Auth metadata, campo nativo, o campos personalizados)
-    const phoneNumber = user.TELEFONO || user.phone || user.PHONE || user.CELULAR || user.telefono || '';
-    
+
+    const phoneNumber =
+        user.TELEFONO ||
+        user.phone ||
+        user.PHONE ||
+        user.CELULAR ||
+        user.telefono ||
+        '';
+
+    // =========================
+    // VALIDAR TELEFONO
+    // =========================
+
     if (!phoneNumber) {
+
         Swal.fire({
             icon: 'warning',
             title: 'Sin número de teléfono',
-            text: 'No tienes un número de teléfono registrado en tu perfil.',
+            text: 'No tienes un número registrado.',
             confirmButtonColor: '#3F51B5'
         });
+
         return;
     }
 
+    // =========================
+    // VALIDAR REPORTES
+    // =========================
+
     if (gsFilteredReportes.length === 0) {
+
         Swal.fire({
             icon: 'warning',
             title: 'Sin reportes',
-            text: 'No hay reportes para enviar en el rango de fechas seleccionado.',
+            text: 'No hay reportes para enviar.',
             confirmButtonColor: '#3F51B5'
         });
+
         return;
     }
 
-    // Build the message
-    let message = '*RESUMEN DIARIO DE REPORTES*\n\n';
-    
-    // Date range info
+    // =========================
+    // HEADER
+    // =========================
+
+    let message = '*MI REPORTE DIARIO:*\n';
+
+    // MONOESPACIADO + NEGRITA
+
+    message += `*\`${user.NOMBRE || user.NAME || 'Usuario'}\`*\n\n`;
+
+    // =========================
+    // FECHAS DINAMICAS
+    // =========================
+
     if (selectedDateRange) {
-        const startDate = selectedDateRange.start.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        const endDate = selectedDateRange.end.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        if (startDate === endDate) {
-            message += `*Fecha:* ${startDate}\n`;
+
+        const start =
+            selectedDateRange.start;
+
+        const end =
+            selectedDateRange.end;
+
+        const startDate =
+            start.toLocaleDateString(
+                'es-ES',
+                {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }
+            );
+
+        const endDate =
+            end.toLocaleDateString(
+                'es-ES',
+                {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }
+            );
+
+        // =========================
+        // MISMO DIA
+        // =========================
+
+        const sameDay =
+            start.getDate() === end.getDate() &&
+            start.getMonth() === end.getMonth() &&
+            start.getFullYear() === end.getFullYear();
+
+        if (sameDay) {
+
+            const fechaLarga =
+                start.toLocaleDateString(
+                    'es-ES',
+                    {
+                        weekday: 'long',
+                        day: 'numeric',
+                        month: 'long',
+                        year: 'numeric'
+                    }
+                );
+
+            const fechaCapitalizada =
+                fechaLarga.charAt(0).toUpperCase() +
+                fechaLarga.slice(1);
+
+            message += `*${fechaCapitalizada}*\n`;
+
         } else {
+
             message += `*Periodo:* ${startDate} - ${endDate}\n`;
         }
-    } else {
-        const today = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-        message += `*Fecha:* ${today}\n`;
-    }
-    
-    message += `*Usuario:* ${escapeWhatsAppFormatting(user.NOMBRE || user.NAME || 'Usuario')}\n`;
-    message += `*Total de reportes:* ${gsFilteredReportes.length}\n\n`;
-    
-    message += '─────────────────────────\n\n';
 
-    // Group by type
-    const groups = { AUDITORIA: [], RONDA: [], CONTRAMUESTRA: [], SEGUIMIENTO: [] };
+    } else {
+
+        const today = new Date();
+
+        const fechaLarga =
+            today.toLocaleDateString(
+                'es-ES',
+                {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                }
+            );
+
+        const fechaCapitalizada =
+            fechaLarga.charAt(0).toUpperCase() +
+            fechaLarga.slice(1);
+
+        message += `*${fechaCapitalizada}*\n`;
+    }
+
+    // =========================
+    // TOTAL REPORTES
+    // =========================
+
+    message += `Total de reportes del dia: *${gsFilteredReportes.length}*\n\n`;
+
+    // =========================
+    // AGRUPAR REPORTES
+    // =========================
+
+    const groups = {
+        AUDITORIA: [],
+        RONDA: [],
+        CONTRAMUESTRA: [],
+        SEGUIMIENTO: []
+    };
+
     gsFilteredReportes.forEach(r => {
-        const tipo = (r.TIPO_VISITA || 'RONDA').toUpperCase();
-        if (groups[tipo]) groups[tipo].push(r);
-        else groups['RONDA'].push(r);
+
+        const tipo =
+            (r.TIPO_VISITA || 'RONDA')
+            .toUpperCase()
+            .trim();
+
+        if (groups[tipo]) {
+
+            groups[tipo].push(r);
+
+        } else {
+
+            groups.RONDA.push(r);
+        }
     });
+
+    // =========================
+    // LABELS
+    // =========================
 
     const tipoLabels = {
         AUDITORIA: 'AUDITORÍAS',
@@ -529,48 +653,133 @@ function enviarWhatsApp() {
         SEGUIMIENTO: 'SEGUIMIENTOS'
     };
 
+    // =========================
+    // RENDER REPORTES
+    // =========================
+
     Object.keys(groups).forEach(tipo => {
+
         const reports = groups[tipo];
+
         if (reports.length === 0) return;
 
-        message += `${tipoLabels[tipo]} (${reports.length})\n`;
-        message += '─────────────────────────\n';
+        // =========================
+        // TITULO DEL GRUPO
+        // =========================
+
+        message += `*${tipoLabels[tipo]} (${reports.length})*\n\n`;
 
         reports.forEach((r, idx) => {
-            message += `\n${idx + 1}. *${escapeWhatsAppFormatting(r.PLANTA || 'Sin planta')}*\n`;
-            message += `   Lote: ${escapeWhatsAppFormatting(r.ID || 'N/A')}\n`;
-            message += `   Referencia: ${escapeWhatsAppFormatting(r.REFERENCIA || 'N/A')}\n`;
-            message += `   Cantidad: ${escapeWhatsAppFormatting(r.CANTIDAD || r.CANT || r.QTY || 'N/A')}\n`;
-            message += `   Conclusión: ${escapeWhatsAppFormatting(r.CONCLUSION || 'Pendiente')}\n`;
-            
-            // Add comments if available
-            if (r.COMENTARIOS || r.COMENTARIO || r.OBSERVACIONES) {
-                const comentarios = r.COMENTARIOS || r.COMENTARIO || r.OBSERVACIONES;
-                message += `   *Comentarios:* ${escapeWhatsAppFormatting(comentarios)}\n`;
-            }
-            
-            // Add additional info if available
-            if (r.INFORMACION || r.INFO || r.DETALLES) {
-                const info = r.INFORMACION || r.INFO || r.DETALLES;
-                message += `   Info: ${escapeWhatsAppFormatting(info)}\n`;
-            }
-        });
 
-        message += '\n';
+            const planta =
+                r.PLANTA ||
+                'SIN PLANTA';
+
+            const lote =
+                r.ID ||
+                'N/A';
+
+            const referencia =
+                r.REFERENCIA ||
+                'N/A';
+
+            const cantidad =
+                r.CANTIDAD ||
+                r.CANT ||
+                r.QTY ||
+                'N/A';
+
+            const conclusion =
+                r.CONCLUSION ||
+                'PENDIENTE';
+
+            const comentarios =
+                r.COMENTARIOS ||
+                r.COMENTARIO ||
+                r.OBSERVACIONES ||
+                '';
+
+            // =========================
+            // TITULO REPORTE
+            // =========================
+
+            message += `*(${idx + 1}.)* *${planta}*\n`;
+
+            // =========================
+            // DATOS
+            // =========================
+
+            message += `*Lote:* ${lote}\n`;
+
+            message += `*Referencia:* ${referencia}\n`;
+
+            message += `*Cantidad:* ${cantidad}\n\n`;
+
+            // =========================
+            // CONCLUSION
+            // =========================
+
+            message += `*Conclusión:*\n`;
+
+            message += `> ${conclusion.toUpperCase()}\n\n`;
+
+            // =========================
+            // COMENTARIOS
+            // =========================
+
+            if (comentarios) {
+
+                message += `*Comentarios:*\n`;
+
+                message += `_${comentarios.trim()}_\n`;
+            }
+
+            // =========================
+            // SEPARADOR ENTRE REPORTES
+            // =========================
+
+            message += `\n━━━━━━━━━━━━━━━━━━\n\n`;
+        });
     });
 
-    message += '─────────────────────────\n';
-    message += '*Enviado desde Sistema de Gestión TDM*';
+    // =========================
+    // CIERRE
+    // =========================
 
-    // Clean phone number (remove spaces, dashes, parentheses)
-    const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
-    
-    // Encode message for URL
-    const encodedMessage = encodeURIComponent(message);
-    
-    // Open WhatsApp
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+    message += `Muchas gracias por la atención prestada.`;
+
+    // =========================
+    // LIMPIAR NUMERO
+    // =========================
+
+    const cleanPhone =
+        phoneNumber.replace(
+            /[\s\-\(\)]/g,
+            ''
+        );
+
+    // =========================
+    // ENCODE URL
+    // =========================
+
+    const encodedMessage =
+        encodeURIComponent(message);
+
+    // =========================
+    // URL WHATSAPP
+    // =========================
+
+    const whatsappUrl =
+        `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+
+    // =========================
+    // ABRIR WHATSAPP
+    // =========================
+
+    window.open(
+        whatsappUrl,
+        '_blank'
+    );
 }
 
 window.toggleKPIs = toggleKPIs;
