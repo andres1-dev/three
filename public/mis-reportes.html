@@ -589,6 +589,71 @@
                 margin-top: 70px !important;
             }
         }
+
+        /* ── WhatsApp Floating Button ── */
+        .whatsapp-float-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(37, 211, 102, 0.5);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+            border: 3px solid rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+            animation: pulse-whatsapp 2s infinite;
+        }
+
+        @keyframes pulse-whatsapp {
+            0%, 100% {
+                box-shadow: 0 8px 32px rgba(37, 211, 102, 0.5);
+            }
+            50% {
+                box-shadow: 0 8px 40px rgba(37, 211, 102, 0.7);
+            }
+        }
+
+        .whatsapp-float-btn:hover {
+            transform: scale(1.15) rotate(5deg);
+            box-shadow: 0 12px 48px rgba(37, 211, 102, 0.6);
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+        }
+
+        .whatsapp-float-btn:active {
+            transform: scale(1.05) rotate(-2deg);
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+        }
+
+        .whatsapp-float-btn i {
+            color: white;
+            font-size: 34px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+        }
+
+        @media (max-width: 767px) {
+            .whatsapp-float-btn {
+                bottom: 24px;
+                right: 24px;
+                width: 58px;
+                height: 58px;
+                border-width: 2.5px;
+            }
+
+            .whatsapp-float-btn i {
+                font-size: 30px;
+            }
+
+            .whatsapp-float-btn:hover {
+                transform: scale(1.1);
+            }
+        }
     </style>
 </head>
 
@@ -697,6 +762,11 @@
         </div>
 
         <div id="myReportsFeed" style="display: none;"></div>
+
+        <!-- WhatsApp Floating Button -->
+        <button class="whatsapp-float-btn" onclick="enviarWhatsApp()" title="Enviar WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </button>
 
         <div id="scrollLoader" style="display: none; padding: 1rem 0;">
             <style>

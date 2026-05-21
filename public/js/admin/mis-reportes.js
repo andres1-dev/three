@@ -22,7 +22,7 @@ let globalReportesPromise = null;
 window.onload = async function() {
     await loadUsers();
     const user = window.currentUser;
-    if (!user || !['USER-C', 'ADMIN', 'MODERATOR'].includes(user.ROL)) {
+    if (!user || user.ROL !== 'USER-C') {
         window.location.replace('index.html');
         return;
     }
@@ -50,16 +50,10 @@ async function cargarMisReportesLocal(reportesPromise) {
         const rawReportes = await (reportesPromise || fetchReportesData());
 
         const user = window.currentUser || {};
-        const isAdminOrMod = ['ADMIN', 'MODERATOR'].includes(user.ROL);
-
-        if (isAdminOrMod) {
-            gsReportes = rawReportes || [];
-        } else {
-            const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
-            gsReportes = (rawReportes || []).filter(r => {
-                return (r.EMAIL || '').toLowerCase().trim() === userEmail;
-            });
-        }
+        const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
+        gsReportes = (rawReportes || []).filter(r => {
+            return (r.EMAIL || '').toLowerCase().trim() === userEmail;
+        });
 
         gsReportes.sort((a, b) => {
             const dateA = parsearFechaLatina(String(a.TIMESTAMP || a.FECHA || '')) || new Date(0);
@@ -101,16 +95,10 @@ async function recargarDatos() {
         const rawReportes = await fetchReportesData();
 
         const user = window.currentUser || {};
-        const isAdminOrMod = ['ADMIN', 'MODERATOR'].includes(user.ROL);
-
-        if (isAdminOrMod) {
-            gsReportes = rawReportes || [];
-        } else {
-            const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
-            gsReportes = (rawReportes || []).filter(r => {
-                return (r.EMAIL || '').toLowerCase().trim() === userEmail;
-            });
-        }
+        const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
+        gsReportes = (rawReportes || []).filter(r => {
+            return (r.EMAIL || '').toLowerCase().trim() === userEmail;
+        });
 
         gsReportes.sort((a, b) => {
             const dateA = parsearFechaLatina(String(a.TIMESTAMP || a.FECHA || '')) || new Date(0);
@@ -468,8 +456,126 @@ function expandReport(index) {
     window.open('plantilla-impresion-calidad.html', '_blank');
 }
 
+function escapeWhatsAppFormatting(text) {
+    if (!text) return '';
+    const str = String(text);
+    return str
+        .replace(/\*/g, '\\*')
+        .replace(/_/g, '\\_')
+        .replace(/~/g, '\\~')
+        .replace(/`/g, '\\`')
+        .replace(/\./g, '\\.');
+}
+
+function enviarWhatsApp() {
+    const user = window.currentUser || {};
+    // Intentar obtener el teléfono desde múltiples fuentes (Supabase Auth metadata, campo nativo, o campos personalizados)
+    const phoneNumber = user.TELEFONO || user.phone || user.PHONE || user.CELULAR || user.telefono || '';
+    
+    if (!phoneNumber) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin número de teléfono',
+            text: 'No tienes un número de teléfono registrado en tu perfil.',
+            confirmButtonColor: '#3F51B5'
+        });
+        return;
+    }
+
+    if (gsFilteredReportes.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin reportes',
+            text: 'No hay reportes para enviar en el rango de fechas seleccionado.',
+            confirmButtonColor: '#3F51B5'
+        });
+        return;
+    }
+
+    // Build the message
+    let message = '*RESUMEN DIARIO DE REPORTES*\n\n';
+    
+    // Date range info
+    if (selectedDateRange) {
+        const startDate = selectedDateRange.start.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const endDate = selectedDateRange.end.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        if (startDate === endDate) {
+            message += `*Fecha:* ${startDate}\n`;
+        } else {
+            message += `*Periodo:* ${startDate} - ${endDate}\n`;
+        }
+    } else {
+        const today = new Date().toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        message += `*Fecha:* ${today}\n`;
+    }
+    
+    message += `*Usuario:* ${escapeWhatsAppFormatting(user.NOMBRE || user.NAME || 'Usuario')}\n`;
+    message += `*Total de reportes:* ${gsFilteredReportes.length}\n\n`;
+    
+    message += '─────────────────────────\n\n';
+
+    // Group by type
+    const groups = { AUDITORIA: [], RONDA: [], CONTRAMUESTRA: [], SEGUIMIENTO: [] };
+    gsFilteredReportes.forEach(r => {
+        const tipo = (r.TIPO_VISITA || 'RONDA').toUpperCase();
+        if (groups[tipo]) groups[tipo].push(r);
+        else groups['RONDA'].push(r);
+    });
+
+    const tipoLabels = {
+        AUDITORIA: 'AUDITORÍAS',
+        RONDA: 'RONDAS',
+        CONTRAMUESTRA: 'CONTRAMUESTRAS',
+        SEGUIMIENTO: 'SEGUIMIENTOS'
+    };
+
+    Object.keys(groups).forEach(tipo => {
+        const reports = groups[tipo];
+        if (reports.length === 0) return;
+
+        message += `${tipoLabels[tipo]} (${reports.length})\n`;
+        message += '─────────────────────────\n';
+
+        reports.forEach((r, idx) => {
+            message += `\n${idx + 1}. *${escapeWhatsAppFormatting(r.PLANTA || 'Sin planta')}*\n`;
+            message += `   Lote: ${escapeWhatsAppFormatting(r.ID || 'N/A')}\n`;
+            message += `   Referencia: ${escapeWhatsAppFormatting(r.REFERENCIA || 'N/A')}\n`;
+            message += `   Cantidad: ${escapeWhatsAppFormatting(r.CANTIDAD || r.CANT || r.QTY || 'N/A')}\n`;
+            message += `   Conclusión: ${escapeWhatsAppFormatting(r.CONCLUSION || 'Pendiente')}\n`;
+            
+            // Add comments if available
+            if (r.COMENTARIOS || r.COMENTARIO || r.OBSERVACIONES) {
+                const comentarios = r.COMENTARIOS || r.COMENTARIO || r.OBSERVACIONES;
+                message += `   *Comentarios:* ${escapeWhatsAppFormatting(comentarios)}\n`;
+            }
+            
+            // Add additional info if available
+            if (r.INFORMACION || r.INFO || r.DETALLES) {
+                const info = r.INFORMACION || r.INFO || r.DETALLES;
+                message += `   Info: ${escapeWhatsAppFormatting(info)}\n`;
+            }
+        });
+
+        message += '\n';
+    });
+
+    message += '─────────────────────────\n';
+    message += '*Enviado desde Sistema de Gestión TDM*';
+
+    // Clean phone number (remove spaces, dashes, parentheses)
+    const cleanPhone = phoneNumber.replace(/[\s\-\(\)]/g, '');
+    
+    // Encode message for URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Open WhatsApp
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+}
+
 window.toggleKPIs = toggleKPIs;
 window.handleSearch = handleSearch;
 window.expandReport = expandReport;
 window.recargarDatos = recargarDatos;
 window.imprimirReporte = imprimirReporte;
+window.enviarWhatsApp = enviarWhatsApp;

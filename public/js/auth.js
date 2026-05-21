@@ -104,7 +104,7 @@ function _buildCurrentUser(user) {
         CORREO: user.email,
         EMAIL: user.email,
         ROL: meta.role || meta.ROL || 'GUEST',
-        TELEFONO: meta.telefono || '',
+        TELEFONO: meta.telefono || meta.phone || user.phone || '',
         DIRECCION: meta.direccion || '',
         PAIS: meta.pais || 'Colombia',
         DEPARTAMENTO: meta.departamento || '',
@@ -710,7 +710,7 @@ function createSidebar() {
                     <i class="fas fa-route"></i> Rutero
                 </a>
             ` : ''}
-            ${(user.ROL === 'USER-C' || user.ROL === 'ADMIN') ? `
+            ${user.ROL === 'USER-C' ? `
                 <a href="mis-reportes.html" class="sidebar-link ${path.includes('mis-reportes.html') ? 'active' : ''}">
                     <i class="fas fa-clipboard-list"></i> Mis Reportes
                 </a>
