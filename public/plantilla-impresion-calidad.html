@@ -361,13 +361,51 @@
             box-shadow: none !important;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Librerías de captura y PDF para descarga directa desde pantalla -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
+    <!-- Skeleton Loader -->
+    <div id="loadingIndicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
+        <div style="max-width: 850px; width: 100%;">
+            <!-- Header Skeleton -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="width: 30%;">
+                    <div class="skeleton-box" style="height: 42px; width: 42px; border-radius: 50%; margin-bottom: 8px;"></div>
+                    <div class="skeleton-box" style="height: 12px; width: 80%;"></div>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <div class="skeleton-box" style="height: 18px; width: 60%; margin: 0 auto 6px;"></div>
+                    <div class="skeleton-box" style="height: 11px; width: 40%; margin: 0 auto;"></div>
+                </div>
+                <div style="width: 30%; text-align: right;">
+                    <div class="skeleton-box" style="height: 15px; width: 60%; margin-left: auto;"></div>
+                    <div class="skeleton-box" style="height: 10px; width: 40%; margin-left: auto; margin-top: 4px;"></div>
+                </div>
+            </div>
+            <!-- Conclusion Card Skeleton -->
+            <div class="skeleton-box" style="height: 60px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Section Skeleton -->
+            <div class="skeleton-box" style="height: 120px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Geoloc/Evidence Skeleton -->
+            <div class="skeleton-box" style="height: 200px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Observations Skeleton -->
+            <div class="skeleton-box" style="height: 80px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Signatures Skeleton -->
+            <div class="skeleton-box" style="height: 200px; border-radius: 6px;"></div>
+        </div>
+        <style>
+            .skeleton-box {
+                background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+            }
+            @keyframes shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+        </style>
+    </div>
+
     <div class="container" id="reporteContenedor">
         <!-- Renderizado Dinámico -->
     </div>
@@ -378,6 +416,11 @@
             <i class="fas fa-print"></i> Imprimir / Guardar PDF
         </button>
     </div>
+
+    <!-- Scripts externos cargados al final para no bloquear renderizado -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <script>
         function formatearFecha(dateString) {
@@ -468,8 +511,18 @@
             }
         }
 
+        // Caché simple para datos de planta
+        const plantaCache = new Map();
+
         async function obtenerDatosPlanta(plantaNombre) {
             if (!plantaNombre) return { nombre: 'N/A', cedula: 'N/A' };
+            
+            // Verificar caché primero
+            const cacheKey = plantaNombre.trim().toLowerCase();
+            if (plantaCache.has(cacheKey)) {
+                return plantaCache.get(cacheKey);
+            }
+            
             try {
                 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
                 const sb = supabase.createClient("https://zpikjjcbievfpzegupmw.supabase.co", SUPABASE_KEY);
@@ -477,17 +530,33 @@
                 if (error) {
                     const { data: dataEq, error: errorEq } = await sb.from('plantas').select('id_planta, planta').eq('planta', plantaNombre.trim()).single();
                     if (errorEq) throw errorEq;
-                    return { nombre: dataEq?.planta || plantaNombre, cedula: dataEq?.id_planta || 'N/A' };
+                    const result = { nombre: dataEq?.planta || plantaNombre, cedula: dataEq?.id_planta || 'N/A' };
+                    plantaCache.set(cacheKey, result);
+                    return result;
                 }
-                return { nombre: data?.planta || plantaNombre, cedula: data?.id_planta || 'N/A' };
+                const result = { nombre: data?.planta || plantaNombre, cedula: data?.id_planta || 'N/A' };
+                plantaCache.set(cacheKey, result);
+                return result;
             } catch(e) {
                 console.error("Error al obtener datos de la planta:", e);
-                return { nombre: plantaNombre, cedula: 'N/A' };
+                const result = { nombre: plantaNombre, cedula: 'N/A' };
+                plantaCache.set(cacheKey, result);
+                return result;
             }
         }
 
+        // Caché simple para datos de auditor
+        const auditorCache = new Map();
+
         async function obtenerDatosAuditor(email) {
             if (!email) return { nombre: 'N/A', cedula: 'N/A', firmaSvg: null };
+            
+            // Verificar caché primero
+            const cacheKey = String(email).toLowerCase();
+            if (auditorCache.has(cacheKey)) {
+                return auditorCache.get(cacheKey);
+            }
+            
             try {
                 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
                 const response = await fetch("https://zpikjjcbievfpzegupmw.supabase.co/functions/v1/operations", {
@@ -503,33 +572,53 @@
                 const result = await response.json();
                 const users = result.users || [];
                 const foundUser = users.find(u => String(u.CORREO || '').toLowerCase() === String(email).toLowerCase());
+                let auditorResult;
                 if (foundUser) {
-                    return {
+                    auditorResult = {
                         nombre: foundUser.NOMBRE || email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
                         cedula: foundUser.ID_USUARIO || 'N/A',
                         firmaSvg: foundUser.FIRMA_SVG || null
                     };
+                } else {
+                    const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    auditorResult = { nombre: username, cedula: 'N/A', firmaSvg: null };
                 }
-                const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                return { nombre: username, cedula: 'N/A', firmaSvg: null };
+                auditorCache.set(cacheKey, auditorResult);
+                return auditorResult;
             } catch(e) {
                 console.error("Error al obtener datos de auditor:", e);
                 const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-                return { nombre: username, cedula: 'N/A', firmaSvg: null };
+                const auditorResult = { nombre: username, cedula: 'N/A', firmaSvg: null };
+                auditorCache.set(cacheKey, auditorResult);
+                return auditorResult;
             }
         }
 
+        // Caché simple para datos de productora
+        const productoraCache = new Map();
+
         async function obtenerNombreProductora(productoraId) {
             if (!productoraId) return 'N/A';
+            
+            // Verificar caché primero
+            const cacheKey = String(productoraId);
+            if (productoraCache.has(cacheKey)) {
+                return productoraCache.get(cacheKey);
+            }
+            
             try {
                 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
                 const sb = supabase.createClient("https://zpikjjcbievfpzegupmw.supabase.co", SUPABASE_KEY);
                 const { data, error } = await sb.from('productoras').select('productora').eq('id_productora', parseInt(productoraId)).single();
                 if (error) throw error;
-                return data?.productora || 'N/A';
+                const result = data?.productora || 'N/A';
+                productoraCache.set(cacheKey, result);
+                return result;
             } catch(e) {
                 console.error("Error al obtener productora:", e);
-                return 'N/A';
+                const result = 'N/A';
+                productoraCache.set(cacheKey, result);
+                return result;
             }
         }
 
@@ -608,12 +697,17 @@
                         cedula: window.preloadedDatos.plantaCedula || 'N/A'
                     };
                 } else {
-                    productoraNombre = await obtenerNombreProductora(rep.productora);
-                    const auditorDatos = await obtenerDatosAuditor(rep.email);
+                    // Ejecutar las 3 llamadas en paralelo para reducir tiempo de espera
+                    const [productoraNombreResult, auditorDatos, plantaDatosResult] = await Promise.all([
+                        obtenerNombreProductora(rep.productora),
+                        obtenerDatosAuditor(rep.email),
+                        obtenerDatosPlanta(rep.planta)
+                    ]);
+                    productoraNombre = productoraNombreResult;
                     auditorNombre = auditorDatos.nombre;
                     auditorCedula = auditorDatos.cedula;
                     auditorFirmaSvg = auditorDatos.firmaSvg || null;
-                    plantaDatos = await obtenerDatosPlanta(rep.planta);
+                    plantaDatos = plantaDatosResult;
                 }
 
                 // Construir bloque de geolocalización y evidencia fotográfica dinámicamente según requerimientos
@@ -878,11 +972,20 @@
 
                 contenedor.innerHTML = html;
 
+                // Ocultar indicador de carga
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.style.opacity = '0';
+                    setTimeout(() => loadingIndicator.remove(), 300);
+                }
+
                 // Auto-imprimir pasados unos ms si es necesario, o dejar que el usuario presione el botón.
                 // setTimeout(() => window.print(), 1000);
 
             } catch (err) {
                 console.error(err);
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) loadingIndicator.remove();
                 document.body.innerHTML = `<h2 style="padding:20px; text-align:center; color:#ef4444;">Error al cargar datos del reporte: ${err.message}</h2>`;
             }
         }
