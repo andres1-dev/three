@@ -1816,7 +1816,7 @@ body.view-expanded #main-content-wrapper {
 }
 
 .lote-card {
-    background: white;
+    background: transparent;
     border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 16px;
@@ -1827,6 +1827,7 @@ body.view-expanded #main-content-wrapper {
 }
 
 .lote-card:hover {
+    background: rgba(255, 255, 255, 0.3);
     border-color: #3b82f6;
     box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
     transform: translateY(-2px);

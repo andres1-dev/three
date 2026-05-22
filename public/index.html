@@ -120,17 +120,35 @@
         box-shadow: none !important;
       }
 
-      .index-skeleton-card,
-      .lote-card,
-      .summary-panel,
-      #plantaFilter,
-      #searchView {
+      .index-skeleton-card {
         border: 1.5px solid #e2e8f0 !important;
         border-radius: 16px !important;
         padding: 16px !important;
         margin-bottom: 16px !important;
         background: white !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+      }
+
+      .lote-card {
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        padding: 16px !important;
+        margin-bottom: 16px !important;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      /* El summary-panel NO debe tener padding propio en móvil:
+         su summary-header es full-bleed (de borde a borde) y el padding
+         del contenedor lo recortaría visualmente. */
+      .summary-panel {
+        border: 1.5px solid #e2e8f0 !important;
+        border-radius: 16px !important;
+        padding: 0 !important;
+        margin-bottom: 16px !important;
+        background: white !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+        overflow: hidden !important;
       }
 
       .lotes-cards-grid {
@@ -816,7 +834,7 @@
         <!-- 2. CORREO y TIPO DE VISITA — fila de dos columnas -->
         <div class="row-pc-grid">
           <div class="mb-3">
-            <label for="email" class="form-label">Correo:</label>
+            <label for="email" class="form-label">Correo: <span style="color:#ef4444;">*</span></label>
             <div class="input-with-icon">
               <i class="fas fa-envelope input-icon"></i>
               <input type="email" id="email" class="form-control" placeholder="usuario@ejemplo.com" required>
@@ -824,7 +842,7 @@
           </div>
 
           <div class="mb-3">
-            <label for="tipoVisita" class="form-label">Tipo de Visita:</label>
+            <label for="tipoVisita" class="form-label">Tipo de Visita: <span style="color:#ef4444;">*</span></label>
             <div class="input-with-icon">
               <i class="fas fa-clipboard-check input-icon"></i>
               <select id="tipoVisita" class="form-control" required>
@@ -1078,7 +1096,7 @@ RESULTADOS:
 
         <!-- Conclusión -->
         <div class="mb-3">
-          <label for="conclusion" class="form-label">Conclusión:</label>
+          <label for="conclusion" class="form-label">Conclusión: <span style="color:#ef4444;">*</span></label>
           <div class="input-with-icon">
             <i class="fas fa-check-circle input-icon"></i>
             <select id="conclusion" class="form-control" required>
@@ -1181,7 +1199,7 @@ RESULTADOS:
 
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center mb-1">
-            <label for="observacionesCalidad" class="form-label mb-0">Observaciones:</label>
+            <label for="observacionesCalidad" class="form-label mb-0">Observaciones: <span style="color:#ef4444;">*</span></label>
             <div>
               <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('observacionesCalidad')"
                 title="Mejorar redacción y ortografía">

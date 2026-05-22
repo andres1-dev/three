@@ -50,7 +50,7 @@ const FirmaTaller = {
         container.innerHTML = `
             <div class="mb-4">
               <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label mb-0">Conformidad:</label>
+                <label class="form-label mb-0">Conformidad: <span style="color:#ef4444;">*</span></label>
                 <div style="display: flex; gap: 8px;">
                   <button type="button" class="btn-action-muted" id="fullscreenFormSignatureBtn" style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
                     <i class="fas fa-expand"></i> Pantalla Completa
@@ -60,7 +60,7 @@ const FirmaTaller = {
                   </button>
                 </div>
               </div>
-              <div id="signatureCanvasWrapper" class="position-relative overflow-hidden" style="border: 1px solid var(--color-border); border-radius: var(--radius-input); background: #ffffff; height: 130px; cursor: crosshair;">
+              <div id="signatureCanvasWrapper" class="position-relative overflow-hidden" style="border: 1px solid var(--color-border); border-radius: var(--radius-input); background: transparent; height: 180px; cursor: crosshair;">
                 <canvas id="formSignatureCanvas" style="position: absolute; top:0; left:0; width: 100%; height: 100%; touch-action: none; display: block;"></canvas>
                 <div class="position-absolute bottom-0 start-0 w-100 p-2 pointer-events-none" style="background: linear-gradient(transparent, rgba(0,0,0,0.02)); display: flex; justify-content: space-between; align-items: center;">
                   <span style="font-size: 0.65rem; color: #94a3b8; font-style: italic;"><i class="fas fa-signature"></i> Firma aquí con tu dedo o mouse</span>
