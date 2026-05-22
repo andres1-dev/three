@@ -882,24 +882,22 @@ function applyGpsToggleUI(enabled) {
     const label = document.getElementById('gps-status-label');
     const slider = document.getElementById('gps-toggle-slider');
     const knob = document.getElementById('gps-toggle-knob');
-    if (!label || !slider || !knob) return;
+    const rb = document.getElementById('gps-refresh-btn');
 
     if (enabled) {
-        // Dot verde sin texto
-        label.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;box-shadow:0 0 0 2px #bbf7d0;"></span>`;
-        slider.style.background = '#16a34a';
-        knob.style.transform = 'translateX(20px)';
-        setCalidadFieldsDisabled(false);
-        const rb = document.getElementById('gps-refresh-btn');
+        if (label) label.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#16a34a;display:inline-block;box-shadow:0 0 0 2px #bbf7d0;"></span>`;
+        if (slider) slider.style.background = '#16a34a';
+        if (knob) knob.style.transform = 'translateX(20px)';
         if (rb) rb.style.display = 'inline-block';
+        
+        setCalidadFieldsDisabled(false);
     } else {
-        // Dot rojo sin texto
-        label.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block;box-shadow:0 0 0 2px #fecaca;"></span>`;
-        slider.style.background = '#dc2626';
-        knob.style.transform = 'translateX(0)';
-        setCalidadFieldsDisabled(true);
-        const rb = document.getElementById('gps-refresh-btn');
+        if (label) label.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:#dc2626;display:inline-block;box-shadow:0 0 0 2px #fecaca;"></span>`;
+        if (slider) slider.style.background = '#dc2626';
+        if (knob) knob.style.transform = 'translateX(0)';
         if (rb) rb.style.display = 'none';
+        
+        setCalidadFieldsDisabled(true);
     }
 }
 
