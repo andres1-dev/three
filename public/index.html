@@ -113,7 +113,11 @@
         margin: 0 !important;
       }
 
-      #mainForm, #novedadesSection, #calidadSection, #ruteroSection, #actualizarDatosSection {
+      #mainForm,
+      #novedadesSection,
+      #calidadSection,
+      #ruteroSection,
+      #actualizarDatosSection {
         padding: 0.2rem !important;
         border-radius: 0 !important;
         border: none !important;
@@ -438,7 +442,7 @@
         <!-- Toggle: datos del lote (colapsado por defecto) -->
         <div class="lot-collapse-header" id="lotCollapseToggle" aria-expanded="false" aria-controls="lotCollapseBody">
           <span class="lot-collapse-label">
-            <i class="fas fa-layer-group"></i> Ver datos del lote
+            <i class="fas fa-layer-group"></i> Trazabilidad
           </span>
           <i class="fas fa-chevron-down lot-chevron"></i>
         </div>
@@ -751,49 +755,16 @@
     <form id="calidadForm">
       <div id="calidadSection" class="hidden">
 
-        <!-- 1. MAPA GPS — ancho completo -->
-        <div class="mb-3 mt-2">
-          <!-- Cabecera con toggle de permiso -->
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
-            <label class="form-label mb-0">
-              <i class="fas fa-map-marker-alt me-1"></i> Localización:
-            </label>
-            <div style="display:flex; align-items:center; gap:10px; font-size:0.8rem; color:#64748b;">
-              <!-- Ícono de refrescar sin texto -->
-              <button type="button" id="gps-refresh-btn" onclick="activarGpsManual()" title="Actualizar ubicación"
-                style="
-                  display:none; background:none; border:none;
-                  color:#94a3b8; cursor:pointer; padding:2px; line-height:1;
-                  transition:color 0.15s;
-                " onmouseover="this.style.color='#475569'" onmouseout="this.style.color='#94a3b8'">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
-                  stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="23 4 23 10 17 10"></polyline>
-                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                </svg>
-              </button>
-              <span id="gps-status-label">Cargando...</span>
-              <div style="position:relative; display:inline-block; width:42px; height:22px; cursor:pointer;"
-                onclick="toggleGpsPermission()">
-                <input type="checkbox" id="gps-toggle-check" style="opacity:0; width:0; height:0; position:absolute;">
-                <span id="gps-toggle-slider" style="
-                    position:absolute; inset:0;
-                    background:#cbd5e1;
-                    border-radius:22px;
-                    transition:background 0.25s;
-                  "></span>
-                <span id="gps-toggle-knob" style="
-                    position:absolute; top:3px; left:3px;
-                    width:16px; height:16px;
-                    background:white;
-                    border-radius:50%;
-                    transition:transform 0.25s;
-                    box-shadow:0 1px 4px rgba(0,0,0,0.2);
-                  "></span>
-              </div>
-            </div>
-          </div>
-          <!-- Campo oculto para guardar coords en el payload -->
+        <!-- 1. MAPA GPS (Estilo Acordeón) -->
+        <div class="lot-collapse-header" id="gpsCollapseToggle" aria-expanded="false" aria-controls="gpsCollapseBody"
+          onclick="this.classList.toggle('open'); document.getElementById('gpsCollapseBody').classList.toggle('open'); this.setAttribute('aria-expanded', String(this.classList.contains('open')));"
+          style="margin-top: 0.5rem;">
+          <span class="lot-collapse-label">
+            <i class="fas fa-map-marker-alt" style="color:#64748b; margin-right: 4px;"></i> Localización
+          </span>
+          <i class="fas fa-chevron-down lot-chevron"></i>
+        </div>
+        <div id="gpsCollapseBody" class="lot-collapse-body">
           <input type="hidden" id="localizacion">
           <!-- Tarjeta del mapa -->
           <div id="mapa-calidad-card" style="
@@ -813,33 +784,16 @@
           </div>
         </div>
 
-        <!-- 2. CORREO y TIPO DE VISITA — fila de dos columnas -->
-        <div class="row-pc-grid">
-          <div class="mb-3">
-            <label for="email" class="form-label">Correo:</label>
-            <div class="input-with-icon">
-              <i class="fas fa-envelope input-icon"></i>
-              <input type="email" id="email" class="form-control" placeholder="usuario@ejemplo.com" required>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label for="tipoVisita" class="form-label">Tipo de Visita:</label>
-            <div class="input-with-icon">
-              <i class="fas fa-clipboard-check input-icon"></i>
-              <select id="tipoVisita" class="form-control" required>
-                <option value="">Seleccione tipo...</option>
-                <option value="AUDITORIA">AUDITORIA</option>
-                <option value="RONDA">RONDA</option>
-                <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
-                <option value="SEGUIMIENTO">SEGUIMIENTO</option>
-              </select>
-            </div>
-          </div>
+        <!-- Muestreo AQL (Estilo Acordeón) -->
+        <div class="lot-collapse-header" id="aqlCollapseToggle" aria-expanded="false" aria-controls="aqlCollapseBody"
+          onclick="this.classList.toggle('open'); document.getElementById('aqlCollapseBody').classList.toggle('open'); this.setAttribute('aria-expanded', String(this.classList.contains('open')));"
+          style="margin-top: 0.5rem; margin-bottom: 1.5rem;">
+          <span class="lot-collapse-label">
+            <i class="fas fa-ruler-combined" style="color:#64748b; margin-right: 4px;"></i> Muestreo AQL
+          </span>
+          <i class="fas fa-chevron-down lot-chevron"></i>
         </div>
-
-        <!-- Botón guía AQL -->
-        <div class="mb-3">
+        <div id="aqlCollapseBody" class="lot-collapse-body">
           <button type="button" id="aqlBtn" onclick="abrirModalAQL()" style="display:none; width:100%; border-radius:14px;
                      border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer;
                      transition:all 0.2s; padding:0; overflow:hidden;
@@ -849,7 +803,7 @@
                            display:flex; flex-direction:column; align-items:center; gap:2px;">
               <span
                 style="font-size:0.75rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:6px;">
-                <i class="fas fa-ruler-combined" style="color:#64748b;"></i>Muestreo AQL
+                <i class="fas fa-ruler-combined" style="color:#64748b;"></i>Guía de Muestreo
               </span>
               <span style="font-size:0.62rem; color:#94a3b8; display:flex; align-items:center; gap:3px;">
                 Ver detalle <i class="fas fa-chevron-right" style="font-size:0.55rem;"></i>
@@ -890,6 +844,33 @@
             </div>
           </button>
         </div>
+
+        <!-- 2. CORREO y TIPO DE VISITA — fila de dos columnas -->
+        <div class="row-pc-grid">
+          <div class="mb-3">
+            <label for="email" class="form-label">Correo:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" id="email" class="form-control" placeholder="usuario@ejemplo.com" required>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="tipoVisita" class="form-label">Tipo de Visita:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-clipboard-check input-icon"></i>
+              <select id="tipoVisita" class="form-control" required>
+                <option value="">Seleccione tipo...</option>
+                <option value="AUDITORIA">AUDITORIA</option>
+                <option value="RONDA">RONDA</option>
+                <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+
 
         <!-- Modal AQL -->
         <div id="aqlModal" style="display:none; position:fixed; inset:0; z-index:9000;

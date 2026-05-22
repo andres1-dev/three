@@ -18,7 +18,7 @@ const LOCAL_TEMPLATES = [
     { tipo: 'UBICACION', contenido: 'Marquilla de talla.' },
     { tipo: 'UBICACION', contenido: 'Delantero izquierdo de la prenda puesta, ubicada entre costuras a 5 cm del costado.' },
     { tipo: 'UBICACION', contenido: 'Sisa izquierda de la prenda puesta, ubicada entre costuras.' },
-    { tipo: 'UBICACION', contenido: 'En la unión de los sesgos de la tira izquierda de la prenda puesta.' },
+    { tipo: 'UBICACION', contenido: 'En la tira libre izquierda de la prenda puesta.' },
 
     // PAQUETEO
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
@@ -271,7 +271,7 @@ function openTemplatesModal() {
         backdrop.style.visibility = 'visible';
         backdrop.classList.add('open');
         filterTemplatesList();
-        
+
         const fab = document.getElementById('fabTemplatesTrigger');
         if (fab) fab.classList.add('modal-open');
     }
@@ -285,7 +285,7 @@ function closeTemplatesModal() {
     if (backdrop) {
         backdrop.classList.remove('open');
         backdrop.style.visibility = 'hidden';
-        
+
         const fab = document.getElementById('fabTemplatesTrigger');
         if (fab) fab.classList.remove('modal-open');
     }
@@ -355,7 +355,7 @@ function makeElementDraggable(el) {
 
         isDragging = true;
         hasDragged = false;
-        
+
         startX = e.clientX;
         startY = e.clientY;
 
@@ -369,7 +369,7 @@ function makeElementDraggable(el) {
         el.style.bottom = 'auto';
         el.style.right = 'auto';
         el.style.transform = 'none';
-        
+
         // Quitar la transición CSS durante el arrastre para evitar efecto elástico o lag
         el.style.transition = 'none';
 
@@ -422,7 +422,7 @@ function makeElementDraggable(el) {
         if (!isDragging) return;
 
         isDragging = false;
-        
+
         // Restaurar transición CSS suave para estados normales de hover/active/opacity
         el.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease, background-color 0.3s, border-color 0.3s, color 0.3s';
 
