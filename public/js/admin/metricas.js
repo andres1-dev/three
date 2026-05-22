@@ -141,13 +141,15 @@ function updateCharts() {
             datasets: [{
                 label: 'Unidades',
                 data: sortedWeeks.map(w => weekMap[w]),
-                backgroundColor: sortedWeeks.map(w => w === activeWeek ? '#10b981' : 'rgba(59, 130, 246, 0.8)'),
+                backgroundColor: sortedWeeks.map(w => w === activeWeek ? 'rgba(16, 185, 129, 0.32)' : 'rgba(59, 130, 246, 0.24)'),
+                borderColor: sortedWeeks.map(w => w === activeWeek ? 'rgba(16, 185, 129, 0.52)' : 'rgba(59, 130, 246, 0.42)'),
+                borderWidth: 1,
                 borderRadius: 8
             }]
         },
         options: { 
             maintainAspectRatio: false, 
-            scales: { y: { beginAtZero: true } }, 
+            scales: { y: { beginAtZero: true }, x: { grid: { color: 'rgba(15, 23, 42, 0.08)' } } }, 
             plugins: { legend: { display: false } },
             onClick: (evt, elements) => {
                 if (elements.length > 0) {
@@ -228,8 +230,18 @@ function updateCharts() {
             labels: labelsWithPerc,
             datasets: [{
                 data: filteredAreaKeys.map(k => areaMap[k]),
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b', '#14b8a6', '#f43f5e'],
-                borderWidth: 0
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.28)',
+                    'rgba(16, 185, 129, 0.28)',
+                    'rgba(245, 158, 11, 0.28)',
+                    'rgba(239, 68, 68, 0.28)',
+                    'rgba(139, 92, 246, 0.28)',
+                    'rgba(100, 116, 139, 0.28)',
+                    'rgba(20, 184, 166, 0.28)',
+                    'rgba(244, 63, 94, 0.28)'
+                ],
+                borderColor: 'rgba(255, 255, 255, 0.5)',
+                borderWidth: 1
             }]
         },
         options: { 
@@ -271,10 +283,20 @@ function updateCharts() {
             bg = fallbackColors[colorIdx % fallbackColors.length];
             colorIdx++;
         }
+        const transparentMap = {
+            '#ef4444': 'rgba(239, 68, 68, 0.28)',
+            '#3b82f6': 'rgba(59, 130, 246, 0.28)',
+            '#10b981': 'rgba(16, 185, 129, 0.28)',
+            '#f59e0b': 'rgba(245, 158, 11, 0.28)',
+            '#64748b': 'rgba(100, 116, 139, 0.28)'
+        };
+        const bgTransparent = transparentMap[bg] || 'rgba(99, 102, 241, 0.24)';
         return {
             label: area,
             data: sortedItems.map(item => itemsByArea[item][area] || 0),
-            backgroundColor: bg,
+            backgroundColor: bgTransparent,
+            borderColor: bgTransparent,
+            borderWidth: 1,
             borderRadius: 4
         };
     });

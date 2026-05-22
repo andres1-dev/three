@@ -1,20 +1,71 @@
 /**
- * calidad.js — Lógica para Dashboard de Calidad con Infinite Scroll e Instagram Style Grid
+ * calidad.js — Lógica para Dashboard de Calidad (Analítico)
  */
 
 let gsReportes = [];
 let gsFilteredReportes = [];
-let itemsToShow = 12; // Cantidad inicial
-const batchSize = 12; // Cuántos cargar en cada scroll
-let isLoadingMore = false;
 let dateRangePicker = null;
 let selectedDateRange = null;
 
-// ============================================================================
-// 🚀 PRE-FETCH DE DATOS (Anon Key)
-// Trae los datos de inmediato mientras la app procesa el DOM y la UI.
-// ============================================================================
+// Chart instances
+let chartConformidad, chartTiposVisita, chartAuditor, chartPlantas;
+
 let globalReportesPromise = null;
+const auditorNameByEmail = new Map();
+let gsTableReportes = [];
+let tableSearchTerm = '';
+let tableCurrentPage = 1;
+const TABLE_PAGE_SIZE = 20;
+
+function resolveUserDisplayName(u) {
+    if (!u) return '';
+    const fromParts = [u.NOMBRES, u.APELLIDOS].filter(Boolean).map(String).join(' ').trim();
+    const candidates = [
+        u.NOMBRE,
+        u.USUARIO,
+        u.FULL_NAME,
+        u.full_name,
+        fromParts || null
+    ];
+    return candidates.map(v => v && String(v).trim()).find(Boolean) || '';
+}
+
+function buildAuditorLookup() {
+    auditorNameByEmail.clear();
+    (window.allUsers || []).forEach(u => {
+        const email = String(u.CORREO || u.correo || u.EMAIL || u.email || '').toLowerCase().trim();
+        if (!email) return;
+        const name = resolveUserDisplayName(u);
+        if (name) auditorNameByEmail.set(email, name);
+    });
+}
+
+function getAuditorName(email) {
+    if (!email) return 'Desconocido';
+    const lowEmail = String(email).toLowerCase().trim();
+    if (auditorNameByEmail.has(lowEmail)) return auditorNameByEmail.get(lowEmail);
+
+    const u = (window.allUsers || []).find(x => {
+        const correo = String(x.CORREO || x.correo || x.EMAIL || x.email || '').toLowerCase().trim();
+        return correo === lowEmail;
+    });
+    const name = resolveUserDisplayName(u);
+    if (name) {
+        auditorNameByEmail.set(lowEmail, name);
+        return name;
+    }
+    return lowEmail.split('@')[0];
+}
+
+function enrichReporteRecord(r) {
+    r._date = parsearFechaLatina(String(r.TIMESTAMP || r.FECHA || r.fecha || '')) || new Date(0);
+    r._auditorName = getAuditorName(r.email || r.EMAIL);
+    r._productora = getProductoraName(String(r.productora || r.PRODUCTORA || '1'));
+    r._conclusion = String(r.conclusion || r.CONCLUSION || '').toUpperCase();
+    r._tipo = String(r.tipo_visita || r.TIPO_VISITA || 'OTRO').toUpperCase();
+    r._planta = String(r.planta || r.PLANTA || 'NO DEFINIDA').toUpperCase();
+    r._cantidad = parseInt(r.cantidad || r.CANTIDAD || 0, 10) || 0;
+}
 (function initFastPrefetch() {
     try {
         if (typeof fetchReportesData === 'function') {
@@ -24,37 +75,18 @@ let globalReportesPromise = null;
     } catch(e) {}
 })();
 
-/**
- * Se inicializa cuando carga la página calidad.html
- */
 window.onload = async function() {
-    await loadUsers();
-
+    await loadUsers(); // Cargar usuarios primero para mapear correos a nombres
+    buildAuditorLookup();
     await cargarDatosCalidadLocal(globalReportesPromise);
-    setupInfiniteScroll();
-    initDateRangePicker();
 };
 
-/**
- * Toggle de KPIs en móvil
- */
-function toggleKPIs() {
-    const container = document.getElementById('kpiContainer');
-    const btn = document.getElementById('kpiToggleBtn');
-    if (container) container.classList.toggle('open');
-    if (btn) btn.classList.toggle('open');
-}
-
-/**
- * Carga inicial de datos desde Sheets con optimización de velocidad
- */
 async function cargarDatosCalidadLocal(reportesPromise) {
-    const loader = document.getElementById('initialLoader');
-    const dataSection = document.getElementById('qualityFeed');
-    const controls = document.getElementById('calidadHeaderControls');
+    const loader = document.getElementById('loaderOverlay');
+    const dataSection = document.getElementById('dashboardContent');
     
-    if (loader) loader.style.display = 'block';
-    if (controls) controls.style.display = 'none';
+    if (loader) loader.style.display = 'flex';
+    if (dataSection) dataSection.style.display = 'none';
 
     try {
         gsReportes = await (reportesPromise || fetchReportesData());
@@ -72,27 +104,18 @@ async function cargarDatosCalidadLocal(reportesPromise) {
             return;
         }
 
-        // Ordenar por fecha recíproca (más nuevos primero) usando motor resiliente
-        gsReportes.sort((a, b) => {
-            const dateA = parsearFechaLatina(String(a.TIMESTAMP || a.FECHA || '')) || new Date(0);
-            const dateB = parsearFechaLatina(String(b.TIMESTAMP || b.FECHA || '')) || new Date(0);
-            return dateB - dateA;
-        });
+        gsReportes.forEach(enrichReporteRecord);
 
+        gsReportes.sort((a, b) => b._date - a._date);
         gsFilteredReportes = [...gsReportes];
         
-        actualizarKPIs();
-        renderReportGrid(true); // true para resetear vista
+        initFilters();
+        initDateRangePicker();
+        initCharts();
+        window.applyFilters();
         
         if (loader) loader.style.display = 'none';
-        if (dataSection) dataSection.style.display = 'grid';
-        if (controls) controls.style.display = 'block';
-        
-        // Reinicializar el date picker si existe
-        if (dateRangePicker) {
-            dateRangePicker.clear();
-            selectedDateRange = null;
-        }
+        if (dataSection) dataSection.style.display = 'block';
         
     } catch (error) {
         if (loader) {
@@ -108,787 +131,557 @@ async function cargarDatosCalidadLocal(reportesPromise) {
     }
 }
 
-/**
- * Función para recargar datos manualmente (botón RECARGAR)
- */
 async function recargarDatosCalidad() {
-    const loader = document.getElementById('initialLoader');
-    const dataSection = document.getElementById('qualityFeed');
-    const controls = document.getElementById('calidadHeaderControls');
+    const loader = document.getElementById('loaderOverlay');
+    const dataSection = document.getElementById('dashboardContent');
     
-    if (loader) loader.style.display = 'block';
+    if (loader) loader.style.display = 'flex';
     if (dataSection) dataSection.style.display = 'none';
-    if (controls) controls.style.display = 'none';
     
     try {
         if (typeof invalidateCache === 'function') invalidateCache('REPORTES');
         gsReportes = await fetchReportesData();
         
-        if (!gsReportes || gsReportes.length === 0) {
-            if (loader) {
-                loader.innerHTML = `
-                    <div class="py-5 text-center">
-                        <i class="fas fa-database mb-3" style="font-size: 3rem; color: #e2e8f0;"></i>
-                        <p class="text-muted fw-800">NO SE ENCONTRARON REGISTROS</p>
-                        <p class="small text-muted">La base de datos de calidad está vacía o no es accesible.</p>
-                    </div>
-                `;
-            }
-            return;
-        }
+        gsReportes.forEach(enrichReporteRecord);
 
-        gsReportes.sort((a, b) => {
-            const dateA = parsearFechaLatina(String(a.TIMESTAMP || a.FECHA || '')) || new Date(0);
-            const dateB = parsearFechaLatina(String(b.TIMESTAMP || b.FECHA || '')) || new Date(0);
-            return dateB - dateA;
-        });
-
-        // Limpiar filtros
-        if (dateRangePicker) {
-            dateRangePicker.clear();
-            selectedDateRange = null;
-        }
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.value = '';
-
-        gsFilteredReportes = [...gsReportes];
+        gsReportes.sort((a, b) => b._date - a._date);
         
-        actualizarKPIs();
-        renderReportGrid(true);
+        if (dateRangePicker) { 
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            dateRangePicker.setDate([firstDay, today]); 
+            selectedDateRange = [firstDay, today]; 
+        }
+        const filterProductora = document.getElementById('filterProductora');
+        if (filterProductora && !filterProductora.disabled) {
+            filterProductora.value = '';
+        }
+        document.getElementById('filterAuditor').value = '';
+        if (document.getElementById('filterEstado')) document.getElementById('filterEstado').value = '';
+        document.getElementById('filterTipo').value = '';
+
+        window.applyFilters();
         
         if (loader) loader.style.display = 'none';
-        if (dataSection) dataSection.style.display = 'grid';
-        if (controls) controls.style.display = 'block';
+        if (dataSection) dataSection.style.display = 'block';
         
-        Swal.fire({
-            icon: 'success',
-            title: 'Datos Actualizados',
-            text: 'Los reportes se han recargado correctamente',
-            timer: 1500,
-            showConfirmButton: false
-        });
+        Swal.fire({ icon: 'success', title: 'Actualizado', timer: 1500, showConfirmButton: false });
         
     } catch (error) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error al Recargar',
-            text: error.message || 'No se pudieron cargar los datos',
-            confirmButtonColor: '#3F51B5'
-        });
+        Swal.fire({ icon: 'error', title: 'Error al Recargar', text: error.message });
         if (loader) loader.style.display = 'none';
-        if (controls) controls.style.display = 'block';
+        if (dataSection) dataSection.style.display = 'block';
     }
 }
 
-/**
- * Motor de parseo de fechas robusto que maneja fechas con hora
- */
 function parsearFechaLatina(d) {
     if (!d) return null;
     if (d instanceof Date) return d;
     let s = String(d).trim();
     if (!s) return null;
 
-    // Separar fecha y hora si existe
+    // Intentar parseo nativo primero (con o sin T)
+    let parsed = new Date(s);
+    if (!isNaN(parsed)) return parsed;
+    
+    parsed = new Date(s.replace(' ', 'T'));
+    if (!isNaN(parsed)) return parsed;
+
+    // Fallback para fechas invertidas como DD/MM/YYYY
     const parts = s.split(/\s+/);
     const datePart = parts[0];
-    const timePart = parts[1] || '00:00:00';
+    const timePart = parts.length > 1 ? parts.slice(1).join(' ') : '00:00:00';
     
-    // Detectar separador de fecha
     const sep = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : null);
     if (!sep) return new Date(d);
     
-    const dateParts = datePart.split(sep);
-    if (dateParts.length !== 3) return new Date(d);
+    const dParts = datePart.split(sep);
+    if (dParts.length < 3) return new Date(d);
     
-    let dia, mes, anio;
+    let year, month, day;
+    if (dParts[0].length === 4) { year = dParts[0]; month = dParts[1]; day = dParts[2]; } 
+    else { day = dParts[0]; month = dParts[1]; year = dParts[2]; }
     
-    // Formato dd/mm/yyyy o dd-mm-yyyy
-    if (dateParts[2].length === 4) {
-        dia = parseInt(dateParts[0]);
-        mes = parseInt(dateParts[1]) - 1;
-        anio = parseInt(dateParts[2]);
-    } 
-    // Formato yyyy/mm/dd o yyyy-mm-dd
-    else if (dateParts[0].length === 4) {
-        anio = parseInt(dateParts[0]);
-        mes = parseInt(dateParts[1]) - 1;
-        dia = parseInt(dateParts[2]);
+    return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
+}
+
+function getProductoraName(prodId) {
+    if (!prodId) return 'Desconocida';
+    const allProds = window._allProductoras || JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+    const p = allProds.find(x => String(x.id_productora) === String(prodId));
+    return p ? p.productora : `Productora ${prodId}`;
+}
+
+function initFilters() {
+    // Populate Productora
+    const selectProd = document.getElementById('filterProductora');
+    const isUserP = window.currentUser && window.currentUser.ROL === 'USER-P';
+    const userProdId = isUserP ? (window.currentUser.ID_PRODUCTORA || window.currentUser.id_productora || null) : null;
+    const userProdName = isUserP ? (window.currentUser.PRODUCTORA || window.currentUser.productora || (userProdId ? getProductoraName(userProdId) : '')) : null;
+
+    if (isUserP && userProdName) {
+        selectProd.innerHTML = `<option value="${escAttr(userProdName)}">${escAttr(userProdName)}</option>`;
+        selectProd.value = userProdName;
+        selectProd.disabled = true;
+        selectProd.title = 'Filtrado por la productora del usuario';
     } else {
-        return new Date(d);
-    }
-    
-    // Parsear hora si existe
-    const timeParts = timePart.split(':');
-    const hora = parseInt(timeParts[0]) || 0;
-    const minuto = parseInt(timeParts[1]) || 0;
-    const segundo = parseInt(timeParts[2]) || 0;
-    
-    return new Date(anio, mes, dia, hora, minuto, segundo);
-}
-
-/**
- * Actualiza los indicadores KPIs del dashboard basándose en los datos reales de REPORTES
- */
-function actualizarKPIs() {
-    // Usar siempre los datos filtrados para los KPIs
-    const data = gsFilteredReportes;
-    
-    if (!data || data.length === 0) {
-        document.getElementById('kpi-total').textContent = '0';
-        document.getElementById('kpi-ok').textContent = '0';
-        document.getElementById('kpi-rejected').textContent = '0';
-        document.getElementById('kpi-audit').textContent = '0';
-        document.getElementById('kpi-ronda').textContent = '0';
-        document.getElementById('kpi-contramuestra').textContent = '0';
-        document.getElementById('kpi-seguimiento').textContent = '0';
-        document.getElementById('kpi-plants').textContent = '0';
-        return;
+        selectProd.disabled = false;
+        selectProd.title = '';
+        const productoras = [...new Set(gsReportes.map(r => r._productora))].filter(Boolean);
+        selectProd.innerHTML = '<option value="">Todas</option>';
+        productoras.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p; opt.textContent = p;
+            selectProd.appendChild(opt);
+        });
     }
 
-    // Total de reportes
-    const total = data.length;
-    document.getElementById('kpi-total').textContent = total;
-
-    // Contar por CONCLUSION (campo real de la tabla)
-    let aprobados = 0;
-    let rechazados = 0;
-
-    data.forEach(r => {
-        const conclusion = (r.CONCLUSION || '').toUpperCase().trim();
-        
-        // Aprobados: APROBADO, SATISFACTORIO, CUMPLE
-        if (conclusion.includes('APROBADO') || 
-            conclusion.includes('SATISFACTORIO') || 
-            conclusion.includes('CUMPLE')) {
-            aprobados++;
-        } 
-        // Rechazados: RECHAZADO, NO CUMPLE, NO CONFORME
-        else if (conclusion.includes('RECHAZADO') || 
-                 conclusion.includes('NO CUMPLE') || 
-                 conclusion.includes('NO CONFORME')) {
-            rechazados++;
-        }
+    // Populate Auditor
+    const auditores = [...new Set(gsReportes.map(r => r._auditorName))].filter(Boolean).sort();
+    const selectAuditor = document.getElementById('filterAuditor');
+    selectAuditor.innerHTML = '<option value="">Todos los Auditores</option>';
+    auditores.forEach(a => {
+        const opt = document.createElement('option');
+        opt.value = a; opt.textContent = a;
+        selectAuditor.appendChild(opt);
     });
 
-    document.getElementById('kpi-ok').textContent = aprobados;
-    document.getElementById('kpi-rejected').textContent = rechazados;
-
-    // Contar por TIPO_VISITA (campo real de la tabla)
-    // Los valores exactos del formulario son: AUDITORIA, RONDA, CONTRAMUESTRA, SEGUIMIENTO
-    let auditorias = 0;
-    let rondas = 0;
-    let contramuestras = 0;
-    let seguimientos = 0;
-
-    data.forEach(r => {
-        const tipoVisita = (r.TIPO_VISITA || '').toUpperCase().trim();
-        
-        if (tipoVisita === 'AUDITORIA') {
-            auditorias++;
-        } else if (tipoVisita === 'RONDA') {
-            rondas++;
-        } else if (tipoVisita === 'CONTRAMUESTRA') {
-            contramuestras++;
-        } else if (tipoVisita === 'SEGUIMIENTO') {
-            seguimientos++;
-        }
-    });
-
-    document.getElementById('kpi-audit').textContent = auditorias;
-    document.getElementById('kpi-ronda').textContent = rondas;
-    document.getElementById('kpi-contramuestra').textContent = contramuestras;
-    document.getElementById('kpi-seguimiento').textContent = seguimientos;
-
-    // Contar PLANTAS únicas (campo real de la tabla)
-    const plantasUnicas = new Set(
-        data.map(r => (r.PLANTA || '').trim())
-            .filter(p => p && p !== '')
-    );
-    document.getElementById('kpi-plants').textContent = plantasUnicas.size;
-}
-
-/**
- * Renderiza la cuadrícula (Infinity Scroll enabled)
- */
-function renderReportGrid(reset = false) {
-    const feed = document.getElementById('qualityFeed');
-    if (!feed) return;
-
-    if (reset) {
-        feed.innerHTML = '';
-        itemsToShow = batchSize;
+    // Populate Estado (Aprobado / Rechazado)
+    const selectEstado = document.getElementById('filterEstado');
+    if (selectEstado) {
+        selectEstado.innerHTML = '<option value="">Todos</option>' +
+            '<option value="APROBADO">Aprobado</option>' +
+            '<option value="RECHAZADO">Rechazado</option>';
     }
-
-    const currentCount = feed.children.length;
-    const dataToRender = gsFilteredReportes.slice(currentCount, itemsToShow);
-
-    if (dataToRender.length === 0 && currentCount === 0) {
-        feed.innerHTML = `
-            <div class="modern-empty-state col-12">
-                <i class="fas fa-folder-open modern-empty-state-icon"></i>
-                <div class="modern-empty-state-title">No se encontraron reportes</div>
-                <div class="modern-empty-state-desc">No hay reportes que coincidan con la búsqueda.</div>
-            </div>
-        `;
-        return;
-    }
-
-    dataToRender.forEach((rep, i) => {
-        // Pasamos el índice global del array filtrado para localizar el reporte al expandir
-        feed.appendChild(createReportCard(rep, currentCount + i));
-    });
 }
 
-/**
- * Crea el componente DOM para cada reporte usando los campos reales de REPORTES
- */
-function createReportCard(rep, globalIndex) {
-    const div = document.createElement('div');
-    div.className = 'report-card-lux';
-    
-    // SOPORTE: imagen o video del reporte
-    const soporteUrl = rep.SOPORTE || 'https://i.ibb.co/r34f0Z5/ORCA-GIFS.gif';
-    const esVideo = soporteUrl.includes('/preview') || soporteUrl.includes('drive.google.com/file');
-    
-    // FECHA: fecha del reporte
-    const fecha = rep.FECHA || 'S/F';
-    
-    // CONCLUSION: estado del reporte
-    const conclusion = (rep.CONCLUSION || 'PENDIENTE').toUpperCase();
-    
-    let statusClass = 'bg-secondary';
-    const conclusionLower = conclusion.toLowerCase();
-    if (conclusionLower.includes('satisfactorio') || 
-        conclusionLower.includes('aprobado') || 
-        conclusionLower.includes('ok') ||
-        conclusionLower.includes('cumple') ||
-        conclusionLower.includes('conforme')) {
-        statusClass = 'bg-success';
-    } else if (conclusionLower.includes('rechazado') || 
-               conclusionLower.includes('fallido') || 
-               conclusionLower.includes('no cumple') ||
-               conclusionLower.includes('no conforme')) {
-        statusClass = 'bg-danger';
-    } else if (conclusionLower.includes('observacion') || 
-               conclusionLower.includes('observación') || 
-               conclusionLower.includes('pendiente')) {
-        statusClass = 'bg-warning text-dark';
-    }
-
-    // Contenido multimedia (imagen o video)
-    let mediaContent;
-    if (esVideo) {
-        mediaContent = `
-            <iframe src="${soporteUrl}" 
-                style="width:100%; height:100%; border:0;" 
-                allow="autoplay" 
-                loading="lazy">
-            </iframe>
-        `;
-    } else {
-        mediaContent = `
-            <img src="${soporteUrl}" 
-                alt="Calidad" 
-                loading="lazy" 
-                onerror="this.src='https://i.ibb.co/r34f0Z5/ORCA-GIFS.gif'">
-        `;
-    }
-
-    div.innerHTML = `
-        <span class="lote-tag-lux">${rep.ID || 'OP'}</span>
-        <div class="report-img-container">
-            ${mediaContent}
-        </div>
-        <div class="report-content-lux">
-            <h3 class="report-title-lux">${rep.REFERENCIA || 'REFERENCIA'}</h3>
-            <div class="report-info-row">
-                <span><i class="far fa-calendar-alt me-1"></i> ${fecha}</span>
-                <span><i class="fas fa-industry me-1"></i> ${rep.PLANTA || 'S/P'}</span>
-            </div>
-            <p class="report-summary-lux">${rep.OBSERVACIONES || 'Sin observaciones.'}</p>
-            <div class="report-footer-lux">
-                <span class="status-badge-lux ${statusClass} text-white">${conclusion}</span>
-                <button class="btn btn-sm btn-link text-primary fw-800 p-0 text-decoration-none" 
-                    onclick="expandReport(${globalIndex})">
-                    VER <i class="fas fa-arrow-right ms-1"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    return div;
-}
-
-/**
- * Configuración del scroll infinito
- */
-function setupInfiniteScroll() {
-    window.addEventListener('scroll', () => {
-        if (isLoadingMore) return;
-        if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 400) {
-            if (gsFilteredReportes.length > document.getElementById('qualityFeed')?.children.length) {
-                loadMore();
-            }
-        }
-    });
-}
-
-async function loadMore() {
-    isLoadingMore = true;
-    const loader = document.getElementById('scrollLoader');
-    if (loader) loader.style.display = 'block';
-
-    itemsToShow += batchSize;
-    renderReportGrid(false);
-
-    if (loader) loader.style.display = 'none';
-    isLoadingMore = false;
-}
-
-/**
- * Inicializa el selector de rango de fechas con Flatpickr
- * Configurado para trabajar con fechas que incluyen hora
- */
 function initDateRangePicker() {
-    const input = document.getElementById('dateRangePicker');
-    if (!input || typeof flatpickr === 'undefined') return;
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    selectedDateRange = [firstDay, today];
 
-    dateRangePicker = flatpickr(input, {
-        mode: 'range',
-        dateFormat: 'd/m/Y',
-        locale: 'es',
-        allowInput: false,
+    dateRangePicker = flatpickr("#dateRangePicker", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        locale: "es",
+        defaultDate: [firstDay, today],
         onChange: function(selectedDates) {
             if (selectedDates.length === 2) {
-                // Establecer el rango completo del día
-                const startDate = new Date(selectedDates[0]);
-                startDate.setHours(0, 0, 0, 0);
-                
-                const endDate = new Date(selectedDates[1]);
-                endDate.setHours(23, 59, 59, 999);
-                
-                selectedDateRange = {
-                    start: startDate,
-                    end: endDate
-                };
-                applyFilters();
-            }
-        },
-        onClose: function(selectedDates) {
-            if (selectedDates.length === 0) {
+                selectedDateRange = selectedDates;
+                window.applyFilters();
+            } else if (selectedDates.length === 0) {
                 selectedDateRange = null;
-                applyFilters();
+                window.applyFilters();
             }
         }
     });
 }
 
-/**
- * Aplica todos los filtros activos (búsqueda + fechas)
- */
-function applyFilters() {
-    const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
-    
+window.applyFilters = function() {
+    const prod = document.getElementById('filterProductora').value;
+    const aud = document.getElementById('filterAuditor').value;
+    const tipo = document.getElementById('filterTipo').value;
+    const estado = (document.getElementById('filterEstado') && document.getElementById('filterEstado').value) || '';
+
     gsFilteredReportes = gsReportes.filter(r => {
-        // Filtro de búsqueda por texto
-        const matchesSearch = !searchTerm || 
-            (r.ID || '').toLowerCase().includes(searchTerm) ||
-            (r.REFERENCIA || '').toLowerCase().includes(searchTerm) ||
-            (r.PLANTA || '').toLowerCase().includes(searchTerm) ||
-            (r.CONCLUSION || '').toLowerCase().includes(searchTerm);
-
-        // Filtro de rango de fechas
-        let matchesDate = true;
-        if (selectedDateRange) {
-            // Intentar parsear la fecha del reporte (puede tener hora)
-            const reportDate = parsearFechaLatina(r.FECHA);
-            if (reportDate && reportDate instanceof Date && !isNaN(reportDate)) {
-                // Comparar solo las fechas, ignorando la hora
-                const reportDateOnly = new Date(reportDate.getFullYear(), reportDate.getMonth(), reportDate.getDate());
-                const startDateOnly = new Date(selectedDateRange.start.getFullYear(), selectedDateRange.start.getMonth(), selectedDateRange.start.getDate());
-                const endDateOnly = new Date(selectedDateRange.end.getFullYear(), selectedDateRange.end.getMonth(), selectedDateRange.end.getDate());
-                
-                matchesDate = reportDateOnly >= startDateOnly && reportDateOnly <= endDateOnly;
-            } else {
-                // Si no se puede parsear la fecha, no filtrar por fecha
-                matchesDate = true;
-            }
+        let okProd = !prod || r._productora === prod;
+        let okAud = !aud || r._auditorName === aud;
+        let okTipo = !tipo || r._tipo === tipo;
+        
+        let okDate = true;
+        if (selectedDateRange && selectedDateRange.length === 2) {
+            const start = new Date(selectedDateRange[0]); start.setHours(0,0,0,0);
+            const end = new Date(selectedDateRange[1]); end.setHours(23,59,59,999);
+            const rDate = r._date;
+            okDate = (rDate >= start && rDate <= end);
         }
-
-        return matchesSearch && matchesDate;
+        let okEstado = !estado || (String(r._conclusion || '').toUpperCase() === String(estado || '').toUpperCase());
+        
+        return okProd && okAud && okTipo && okDate && okEstado;
     });
 
+    updateDashboard();
+};
+
+function updateDashboard() {
+    tableCurrentPage = 1;
     actualizarKPIs();
-    renderReportGrid(true);
+    updateCharts();
+    renderTable();
 }
 
-/**
- * Filtrado dinámico por texto
- */
-function handleSearch() {
-    applyFilters();
+function getReportSearchText(r) {
+    return [
+        r.referencia, r.REFERENCIA, r.id, r.ID, r.lote, r.LOTE,
+        r._planta, r.planta, r.PLANTA, r._auditorName,
+        r.email, r.EMAIL, r._tipo, r._conclusion, r._productora,
+        r.observaciones, r.OBSERVACIONES
+    ].map(v => String(v || '').toLowerCase()).join(' ');
 }
 
-/**
- * Detalle expandido con SweetAlert2 mostrando todos los campos de REPORTES
- */
-function expandReport(index) {
-    // index es la posición en gsFilteredReportes al momento de renderizar la tarjeta
-    const rep = gsFilteredReportes[index];
+function applyTableSearchFilter() {
+    const q = tableSearchTerm.toLowerCase().trim();
+    gsTableReportes = q
+        ? gsFilteredReportes.filter(r => getReportSearchText(r).includes(q))
+        : [...gsFilteredReportes];
+}
+
+window.handleCalidadTableSearch = function() {
+    tableSearchTerm = document.getElementById('calidadTableSearch')?.value || '';
+    tableCurrentPage = 1;
+    renderTable();
+};
+
+window.clearCalidadTableSearch = function() {
+    const input = document.getElementById('calidadTableSearch');
+    if (input) input.value = '';
+    tableSearchTerm = '';
+    tableCurrentPage = 1;
+    renderTable();
+};
+
+window.verReporteCalidad = function(index) {
+    const rep = gsTableReportes[index];
     if (!rep) return;
 
-    // Formatear tipo de visita con icono específico
-    const tipoVisita = (rep.TIPO_VISITA || 'No especificado').toUpperCase();
-    let tipoIcon = 'fa-clipboard-check';
-    let tipoColor = '#8b5cf6';
-    
-    if (tipoVisita === 'AUDITORIA') {
-        tipoIcon = 'fa-clipboard-check';
-        tipoColor = '#8b5cf6';
-    } else if (tipoVisita === 'RONDA') {
-        tipoIcon = 'fa-route';
-        tipoColor = '#06b6d4';
-    } else if (tipoVisita === 'CONTRAMUESTRA') {
-        tipoIcon = 'fa-vial';
-        tipoColor = '#f59e0b';
-    } else if (tipoVisita === 'SEGUIMIENTO') {
-        tipoIcon = 'fa-tasks';
-        tipoColor = '#ec4899';
+    const reportNormalized = {};
+    for (const key in rep) {
+        if (key.startsWith('_')) continue;
+        reportNormalized[key.toLowerCase()] = rep[key];
+    }
+    reportNormalized._autoprint = false;
+
+    localStorage.setItem('printReporteCalidad', JSON.stringify(reportNormalized));
+    window.open('plantilla-impresion-calidad.html', '_blank');
+};
+
+function escAttr(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function formatFechaTabla(date) {
+    if (!date || isNaN(date)) return '—';
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = String(date.getFullYear()).slice(-2);
+    return `${d}/${m}/${y}`;
+}
+
+function renderEstadoCell(conclusion) {
+    const label = String(conclusion || '—').toUpperCase();
+    const c = label.replace(/—/g, '');
+    if (c === 'APROBADO') {
+        return `<span class="estado-badge aprobado">${label}</span>`;
+    }
+    if (c === 'RECHAZADO') {
+        return `<span class="estado-badge rechazado">${label}</span>`;
+    }
+    return label || '—';
+}
+
+function renderTablePagination(totalItems, totalPages) {
+    const pagination = document.getElementById('tablePagination');
+    const info = document.getElementById('tablePaginationInfo');
+    const btns = document.getElementById('tablePaginationBtns');
+    if (!pagination || !info || !btns) return;
+
+    if (totalPages <= 1) {
+        pagination.style.display = 'none';
+        return;
     }
 
-    // Detectar si el soporte es video o imagen
-    const soporteUrl = rep.SOPORTE || '';
-    const esVideo = soporteUrl.includes('/preview') || soporteUrl.includes('drive.google.com/file');
-    
-    let mediaHTML = '';
-    if (soporteUrl) {
-        if (esVideo) {
-            mediaHTML = `
-                <div class="mt-4 overflow-hidden rounded-4 border shadow-sm" style="position: relative; padding-bottom: 56.25%; height: 0;">
-                    <iframe src="${soporteUrl}" 
-                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" 
-                        allow="autoplay; fullscreen" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
-            `;
-        } else {
-            mediaHTML = `<div class="mt-4 overflow-hidden rounded-4 border shadow-sm"><img src="${soporteUrl}" style="width:100%;"></div>`;
+    pagination.style.display = 'flex';
+    const start = (tableCurrentPage - 1) * TABLE_PAGE_SIZE + 1;
+    const end = Math.min(tableCurrentPage * TABLE_PAGE_SIZE, totalItems);
+    info.textContent = `Mostrando ${start}–${end} de ${totalItems.toLocaleString('es-CO')} reportes`;
+
+    let html = `
+        <button type="button" class="btn-page" ${tableCurrentPage <= 1 ? 'disabled' : ''}
+            onclick="changeCalidadTablePage(${tableCurrentPage - 1})" title="Anterior">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+
+    const pages = [];
+    for (let p = 1; p <= totalPages; p++) {
+        if (p === 1 || p === totalPages || Math.abs(p - tableCurrentPage) <= 1) pages.push(p);
+    }
+    let last = 0;
+    pages.forEach(p => {
+        if (last && p - last > 1) {
+            html += `<span style="padding:0 4px;color:#94a3b8;">…</span>`;
         }
-    }
+        html += `<button type="button" class="btn-page ${p === tableCurrentPage ? 'active' : ''}"
+            onclick="changeCalidadTablePage(${p})">${p}</button>`;
+        last = p;
+    });
 
-    Swal.fire({
-        title: null,
-        html: `
-            <style>
-                .modal-detail-container {
-                    font-family: 'Inter', sans-serif;
-                    padding: 0;
-                    text-align: left;
-                }
-                
-                .modal-header-lux {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    margin-bottom: 24px;
-                    padding-bottom: 20px;
-                    border-bottom: 2px solid #f1f5f9;
-                }
-                
-                .modal-icon-box {
-                    background: linear-gradient(135deg, #3f51b5, #6366f1);
-                    color: white;
-                    width: 56px;
-                    height: 56px;
-                    border-radius: 16px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font-size: 1.5rem;
-                    flex-shrink: 0;
-                    box-shadow: 0 8px 16px rgba(63, 81, 181, 0.25);
-                }
-                
-                .modal-title-group {
-                    flex: 1;
-                    min-width: 0;
-                }
-                
-                .modal-title-lux {
-                    margin: 0 0 4px 0;
-                    font-size: 1.3rem;
-                    font-weight: 800;
-                    color: #0f172a;
-                    line-height: 1.2;
-                }
-                
-                .modal-subtitle-lux {
-                    color: #64748b;
-                    font-size: 0.8rem;
-                    font-weight: 600;
-                    margin: 0;
-                }
-                
-                .modal-grid-lux {
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    gap: 16px;
-                }
-                
-                .field-group-lux {
-                    background: #f8fafc;
-                    padding: 14px 16px;
-                    border-radius: 12px;
-                    border: 1px solid #f1f5f9;
-                    transition: all 0.2s ease;
-                }
-                
-                .field-group-lux:hover {
-                    background: #f1f5f9;
-                    border-color: #e2e8f0;
-                }
-                
-                .field-label-lux {
-                    display: block;
-                    font-size: 0.65rem;
-                    font-weight: 800;
-                    text-transform: uppercase;
-                    color: #94a3b8;
-                    margin-bottom: 6px;
-                    letter-spacing: 0.5px;
-                }
-                
-                .field-value-lux {
-                    font-size: 0.95rem;
-                    font-weight: 700;
-                    color: #1e293b;
-                    word-break: break-word;
-                }
-                
-                .field-highlight {
-                    background: ${tipoColor}10;
-                    border: 1.5px solid ${tipoColor}30;
-                    padding: 16px;
-                }
-                
-                .field-highlight .field-value-lux {
-                    color: ${tipoColor};
-                    font-size: 1.05rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-                
-                .conclusion-box {
-                    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-                    border: 1.5px solid #93c5fd;
-                    padding: 16px;
-                }
-                
-                .conclusion-box .field-value-lux {
-                    color: #1e40af;
-                    font-size: 1.05rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                }
-                
-                .observations-box {
-                    background: white;
-                    border: 1.5px solid #e2e8f0;
-                    padding: 16px;
-                    border-radius: 12px;
-                    margin-top: 8px;
-                }
-                
-                .observations-box .field-value-lux {
-                    font-weight: 500;
-                    line-height: 1.6;
-                    color: #475569;
-                    white-space: pre-wrap;
-                }
-                
-                .media-container-lux {
-                    margin-top: 20px;
-                    border-radius: 16px;
-                    overflow: hidden;
-                    border: 1px solid #e2e8f0;
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-                }
-                
-                .media-container-lux img,
-                .media-container-lux video {
-                    width: 100%;
-                    display: block;
-                }
-                
-                /* Desktop: 2 columnas */
-                @media (min-width: 768px) {
-                    .modal-grid-lux {
-                        grid-template-columns: repeat(2, 1fr);
-                    }
-                    
-                    .field-group-full {
-                        grid-column: 1 / -1;
-                    }
-                    
-                    .modal-title-lux {
-                        font-size: 1.5rem;
-                    }
-                }
-                
-                /* Mobile: optimización */
-                @media (max-width: 767px) {
-                    .modal-header-lux {
-                        gap: 12px;
-                        margin-bottom: 20px;
-                        padding-bottom: 16px;
-                    }
-                    
-                    .modal-icon-box {
-                        width: 48px;
-                        height: 48px;
-                        font-size: 1.3rem;
-                    }
-                    
-                    .modal-title-lux {
-                        font-size: 1.1rem;
-                    }
-                    
-                    .modal-subtitle-lux {
-                        font-size: 0.75rem;
-                    }
-                    
-                    .field-group-lux {
-                        padding: 12px 14px;
-                    }
-                    
-                    .field-value-lux {
-                        font-size: 0.9rem;
-                    }
-                }
-            </style>
-            
-            <div class="modal-detail-container">
-                <div class="modal-header-lux">
-                    <div class="modal-icon-box">
-                        <i class="fas fa-microscope"></i>
-                    </div>
-                    <div class="modal-title-group">
-                        <h4 class="modal-title-lux">Reporte de Calidad</h4>
-                        <p class="modal-subtitle-lux">ID: ${rep.ID_REPORTE || rep.TIMESTAMP || 'N/A'}</p>
-                    </div>
-                </div>
+    html += `
+        <button type="button" class="btn-page" ${tableCurrentPage >= totalPages ? 'disabled' : ''}
+            onclick="changeCalidadTablePage(${tableCurrentPage + 1})" title="Siguiente">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+    btns.innerHTML = html;
+}
 
-                <div class="modal-grid-lux">
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Lote</span>
-                        <div class="field-value-lux" style="color: #3f51b5;">${rep.ID || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Fecha</span>
-                        <div class="field-value-lux">${rep.FECHA || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Referencia</span>
-                        <div class="field-value-lux">${rep.REFERENCIA || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Cantidad</span>
-                        <div class="field-value-lux">${rep.CANTIDAD || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Planta</span>
-                        <div class="field-value-lux">${rep.PLANTA || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Línea</span>
-                        <div class="field-value-lux">${rep.LINEA || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux field-group-full">
-                        <span class="field-label-lux">Proceso</span>
-                        <div class="field-value-lux">${rep.PROCESO || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Prenda</span>
-                        <div class="field-value-lux">${rep.PRENDA || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Género</span>
-                        <div class="field-value-lux">${rep.GENERO || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux field-group-full">
-                        <span class="field-label-lux">Tejido</span>
-                        <div class="field-value-lux">${rep.TEJIDO || 'N/A'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux field-group-full field-highlight">
-                        <span class="field-label-lux">
-                            <i class="fas ${tipoIcon}"></i> Tipo de Visita
-                        </span>
-                        <div class="field-value-lux">
-                            <i class="fas ${tipoIcon}"></i>
-                            ${tipoVisita}
-                        </div>
-                    </div>
-                    
-                    <div class="field-group-lux field-group-full conclusion-box">
-                        <span class="field-label-lux">Conclusión Final</span>
-                        <div class="field-value-lux">
-                            <i class="fas fa-award"></i>
-                            ${rep.CONCLUSION || 'N/A'}
-                        </div>
-                    </div>
-                    
-                    <div class="field-group-lux field-group-full observations-box">
-                        <span class="field-label-lux">Observaciones</span>
-                        <div class="field-value-lux">${rep.OBSERVACIONES || 'Sin observaciones registradas'}</div>
-                    </div>
-                    
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Inspector</span>
-                        <div class="field-value-lux">
-                            <i class="fas fa-user-check" style="color: #3f51b5; margin-right: 6px;"></i>
-                            ${rep.EMAIL || 'N/A'}
-                        </div>
-                    </div>
-                    
-                    ${rep.LOCALIZACION ? `
-                    <div class="field-group-lux">
-                        <span class="field-label-lux">Ubicación GPS</span>
-                        <div class="field-value-lux">
-                            <i class="fas fa-map-marker-alt" style="color: #ef4444; margin-right: 6px;"></i>
-                            ${rep.LOCALIZACION}
-                        </div>
-                    </div>
-                    ` : ''}
-                </div>
+window.changeCalidadTablePage = function(page) {
+    const totalPages = Math.max(1, Math.ceil(gsTableReportes.length / TABLE_PAGE_SIZE));
+    if (page < 1 || page > totalPages) return;
+    tableCurrentPage = page;
+    renderTable(false);
+};
 
-                ${mediaHTML ? `<div class="media-container-lux">${mediaHTML}</div>` : ''}
-            </div>
-        `,
-        confirmButtonText: 'CERRAR',
-        confirmButtonColor: '#3f51b5',
-        width: '800px',
-        customClass: { 
-            popup: 'rounded-5',
-            confirmButton: 'rounded-pill px-5 fw-800'
+function sumCantidad(reportes) {
+    return reportes.reduce((s, r) => s + r._cantidad, 0);
+}
+
+function pctUnidades(parte, total) {
+    if (!total || total <= 0) return '0.0';
+    return ((parte / total) * 100).toFixed(1);
+}
+
+function actualizarKPIs() {
+    const total = gsFilteredReportes.length;
+    const totalUnidades = sumCantidad(gsFilteredReportes);
+
+    document.getElementById('kpi-total').innerText = totalUnidades.toLocaleString('es-CO');
+    document.getElementById('kpi-total-sub').innerText =
+        `${total.toLocaleString('es-CO')} reporte${total === 1 ? '' : 's'} en el periodo`;
+
+    const oksReports = gsFilteredReportes.filter(r => r._conclusion === 'APROBADO');
+    const rejsReports = gsFilteredReportes.filter(r => r._conclusion === 'RECHAZADO');
+    const oks = oksReports.length;
+    const rejs = rejsReports.length;
+    const oksUnits = sumCantidad(oksReports);
+    const rejsUnits = sumCantidad(rejsReports);
+
+    document.getElementById('kpi-ok').innerText = oksUnits.toLocaleString('es-CO');
+    document.getElementById('kpi-ok-sub').innerText = totalUnidades > 0
+        ? `${oks.toLocaleString('es-CO')} reportes · ${pctUnidades(oksUnits, totalUnidades)}% unidades`
+        : `${oks.toLocaleString('es-CO')} reportes`;
+
+    document.getElementById('kpi-rejected').innerText = rejsUnits.toLocaleString('es-CO');
+    document.getElementById('kpi-rejected-sub').innerText = totalUnidades > 0
+        ? `${rejs.toLocaleString('es-CO')} reportes · ${pctUnidades(rejsUnits, totalUnidades)}% unidades`
+        : `${rejs.toLocaleString('es-CO')} reportes`;
+
+    const plantas = new Set(gsFilteredReportes.map(r => r._planta));
+    document.getElementById('kpi-plants').innerText = totalUnidades.toLocaleString('es-CO');
+    document.getElementById('kpi-plants-sub').innerText =
+        `${plantas.size} planta${plantas.size === 1 ? '' : 's'} · ${total.toLocaleString('es-CO')} reportes`;
+}
+
+function chartBarOpts(horizontal = false) {
+    return {
+        maintainAspectRatio: false,
+        ...(horizontal ? { indexAxis: 'y' } : {}),
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                padding: 12,
+                cornerRadius: 8,
+                titleFont: { size: 12, weight: '700' },
+                bodyFont: { size: 11 },
+                callbacks: {
+                    label(ctx) {
+                        const units = horizontal ? ctx.parsed.x : ctx.parsed.y;
+                        const reports = ctx.dataset.reportCounts?.[ctx.dataIndex];
+                        const lines = [`Unidades: ${Number(units || 0).toLocaleString('es-CO')}`];
+                        if (reports !== undefined) {
+                            lines.push(`Reportes: ${Number(reports).toLocaleString('es-CO')}`);
+                        }
+                        return lines;
+                    }
+                }
+            }
         },
-        didOpen: () => {
-            // Ajustar ancho en móvil
-            if (window.innerWidth < 768) {
-                document.querySelector('.swal2-popup').style.width = '95%';
+        scales: {
+            x: { beginAtZero: true, stacked: false, grid: { color: 'rgba(0,0,0,0.05)' } },
+            y: {
+                beginAtZero: true,
+                stacked: false,
+                grid: horizontal ? { display: false } : { color: 'rgba(0,0,0,0.05)' },
+                ticks: horizontal ? { font: { size: 10 } } : undefined
             }
         }
+    };
+}
+
+function setUnitsDataset(chart, unitsData, reportCounts, color) {
+    chart.data.datasets = [{
+        label: 'Unidades',
+        data: unitsData,
+        reportCounts: reportCounts,
+        backgroundColor: color,
+        borderRadius: horizontalRadius(chart),
+        maxBarThickness: 42
+    }];
+}
+
+function setConformidadChart(oksReports, rejsReports) {
+    chartConformidad.data.labels = ['Aprobadas', 'Rechazadas'];
+    chartConformidad.data.datasets = [{
+        label: 'Unidades',
+        data: [sumCantidad(oksReports), sumCantidad(rejsReports)],
+        reportCounts: [oksReports.length, rejsReports.length],
+        backgroundColor: ['rgba(16, 185, 129, 0.32)', 'rgba(239, 68, 68, 0.32)'],
+        borderRadius: 6,
+        maxBarThickness: 48
+    }];
+}
+
+function horizontalRadius(chart) {
+    return chart?.options?.indexAxis === 'y' ? 4 : 6;
+}
+
+function initCharts() {
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = '#64748b';
+
+    chartConformidad = new Chart(document.getElementById('chartConformidad'), {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        options: chartBarOpts(false)
     });
+
+    chartTiposVisita = new Chart(document.getElementById('chartTiposVisita'), {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        options: chartBarOpts(false)
+    });
+
+    chartAuditor = new Chart(document.getElementById('chartAuditor'), {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        options: chartBarOpts(true)
+    });
+
+    chartPlantas = new Chart(document.getElementById('chartPlantas'), {
+        type: 'bar',
+        data: { labels: [], datasets: [] },
+        options: chartBarOpts(true)
+    });
+}
+
+function aggregateByKey(reportes, keyFn) {
+    const map = {};
+    reportes.forEach(r => {
+        const key = keyFn(r);
+        if (!map[key]) map[key] = { count: 0, units: 0 };
+        map[key].count++;
+        map[key].units += r._cantidad;
+    });
+    return map;
+}
+
+function updateCharts() {
+    const oksReports = gsFilteredReportes.filter(r => r._conclusion === 'APROBADO');
+    const rejsReports = gsFilteredReportes.filter(r => r._conclusion === 'RECHAZADO');
+
+    setConformidadChart(oksReports, rejsReports);
+    chartConformidad.update();
+
+    const tiposMap = aggregateByKey(gsFilteredReportes, r => r._tipo);
+    const tiposSorted = Object.entries(tiposMap).sort((a, b) => b[1].units - a[1].units);
+    chartTiposVisita.data.labels = tiposSorted.map(i => i[0]);
+    setUnitsDataset(
+        chartTiposVisita,
+        tiposSorted.map(i => i[1].units),
+        tiposSorted.map(i => i[1].count),
+        'rgba(6, 182, 212, 0.28)'
+    );
+    chartTiposVisita.update();
+
+    const audSorted = Object.entries(aggregateByKey(gsFilteredReportes, r => r._auditorName))
+        .sort((a, b) => b[1].units - a[1].units);
+    chartAuditor.data.labels = audSorted.map(i => i[0]);
+    setUnitsDataset(
+        chartAuditor,
+        audSorted.map(i => i[1].units),
+        audSorted.map(i => i[1].count),
+        'rgba(245, 158, 11, 0.28)'
+    );
+    chartAuditor.update();
+
+    const plantSorted = Object.entries(aggregateByKey(gsFilteredReportes, r => r._planta))
+        .sort((a, b) => b[1].units - a[1].units).slice(0, 10);
+    chartPlantas.data.labels = plantSorted.map(i => i[0]);
+    setUnitsDataset(
+        chartPlantas,
+        plantSorted.map(i => i[1].units),
+        plantSorted.map(i => i[1].count),
+        'rgba(236, 72, 153, 0.28)'
+    );
+    chartPlantas.update();
+}
+
+function renderTable(resetPage = true) {
+    const tbody = document.getElementById('calidadTableBody');
+    const emptyState = document.getElementById('tableEmpty');
+    const meta = document.getElementById('tableResultsMeta');
+    const tableWrap = document.querySelector('.reports-table-wrap table');
+
+    if (resetPage) tableCurrentPage = 1;
+    applyTableSearchFilter();
+
+    const totalFiltered = gsFilteredReportes.length;
+    const totalTable = gsTableReportes.length;
+
+    if (meta) {
+        const q = tableSearchTerm.trim();
+        meta.textContent = q
+            ? `${totalTable.toLocaleString('es-CO')} de ${totalFiltered.toLocaleString('es-CO')} reportes (búsqueda activa)`
+            : `${totalTable.toLocaleString('es-CO')} reporte${totalTable === 1 ? '' : 's'} en el periodo`;
+    }
+
+    if (!tbody || !emptyState) return;
+
+    if (totalTable === 0) {
+        tbody.innerHTML = '';
+        emptyState.style.display = 'block';
+        if (tableWrap) tableWrap.style.display = 'none';
+        renderTablePagination(0, 0);
+        return;
+    }
+
+    emptyState.style.display = 'none';
+    if (tableWrap) tableWrap.style.display = '';
+
+    const totalPages = Math.max(1, Math.ceil(totalTable / TABLE_PAGE_SIZE));
+    if (tableCurrentPage > totalPages) tableCurrentPage = totalPages;
+
+    const start = (tableCurrentPage - 1) * TABLE_PAGE_SIZE;
+    const pageItems = gsTableReportes.slice(start, start + TABLE_PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map((r, i) => {
+        const globalIndex = start + i;
+        const ref = r.referencia || r.REFERENCIA || r.id || r.ID || '—';
+        const lote = r.lote || r.LOTE || r.id || r.ID || '—';
+        const cantFmt = r._cantidad > 0 ? r._cantidad.toLocaleString('es-CO') : '—';
+        return `
+            <tr>
+                <td class="cell-date">${formatFechaTabla(r._date)}</td>
+                <td class="cell-lote" title="${escAttr(lote)}">${lote}</td>
+                <td class="cell-ref" title="${escAttr(ref)}">${ref}</td>
+                <td class="cell-planta" title="${escAttr(r._planta)}">${r._planta}</td>
+                <td class="cell-auditor" title="${escAttr(r._auditorName)}">${r._auditorName}</td>
+                <td class="cell-tipo">${r._tipo}</td>
+                <td class="cell-qty">${cantFmt}</td>
+                <td>${renderEstadoCell(r._conclusion)}</td>
+                <td style="text-align:center;">
+                    <button type="button" class="btn-ver-reporte" onclick="verReporteCalidad(${globalIndex})" title="Ver reporte">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    renderTablePagination(totalTable, totalPages);
 }

@@ -691,6 +691,9 @@ function createSidebar() {
                 <a href="resolucion.html" class="sidebar-link ${path.includes('resolucion.html') ? 'active' : ''}">
                     <i class="fas fa-desktop"></i> Novedades
                 </a>
+                <a href="metricas.html" class="sidebar-link ${path.includes('metricas.html') ? 'active' : ''}">
+                    <i class="fas fa-chart-pie"></i> Métricas
+                </a>
             ` : ''}
             ${user.ROL === 'GUEST' ? `
                 <a href="seguimiento.html" class="sidebar-link ${path.includes('seguimiento.html') ? 'active' : ''}">
@@ -700,7 +703,7 @@ function createSidebar() {
                     <i class="fas fa-industry"></i> Actualizar
                 </a>
             ` : ''}
-            ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR') ? `
+            ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR' || user.ROL === 'USER-P') ? `
                 <a href="calidad.html" class="sidebar-link ${path.includes('calidad.html') ? 'active' : ''}">
                     <i class="fas fa-microscope"></i> Calidad
                 </a>

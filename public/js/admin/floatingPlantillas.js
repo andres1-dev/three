@@ -452,6 +452,9 @@ function makeElementDraggable(el) {
  * Inicializador asíncrono no bloqueante
  */
 function initFloatingTemplates() {
+    // Solo en index.html con el formulario de calidad activo
+    if (!document.getElementById('calidadSection')) return;
+
     // 1. Inyectar maquetación en el DOM
     injectTemplatesUI();
 
@@ -518,8 +521,6 @@ function initFloatingTemplates() {
         observer.observe(calidadSection, { attributes: true, attributeFilter: ['class'] });
 
         fab.style.display = calidadSection.classList.contains('hidden') ? 'none' : 'flex';
-    } else if (fab) {
-        fab.style.display = 'flex';
     }
 
     // 6. Primer renderizado local instantáneo

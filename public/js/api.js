@@ -122,7 +122,7 @@ async function fetchSupabaseData(tableName, options = {}) {
                     query = query.eq(plantCol, sessionUser.PLANTA);
                 }
                 // Filtro por productora para usuarios internos
-                if (!skipFilter && ['MASTER', 'PLANTAS', 'NOVEDADES', 'RUTERO', 'VISITAS'].includes(tableUpper) && sessionUser &&
+                if (!skipFilter && ['MASTER', 'PLANTAS', 'NOVEDADES', 'RUTERO', 'VISITAS', 'REPORTES'].includes(tableUpper) && sessionUser &&
                     ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(sessionUser.ROL) &&
                     sessionUser.ID_PRODUCTORA) {
                     query = query.eq('productora', parseInt(sessionUser.ID_PRODUCTORA));
@@ -421,6 +421,40 @@ async function fetchReportesData() {
         const resJson = await resp.json();
         const reportes = resJson.reportes || [];
         return _normalizeSupabaseData(reportes, 'reportes');
+    }
+
+    // Si el rol es USER-P, intentar leer por productora via Edge Function (asegura scoped data)
+    if (sessionUser && sessionUser.ROL === 'USER-P') {
+        let sessionToken = SUPABASE_KEY;
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.includes('-auth-token')) {
+                    const s = JSON.parse(localStorage.getItem(k));
+                    if (s?.access_token) { sessionToken = s.access_token; break; }
+                }
+            }
+        } catch(e) {}
+
+        try {
+            const resp = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_KEY,
+                    'Authorization': `Bearer ${sessionToken}`
+                },
+                body: JSON.stringify({ accion: 'LISTAR_REPORTES', productora: sessionUser.ID_PRODUCTORA })
+            });
+            if (resp.ok) {
+                const resJson = await resp.json();
+                const reportes = resJson.reportes || [];
+                return _normalizeSupabaseData(reportes, 'reportes');
+            }
+        } catch (e) {
+            console.warn('[API] LISTAR_REPORTES falló para USER-P:', e);
+            // fallback a fetchSupabaseData
+        }
     }
 
     return fetchSupabaseData('reportes');
