@@ -2564,3 +2564,350 @@ body.view-expanded #main-content-wrapper {
     line-height: 1.5;
     margin: 0 auto;
 }
+
+/* ==========================================================================
+   Premium Floating Templates FAB & Modal Style
+   ========================================================================== */
+
+/* Botón Flotante (FAB) */
+.fab-templates-trigger {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3f51b5, #6366f1);
+    color: #ffffff !important;
+    border: none;
+    outline: none !important;
+    box-shadow: 0 10px 25px rgba(63, 81, 181, 0.4), 0 4px 10px rgba(99, 102, 241, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 9990;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fab-templates-trigger:hover {
+    transform: translateY(-5px) scale(1.08);
+    box-shadow: 0 14px 30px rgba(63, 81, 181, 0.5), 0 6px 15px rgba(99, 102, 241, 0.3);
+    background: linear-gradient(135deg, #4f46e5, #3f51b5);
+}
+
+.fab-templates-trigger:active {
+    transform: translateY(-2px) scale(0.95);
+}
+
+/* Backdrop del Modal */
+.templates-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9995;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: none;
+}
+
+.templates-modal-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Caja del Modal (Glassmorphism & Lux Design) */
+.templates-modal-box {
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 24px;
+    width: 520px;
+    max-width: 92%;
+    max-height: 85vh;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: none;
+}
+
+.templates-modal-backdrop.open .templates-modal-box {
+    transform: none;
+}
+
+/* Cabecera del Modal */
+.templates-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8fafc;
+}
+
+.templates-modal-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+.templates-modal-title i {
+    color: #3f51b5;
+}
+
+.templates-modal-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: color 0.15s;
+    outline: none !important;
+}
+
+.templates-modal-close:hover {
+    color: #ef4444;
+}
+
+/* Buscador */
+.templates-search-wrapper {
+    padding: 20px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.templates-search-input {
+    width: 100%;
+    padding: 12px 16px 12px 42px;
+    font-size: 0.95rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    outline: none;
+    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
+    background: #f8fafc;
+}
+
+.templates-search-input:focus {
+    border-color: #3f51b5;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+}
+
+.templates-search-icon {
+    position: absolute;
+    left: 38px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+    font-size: 0.95rem;
+}
+
+/* Pestañas (Tabs) */
+.templates-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    background: #f1f5f9;
+    padding: 5px;
+    margin: 18px 24px 12px;
+    border-radius: 16px;
+    gap: 4px;
+}
+
+.templates-tab-btn {
+    border: none;
+    background: none;
+    padding: 11px 12px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background-color 0.15s, color 0.15s;
+    outline: none !important;
+}
+
+.templates-tab-btn.active {
+    background: #ffffff;
+    color: #3f51b5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Cuerpo / Lista de Plantillas */
+.templates-modal-body {
+    padding: 16px 24px 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.templates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.template-card {
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
+    padding: 20px;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.template-card:hover {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+}
+
+.template-text {
+    font-size: 0.92rem;
+    color: #334155;
+    line-height: 1.6;
+    font-weight: 500;
+    margin: 0;
+    white-space: pre-line;
+}
+
+/* Botones de acción de cada tarjeta */
+.template-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 10px;
+}
+
+.btn-template-action {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+    outline: none !important;
+}
+
+.btn-template-action:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.btn-template-action.btn-insert {
+    background: #3f51b5;
+    border-color: #3f51b5;
+    color: #ffffff;
+}
+
+.btn-template-action.btn-insert:hover {
+    background: #303f9f;
+    border-color: #303f9f;
+}
+
+.btn-template-action i {
+    font-size: 0.8rem;
+}
+
+/* Estado Vacío de Búsqueda */
+.templates-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.templates-empty-state i {
+    font-size: 2rem;
+    margin-bottom: 12px;
+    opacity: 0.7;
+}
+
+.templates-empty-state p {
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Media Queries para Mobile Compact */
+@media (max-width: 480px) {
+    .fab-templates-trigger {
+        bottom: 16px;
+        right: 16px;
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+
+    .templates-modal-box {
+        max-height: 80vh;
+        border-radius: 20px;
+    }
+
+    .templates-modal-header {
+        padding: 16px 20px;
+    }
+
+    .templates-search-wrapper {
+        padding: 12px 20px;
+    }
+
+    .templates-search-input {
+        padding: 8px 12px 8px 36px;
+        font-size: 0.85rem;
+    }
+
+    .templates-search-icon {
+        left: 30px;
+    }
+
+    .templates-tabs {
+        margin: 10px 20px 6px;
+    }
+
+    .templates-tab-btn {
+        padding: 6px 8px;
+        font-size: 0.65rem;
+    }
+
+    .templates-modal-body {
+        padding: 10px 20px 20px;
+    }
+
+    .template-card {
+        padding: 12px;
+        border-radius: 12px;
+    }
+
+    .template-text {
+        font-size: 0.8rem;
+    }
+
+    .btn-template-action {
+        padding: 5px 10px;
+        font-size: 0.68rem;
+    }
+}

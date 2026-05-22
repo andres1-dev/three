@@ -1179,34 +1179,6 @@ RESULTADOS:
           <div id="calidadNovedadesList" style="margin-top:8px;"></div>
         </div>
 
-        <!-- Configuración de Estilo de Redacción y Conectores -->
-        <div class="mb-3">
-          <div class="d-flex justify-content-between align-items-center mb-1">
-            <label for="redaccionEstilo" class="form-label mb-0">Estilo de Redacción:</label>
-            <div class="btn-action-muted" style="display: inline-flex; align-items: center; cursor: pointer;">
-              <i class="fas fa-comment-dots"></i>&nbsp;
-              <select id="conectorRedaccion"
-                style="appearance: none; -webkit-appearance: none; background: transparent; border: none; outline: none; padding: 0; margin: 0; color: inherit; font-family: inherit; font-size: inherit; font-weight: inherit; cursor: pointer;">
-                <option value="" selected>Recomendación</option>
-                <option value="Se sugiere que ">Se sugiere...</option>
-                <option value="Se recomienda que ">Se recomienda...</option>
-                <option value="Se solicita que ">Se solicita...</option>
-                <option value="Se requiere que ">Se requiere...</option>
-                <option value="Se exige que ">Se exige...</option>
-              </select>
-            </div>
-          </div>
-          <div class="input-with-icon">
-            <i class="fas fa-pen-nib input-icon"></i>
-            <select id="redaccionEstilo" class="form-control" style="cursor: pointer;">
-              <option value="ESTANDAR" selected>Técnico Estándar</option>
-              <option value="DETALLISTA">Técnico Detallista</option>
-              <option value="EJECUTIVO">Técnico Analítico</option>
-              <option value="MEJORA">Técnico Preventivo</option>
-            </select>
-          </div>
-        </div>
-
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center mb-1">
             <label for="observacionesCalidad" class="form-label mb-0">Observaciones:</label>
@@ -2186,6 +2158,7 @@ RESULTADOS:
   <script src="js/forms/novedades.js"></script> <!-- formulario novedades -->
   <script src="js/forms/plantillasCalidad.js"></script>
   <script src="js/forms/calidad.js"></script> <!-- formulario calidad -->
+  <script src="js/admin/floatingPlantillas.js"></script>
   <script src="js/forms/plantas.js"></script> <!-- formulario plantas + Google Maps -->
   <script src="js/forms/dropzone.js"></script> <!-- dropzone personalizado de archivos -->
   <script src="js/forms/rutero.js"></script> <!-- formulario rutero -->

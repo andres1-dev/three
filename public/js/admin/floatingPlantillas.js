@@ -19,13 +19,13 @@ const LOCAL_TEMPLATES = [
     { tipo: 'UBICACION', contenido: 'Delantero izquierdo de la prenda puesta, ubicada entre costuras a 5 cm del costado.' },
     { tipo: 'UBICACION', contenido: 'Sisa izquierda de la prenda puesta, ubicada entre costuras.' },
     { tipo: 'UBICACION', contenido: 'En la unión de los sesgos de la tira izquierda de la prenda puesta.' },
-    
+
     // PAQUETEO
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 20 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, ensambladas espalda con espalda, dobladas individualmente y con las etiquetas aseguradas y amarradas.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 12 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
-    
+    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' },
+
     // OPERACION
     { tipo: 'OPERACION', contenido: 'Costura con puntada floja.' },
     { tipo: 'OPERACION', contenido: 'Piezas con hilos sueltos.' },
@@ -56,7 +56,7 @@ async function loadTemplates() {
                     tipo: (item.tipo || item.TIPO || '').toUpperCase(),
                     contenido: item.contenido || item.CONTENIDO || ''
                 })).filter(item => item.tipo && item.contenido);
-                
+
                 if (loaded.length > 0) {
                     plantillasData = loaded;
                     console.log(`[Plantillas] Base de datos Supabase sincronizada con ${plantillasData.length} registros.`);
@@ -93,7 +93,7 @@ function injectTemplatesUI() {
     backdrop.className = 'templates-modal-backdrop';
     backdrop.style.visibility = 'hidden'; // Evita el repintado inútil y optimiza la GPU
     backdrop.style.display = 'flex';
-    
+
     backdrop.innerHTML = `
         <div class="templates-modal-box" style="will-change: transform, opacity;">
             <div class="templates-modal-header">
@@ -123,7 +123,7 @@ function injectTemplatesUI() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(backdrop);
 }
 
@@ -132,11 +132,11 @@ function injectTemplatesUI() {
  */
 function escapeHtml(unsafe) {
     return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 /**
@@ -150,7 +150,7 @@ function renderTemplates() {
 
     // Generar todas las tarjetas en memoria
     container.innerHTML = plantillasData.map((item, index) => {
-        const insertButtonHtml = hasTextarea 
+        const insertButtonHtml = hasTextarea
             ? `<button type="button" class="btn-template-action btn-insert">
                 <i class="fas fa-arrow-right"></i> Insertar
                </button>`
@@ -244,23 +244,7 @@ async function copyToClipboard(text) {
 }
 
 /**
- * Obtiene el texto formateado con su prefijo oficial correspondiente
- * @param {string} tipo - 'UBICACION' | 'PAQUETEO' | 'OPERACION'
- * @param {string} text - Contenido original de la plantilla
- * @returns {string} Texto con el prefijo en mayúscula agregado
- */
-function getFormattedTemplateText(tipo, text) {
-    const PREFIXES = {
-        'UBICACION': 'UBICACIÓN DE ETIQUETA: ',
-        'PAQUETEO': 'INSTRUCCIONES DE PAQUETEO: ',
-        'OPERACION': 'RECOMENDACIONES: '
-    };
-    const prefix = PREFIXES[tipo] || '';
-    return prefix + text;
-}
-
-/**
- * Inserción sin lag en la posición actual del cursor con salto de línea inteligente
+ * Inserción sin lag en la posición actual del cursor
  */
 function insertTextIntoObservations(text) {
     const textarea = document.getElementById('observacionesCalidad');
@@ -271,26 +255,21 @@ function insertTextIntoObservations(text) {
     const value = textarea.value;
 
     let textToInsert = text;
-    
-    // Salto de línea inteligente si ya hay texto previo
-    if (startPos > 0) {
-        const prevChar = value.charAt(startPos - 1);
-        if (prevChar !== '\n') {
-            textToInsert = '\n' + textToInsert;
-        }
+    if (startPos > 0 && !/\s/.test(value.charAt(startPos - 1))) {
+        textToInsert = ' ' + textToInsert;
     }
 
     textarea.value = value.substring(0, startPos) + textToInsert + value.substring(endPos);
     textarea.focus();
-    
+
     const newCursorPos = startPos + textToInsert.length;
     textarea.setSelectionRange(newCursorPos, newCursorPos);
-    
+
     // Desencadenar reactividad en el formulario
     textarea.dispatchEvent(new Event('input', { bubbles: true }));
     textarea.dispatchEvent(new Event('change', { bubbles: true }));
 
-    showToast('success', 'Plantilla insertada con prefijo');
+    showToast('success', 'Plantilla insertada con éxito');
     closeTemplatesModal();
 }
 
@@ -302,14 +281,14 @@ function openTemplatesModal() {
     if (backdrop) {
         backdrop.style.visibility = 'visible';
         backdrop.classList.add('open');
-        
+
         const searchInput = document.getElementById('templatesSearchInput');
         if (searchInput) {
             searchInput.value = '';
             searchQuery = '';
         }
         filterTemplatesList();
-        
+
         // Foco inmediato sin retardo
         if (searchInput) searchInput.focus();
     }
@@ -429,16 +408,11 @@ function initFloatingTemplates() {
             const copyBtn = e.target.closest('.btn-copy');
             const insertBtn = e.target.closest('.btn-insert');
             const card = e.target.closest('.template-card');
-            
+
             if (card) {
                 const text = card.querySelector('.template-text').textContent;
-                const tipo = card.getAttribute('data-tipo') || '';
-                
-                // Formatear texto con prefijo dinámico oficial
-                const formattedText = getFormattedTemplateText(tipo, text);
-                
-                if (copyBtn) copyToClipboard(formattedText);
-                if (insertBtn) insertTextIntoObservations(formattedText);
+                if (copyBtn) copyToClipboard(text);
+                if (insertBtn) insertTextIntoObservations(text);
             }
         });
     }
@@ -451,7 +425,7 @@ function initFloatingTemplates() {
             fab.style.display = isHidden ? 'none' : 'flex';
         });
         observer.observe(calidadSection, { attributes: true, attributeFilter: ['class'] });
-        
+
         fab.style.display = calidadSection.classList.contains('hidden') ? 'none' : 'flex';
     } else if (fab) {
         fab.style.display = 'flex';
