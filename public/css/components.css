@@ -2572,33 +2572,43 @@ body.view-expanded #main-content-wrapper {
 /* Botón Flotante (FAB) */
 .fab-templates-trigger {
     position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 60px;
-    height: 60px;
+    top: calc(50% - 40px);
+    right: 30px;
+    left: auto;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3f51b5, #6366f1);
-    color: #ffffff !important;
-    border: none;
+    background: rgba(15, 23, 42, 0.45); /* Estilo AssistiveTouch en reposo */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: rgba(255, 255, 255, 0.75) !important;
+    border: 2px solid rgba(255, 255, 255, 0.2);
     outline: none !important;
-    box-shadow: 0 10px 25px rgba(63, 81, 181, 0.4), 0 4px 10px rgba(99, 102, 241, 0.2);
+    box-shadow: none !important;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.5rem;
+    font-size: 2rem;
     cursor: pointer;
     z-index: 9990;
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0.4;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease, background 0.3s, border-color 0.3s, color 0.3s;
+    touch-action: none; /* Prevenir gestos predeterminados del móvil durante el arrastre */
 }
 
-.fab-templates-trigger:hover {
-    transform: translateY(-5px) scale(1.08);
-    box-shadow: 0 14px 30px rgba(63, 81, 181, 0.5), 0 6px 15px rgba(99, 102, 241, 0.3);
-    background: linear-gradient(135deg, #4f46e5, #3f51b5);
+.fab-templates-trigger:hover,
+.fab-templates-trigger:active,
+.fab-templates-trigger.modal-open {
+    opacity: 1;
+    background: linear-gradient(135deg, #3f51b5, #6366f1); /* Se enciende en azul al tocarlo/abrirlo */
+    border-color: rgba(255, 255, 255, 0.4);
+    color: #ffffff !important;
+    transform: scale(1.08);
+    box-shadow: none !important;
 }
 
 .fab-templates-trigger:active {
-    transform: translateY(-2px) scale(0.95);
+    transform: scale(0.95);
 }
 
 /* Backdrop del Modal */
@@ -2679,39 +2689,7 @@ body.view-expanded #main-content-wrapper {
     color: #ef4444;
 }
 
-/* Buscador */
-.templates-search-wrapper {
-    padding: 20px 24px;
-    background: #ffffff;
-    border-bottom: 1px solid #f1f5f9;
-}
 
-.templates-search-input {
-    width: 100%;
-    padding: 12px 16px 12px 42px;
-    font-size: 0.95rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    outline: none;
-    transition: border-color 0.15s, background-color 0.15s, box-shadow 0.15s;
-    background: #f8fafc;
-}
-
-.templates-search-input:focus {
-    border-color: #3f51b5;
-    background: #ffffff;
-    box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
-}
-
-.templates-search-icon {
-    position: absolute;
-    left: 38px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    pointer-events: none;
-    font-size: 0.95rem;
-}
 
 /* Pestañas (Tabs) */
 .templates-tabs {
@@ -2855,11 +2833,12 @@ body.view-expanded #main-content-wrapper {
 /* Media Queries para Mobile Compact */
 @media (max-width: 480px) {
     .fab-templates-trigger {
-        bottom: 16px;
-        right: 16px;
-        width: 50px;
-        height: 50px;
-        font-size: 1.25rem;
+        top: calc(50% - 36px);
+        right: 20px;
+        left: auto;
+        width: 72px;
+        height: 72px;
+        font-size: 1.7rem;
     }
 
     .templates-modal-box {
@@ -2869,19 +2848,6 @@ body.view-expanded #main-content-wrapper {
 
     .templates-modal-header {
         padding: 16px 20px;
-    }
-
-    .templates-search-wrapper {
-        padding: 12px 20px;
-    }
-
-    .templates-search-input {
-        padding: 8px 12px 8px 36px;
-        font-size: 0.85rem;
-    }
-
-    .templates-search-icon {
-        left: 30px;
     }
 
     .templates-tabs {

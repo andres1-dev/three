@@ -39,7 +39,6 @@ const LOCAL_TEMPLATES = [
 
 let plantillasData = [];
 let currentTab = 'UBICACION';
-let searchQuery = '';
 
 /**
  * Consulta asíncrona no bloqueante a Supabase.
@@ -103,11 +102,6 @@ function injectTemplatesUI() {
                 <button type="button" class="templates-modal-close" id="templatesModalCloseBtn" aria-label="Cerrar modal">
                     <i class="fas fa-times"></i>
                 </button>
-            </div>
-            
-            <div class="templates-search-wrapper" style="position: relative;">
-                <i class="fas fa-search templates-search-icon"></i>
-                <input type="text" id="templatesSearchInput" class="templates-search-input" placeholder="Buscar plantilla..." autocomplete="off">
             </div>
             
             <div class="templates-tabs">
@@ -178,17 +172,13 @@ function renderTemplates() {
  */
 function filterTemplatesList() {
     const cards = document.querySelectorAll('.template-card');
-    const query = searchQuery.trim().toLowerCase();
     let visibleCount = 0;
 
     cards.forEach(card => {
         const cardTipo = card.getAttribute('data-tipo');
-        const cardContenido = card.getAttribute('data-contenido');
-
         const matchesTab = cardTipo === currentTab;
-        const matchesSearch = !query || cardContenido.includes(query);
 
-        if (matchesTab && matchesSearch) {
+        if (matchesTab) {
             card.style.display = 'flex';
             visibleCount++;
         } else {
@@ -204,9 +194,8 @@ function filterTemplatesList() {
             emptyState.id = 'templatesEmptyState';
             emptyState.className = 'templates-empty-state';
             emptyState.innerHTML = `
-                <i class="fas fa-search-minus"></i>
-                <p>No se encontraron plantillas</p>
-                <span style="font-size: 0.75rem; color: #94a3b8; margin-top: 4px;">Pruebe con otra búsqueda o categoría</span>
+                <i class="fas fa-clipboard-list"></i>
+                <p>No hay plantillas en esta categoría</p>
             `;
             const container = document.getElementById('templatesListContainer');
             if (container) container.appendChild(emptyState);
@@ -281,16 +270,10 @@ function openTemplatesModal() {
     if (backdrop) {
         backdrop.style.visibility = 'visible';
         backdrop.classList.add('open');
-
-        const searchInput = document.getElementById('templatesSearchInput');
-        if (searchInput) {
-            searchInput.value = '';
-            searchQuery = '';
-        }
         filterTemplatesList();
-
-        // Foco inmediato sin retardo
-        if (searchInput) searchInput.focus();
+        
+        const fab = document.getElementById('fabTemplatesTrigger');
+        if (fab) fab.classList.add('modal-open');
     }
 }
 
@@ -302,6 +285,9 @@ function closeTemplatesModal() {
     if (backdrop) {
         backdrop.classList.remove('open');
         backdrop.style.visibility = 'hidden';
+        
+        const fab = document.getElementById('fabTemplatesTrigger');
+        if (fab) fab.classList.remove('modal-open');
     }
 }
 
@@ -350,6 +336,119 @@ function showToast(icon, title) {
 }
 
 /**
+ * Implementa arrastre suave (drag & drop) usando PointerEvents para PC y Móviles.
+ * Cuenta con límites del viewport y diferenciación inteligente entre arrastre y clic.
+ */
+function makeElementDraggable(el) {
+    if (!el) return;
+
+    let startX = 0, startY = 0;
+    let currentX = 0, currentY = 0;
+    let isDragging = false;
+    let hasDragged = false;
+
+    el.addEventListener('pointerdown', onPointerDown);
+
+    function onPointerDown(e) {
+        // Ignorar clics secundarios
+        if (e.button !== 0 && e.pointerType === 'mouse') return;
+
+        isDragging = true;
+        hasDragged = false;
+        
+        startX = e.clientX;
+        startY = e.clientY;
+
+        const rect = el.getBoundingClientRect();
+        currentX = rect.left;
+        currentY = rect.top;
+
+        // Forzar posicionamiento explícito en píxeles y remover bottom/right/transform
+        el.style.left = currentX + 'px';
+        el.style.top = currentY + 'px';
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+        el.style.transform = 'none';
+        
+        // Quitar la transición CSS durante el arrastre para evitar efecto elástico o lag
+        el.style.transition = 'none';
+
+        // Estilos interactivos durante el arrastre (opacidad total al interactuar)
+        el.style.opacity = '1';
+        el.style.background = 'linear-gradient(135deg, #3f51b5, #6366f1)';
+        el.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+        el.style.color = '#ffffff';
+
+        // Captura del puntero para que no se pierda al salir del elemento
+        el.setPointerCapture(e.pointerId);
+
+        el.addEventListener('pointermove', onPointerMove);
+        el.addEventListener('pointerup', onPointerUp);
+        el.addEventListener('pointercancel', onPointerUp);
+    }
+
+    function onPointerMove(e) {
+        if (!isDragging) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        // Umbral de 5px para considerar que es un arrastre y no un clic
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+            hasDragged = true;
+        }
+
+        let newX = currentX + dx;
+        let newY = currentY + dy;
+
+        const rect = el.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        // Mantener dentro de los límites del viewport con 10px de margen
+        const padding = 10;
+        if (newX < padding) newX = padding;
+        if (newX + width > windowWidth - padding) newX = windowWidth - padding - width;
+        if (newY < padding) newY = padding;
+        if (newY + height > windowHeight - padding) newY = windowHeight - padding - height;
+
+        el.style.left = newX + 'px';
+        el.style.top = newY + 'px';
+    }
+
+    function onPointerUp(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        
+        // Restaurar transición CSS suave para estados normales de hover/active/opacity
+        el.style.transition = 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2), opacity 0.3s ease, background-color 0.3s, border-color 0.3s, color 0.3s';
+
+        // Limpiar anulaciones en línea para que el archivo CSS vuelva a gobernar la opacidad/color/borde
+        el.style.opacity = '';
+        el.style.background = '';
+        el.style.borderColor = '';
+        el.style.color = '';
+
+        el.releasePointerCapture(e.pointerId);
+        el.removeEventListener('pointermove', onPointerMove);
+        el.removeEventListener('pointerup', onPointerUp);
+        el.removeEventListener('pointercancel', onPointerUp);
+
+        // Si se detectó arrastre, capturamos e interceptamos el clic para evitar que se abra el modal
+        if (hasDragged) {
+            const preventClick = (event) => {
+                event.stopImmediatePropagation();
+                el.removeEventListener('click', preventClick, true);
+            };
+            el.addEventListener('click', preventClick, true);
+        }
+    }
+}
+
+/**
  * Inicializador asíncrono no bloqueante
  */
 function initFloatingTemplates() {
@@ -363,13 +462,13 @@ function initFloatingTemplates() {
     const fab = document.getElementById('fabTemplatesTrigger');
     const backdrop = document.getElementById('templatesModalBackdrop');
     const closeBtn = document.getElementById('templatesModalCloseBtn');
-    const searchInput = document.getElementById('templatesSearchInput');
     const tabButtons = document.querySelectorAll('.templates-tab-btn');
     const listContainer = document.getElementById('templatesListContainer');
 
     // 4. Escuchas de Eventos
     if (fab) {
         fab.addEventListener('click', openTemplatesModal);
+        makeElementDraggable(fab);
     }
 
     if (closeBtn) {
@@ -381,14 +480,6 @@ function initFloatingTemplates() {
             if (e.target === backdrop) {
                 closeTemplatesModal();
             }
-        });
-    }
-
-    // Filtrado en tiempo real reactivo sin lag
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            searchQuery = e.target.value;
-            filterTemplatesList();
         });
     }
 
