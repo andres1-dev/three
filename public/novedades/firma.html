@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Módulo de Firma de Taller - Grupo TDM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <meta name="theme-color" content="#3b82f6">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <style>
+    body {
+      background: radial-gradient(circle at 10% 20%, rgba(243, 246, 253, 1) 0%, rgba(250, 252, 255, 1) 90%);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      color: #1e293b;
+    }
+
+    .signature-container {
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 0 15px;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 20px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .header-gradient {
+      background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+      padding: 24px;
+      color: white;
+      text-align: center;
+      position: relative;
+    }
+
+    .header-gradient h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+
+    .header-gradient p {
+      font-size: 0.8rem;
+      opacity: 0.9;
+      margin: 6px 0 0 0;
+    }
+
+    .role-btn-group {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .role-btn {
+      flex: 1;
+      border: 2px solid #e2e8f0;
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .role-btn i {
+      font-size: 1.25rem;
+      color: #94a3b8;
+      transition: all 0.2s;
+    }
+
+    .role-btn span {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .role-btn.active[data-role="AUDITOR"] {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+    }
+    .role-btn.active[data-role="AUDITOR"] i {
+      color: #3b82f6;
+    }
+    .role-btn.active[data-role="AUDITOR"] span {
+      color: #1e3a8a;
+    }
+
+    .role-btn.active[data-role="TALLER"] {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.05);
+    }
+    .role-btn.active[data-role="TALLER"] i {
+      color: #3b82f6;
+    }
+    .role-btn.active[data-role="TALLER"] span {
+      color: #1e3a8a;
+    }
+
+    .canvas-wrapper {
+      border: 2px dashed #cbd5e1;
+      background: #ffffff;
+      height: 200px;
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    #sigCanvas {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .canvas-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .info-badge {
+      font-size: 0.65rem;
+      color: #94a3b8;
+      font-style: italic;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-action-outline {
+      background: white;
+      border: 1px solid #cbd5e1;
+      font-size: 0.75rem;
+      color: #64748b;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .btn-action-outline:hover {
+      background: #f8fafc;
+      color: #1e293b;
+      border-color: #94a3b8;
+    }
+
+    .btn-submit-firm {
+      width: 100%;
+      background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+      color: white;
+      border: none;
+      padding: 14px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      border-radius: 12px;
+      box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .btn-submit-firm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 20px -3px rgba(59, 130, 246, 0.4);
+    }
+
+    .btn-submit-firm:active {
+      transform: translateY(1px);
+    }
+
+    .history-section {
+      margin-top: 30px;
+    }
+
+    .history-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .history-card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .history-role-badge {
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+
+    .badge-auditor {
+      background: rgba(59, 130, 246, 0.1);
+      color: #2563eb;
+    }
+
+    .badge-taller {
+      background: rgba(59, 130, 246, 0.1);
+      color: #1e3a8a;
+    }
+
+    .history-meta {
+      font-size: 0.7rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .history-preview {
+      height: 40px;
+      width: 80px;
+      border: 1px solid #f1f5f9;
+      background: #f8fafc;
+      border-radius: 4px;
+      object-fit: contain;
+      padding: 2px;
+    }
+
+    .back-btn {
+      position: absolute;
+      left: 16px;
+      top: 22px;
+      color: white;
+      opacity: 0.8;
+      font-size: 1.1rem;
+      transition: opacity 0.2s;
+    }
+
+    .back-btn:hover {
+      opacity: 1;
+      color: white;
+    }
+
+    .swal2-styled.swal2-confirm {
+      background-color: #3b82f6 !important;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="signature-container">
+    <div class="glass-card">
+      
+      <!-- Cabecera -->
+      <div class="header-gradient">
+        <a href="index.html" class="back-btn" title="Volver al inicio"><i class="fas fa-arrow-left"></i></a>
+        <h1>Módulo de Firma de Taller</h1>
+        <p>Valida los reportes de calidad con firma de recibido</p>
+      </div>
+
+      <div class="p-4">
+        <!-- Campos de Contexto de Firma -->
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="signName" class="form-label" style="font-weight: 600; font-size: 0.8rem;">Nombre Completo (Contacto Taller):</label>
+            <div class="input-with-icon">
+              <i class="fas fa-user input-icon"></i>
+              <input type="text" id="signName" class="form-control" placeholder="Escribe tu nombre..." style="font-size: 0.85rem;" required>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="signProcess" class="form-label" style="font-weight: 600; font-size: 0.8rem;">Proceso Auditado:</label>
+            <div class="input-with-icon">
+              <i class="fas fa-route input-icon"></i>
+              <select id="signProcess" class="form-control" style="font-size: 0.85rem;">
+                <option value="RONDA">Ronda de Calidad</option>
+                <option value="CONTRAMUESTRA">Contramuestra</option>
+                <option value="TERMINACION">Terminación</option>
+                <option value="CONFECCION">Confección</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Área de Firma Digital (Canvas) -->
+        <label class="form-label mt-2 mb-2" style="font-weight: 700; font-size: 0.85rem; color: #475569;">2. Traza tu firma:</label>
+        <div class="canvas-wrapper">
+          <canvas id="sigCanvas"></canvas>
+        </div>
+
+        <div class="canvas-actions">
+          <div class="info-badge">
+            <i class="fas fa-info-circle"></i> Usa tu dedo o puntero para firmar en el recuadro
+          </div>
+          <button type="button" class="btn-action-outline" id="clearBtn">
+            <i class="fas fa-eraser text-danger"></i> Limpiar
+          </button>
+        </div>
+
+        <!-- Botón Enviar / Confirmar -->
+        <button class="btn-submit-firm" id="submitBtn">
+          <i class="fas fa-fingerprint"></i> Guardar y Aplicar Firma
+        </button>
+
+        <!-- Galería/Historial de firmas locales -->
+        <div class="history-section" id="historySection" style="display: none;">
+          <div class="history-title">
+            <i class="fas fa-clock-rotate-left"></i> Historial de Firmas Guardadas
+          </div>
+          <div id="historyList"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SweetAlert2 para notificaciones premium -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <script>
+    // Inicializar lógica de canvas de firma
+    const canvas = document.getElementById('sigCanvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let selectedRole = 'TALLER';
+    
+    let _strokes = [];
+    let _currentStroke = null;
+    let canvasRefWidth = 0;
+    let canvasRefHeight = 0;
+
+    let originalWidth = 0;
+    let originalHeight = 0;
+    let _rawStrokes = [];
+
+    function transformStrokesClone(strokes, oldW, oldH, newW, newH) {
+      if (!strokes || strokes.length === 0) return [];
+      const s = Math.min(newW / oldW, newH / oldH);
+      const dx = (newW - oldW * s) / 2;
+      const dy = (newH - oldH * s) / 2;
+      
+      return strokes.map(stroke => {
+        return stroke.map(p => {
+          return {
+            x: p.x * s + dx,
+            y: p.y * s + dy
+          };
+        });
+      });
+    }
+
+    function inverseTransformStroke(stroke, origW, origH, newW, newH) {
+      const s = Math.min(newW / origW, newH / origH);
+      const dx = (newW - origW * s) / 2;
+      const dy = (newH - origH * s) / 2;
+      
+      return stroke.map(p => {
+        return {
+          x: (p.x - dx) / s,
+          y: (p.y - dy) / s
+        };
+      });
+    }
+
+    function redrawCanvas() {
+      if (!ctx || !_strokes || _strokes.length === 0) return;
+      ctx.clearRect(0, 0, canvasRefWidth, canvasRefHeight);
+      ctx.beginPath();
+      _strokes.forEach(stroke => {
+        if (stroke.length === 0) return;
+        ctx.moveTo(stroke[0].x, stroke[0].y);
+        for (let i = 1; i < stroke.length; i++) {
+          ctx.lineTo(stroke[i].x, stroke[i].y);
+        }
+      });
+      ctx.stroke();
+    }
+
+    // Ajustar resolución del canvas para soporte de alta densidad
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      const newW = rect.width;
+      const newH = rect.height;
+      if (!newW || !newH) return;
+
+      // Adaptar trazos si las dimensiones cambian
+      if (_rawStrokes.length > 0 && originalWidth && originalHeight) {
+        if (canvasRefWidth !== newW || canvasRefHeight !== newH) {
+          _strokes = transformStrokesClone(_rawStrokes, originalWidth, originalHeight, newW, newH);
+        }
+      }
+
+      canvasRefWidth = newW;
+      canvasRefHeight = newH;
+
+      canvas.width = newW * window.devicePixelRatio;
+      canvas.height = newH * window.devicePixelRatio;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      
+      // Configurar pincel premium
+      ctx.strokeStyle = '#1e3a8a'; // Premium blue ink
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      redrawCanvas();
+    }
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(resizeCanvas, 150);
+    });
+    setTimeout(resizeCanvas, 300);
+
+    // Eventos de dibujo táctil y mouse
+    function startDrawing(e) {
+      isDrawing = true;
+      const pos = getPos(e);
+      lastX = pos.x;
+      lastY = pos.y;
+      _currentStroke = [pos];
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      lastX = pos.x;
+      lastY = pos.y;
+      if (_currentStroke) _currentStroke.push(pos);
+    }
+
+    function stopDrawing() {
+      if (isDrawing && _currentStroke && _currentStroke.length > 1) {
+        if (_rawStrokes.length === 0) {
+          originalWidth = canvasRefWidth;
+          originalHeight = canvasRefHeight;
+        }
+        _strokes.push(_currentStroke);
+        const rawStroke = inverseTransformStroke(_currentStroke, originalWidth, originalHeight, canvasRefWidth, canvasRefHeight);
+        _rawStrokes.push(rawStroke);
+      }
+      _currentStroke = null;
+      isDrawing = false;
+    }
+
+    // Registrar Eventos del Canvas
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    canvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      startDrawing(e);
+    });
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      draw(e);
+    });
+    canvas.addEventListener('touchend', stopDrawing);
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    // Limpiar Canvas
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      _strokes = [];
+      _rawStrokes = [];
+      originalWidth = 0;
+      originalHeight = 0;
+      ctx.clearRect(0, 0, canvasRefWidth, canvasRefHeight);
+    });
+
+    // Cargar historial de localStorage
+    function loadHistory() {
+      const saved = JSON.parse(localStorage.getItem('saved_signatures') || '[]');
+      const historySection = document.getElementById('historySection');
+      const historyList = document.getElementById('historyList');
+      
+      if (saved.length === 0) {
+        historySection.style.display = 'none';
+        return;
+      }
+      
+      historySection.style.display = 'block';
+      historyList.innerHTML = '';
+      
+      saved.forEach((item, idx) => {
+        const div = document.createElement('div');
+        div.className = 'history-card';
+        div.innerHTML = `
+          <div class="history-info">
+            <span class="history-role-badge badge-${item.role.toLowerCase()}">${item.role === 'AUDITOR' ? 'Auditor' : 'Taller'}</span>
+            <div style="font-weight:700; font-size:0.8rem; margin-top:2px;">${item.name}</div>
+            <div class="history-meta"><i class="fas fa-tag"></i> ${item.process} · ${item.date}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <img class="history-preview" src="${item.image}" alt="Firma">
+            <button class="btn btn-sm btn-light text-danger" onclick="deleteSig(${idx})" title="Eliminar"><i class="fas fa-trash-alt"></i></button>
+          </div>
+        `;
+        historyList.appendChild(div);
+      });
+    }
+
+    // Eliminar firma del historial
+    window.deleteSig = (idx) => {
+      const saved = JSON.parse(localStorage.getItem('saved_signatures') || '[]');
+      saved.splice(idx, 1);
+      localStorage.setItem('saved_signatures', JSON.stringify(saved));
+      loadHistory();
+      Swal.fire({
+        icon: 'success',
+        title: 'Firma eliminada',
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000
+      });
+    };
+
+    // Guardar firma
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+      const nameInput = document.getElementById('signName');
+      const processSelect = document.getElementById('signProcess');
+      
+      if (!nameInput.value.trim()) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Nombre requerido',
+          text: 'Por favor escribe tu nombre antes de guardar la firma.',
+          confirmButtonColor: '#3b82f6'
+        });
+        return;
+      }
+
+      // Validar si el canvas está vacío
+      if (_strokes.length === 0) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Firma vacía',
+          text: 'Por favor dibuja tu firma antes de continuar.',
+          confirmButtonColor: '#3b82f6'
+        });
+        return;
+      }
+
+      const sigImg = canvas.toDataURL('image/png');
+      const now = new Date();
+      const dateStr = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      
+      const newSignature = {
+        role: 'TALLER',
+        name: nameInput.value.trim(),
+        process: processSelect.value,
+        image: sigImg,
+        date: dateStr
+      };
+
+      // Guardar en localStorage
+      const saved = JSON.parse(localStorage.getItem('saved_signatures') || '[]');
+      saved.unshift(newSignature); // Agregar al inicio
+      localStorage.setItem('saved_signatures', JSON.stringify(saved));
+
+      // Guardar firma temporal para pre-cargar en el formulario principal
+      sessionStorage.setItem('temp_signature', JSON.stringify(newSignature));
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Firma Guardada con éxito!',
+        text: 'La firma se aplicará de forma automática al próximo reporte de calidad que envíes.',
+        confirmButtonText: 'Perfecto',
+        confirmButtonColor: '#3b82f6'
+      }).then(() => {
+        // Redirigir al index para aplicar la firma
+        window.location.href = 'index.html';
+      });
+    });
+
+    // Cargar historial al iniciar
+    loadHistory();
+  </script>
+</body>
+
+</html>
