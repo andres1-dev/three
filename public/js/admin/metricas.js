@@ -56,9 +56,23 @@ function initDashboard() {
         mode: "range",
         dateFormat: "Y-m-d",
         defaultDate: [firstDay, today],
-        locale: "es"
+        locale: "es",
+        onChange: function(selectedDates) {
+            // Filtrar automáticamente al seleccionar las dos fechas del rango
+            if (selectedDates.length === 2) {
+                window.applyFilters();
+            }
+        }
     });
     
+    // Cerrar el FAB al tocar fuera de él
+    document.addEventListener('click', function(e) {
+        const container = document.querySelector('.actions-container');
+        if (container && container.classList.contains('open') && !container.contains(e.target)) {
+            container.classList.remove('open');
+        }
+    });
+
     window.applyFilters();
 }
 
