@@ -957,6 +957,26 @@ const GPS_COORDS_STORAGE_KEY = 'gps_coords_storage';
 const GPS_COORDS_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 horas
 
 /**
+ * Controla el estado colapsado/expandido del acordeón de GPS.
+ * @param {boolean} open - Si es true, el acordeón se expande (visible).
+ */
+function setGpsAccordionState(open) {
+    const toggle = document.getElementById('gpsCollapseToggle');
+    const body = document.getElementById('gpsCollapseBody');
+    if (!toggle || !body) return;
+    
+    if (open) {
+        toggle.classList.add('open');
+        body.classList.add('open');
+        toggle.setAttribute('aria-expanded', 'true');
+    } else {
+        toggle.classList.remove('open');
+        body.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+    }
+}
+
+/**
  * Muestra el mapa con las coordenadas dadas sin hacer ninguna petición al navegador.
  */
 function _renderMapCard(lat, lng, locInput, mapaCard) {
@@ -1004,6 +1024,7 @@ function requestCalidadLocation() {
     if (pref === 'disabled') {
         applyGpsToggleUI(false);
         showGpsBlockedOverlay();
+        setGpsAccordionState(true);
         return;
     }
 
@@ -1018,6 +1039,7 @@ function requestCalidadLocation() {
         if (stored && stored.lat && stored.lng && age < GPS_COORDS_MAX_AGE_MS) {
             // Coords guardadas vigentes → mostrar mapa directamente, sin tocar el navegador
             _renderMapCard(stored.lat, stored.lng, locInput, mapaCard);
+            setGpsAccordionState(false);
             return;
         }
     } catch (_) { /* almacenamiento corrupto, ignorar */ }
@@ -1026,6 +1048,7 @@ function requestCalidadLocation() {
     if (!navigator.geolocation) {
         mapaCard.innerHTML = `<span><i class="fas fa-exclamation-triangle me-2 text-warning"></i> Geolocalización no soportada.</span>`;
         locInput.value = 'No soportado';
+        setGpsAccordionState(true);
         return;
     }
 
@@ -1049,6 +1072,7 @@ function requestCalidadLocation() {
             </p>
         </div>
     `;
+    setGpsAccordionState(true);
 }
 
 /**
@@ -1075,10 +1099,12 @@ function activarGpsManual() {
             applyGpsToggleUI(true);
 
             _renderMapCard(lat, lng, locInput, mapaCard);
+            setGpsAccordionState(false);
         },
         (error) => {
             console.warn('[GPS]', error.message);
             if (submitBtn) submitBtn.disabled = false;
+            setGpsAccordionState(true);
             if (error.code === error.PERMISSION_DENIED) {
                 localStorage.setItem(key, 'disabled');
                 applyGpsToggleUI(false);
