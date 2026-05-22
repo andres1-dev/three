@@ -729,7 +729,7 @@ function createSidebar() {
         <div class="sidebar-footer">
             ${_PROD_SWITCH_ROLES.includes(user.ROL) ? `
                 <button onclick="window._forceChangeProductora && window._forceChangeProductora()" class="btn-change-prod">
-                    <i class="fa-solid fa-building-circle-arrow-right"></i> Cambiar Productora
+                    <i class="fas fa-exchange-alt me-2"></i> Cambiar Productora
                 </button>
             ` : ''}
             <button onclick="logout()" class="btn-logout-full mb-3">

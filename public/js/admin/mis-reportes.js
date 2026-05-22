@@ -265,9 +265,10 @@ function renderGroupedView() {
 
     if (gsFilteredReportes.length === 0) {
         feed.innerHTML = `
-            <div class="text-center py-5 text-muted">
-                <i class="fas fa-search mb-3" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                <p class="fw-bold">No hay reportes que coincidan con la búsqueda o rango de fechas.</p>
+            <div class="modern-empty-state">
+                <i class="fas fa-folder-open modern-empty-state-icon"></i>
+                <div class="modern-empty-state-title">No se encontraron reportes</div>
+                <div class="modern-empty-state-desc">No hay reportes que coincidan con la búsqueda o el rango de fechas seleccionado.</div>
             </div>
         `;
         return;

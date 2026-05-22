@@ -325,9 +325,10 @@ function renderReportGrid(reset = false) {
 
     if (dataToRender.length === 0 && currentCount === 0) {
         feed.innerHTML = `
-            <div class="col-12 text-center py-5 text-muted">
-                <i class="fas fa-search mb-3" style="font-size: 2.5rem; opacity: 0.3;"></i>
-                <p class="fw-bold">No hay reportes que coincidan con la búsqueda.</p>
+            <div class="modern-empty-state col-12">
+                <i class="fas fa-folder-open modern-empty-state-icon"></i>
+                <div class="modern-empty-state-title">No se encontraron reportes</div>
+                <div class="modern-empty-state-desc">No hay reportes que coincidan con la búsqueda.</div>
             </div>
         `;
         return;

@@ -2337,6 +2337,7 @@ body.view-expanded #main-content-wrapper {
         gap: 0.75rem !important;
     }
 }
+
 /* ── Productora Selection Overlay ── */
 .productora-overlay {
     position: fixed;
@@ -2344,8 +2345,10 @@ body.view-expanded #main-content-wrapper {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: #ffffff; /* Fondo blanco limpio */
-    z-index: 99999; /* Por encima de todo */
+    background-color: #ffffff;
+    /* Fondo blanco limpio */
+    z-index: 99999;
+    /* Por encima de todo */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -2394,18 +2397,22 @@ body.view-expanded #main-content-wrapper {
 .productora-list::-webkit-scrollbar {
     width: 4px;
 }
+
 .productora-list::-webkit-scrollbar-thumb {
     background: var(--color-border);
     border-radius: 4px;
 }
 
 .productora-item {
-    position: relative; /* Para el icono de fondo */
-    overflow: hidden;   /* Contener el icono de fondo */
+    position: relative;
+    /* Para el icono de fondo */
+    overflow: hidden;
+    /* Contener el icono de fondo */
     background-color: #f8fafc;
     border: 2px solid #f1f5f9;
     border-radius: var(--radius-md);
-    padding: 24px 20px; /* Un poco más de aire */
+    padding: 24px 20px;
+    /* Un poco más de aire */
     cursor: pointer;
     transition: all var(--transition-base);
     display: flex;
@@ -2428,9 +2435,11 @@ body.view-expanded #main-content-wrapper {
     position: absolute;
     right: -10px;
     bottom: -10px;
-    font-size: 5rem; /* Ajustado para mejor visibilidad */
+    font-size: 5rem;
+    /* Ajustado para mejor visibilidad */
     color: var(--color-primary);
-    opacity: 0.1; /* Aumentado de 0.05 para que se vea */
+    opacity: 0.1;
+    /* Aumentado de 0.05 para que se vea */
     z-index: 0;
     pointer-events: none;
     transform: rotate(-15deg);
@@ -2444,7 +2453,8 @@ body.view-expanded #main-content-wrapper {
 
 .productora-item-info {
     position: relative;
-    z-index: 1; /* Por encima del icono */
+    z-index: 1;
+    /* Por encima del icono */
     width: 100%;
 }
 
@@ -2460,12 +2470,14 @@ body.view-expanded #main-content-wrapper {
 }
 
 .productora-nit {
-    font-size: 0.75rem; /* Reducido */
+    font-size: 0.75rem;
+    /* Reducido */
     color: var(--color-text-muted);
 }
 
 .productora-item .fa-chevron-right {
-    font-size: 0.7rem; /* Reducido */
+    font-size: 0.7rem;
+    /* Reducido */
     opacity: 0.2;
 }
 
@@ -2476,43 +2488,79 @@ body.view-expanded #main-content-wrapper {
 }
 
 @keyframes prodFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 /* ── Botón Cambiar Productora (Sidebar) ── */
 .btn-change-prod {
     width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 16px;
-    margin-bottom: 10px;
-    background: rgba(59, 130, 246, 0.08);
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #ffffff;
     color: #3b82f6;
-    border: 1.5px solid rgba(59, 130, 246, 0.2);
-    border-radius: 10px;
-    font-size: 0.78rem;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
     font-weight: 700;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    transition: all 0.2s ease;
 }
 
 .btn-change-prod:hover {
-    background: rgba(59, 130, 246, 0.16);
-    border-color: rgba(59, 130, 246, 0.4);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #2563eb;
+    transform: translateY(-2px);
 }
 
 .btn-change-prod:active {
     transform: translateY(0);
-    box-shadow: none;
 }
 
-.btn-change-prod i {
-    font-size: 0.85rem;
+/* ── Modern Empty State for Data Grids ── */
+.modern-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    border-radius: 16px;
+    margin: 20px 0;
+    color: #64748b;
+    transition: all 0.3s ease;
+}
+
+.modern-empty-state:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+}
+
+.modern-empty-state-icon {
+    font-size: 3.5rem;
+    color: #94a3b8;
+    margin-bottom: 20px;
+    opacity: 0.7;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.05));
+}
+
+.modern-empty-state-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #334155;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+}
+
+.modern-empty-state-desc {
+    font-size: 0.95rem;
+    color: #64748b;
+    max-width: 400px;
+    line-height: 1.5;
+    margin: 0 auto;
 }
