@@ -10,6 +10,10 @@ let chartItems = null;
 let activeWeek = null;
 let fpInstance = null;
 let gsPlantas = []; // para enriquecer los csv si es posible
+let resizeTimer = null;
+let metricsResizeObserver = null;
+let lastResponsiveIsMobile = null;
+let areaChartMode = 'doughnut';
 
 window.onload = async function() {
     // 1. Iniciar Auth si es necesario (ya lo hace auth.js y loadUsers)
@@ -74,6 +78,7 @@ function initDashboard() {
     });
 
     window.applyFilters();
+    initResponsiveCharts();
 }
 
 window.viewAllData = function() {
@@ -90,6 +95,13 @@ window.viewAllData = function() {
         
         window.applyFilters();
     }
+};
+
+window.setAreaChartMode = function(mode) {
+    if (!['doughnut', 'radar'].includes(mode) || areaChartMode === mode) return;
+    areaChartMode = mode;
+    updateAreaModeButtons();
+    updateCharts();
 };
 
 window.applyFilters = function() {
@@ -121,6 +133,9 @@ function updateDashboard() {
 }
 
 function updateCharts() {
+    const isMobile = window.matchMedia('(max-width: 767px)').matches;
+    updateAreaModeButtons();
+
     // --- 1. PROCESAR TENDENCIA SEMANAL ---
     const weekMap = {};
     filteredData.forEach(n => {
@@ -148,8 +163,23 @@ function updateCharts() {
             }]
         },
         options: { 
+            responsive: true,
             maintainAspectRatio: false, 
-            scales: { y: { beginAtZero: true }, x: { grid: { color: 'rgba(15, 23, 42, 0.08)' } } }, 
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { maxTicksLimit: isMobile ? 5 : 8 }
+                },
+                x: {
+                    grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                    ticks: {
+                        maxRotation: isMobile ? 45 : 0,
+                        minRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: isMobile ? 6 : 12
+                    }
+                }
+            },
             plugins: { legend: { display: false } },
             onClick: (evt, elements) => {
                 if (elements.length > 0) {
@@ -222,40 +252,71 @@ function updateCharts() {
         const perc = totalAreaUnits > 0 ? ((areaMap[k] / totalAreaUnits) * 100).toFixed(1) : 0;
         return k + ' (' + perc + '%)';
     });
+    const areaValues = filteredAreaKeys.map(k => areaMap[k]);
+    const areaPalette = [
+        'rgba(59, 130, 246, 0.28)',
+        'rgba(16, 185, 129, 0.28)',
+        'rgba(245, 158, 11, 0.28)',
+        'rgba(239, 68, 68, 0.28)',
+        'rgba(139, 92, 246, 0.28)',
+        'rgba(100, 116, 139, 0.28)',
+        'rgba(20, 184, 166, 0.28)',
+        'rgba(244, 63, 94, 0.28)'
+    ];
 
     if (chartArea) chartArea.destroy();
     chartArea = new Chart(document.getElementById('chartArea'), {
-        type: 'doughnut',
+        type: areaChartMode,
         data: {
-            labels: labelsWithPerc,
+            labels: areaChartMode === 'radar' ? filteredAreaKeys : labelsWithPerc,
             datasets: [{
-                data: filteredAreaKeys.map(k => areaMap[k]),
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.28)',
-                    'rgba(16, 185, 129, 0.28)',
-                    'rgba(245, 158, 11, 0.28)',
-                    'rgba(239, 68, 68, 0.28)',
-                    'rgba(139, 92, 246, 0.28)',
-                    'rgba(100, 116, 139, 0.28)',
-                    'rgba(20, 184, 166, 0.28)',
-                    'rgba(244, 63, 94, 0.28)'
-                ],
-                borderColor: 'rgba(255, 255, 255, 0.5)',
-                borderWidth: 1
+                label: 'Unidades',
+                data: areaValues,
+                backgroundColor: areaChartMode === 'radar' ? 'rgba(59, 130, 246, 0.18)' : areaPalette,
+                borderColor: areaChartMode === 'radar' ? 'rgba(59, 130, 246, 0.58)' : 'rgba(255, 255, 255, 0.5)',
+                pointBackgroundColor: areaChartMode === 'radar' ? 'rgba(59, 130, 246, 0.8)' : undefined,
+                pointBorderColor: areaChartMode === 'radar' ? '#fff' : undefined,
+                pointRadius: areaChartMode === 'radar' ? (isMobile ? 3 : 4) : undefined,
+                borderWidth: areaChartMode === 'radar' ? 2 : 1
             }]
         },
         options: { 
+            responsive: true,
             maintainAspectRatio: false, 
             plugins: { 
-                legend: { position: 'bottom' },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: isMobile ? 10 : 12,
+                        font: { size: isMobile ? 10 : 12 }
+                    }
+                },
                 title: {
                     display: true,
                     text: activeWeek ? 'Distribución: ' + activeWeek : 'Distribución Global',
                     color: activeWeek ? '#10b981' : '#64748b',
-                    font: { size: 14, weight: 'bold' }
+                    font: { size: isMobile ? 12 : 14, weight: 'bold' }
                 }
             }, 
-            cutout: '70%' 
+            cutout: areaChartMode === 'doughnut' ? (isMobile ? '62%' : '70%') : undefined,
+            scales: areaChartMode === 'radar'
+                ? {
+                    r: {
+                        beginAtZero: true,
+                        ticks: {
+                            backdropColor: 'transparent',
+                            maxTicksLimit: isMobile ? 4 : 6,
+                            font: { size: isMobile ? 9 : 11 }
+                        },
+                        pointLabels: {
+                            color: '#64748b',
+                            font: { size: isMobile ? 10 : 12, weight: '600' }
+                        },
+                        grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                        angleLines: { color: 'rgba(15, 23, 42, 0.08)' }
+                    }
+                }
+                : undefined
         }
     });
 
@@ -304,7 +365,9 @@ function updateCharts() {
     const itemsContainer = document.getElementById('chartItemsContainer');
     if (itemsContainer) {
         // Calcular altura dinámica: min 350px, +30px por cada ítem extra si hay muchos
-        const newHeight = Math.max(350, sortedItems.length * 30);
+        const minHeight = isMobile ? 360 : 350;
+        const rowHeight = isMobile ? 34 : 30;
+        const newHeight = Math.max(minHeight, sortedItems.length * rowHeight);
         itemsContainer.style.height = newHeight + 'px';
     }
 
@@ -316,23 +379,87 @@ function updateCharts() {
             datasets: datasets
         },
         options: {
+            responsive: true,
             indexAxis: 'y', // Gráfico de barras horizontal
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: true, position: 'bottom' }, // Mostrar leyenda para identificar áreas
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        boxWidth: isMobile ? 10 : 12,
+                        font: { size: isMobile ? 10 : 12 }
+                    }
+                }, // Mostrar leyenda para identificar áreas
                 title: { 
                     display: true, 
                     text: activeWeek ? 'Detalle Consolidado de Items: ' + activeWeek : 'Detalle Consolidado de Items (Global)', 
                     color: activeWeek ? '#10b981' : '#64748b', 
-                    font: { size: 13, weight: 'bold' } 
+                    font: { size: isMobile ? 11 : 13, weight: 'bold' } 
                 }
             },
             scales: {
-                x: { stacked: true, beginAtZero: true },
-                y: { stacked: true, ticks: { autoSkip: false } }
+                x: {
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: { maxTicksLimit: isMobile ? 5 : 8 }
+                },
+                y: {
+                    stacked: true,
+                    ticks: {
+                        autoSkip: false,
+                        font: { size: isMobile ? 10 : 12 }
+                    }
+                }
             }
         }
     });
+}
+
+function updateAreaModeButtons() {
+    const doughnutBtn = document.getElementById('areaChartDoughnutBtn');
+    const radarBtn = document.getElementById('areaChartRadarBtn');
+
+    if (doughnutBtn) {
+        doughnutBtn.classList.toggle('active', areaChartMode === 'doughnut');
+        doughnutBtn.setAttribute('aria-pressed', String(areaChartMode === 'doughnut'));
+    }
+
+    if (radarBtn) {
+        radarBtn.classList.toggle('active', areaChartMode === 'radar');
+        radarBtn.setAttribute('aria-pressed', String(areaChartMode === 'radar'));
+    }
+}
+
+function initResponsiveCharts() {
+    const dashboard = document.getElementById('mainDashboard');
+    if (!dashboard) return;
+    lastResponsiveIsMobile = window.matchMedia('(max-width: 767px)').matches;
+
+    const scheduleResize = function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            const nextIsMobile = window.matchMedia('(max-width: 767px)').matches;
+            [chartArea, chartTrend, chartItems].forEach(function(chart) {
+                if (chart) chart.resize();
+            });
+
+            if (nextIsMobile !== lastResponsiveIsMobile) {
+                lastResponsiveIsMobile = nextIsMobile;
+                updateCharts();
+            }
+        }, 180);
+    };
+
+    window.addEventListener('resize', scheduleResize);
+
+    if (typeof ResizeObserver === 'function') {
+        if (metricsResizeObserver) metricsResizeObserver.disconnect();
+        metricsResizeObserver = new ResizeObserver(scheduleResize);
+        dashboard.querySelectorAll('.chart-frame, .charts-grid').forEach(function(el) {
+            metricsResizeObserver.observe(el);
+        });
+    }
 }
 
 function _getISOWeek(date) {

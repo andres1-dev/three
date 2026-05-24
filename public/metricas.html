@@ -114,12 +114,61 @@
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 30px; }
         .charts-grid.mixed { grid-template-columns: 1fr 1.5fr; }
         .card { background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); border-radius: 20px; padding: 25px; border: 1px solid rgba(226, 232, 240, 0.6); box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
+        .card-title-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .chart-frame {
+            position: relative;
+            width: 100%;
+            min-width: 0;
+            height: 300px;
+        }
+        .chart-frame.tall { height: 350px; }
+        .chart-frame canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+        }
 
         /* Hacer canvases transparentes y tarjetas más translúcidas */
         .card { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 6px 20px rgba(0,0,0,0.02); }
         .card canvas { background: transparent !important; }
         .reports-card { background: transparent; border: 1px solid rgba(255,255,255,0.06); }
         .card-title { font-size: 1rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: #1e293b; }
+        .card-title-row .card-title { margin-bottom: 0; min-width: 0; }
+        .chart-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            padding: 3px;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 10px;
+            background: rgba(255,255,255,0.45);
+            flex-shrink: 0;
+        }
+        .chart-toggle button {
+            width: 34px;
+            height: 30px;
+            border: none;
+            border-radius: 7px;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        }
+        .chart-toggle button.active {
+            background: #fff;
+            color: #3b82f6;
+            box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
+        }
 
         .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
         .status-badge.ok { background: rgba(16, 185, 129, 0.15); color: #10b981; }
@@ -245,6 +294,13 @@
             .wrapper-dashboard { padding: 1rem; width: 100%; margin-top: 60px; }
             .filters-bar { flex-direction: column; align-items: stretch; padding: 15px; }
             .filter-group { max-width: none; margin-bottom: 10px; }
+            .charts-grid { grid-template-columns: 1fr !important; gap: 16px; }
+            .card { padding: 18px; border-radius: 16px; min-width: 0; }
+            .card-title { font-size: 0.9rem; line-height: 1.25; flex-wrap: wrap; }
+            .card-title-row { align-items: center; gap: 10px; }
+            .chart-toggle button { width: 32px; height: 28px; }
+            .chart-frame { height: 260px; }
+            .chart-frame.tall { height: 360px; }
             
             .actions-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; flex-direction: column-reverse; align-items: flex-end; }
             .actions-menu { display: none; flex-direction: column; align-items: flex-end; background: rgba(255,255,255,0.85); padding: 15px; border-radius: 16px; backdrop-filter: blur(12px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid rgba(226,232,240,0.6); }
@@ -272,10 +328,70 @@
                 animation: skeleton-loading 1.5s infinite;
                 border-radius: 8px;
             }
+            .dashboard-skeleton-shell {
+                width: 90%;
+                max-width: 1200px;
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+            .dashboard-skeleton-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+            }
+            .skeleton-stats-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
+            }
+            .skeleton-charts-grid {
+                display: grid;
+                grid-template-columns: 1fr 1.5fr;
+                gap: 25px;
+            }
+            @media (max-width: 767px) {
+                .dashboard-skeleton-shell {
+                    width: 100%;
+                    padding: 1rem;
+                    gap: 16px;
+                }
+                .dashboard-skeleton-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                .dashboard-skeleton-header .skeleton-box {
+                    max-width: 100%;
+                }
+                .dashboard-skeleton-header .skeleton-box[style*="400px"],
+                .dashboard-skeleton-header .skeleton-box[style*="250px"],
+                .dashboard-skeleton-header > .skeleton-box {
+                    width: 100% !important;
+                }
+                .skeleton-stats-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                    gap: 12px !important;
+                }
+                .skeleton-stats-grid > div,
+                .skeleton-charts-grid > div {
+                    min-width: 0;
+                }
+                .skeleton-charts-grid {
+                    grid-template-columns: 1fr !important;
+                    gap: 12px !important;
+                }
+                .skeleton-charts-grid > div {
+                    height: 240px !important;
+                    padding: 18px !important;
+                    border-radius: 16px !important;
+                }
+            }
         </style>
-        <div style="width: 90%; max-width: 1200px; padding: 2rem; display: flex; flex-direction: column; gap: 24px;">
+        <div class="dashboard-skeleton-shell">
             <!-- Header skeleton -->
-            <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div class="dashboard-skeleton-header">
                 <div>
                     <div class="skeleton-box" style="width: 250px; height: 32px; margin-bottom: 8px;"></div>
                     <div class="skeleton-box" style="width: 400px; height: 16px;"></div>
@@ -284,7 +400,7 @@
             </div>
 
             <!-- Stats grid skeleton -->
-            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;" class="skeleton-stats-grid">
+            <div class="skeleton-stats-grid">
                 <div style="background: white; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; display:flex; flex-direction:column; gap:10px;">
                     <div class="skeleton-box" style="width: 60%; height: 12px;"></div>
                     <div class="skeleton-box" style="width: 40%; height: 28px;"></div>
@@ -304,7 +420,7 @@
             </div>
 
             <!-- Charts skeleton -->
-            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 25px;" class="skeleton-charts-grid">
+            <div class="skeleton-charts-grid">
                 <div style="background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 20px; height: 350px; display:flex; flex-direction:column; gap:15px;">
                     <div class="skeleton-box" style="width: 40%; height: 16px; margin-bottom:10px;"></div>
                     <div class="skeleton-box" style="width: 100%; flex:1; border-radius:12px;"></div>
@@ -376,19 +492,25 @@
 
         <div class="charts-grid">
             <div class="card">
-                <div class="card-title"><i class="fas fa-chart-pie" style="color: #f59e0b;"></i> Peso Volumétrico por Área</div>
-                <div style="height: 300px;"><canvas id="chartArea"></canvas></div>
+                <div class="card-title-row">
+                    <div class="card-title"><i class="fas fa-chart-pie" style="color: #f59e0b;"></i> Peso Volumétrico por Área</div>
+                    <div class="chart-toggle" aria-label="Cambiar tipo de gráfica">
+                        <button type="button" id="areaChartDoughnutBtn" class="active" title="Dona" onclick="window.setAreaChartMode('doughnut')"><i class="fas fa-chart-pie"></i></button>
+                        <button type="button" id="areaChartRadarBtn" title="Spider" onclick="window.setAreaChartMode('radar')"><i class="fas fa-bullseye"></i></button>
+                    </div>
+                </div>
+                <div class="chart-frame"><canvas id="chartArea"></canvas></div>
             </div>
             <div class="card">
                 <div class="card-title"><i class="fas fa-chart-bar" style="color: #3b82f6;"></i> Tendencia Semanal (Cantidades)</div>
-                <div style="height: 300px;"><canvas id="chartTrend"></canvas></div>
+                <div class="chart-frame"><canvas id="chartTrend"></canvas></div>
             </div>
         </div>
 
         <div class="charts-grid" style="grid-template-columns: 1fr; margin-top: 25px;">
             <div class="card">
                 <div class="card-title"><i class="fas fa-layer-group" style="color: #8b5cf6;"></i> Detalle Consolidado de Items</div>
-                <div id="chartItemsContainer" style="height: 350px;"><canvas id="chartItems"></canvas></div>
+                <div id="chartItemsContainer" class="chart-frame tall"><canvas id="chartItems"></canvas></div>
             </div>
         </div>
     </div>

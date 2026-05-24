@@ -215,6 +215,9 @@ function getProductoraName(prodId) {
 function initFilters() {
     // Populate Productora
     const selectProd = document.getElementById('filterProductora');
+    const containerProd = document.getElementById('filterProductoraContainer');
+    if (containerProd) containerProd.style.display = 'block';
+
     const isUserP = window.currentUser && window.currentUser.ROL === 'USER-P';
     const userProdId = isUserP ? (window.currentUser.ID_PRODUCTORA || window.currentUser.id_productora || null) : null;
     const userProdName = isUserP ? (window.currentUser.PRODUCTORA || window.currentUser.productora || (userProdId ? getProductoraName(userProdId) : '')) : null;

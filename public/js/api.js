@@ -125,7 +125,12 @@ async function fetchSupabaseData(tableName, options = {}) {
                 if (!skipFilter && ['MASTER', 'PLANTAS', 'NOVEDADES', 'RUTERO', 'VISITAS', 'REPORTES'].includes(tableUpper) && sessionUser &&
                     ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I'].includes(sessionUser.ROL) &&
                     sessionUser.ID_PRODUCTORA) {
-                    query = query.eq('productora', parseInt(sessionUser.ID_PRODUCTORA));
+                    
+                    // Excepción: ADMIN y MODERATOR ven todas las productoras SOLO en la tabla REPORTES (Calidad)
+                    const isAdminOrMod = ['ADMIN', 'MODERATOR'].includes(sessionUser.ROL);
+                    if (!(isAdminOrMod && tableUpper === 'REPORTES')) {
+                        query = query.eq('productora', parseInt(sessionUser.ID_PRODUCTORA));
+                    }
                 }
 
                 const { data, error } = await query;
