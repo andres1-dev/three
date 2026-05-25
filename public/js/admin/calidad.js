@@ -72,10 +72,10 @@ function enrichReporteRecord(r) {
             console.log('[FAST-LOAD] 🚀 Ejecutando prefetch de calidad...');
             globalReportesPromise = fetchReportesData();
         }
-    } catch(e) {}
+    } catch (e) { }
 })();
 
-window.onload = async function() {
+window.onload = async function () {
     await loadUsers(); // Cargar usuarios primero para mapear correos a nombres
     buildAuditorLookup();
     await cargarDatosCalidadLocal(globalReportesPromise);
@@ -84,13 +84,13 @@ window.onload = async function() {
 async function cargarDatosCalidadLocal(reportesPromise) {
     const loader = document.getElementById('loaderOverlay');
     const dataSection = document.getElementById('dashboardContent');
-    
+
     if (loader) loader.style.display = 'flex';
     if (dataSection) dataSection.style.display = 'none';
 
     try {
         gsReportes = await (reportesPromise || fetchReportesData());
-        
+
         if (!gsReportes || gsReportes.length === 0) {
             if (loader) {
                 loader.innerHTML = `
@@ -108,15 +108,15 @@ async function cargarDatosCalidadLocal(reportesPromise) {
 
         gsReportes.sort((a, b) => b._date - a._date);
         gsFilteredReportes = [...gsReportes];
-        
+
         initFilters();
         initDateRangePicker();
         initCharts();
         window.applyFilters();
-        
+
         if (loader) loader.style.display = 'none';
         if (dataSection) dataSection.style.display = 'block';
-        
+
     } catch (error) {
         if (loader) {
             loader.innerHTML = `
@@ -134,23 +134,23 @@ async function cargarDatosCalidadLocal(reportesPromise) {
 async function recargarDatosCalidad() {
     const loader = document.getElementById('loaderOverlay');
     const dataSection = document.getElementById('dashboardContent');
-    
+
     if (loader) loader.style.display = 'flex';
     if (dataSection) dataSection.style.display = 'none';
-    
+
     try {
         if (typeof invalidateCache === 'function') invalidateCache('REPORTES');
         gsReportes = await fetchReportesData();
-        
+
         gsReportes.forEach(enrichReporteRecord);
 
         gsReportes.sort((a, b) => b._date - a._date);
-        
-        if (dateRangePicker) { 
+
+        if (dateRangePicker) {
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            dateRangePicker.setDate([firstDay, today]); 
-            selectedDateRange = [firstDay, today]; 
+            dateRangePicker.setDate([firstDay, today]);
+            selectedDateRange = [firstDay, today];
         }
         const filterProductora = document.getElementById('filterProductora');
         if (filterProductora && !filterProductora.disabled) {
@@ -161,12 +161,12 @@ async function recargarDatosCalidad() {
         document.getElementById('filterTipo').value = '';
 
         window.applyFilters();
-        
+
         if (loader) loader.style.display = 'none';
         if (dataSection) dataSection.style.display = 'block';
-        
+
         Swal.fire({ icon: 'success', title: 'Actualizado', timer: 1500, showConfirmButton: false });
-        
+
     } catch (error) {
         Swal.fire({ icon: 'error', title: 'Error al Recargar', text: error.message });
         if (loader) loader.style.display = 'none';
@@ -183,7 +183,7 @@ function parsearFechaLatina(d) {
     // Intentar parseo nativo primero (con o sin T)
     let parsed = new Date(s);
     if (!isNaN(parsed)) return parsed;
-    
+
     parsed = new Date(s.replace(' ', 'T'));
     if (!isNaN(parsed)) return parsed;
 
@@ -191,17 +191,17 @@ function parsearFechaLatina(d) {
     const parts = s.split(/\s+/);
     const datePart = parts[0];
     const timePart = parts.length > 1 ? parts.slice(1).join(' ') : '00:00:00';
-    
+
     const sep = datePart.includes('/') ? '/' : (datePart.includes('-') ? '-' : null);
     if (!sep) return new Date(d);
-    
+
     const dParts = datePart.split(sep);
     if (dParts.length < 3) return new Date(d);
-    
+
     let year, month, day;
-    if (dParts[0].length === 4) { year = dParts[0]; month = dParts[1]; day = dParts[2]; } 
+    if (dParts[0].length === 4) { year = dParts[0]; month = dParts[1]; day = dParts[2]; }
     else { day = dParts[0]; month = dParts[1]; year = dParts[2]; }
-    
+
     return new Date(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T00:00:00`);
 }
 
@@ -268,7 +268,7 @@ function initDateRangePicker() {
         dateFormat: "Y-m-d",
         locale: "es",
         defaultDate: [firstDay, today],
-        onChange: function(selectedDates) {
+        onChange: function (selectedDates) {
             if (selectedDates.length === 2) {
                 selectedDateRange = selectedDates;
                 window.applyFilters();
@@ -280,7 +280,7 @@ function initDateRangePicker() {
     });
 }
 
-window.applyFilters = function() {
+window.applyFilters = function () {
     const prod = document.getElementById('filterProductora').value;
     const aud = document.getElementById('filterAuditor').value;
     const tipo = document.getElementById('filterTipo').value;
@@ -290,16 +290,16 @@ window.applyFilters = function() {
         let okProd = !prod || r._productora === prod;
         let okAud = !aud || r._auditorName === aud;
         let okTipo = !tipo || r._tipo === tipo;
-        
+
         let okDate = true;
         if (selectedDateRange && selectedDateRange.length === 2) {
-            const start = new Date(selectedDateRange[0]); start.setHours(0,0,0,0);
-            const end = new Date(selectedDateRange[1]); end.setHours(23,59,59,999);
+            const start = new Date(selectedDateRange[0]); start.setHours(0, 0, 0, 0);
+            const end = new Date(selectedDateRange[1]); end.setHours(23, 59, 59, 999);
             const rDate = r._date;
             okDate = (rDate >= start && rDate <= end);
         }
         let okEstado = !estado || (String(r._conclusion || '').toUpperCase() === String(estado || '').toUpperCase());
-        
+
         return okProd && okAud && okTipo && okDate && okEstado;
     });
 
@@ -329,13 +329,13 @@ function applyTableSearchFilter() {
         : [...gsFilteredReportes];
 }
 
-window.handleCalidadTableSearch = function() {
+window.handleCalidadTableSearch = function () {
     tableSearchTerm = document.getElementById('calidadTableSearch')?.value || '';
     tableCurrentPage = 1;
     renderTable();
 };
 
-window.clearCalidadTableSearch = function() {
+window.clearCalidadTableSearch = function () {
     const input = document.getElementById('calidadTableSearch');
     if (input) input.value = '';
     tableSearchTerm = '';
@@ -343,7 +343,7 @@ window.clearCalidadTableSearch = function() {
     renderTable();
 };
 
-window.verReporteCalidad = function(index) {
+window.verReporteCalidad = function (index) {
     const rep = gsTableReportes[index];
     if (!rep) return;
 
@@ -432,7 +432,7 @@ function renderTablePagination(totalItems, totalPages) {
     btns.innerHTML = html;
 }
 
-window.changeCalidadTablePage = function(page) {
+window.changeCalidadTablePage = function (page) {
     const totalPages = Math.max(1, Math.ceil(gsTableReportes.length / TABLE_PAGE_SIZE));
     if (page < 1 || page > totalPages) return;
     tableCurrentPage = page;

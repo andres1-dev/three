@@ -313,6 +313,22 @@ function _actualizarCamposCalidad() {
     if (conclusion) {
         conclusion.required = mostrarConclusion;
         if (!mostrarConclusion) conclusion.value = '';
+        
+        // La conclusión PAUSADO solo está disponible para RONDA
+        Array.from(conclusion.options).forEach(opt => {
+            if (opt.value === 'PAUSADO') {
+                if (esRonda) {
+                    opt.hidden = false;
+                    opt.disabled = false;
+                } else {
+                    opt.hidden = true;
+                    opt.disabled = true;
+                    if (conclusion.value === 'PAUSADO') {
+                        conclusion.value = '';
+                    }
+                }
+            }
+        });
     }
     if (conclusionLabel) {
         if (mostrarConclusion) {
@@ -324,17 +340,19 @@ function _actualizarCamposCalidad() {
 
     // ── Avance ──
     // Visible en RONDA (obligatorio) y CONTRAMUESTRA (opcional)
-    const mostrarAvance = esRonda || esContramuestra;
+    // Oculto si la conclusión es PAUSADO
+    const esPausado = conclusion && conclusion.value === 'PAUSADO';
+    const mostrarAvance = (esRonda || esContramuestra) && !esPausado;
     if (avanceSection) avanceSection.style.display = mostrarAvance ? '' : 'none';
     if (avanceLabel) {
-        if (esRonda) {
+        if (esRonda && !esPausado) {
             avanceLabel.innerHTML = 'Avance de producción: <i class="fas fa-asterisk" style="color:#ef4444;font-size:0.6rem;vertical-align:middle;margin-left:4px;" title="Requerido"></i>';
         } else {
             avanceLabel.innerHTML = 'Avance de producción: <i class="fas fa-circle-minus" style="color:#94a3b8;font-size:0.7rem;vertical-align:middle;margin-left:4px;" title="Opcional"></i>';
         }
     }
     if (avanceSlider) {
-        avanceSlider.required = esRonda;
+        avanceSlider.required = esRonda && !esPausado;
         avanceSlider.value = 0;
         const avanceValor = document.getElementById('avanceValor');
         const avancePct   = document.getElementById('avancePorcentaje');
@@ -735,8 +753,9 @@ async function handleCalidadSubmit(e) {
     const tipo = (document.getElementById('tipoVisita')?.value || '').toUpperCase();
     const esRonda = tipo === 'RONDA';
 
-    // Validar avance obligatorio en RONDA
-    if (esRonda) {
+    // Validar avance obligatorio en RONDA (excepto si está PAUSADO)
+    const conclusionVal = document.getElementById('conclusion')?.value || '';
+    if (esRonda && conclusionVal !== 'PAUSADO') {
         const avance = parseInt(document.getElementById('avancePorcentaje')?.value || '0');
         if (avance === 0) {
             Swal.fire({

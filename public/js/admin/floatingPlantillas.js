@@ -24,17 +24,7 @@ const LOCAL_TEMPLATES = [
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 20 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, ensambladas espalda con espalda, dobladas individualmente y con las etiquetas aseguradas y amarradas.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' },
-
-    // OPERACION
-    { tipo: 'OPERACION', contenido: 'Costura con puntada floja.' },
-    { tipo: 'OPERACION', contenido: 'Piezas con hilos sueltos.' },
-    { tipo: 'OPERACION', contenido: 'Costuras torcidas o arrugadas.' },
-    { tipo: 'OPERACION', contenido: 'Piezas con orificios o rotas.' },
-    { tipo: 'OPERACION', contenido: 'Medidas fuera de tolerancia (muy grandes o pequeñas).' },
-    { tipo: 'OPERACION', contenido: 'Costuras reventadas o abiertas.' },
-    { tipo: 'OPERACION', contenido: 'Piezas con saltos de puntada o puntadas sueltas.' },
-    { tipo: 'OPERACION', contenido: 'Piezas con manchas, suciedad u otras imperfecciones.' }
+    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' }
 ];
 
 let plantillasData = [];
@@ -107,12 +97,41 @@ function injectTemplatesUI() {
             <div class="templates-tabs">
                 <button type="button" class="templates-tab-btn active" data-tab="UBICACION">Ubicación</button>
                 <button type="button" class="templates-tab-btn" data-tab="PAQUETEO">Paqueteo</button>
-                <button type="button" class="templates-tab-btn" data-tab="OPERACION">Operación</button>
+                <button type="button" class="templates-tab-btn" data-tab="COMPROMISO">Compromiso</button>
             </div>
             
             <div class="templates-modal-body">
                 <div class="templates-list" id="templatesListContainer">
                     <!-- Las tarjetas se inyectan solo una vez -->
+                </div>
+                <div id="compromisoContainer" style="display:none; padding:16px 12px;">
+                    <div style="text-align:center; margin-bottom:12px;">
+                        <div style="font-size:0.65rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:#94a3b8; margin-bottom:4px;">Fecha de compromiso</div>
+                        <div id="compromisoSelectedDisplay" style="font-size:1rem; font-weight:800; color:#3F51B5; min-height:22px;"></div>
+                    </div>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden;">
+                        <!-- Encabezado mes/año -->
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:linear-gradient(135deg,#3F51B5,#6366f1);">
+                            <button type="button" id="calPrevMonth" style="background:rgba(255,255,255,0.15); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">&lsaquo;</button>
+                            <span id="calMonthLabel" style="font-size:0.85rem; font-weight:800; color:white; text-transform:uppercase; letter-spacing:0.04em;"></span>
+                            <button type="button" id="calNextMonth" style="background:rgba(255,255,255,0.15); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">&rsaquo;</button>
+                        </div>
+                        <!-- Días de semana -->
+                        <div style="display:grid; grid-template-columns:repeat(7,1fr); background:#f1f5f9; padding:6px 8px 4px;">
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">D</div>
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">L</div>
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">M</div>
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">X</div>
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">J</div>
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">V</div>
+                            <div style="text-align:center; font-size:0.58rem; font-weight:800; color:#94a3b8;">S</div>
+                        </div>
+                        <!-- Grilla de días -->
+                        <div id="calDaysGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:2px; padding:6px 8px 10px;"></div>
+                    </div>
+                    <button type="button" id="btnInsertarCompromiso" style="margin-top:14px; padding:13px; background:linear-gradient(135deg,#3F51B5,#6366f1); color:white; border:none; border-radius:12px; width:100%; cursor:pointer; font-weight:800; font-size:0.9rem; transition:all 0.2s; box-shadow:0 4px 12px rgba(63,81,181,0.3); display:flex; align-items:center; justify-content:center; gap:8px;" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                        <i class="fas fa-calendar-check"></i> Insertar Fecha de Compromiso
+                    </button>
                 </div>
             </div>
         </div>
@@ -173,6 +192,20 @@ function renderTemplates() {
 function filterTemplatesList() {
     const cards = document.querySelectorAll('.template-card');
     let visibleCount = 0;
+    
+    const container = document.getElementById('templatesListContainer');
+    const compromisoContainer = document.getElementById('compromisoContainer');
+    let emptyState = document.getElementById('templatesEmptyState');
+    
+    if (currentTab === 'COMPROMISO') {
+        if (container) container.style.display = 'none';
+        if (compromisoContainer) compromisoContainer.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'none';
+        return;
+    } else {
+        if (container) container.style.display = '';
+        if (compromisoContainer) compromisoContainer.style.display = 'none';
+    }
 
     cards.forEach(card => {
         const cardTipo = card.getAttribute('data-tipo');
@@ -187,7 +220,6 @@ function filterTemplatesList() {
     });
 
     // Controlar el mensaje de búsqueda vacía de forma ultra-limpia
-    let emptyState = document.getElementById('templatesEmptyState');
     if (visibleCount === 0) {
         if (!emptyState) {
             emptyState = document.createElement('div');
@@ -197,7 +229,6 @@ function filterTemplatesList() {
                 <i class="fas fa-clipboard-list"></i>
                 <p>No hay plantillas en esta categoría</p>
             `;
-            const container = document.getElementById('templatesListContainer');
             if (container) container.appendChild(emptyState);
         } else {
             emptyState.style.display = 'flex';
@@ -448,6 +479,100 @@ function makeElementDraggable(el) {
     }
 }
 
+/* ── Motor de Calendario Personalizado ─────────────────────────────────── */
+let _calCurrentYear = new Date().getFullYear();
+let _calCurrentMonth = new Date().getMonth(); // 0-indexed
+let _calSelectedDate = null;
+
+const _CAL_MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function _renderCalendar() {
+    const grid    = document.getElementById('calDaysGrid');
+    const label   = document.getElementById('calMonthLabel');
+    if (!grid || !label) return;
+
+    label.textContent = `${_CAL_MESES[_calCurrentMonth]} ${_calCurrentYear}`;
+    grid.innerHTML = '';
+
+    const firstDay  = new Date(_calCurrentYear, _calCurrentMonth, 1).getDay(); // 0=Dom
+    const daysInMonth = new Date(_calCurrentYear, _calCurrentMonth + 1, 0).getDate();
+    const today     = new Date();
+    today.setHours(0,0,0,0);
+
+    // Celdas vacías al inicio
+    for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        grid.appendChild(empty);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+        const cellDate = new Date(_calCurrentYear, _calCurrentMonth, d);
+        const isToday    = cellDate.getTime() === today.getTime();
+        const isSelected = _calSelectedDate && cellDate.getTime() === _calSelectedDate.getTime();
+        const isPast     = cellDate.getTime() < today.getTime();
+
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.textContent = d;
+
+        let bg = 'transparent', color = '#334155', fontWeight = '600', border = 'none', cursor = 'pointer', opacity = '1';
+        if (isPast) {
+            color = '#cbd5e1'; fontWeight = '400'; cursor = 'default'; opacity = '0.5';
+        } else if (isSelected) {
+            bg = '#3F51B5'; color = 'white'; fontWeight = '800';
+        } else if (isToday) {
+            bg = '#eef2ff'; color = '#3F51B5'; fontWeight = '800'; border = '1px solid #c7d2fe';
+        }
+
+        cell.style.cssText = `
+            background:${bg}; color:${color}; font-weight:${fontWeight};
+            border:${border}; border-radius:50%; width:32px; height:32px;
+            cursor:${cursor}; font-size:0.78rem; display:flex; align-items:center;
+            justify-content:center; margin:auto; transition:all 0.15s; opacity:${opacity};
+        `;
+
+        if (!isPast) {
+            cell.addEventListener('pointerover', () => {
+                if (!isSelected) cell.style.background = '#eef2ff';
+            });
+            cell.addEventListener('pointerout', () => {
+                if (!isSelected) cell.style.background = isToday ? '#eef2ff' : 'transparent';
+            });
+            cell.addEventListener('click', () => {
+                _calSelectedDate = cellDate;
+                const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                const diaSemana = dias[cellDate.getDay()];
+                const display = document.getElementById('compromisoSelectedDisplay');
+                if (display) display.textContent = `${diaSemana}, ${d} de ${_CAL_MESES[_calCurrentMonth].toLowerCase()} del ${_calCurrentYear}`;
+                _renderCalendar();
+            });
+        }
+
+        grid.appendChild(cell);
+    }
+}
+
+function _initCalendar() {
+    const prevBtn = document.getElementById('calPrevMonth');
+    const nextBtn = document.getElementById('calNextMonth');
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            _calCurrentMonth--;
+            if (_calCurrentMonth < 0) { _calCurrentMonth = 11; _calCurrentYear--; }
+            _renderCalendar();
+        });
+    }
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            _calCurrentMonth++;
+            if (_calCurrentMonth > 11) { _calCurrentMonth = 0; _calCurrentYear++; }
+            _renderCalendar();
+        });
+    }
+    _renderCalendar();
+}
+
 /**
  * Inicializador asíncrono no bloqueante
  */
@@ -510,6 +635,33 @@ function initFloatingTemplates() {
             }
         });
     }
+
+    // Acción para el botón de insertar Compromiso
+    const btnCompromiso = document.getElementById('btnInsertarCompromiso');
+    if (btnCompromiso) {
+        btnCompromiso.addEventListener('click', () => {
+            if (!_calSelectedDate) {
+                showToast('error', 'Por favor selecciona una fecha');
+                return;
+            }
+            const d = _calSelectedDate;
+            const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+            const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+            const diaSemana = dias[d.getDay()];
+            const diaNum = d.getDate();
+            const mes = meses[d.getMonth()];
+            const anio = d.getFullYear();
+            
+            const texto = `Compromiso de entrega: ${diaSemana}, ${diaNum} de ${mes} del ${anio}.`;
+            insertTextIntoObservations(texto);
+            _calSelectedDate = null;
+            document.getElementById('compromisoSelectedDisplay').textContent = '';
+            _renderCalendar();
+        });
+    }
+
+    // Inicializar calendario
+    _initCalendar();
 
     // 5. Control inteligente de visibilidad del botón flotante en index.html
     const calidadSection = document.getElementById('calidadSection');

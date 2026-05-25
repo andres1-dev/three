@@ -13,7 +13,7 @@
 function normalizarPrenda(prenda) {
     if (!prenda) return "prenda no especificada";
     let p = prenda.trim().toLowerCase();
-    
+
     // Diccionario de normalización para asegurar singular y ortografía correcta
     const normas = {
         'bodys': 'body',
@@ -57,9 +57,9 @@ function normalizarPrenda(prenda) {
         'pijama': 'pijama',
         'pijamas': 'pijama'
     };
-    
+
     if (normas[p]) return normas[p];
-    
+
     // Fallback dinámico de singularización si termina en 's'
     if (p.endsWith('s') && p.length > 3) {
         if (p.endsWith('es') && !p.endsWith('les')) {
@@ -67,7 +67,7 @@ function normalizarPrenda(prenda) {
         }
         return p.slice(0, -1);
     }
-    
+
     return p;
 }
 
@@ -80,7 +80,7 @@ function normalizarPrenda(prenda) {
 function normalizarGenero(genero) {
     if (!genero) return "";
     let g = genero.trim().toLowerCase();
-    
+
     if (g === 'caballero' || g === 'caballeros' || g === 'caballero.') {
         return 'hombre';
     }
@@ -115,7 +115,7 @@ function toTitleCase(str) {
     if (!str) return "";
     const text = str.trim();
     if (text.toUpperCase() === 'CDI') return 'CDI';
-    
+
     return text.toLowerCase().split(' ').map(word => {
         return word.charAt(0).toUpperCase() + word.slice(1);
     }).join(' ');
@@ -170,7 +170,7 @@ const PLANTILLAS_CALIDAD = {
                 rec: "Se sugiere que "
             },
             RECHAZADO: {
-                obs: "Se realiza ronda de calidad para {prenda_genero}{tejido}{avance}, detectándose no conformidades repetitivas en la operación. Se requiere intervenir la línea con carácter prioritario.",
+                obs: "Se realiza ronda de calidad para {prenda_genero}{tejido}{avance}, detectándose no conformidades repetitivas en la operación. Se requiere intervenir con carácter prioritario.",
                 rec: "Se recomienda que "
             },
             DEFAULT: {
@@ -369,25 +369,25 @@ const PLANTILLAS_CALIDAD = {
 function generarRedaccionPlantilla(datos, estilo = 'ESTANDAR', conectorTexto = '') {
     const estiloElegido = PLANTILLAS_CALIDAD[estilo] ? estilo : 'ESTANDAR';
     const plantillasEstilo = PLANTILLAS_CALIDAD[estiloElegido];
-    
+
     const tipo = (datos.tipo || 'AUDITORIA').toUpperCase();
     const conclusion = (datos.conclusion || '').toUpperCase();
-    
+
     // Normalizar forzosamente a minúsculas para coherencia sintáctica dentro de la prosa
     const procesoRaw = (datos.proceso || 'confección').trim().toLowerCase();
     const prendaRaw = (datos.prenda || '').trim().toLowerCase();
     const generoRaw = (datos.genero || '').trim().toLowerCase();
     const tejidoRaw = (datos.tejido || '').trim().toLowerCase();
-    
+
     // Normalizar prenda y género
     const prendaNorm = normalizarPrenda(prendaRaw);
     const generoNorm = normalizarGenero(generoRaw);
-    
+
     let prendaGeneroText = prendaNorm;
     if (generoNorm && generoNorm !== 'no especificado' && generoNorm !== 'no especificada') {
         prendaGeneroText += ` ${generoNorm}`;
     }
-    
+
     // Formatear tejido
     let tejidoText = "";
     const hasTejido = tejidoRaw && !['--', 'n/a', 'na', 'no especificado', 'no especificada', 'no', 'no especificado.', 'no especificada.'].includes(tejidoRaw);
@@ -398,7 +398,7 @@ function generarRedaccionPlantilla(datos, estilo = 'ESTANDAR', conectorTexto = '
             tejidoText = ` en tejido ${tejidoRaw}`;
         }
     }
-    
+
     // Formatear avance
     const avanceVal = parseInt(datos.avance) || 0;
     let avanceText = "";
@@ -411,7 +411,7 @@ function generarRedaccionPlantilla(datos, estilo = 'ESTANDAR', conectorTexto = '
             avanceText = `, evidenciando un avance del ${avanceVal}% en la producción`;
         }
     }
-    
+
     // Formatear destino de liberación
     let destinoText = "";
     if (tipo === 'AUDITORIA' && conclusion === 'APROBADO' && datos.destinoTipo) {
@@ -420,20 +420,20 @@ function generarRedaccionPlantilla(datos, estilo = 'ESTANDAR', conectorTexto = '
         } else if (datos.destinoTipo === 'PROCESO' && datos.destinoProceso) {
             const destProc = normalizarProcesoDestino(datos.destinoProceso);
             let destStr = ` con destino al proceso de ${destProc}`;
-            
+
             if (datos.destinoPlanta) {
                 const destPlan = toTitleCase(datos.destinoPlanta);
                 destStr += ` en ${destPlan}`;
             }
-            
+
             destinoText = destStr;
         }
     }
-    
+
     // Buscar la plantilla específica
     let plantillaObj = null;
     const tipoObj = plantillasEstilo[tipo];
-    
+
     if (tipoObj) {
         if (tipo === 'SEGUIMIENTO') {
             plantillaObj = tipoObj.DEFAULT;
@@ -441,18 +441,18 @@ function generarRedaccionPlantilla(datos, estilo = 'ESTANDAR', conectorTexto = '
             plantillaObj = tipoObj[conclusion] || tipoObj.DEFAULT;
         }
     }
-    
+
     if (!plantillaObj) {
         return "Se realiza reporte de calidad.";
     }
-    
+
     let plantillaStr = "";
     if (conectorTexto && conectorTexto.trim() !== '') {
         plantillaStr = plantillaObj.obs + " " + conectorTexto;
     } else {
         plantillaStr = plantillaObj.obs;
     }
-    
+
     // Reemplazar los marcadores de posición
     let resultado = plantillaStr
         .replace('{proceso}', procesoRaw)
@@ -460,12 +460,12 @@ function generarRedaccionPlantilla(datos, estilo = 'ESTANDAR', conectorTexto = '
         .replace('{tejido}', tejidoText)
         .replace('{avance}', avanceText)
         .replace('{destino}', destinoText);
-        
+
     // Forzar que el texto comience formalmente con mayúscula
     if (resultado) {
         resultado = resultado.trim();
         resultado = resultado.charAt(0).toUpperCase() + resultado.slice(1);
     }
-        
+
     return resultado;
 }
