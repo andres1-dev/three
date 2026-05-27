@@ -46,7 +46,7 @@ let globalPlantasPromise = null;
 (function initFastPrefetch() {
     try {
         if (typeof fetchNovedadesData !== 'function' || typeof fetchPlantasData !== 'function') return;
-        
+
         // Mock user temporalmente para que fetchNovedadesData aplique el filtro
         const savedProdRaw = localStorage.getItem('busint_productora');
         let mocked = false;
@@ -57,13 +57,13 @@ let globalPlantasPromise = null;
                 mocked = true;
             }
         }
-        
+
         console.log('[FAST-LOAD] 🚀 Ejecutando prefetch paralelo para Resolución...');
         globalNovedadesPromise = fetchNovedadesData(false);
         globalPlantasPromise = fetchPlantasData();
-        
+
         if (mocked) window.currentUser = undefined;
-    } catch(e) {}
+    } catch (e) { }
 })();
 
 window.onload = async function () {
@@ -92,7 +92,7 @@ function toggleCompactView() {
     btn.classList.toggle('active');
 
     localStorage.setItem('viewModeResolucion', isCompact ? 'compact' : 'expanded');
-    
+
     // Si la paginación cambia de layout, forzamos reflow o scroll top
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -115,7 +115,7 @@ async function cargarDatos(soloFinalizados = false) {
                 return [];
             })
         ]);
-        
+
         // Limpiar para que en reloads manuales se haga el fetch normal
         globalNovedadesPromise = null;
         globalPlantasPromise = null;
@@ -231,16 +231,16 @@ function handleFilter() {
  */
 function formatearTipoDetalle(tipoDetalle, area) {
     if (!tipoDetalle) return null;
-    
+
     try {
         const detalle = typeof tipoDetalle === 'string' ? JSON.parse(tipoDetalle) : tipoDetalle;
-        
+
         console.log('[formatearTipoDetalle] Procesando:', { tipoDetalle, detalle, area });
-        
+
         if (!detalle || typeof detalle !== 'object') return null;
-        
+
         let html = '<div style="font-size: 0.85rem; line-height: 1.6; color: #475569; background: #f8fafc; padding: 12px; border-radius: 8px; border-left: 3px solid #3b82f6; margin: 8px 0;">';
-        
+
         // CÓDIGOS - Lote completo
         if (detalle.tipo_solicitud === 'LOTE_COMPLETO') {
             html += `<div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1e293b;">
@@ -275,12 +275,12 @@ function formatearTipoDetalle(tipoDetalle, area) {
                 'TELAS': 'fa-scroll'
             };
             const icon = iconMap[area] || 'fa-list';
-            
+
             html += `<div style="display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">
                 <i class="fas ${icon}" style="color: #3b82f6;"></i>
                 <span>${area || 'DETALLE'}</span>
             </div>`;
-            
+
             detalle.items.forEach((item, idx) => {
                 html += `<div style="padding: 6px 0 6px 24px; border-bottom: 1px solid #e2e8f0;">
                     <span style="color: #64748b; font-size: 0.75rem;">Ítem ${idx + 1}:</span>
@@ -289,10 +289,10 @@ function formatearTipoDetalle(tipoDetalle, area) {
                 </div>`;
             });
         }
-        
+
         html += '</div>';
         return html;
-        
+
     } catch (e) {
         console.error('[formatearTipoDetalle] Error al parsear:', e);
         return null;
@@ -361,8 +361,8 @@ function renderTabla(data = gsNovedades) {
         const statusClass = `status-${estadoActual.toLowerCase()}`;
         card.className = `novedad-card-ultra ${statusClass} ${estadoActual === 'FINALIZADO' ? 'is-finalized' : ''} ${isLocked ? 'is-locked' : ''}`;
         card.dataset.novedadId = nov.ID_NOVEDAD;
-        card.dataset.lote      = loteVal;
-        card.dataset.planta    = nov.PLANTA  || '';
+        card.dataset.lote = loteVal;
+        card.dataset.planta = nov.PLANTA || '';
 
         let sIcon = 'clock', sClass = 'p', sLab = 'PENDIENTE';
         if (estadoActual === 'ELABORACION') { sIcon = 'sync-alt'; sClass = 'w'; sLab = 'ELABORACIÓN'; }
@@ -419,15 +419,15 @@ function renderTabla(data = gsNovedades) {
                 ${nov.IMAGEN ? `<img src="${nov.IMAGEN}">` : `
                     <div class="no-image-placeholder h-100 d-flex flex-column align-items-center justify-content-center" style="background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); gap: 8px;">
                         <i class="fas ${(() => {
-                            const iconMap = {
-                                'INSUMOS': 'fa-tags',
-                                'CORTE': 'fa-cut',
-                                'TELAS': 'fa-scroll',
-                                'CODIGOS': 'fa-barcode',
-                                'DISEÑO': 'fa-palette'
-                            };
-                            return iconMap[nov.AREA] || 'fa-image';
-                        })()} " style="font-size: 2.5rem; color: #cbd5e1; transition: all 0.3s ease;"></i>
+                    const iconMap = {
+                        'INSUMOS': 'fa-tags',
+                        'CORTE': 'fa-cut',
+                        'TELAS': 'fa-scroll',
+                        'CODIGOS': 'fa-barcode',
+                        'DISEÑO': 'fa-palette'
+                    };
+                    return iconMap[nov.AREA] || 'fa-image';
+                })()} " style="font-size: 2.5rem; color: #cbd5e1; transition: all 0.3s ease;"></i>
                         <span style="font-size: 0.65rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px;">Sin Evidencia</span>
                     </div>
                 `}
@@ -444,11 +444,11 @@ function renderTabla(data = gsNovedades) {
                                 <i class="fas fa-building" style="color: #3b82f6; font-size: 0.75rem;"></i>
                                 ${nov.AREA || 'GENERAL'}
                             </div>
-                            ${nov.TIPO_NOVEDAD ? `<div class="tech-pill-highlight" title="Tipo de Novedad" style="padding: 3px 10px; ${
-                                nov.TIPO_NOVEDAD === 'FALTANTE' ? 'background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #dc2626;' :
-                                nov.TIPO_NOVEDAD === 'IMPERFECTO' ? 'background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.4); color: #d97706;' :
-                                nov.TIPO_NOVEDAD === 'PERDIDA' ? 'background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.4); color: #7c3aed;' : ''
-                            }">${nov.TIPO_NOVEDAD}</div>` : ''}
+                            ${nov.TIPO_NOVEDAD ? `<div class="tech-pill-highlight" title="Tipo de Novedad" style="padding: 3px 10px; ${nov.TIPO_NOVEDAD === 'FALTANTE' ? 'background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.4); color: #dc2626;' :
+                nov.TIPO_NOVEDAD === 'IMPERFECTO' ? 'background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.4); color: #d97706;' :
+                    nov.TIPO_NOVEDAD === 'PERDIDA' ? 'background: rgba(139, 92, 246, 0.1); border-color: rgba(139, 92, 246, 0.4); color: #7c3aed;' :
+                        nov.TIPO_NOVEDAD === 'CAMBIO' ? 'background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.4); color: #3b82f6;' : ''
+                }">${nov.TIPO_NOVEDAD}</div>` : ''}
                         </div>
                     </div>
                     <div style="text-align: right; padding: 8px 12px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border-radius: 10px; border: 1px solid #bfdbfe;">
@@ -462,58 +462,58 @@ function renderTabla(data = gsNovedades) {
                 <div class="tech-divider-container" style="position: relative; border-top: 2px solid #e2e8f0; margin-bottom: 12px;">
                     <div class="tech-badge-container">
                         ${(() => {
-                            const items = [];
-                            const loteVal = nov.id || nov.ID || nov.LOTE;
-                            if (loteVal && loteVal !== 'S/L' && loteVal !== 'N/A') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-barcode"></i>${loteVal}</span>`);
-                            }
-                            if (nov.REFERENCIA && nov.REFERENCIA !== 'N/A' && nov.REFERENCIA !== '--') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-tag"></i>${nov.REFERENCIA}</span>`);
-                            }
-                            if (nov.PRENDA && nov.PRENDA !== '--') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-tshirt"></i>${nov.PRENDA}</span>`);
-                            }
-                            if (nov.GENERO && nov.GENERO !== '--') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-venus-mars"></i>${nov.GENERO}</span>`);
-                            }
-                            if (nov.TEJIDO && nov.TEJIDO !== '--' && nov.TEJIDO !== 'NA') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-scroll"></i>${nov.TEJIDO}</span>`);
-                            }
-                            if (nov.LINEA && nov.LINEA !== '--') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-route"></i>${nov.LINEA}</span>`);
-                            }
-                            if (nov.CANTIDAD && nov.CANTIDAD !== '0') {
-                                items.push(`<span class="tech-badge-item"><i class="fas fa-cubes"></i>${nov.CANTIDAD}</span>`);
-                            }
-                            return items.join('<span class="tech-badge-separator">•</span>');
-                        })()}
+                const items = [];
+                const loteVal = nov.id || nov.ID || nov.LOTE;
+                if (loteVal && loteVal !== 'S/L' && loteVal !== 'N/A') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-barcode"></i>${loteVal}</span>`);
+                }
+                if (nov.REFERENCIA && nov.REFERENCIA !== 'N/A' && nov.REFERENCIA !== '--') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-tag"></i>${nov.REFERENCIA}</span>`);
+                }
+                if (nov.PRENDA && nov.PRENDA !== '--') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-tshirt"></i>${nov.PRENDA}</span>`);
+                }
+                if (nov.GENERO && nov.GENERO !== '--') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-venus-mars"></i>${nov.GENERO}</span>`);
+                }
+                if (nov.TEJIDO && nov.TEJIDO !== '--' && nov.TEJIDO !== 'NA') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-scroll"></i>${nov.TEJIDO}</span>`);
+                }
+                if (nov.LINEA && nov.LINEA !== '--') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-route"></i>${nov.LINEA}</span>`);
+                }
+                if (nov.CANTIDAD && nov.CANTIDAD !== '0') {
+                    items.push(`<span class="tech-badge-item"><i class="fas fa-cubes"></i>${nov.CANTIDAD}</span>`);
+                }
+                return items.join('<span class="tech-badge-separator">•</span>');
+            })()}
                     </div>
                 </div>
 
                 <!-- Descripción y Detalle JSONB -->
                 <div class="card-desc-ultra">${(() => {
-                    const descripcion = (nov.DESCRIPCION || '').trim();
-                    const detalleFormateado = formatearTipoDetalle(nov.TIPO_DETALLE, nov.AREA);
-                    
-                    let content = '';
-                    
-                    // Si hay descripción, mostrarla primero
-                    if (descripcion) {
-                        content += `<div style="margin-bottom: ${detalleFormateado ? '12px' : '0'}; color: #1e293b; line-height: 1.6;">${descripcion}</div>`;
-                    }
-                    
-                    // Si hay detalle JSONB, agregarlo
-                    if (detalleFormateado) {
-                        content += detalleFormateado;
-                    }
-                    
-                    // Si no hay nada, mensaje por defecto
-                    if (!content) {
-                        content = '<div style="color: #94a3b8; font-style: italic;">Sin registro detallado.</div>';
-                    }
-                    
-                    return content;
-                })()}</div>
+                const descripcion = (nov.DESCRIPCION || '').trim();
+                const detalleFormateado = formatearTipoDetalle(nov.TIPO_DETALLE, nov.AREA);
+
+                let content = '';
+
+                // Si hay descripción, mostrarla primero
+                if (descripcion) {
+                    content += `<div style="margin-bottom: ${detalleFormateado ? '12px' : '0'}; color: #1e293b; line-height: 1.6;">${descripcion}</div>`;
+                }
+
+                // Si hay detalle JSONB, agregarlo
+                if (detalleFormateado) {
+                    content += detalleFormateado;
+                }
+
+                // Si no hay nada, mensaje por defecto
+                if (!content) {
+                    content = '<div style="color: #94a3b8; font-style: italic;">Sin registro detallado.</div>';
+                }
+
+                return content;
+            })()}</div>
 
                 <!-- Footer: Planta + Fechas + Badge Días -->
                 <div class="card-meta-ultra">
@@ -556,7 +556,7 @@ function renderTabla(data = gsNovedades) {
                     <i class="fas fa-file-alt"></i> TRANSCRIPCIÓN
                 </button>
                 ` : ''}
-                <button class="btn-chat-ultra w-100" data-chat-btn="${nov.ID_NOVEDAD}" onclick="openChat('${nov.ID_NOVEDAD}','${(nov.PLANTA||'').replace(/'/g,"\\'")}','${(nov.id || nov.ID || nov.LOTE || '').replace(/'/g,"\\'")}',${(String(nov.CHAT||'').startsWith('https://') || String(nov.CHAT||'').startsWith('[')) ? 'true' : 'false'})">
+                <button class="btn-chat-ultra w-100" data-chat-btn="${nov.ID_NOVEDAD}" onclick="openChat('${nov.ID_NOVEDAD}','${(nov.PLANTA || '').replace(/'/g, "\\'")}','${(nov.id || nov.ID || nov.LOTE || '').replace(/'/g, "\\'")}',${(String(nov.CHAT || '').startsWith('https://') || String(nov.CHAT || '').startsWith('[')) ? 'true' : 'false'})">
                     <i class="fas fa-comments"></i> CHAT
                 </button>
             </div>
@@ -616,12 +616,12 @@ function calcularDiasHabiles(fechaInicio, fechaFin) {
 
     // Si las fechas son iguales, no hay días transcurridos
     if (start.getTime() === end.getTime()) return 0;
-    
+
     if (start > end) return 0;
 
     let count = 0;
     let curr = new Date(start);
-    
+
     // Avanzar al día siguiente del inicio (excluir día de inicio)
     curr.setDate(curr.getDate() + 1);
 
@@ -653,11 +653,11 @@ async function actualizarEstado(timestampId, nuevoEstado, selectEl) {
     if (nuevoEstado === 'FINALIZADO') {
         const comentarios = (row?.COMENTARIOS || '').trim();
         const cobro = (row?.COBRO || '').trim();
-        
+
         if (!comentarios || !cobro) {
             // Restaurar el select al estado anterior
             selectEl.value = row?.ESTADO || 'ELABORACION';
-            
+
             Swal.fire({
                 icon: 'warning',
                 title: 'Campos Obligatorios',
@@ -679,12 +679,12 @@ async function actualizarEstado(timestampId, nuevoEstado, selectEl) {
 
     try {
         const res = await sendToSupabase({
-            accion: "UPDATE_ESTADO", 
-            timestampId, 
-            nuevoEstado, 
-            respuesta: respuestaCorreo, 
-            correo: obtenerPlantaReciente(row?.PLANTA)?.EMAIL || '', 
-            resLote: row?.id || row?.ID || row?.LOTE || '' 
+            accion: "UPDATE_ESTADO",
+            timestampId,
+            nuevoEstado,
+            respuesta: respuestaCorreo,
+            correo: obtenerPlantaReciente(row?.PLANTA)?.EMAIL || '',
+            resLote: row?.id || row?.ID || row?.LOTE || ''
         });
 
         if (row) row.ESTADO = nuevoEstado;
@@ -695,16 +695,16 @@ async function actualizarEstado(timestampId, nuevoEstado, selectEl) {
             _finalizarChat(timestampId);
         }
 
-        Swal.fire({ 
-            icon: 'success', 
-            title: 'Estado Actualizado', 
+        Swal.fire({
+            icon: 'success',
+            title: 'Estado Actualizado',
             text: 'El cambio se ha guardado correctamente',
             timer: 1500,
             showConfirmButton: false
         });
     } catch (e) {
-        Swal.fire({ 
-            icon: 'error', 
+        Swal.fire({
+            icon: 'error',
             title: 'Error al Actualizar',
             text: 'No se pudo guardar el cambio. Intente nuevamente.'
         });
@@ -722,7 +722,7 @@ let currentNovedadNotify = null;
 function seleccionarCobroYPlantilla(tipo) {
     // 1. Seleccionar el tipo de cobro visualmente
     seleccionarCobro(tipo);
-    
+
     // 2. Llenar el campo de comentarios con la plantilla
     insertarPlantilla(tipo);
 }
@@ -735,13 +735,13 @@ function seleccionarCobro(tipo) {
     document.querySelectorAll('.cobro-option-btn').forEach(btn => {
         btn.classList.remove('selected');
     });
-    
+
     // Seleccionar el botón clickeado
     const btnSeleccionado = document.querySelector(`.cobro-option-btn[data-cobro="${tipo}"]`);
     if (btnSeleccionado) {
         btnSeleccionado.classList.add('selected');
     }
-    
+
     // Guardar el valor en el input hidden
     document.getElementById('editCobro').value = tipo;
 }
@@ -781,18 +781,18 @@ function calcularDiasHabilesHastaHoy(fechaInicioStr) {
 function insertarPlantilla(tipo) {
     const textarea = document.getElementById('editComentarios');
     const container = document.getElementById('editComentariosContainer');
-    
+
     if (!textarea || !container) {
         console.error('[insertarPlantilla] No se encontró el campo editComentarios o su contenedor');
         return;
     }
-    
+
     // Mostrar el contenedor
     container.style.display = 'block';
-    
+
     let plantilla = '';
-    
-    switch(tipo) {
+
+    switch (tipo) {
         case 'MANO_A_MANO':
             plantilla = 'Nos complace informarle que la presente novedad ha sido resuelta de manera satisfactoria mediante un proceso de compensación directa, sin generar cargos adicionales a su operación. El material correspondiente se encuentra disponible para su retiro en nuestras instalaciones, en el horario de atención establecido de 7:10 a.m. a 4:43 p.m., de lunes a viernes.\n\nEsta modalidad de resolución refleja nuestro compromiso con la agilidad operativa y la construcción de relaciones comerciales basadas en la confianza mutua. Agradecemos su disposición para coordinar el retiro del material en el menor tiempo posible, contribuyendo así a la continuidad de los procesos productivos.';
             textarea.readOnly = true;
@@ -823,15 +823,15 @@ function insertarPlantilla(tipo) {
             textarea.readOnly = false; // Permitir edición
             break;
     }
-    
+
     // Insertar la plantilla en el textarea (o dejarlo vacío si es PERSONALIZADO)
     textarea.value = plantilla;
-    
+
     // Expandir automáticamente el textarea según el contenido
     autoExpandTextarea(textarea);
-    
+
     textarea.focus();
-    
+
     // Pequeña animación visual
     if (tipo === 'PERSONALIZADO') {
         textarea.style.background = '#fffbeb'; // Amarillo suave para indicar que debe escribir
@@ -840,7 +840,7 @@ function insertarPlantilla(tipo) {
         textarea.style.background = '#f0f9ff';
         textarea.placeholder = 'Comentarios sobre la resolución de la novedad...';
     }
-    
+
     setTimeout(() => {
         textarea.style.background = '#fafafa';
     }, 300);
@@ -853,17 +853,17 @@ function autoExpandTextarea(textarea) {
     // Reset height para calcular correctamente
     textarea.style.height = 'auto';
     textarea.style.overflowY = 'hidden'; // Ocultar scroll
-    
+
     // Calcular la altura necesaria (scrollHeight + un pequeño margen)
     const scrollHeight = textarea.scrollHeight;
-    
+
     // Establecer la altura (mínimo 3 filas, máximo 20 filas para textos muy largos)
     const minHeight = 60; // ~3 filas
     const maxHeight = 400; // ~20 filas
     const newHeight = Math.min(Math.max(scrollHeight + 2, minHeight), maxHeight);
-    
+
     textarea.style.height = newHeight + 'px';
-    
+
     // Si alcanza el máximo, mostrar scroll
     if (scrollHeight + 2 >= maxHeight) {
         textarea.style.overflowY = 'auto';
@@ -871,10 +871,10 @@ function autoExpandTextarea(textarea) {
 }
 
 // Agregar listener para auto-expandir cuando el usuario escribe (solo para PERSONALIZADO)
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const textarea = document.getElementById('editComentarios');
     if (textarea) {
-        textarea.addEventListener('input', function() {
+        textarea.addEventListener('input', function () {
             if (!this.readOnly) {
                 autoExpandTextarea(this);
             }
@@ -885,8 +885,8 @@ document.addEventListener('DOMContentLoaded', function() {
 async function notificarSolucion(timestampId) {
     const nov = gsNovedades.find(n => n.ID_NOVEDAD === timestampId);
     if (!nov) {
-        Swal.fire({ 
-            icon: 'error', 
+        Swal.fire({
+            icon: 'error',
             title: 'Error',
             text: 'No se encontró la novedad',
             timer: 1500,
@@ -897,8 +897,8 @@ async function notificarSolucion(timestampId) {
 
     const infoPlanta = obtenerPlantaReciente(nov.PLANTA);
     if (!infoPlanta || !infoPlanta.EMAIL) {
-        Swal.fire({ 
-            icon: 'warning', 
+        Swal.fire({
+            icon: 'warning',
             title: 'Sin Correo',
             text: 'Esta planta no tiene un correo electrónico registrado',
             timer: 1500,
@@ -943,7 +943,7 @@ async function corregirTextoIA() {
     const aiBtn = document.querySelector('.notify-ai-btn');
     const aiStatus = document.getElementById('notifyAiStatus');
     const originalHTML = aiBtn.innerHTML;
-    
+
     aiBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Procesando...';
     aiBtn.disabled = true;
     aiStatus.classList.add('active');
@@ -957,7 +957,7 @@ async function corregirTextoIA() {
             aiStatus.style.background = '#f0fdf4';
             aiStatus.style.borderColor = '#bbf7d0';
             aiStatus.style.color = '#15803d';
-            
+
             textarea.value = data.improvedText;
 
             setTimeout(() => {
@@ -978,7 +978,7 @@ async function corregirTextoIA() {
         aiStatus.style.background = '#fef2f2';
         aiStatus.style.borderColor = '#fecaca';
         aiStatus.style.color = '#dc2626';
-        
+
         setTimeout(() => {
             aiStatus.classList.remove('active');
             setTimeout(() => {
@@ -1026,8 +1026,8 @@ async function enviarNotificacion() {
     btnEnviar.disabled = true;
 
     try {
-        const data = await sendToSupabase({ 
-            accion: "NOTIFICAR_SOLUCION", 
+        const data = await sendToSupabase({
+            accion: "NOTIFICAR_SOLUCION",
             timestampId: currentNovedadNotify.nov.ID_NOVEDAD,
             correo: currentNovedadNotify.infoPlanta.EMAIL,
             planta: currentNovedadNotify.nov.PLANTA,
@@ -1042,9 +1042,9 @@ async function enviarNotificacion() {
             // Guardar el email antes de cerrar el modal (que limpia currentNovedadNotify)
             const emailDestino = currentNovedadNotify.infoPlanta.EMAIL;
             cerrarModalNotify();
-            Swal.fire({ 
-                icon: 'success', 
-                title: 'Notificación Enviada', 
+            Swal.fire({
+                icon: 'success',
+                title: 'Notificación Enviada',
                 text: `Se ha enviado el correo a ${emailDestino}`,
                 timer: 1500,
                 showConfirmButton: false
@@ -1053,8 +1053,8 @@ async function enviarNotificacion() {
             throw new Error(data.message || 'Error al enviar notificación');
         }
     } catch (e) {
-        Swal.fire({ 
-            icon: 'error', 
+        Swal.fire({
+            icon: 'error',
             title: 'Error al Enviar',
             text: e.message || 'No se pudo enviar la notificación. Intente nuevamente.'
         });
@@ -1065,7 +1065,7 @@ async function enviarNotificacion() {
 }
 
 // Cerrar modal al hacer clic fuera
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const overlay = document.getElementById('modalNotifyOverlay');
     if (e.target === overlay) {
         cerrarModalNotify();
@@ -1074,12 +1074,12 @@ document.addEventListener('click', function(e) {
 function imprimirNovedad(id) {
     const nov = gsNovedades.find(n => n.ID_NOVEDAD === id);
     if (!nov) return;
-    
+
     const infoPlanta = obtenerPlantaReciente(nov.PLANTA);
-    
+
     localStorage.setItem('printNovedad', JSON.stringify(nov));
     localStorage.setItem('printPlanta', JSON.stringify(infoPlanta));
-    
+
     window.open('plantilla-impresion.html', '_blank');
 }
 
@@ -1271,7 +1271,7 @@ function parsearFechaLatina(d) {
 
         if (dateParts.length === 3) {
             let dia, mes, anio;
-            
+
             // Caso YYYY-MM-DD (Formato ISO de Sheets)
             if (dateParts[0].length === 4) {
                 anio = parseInt(dateParts[0]);
@@ -1305,7 +1305,7 @@ function parsearFechaLatina(d) {
                     const timeParts = parts[1].split(':');
                     fecha.setHours(parseInt(timeParts[0]) || 0, parseInt(timeParts[1]) || 0, parseInt(timeParts[2]) || 0);
                 }
-                
+
                 // Validar que la fecha sea válida
                 if (!isNaN(fecha.getTime())) {
                     return fecha;
@@ -1319,7 +1319,7 @@ function parsearFechaLatina(d) {
     if (!isNaN(dtFallback.getTime())) {
         return dtFallback;
     }
-    
+
     return null;
 }
 
@@ -1344,15 +1344,15 @@ async function _toggleFinalizados() {
     const icon = document.getElementById('icon-toggle-cerradas');
     const label = document.getElementById('label-toggle-cerradas');
     if (!checkbox) return;
-    
+
     checkbox.checked = !checkbox.checked;
     const showing = checkbox.checked;
-    
+
     if (icon) icon.className = showing ? 'fas fa-eye-slash' : 'fas fa-eye';
     if (label) label.textContent = showing ? 'Ocultar' : 'Cerradas';
-    
+
     gsCurrentPage = 1;
-    
+
     // Recargar datos desde Supabase según el estado del toggle
     await cargarDatos(showing);
 }
@@ -1362,11 +1362,11 @@ let currentEditNovedad = null;
 
 // Opciones para cada tipo de área (copiadas de novedades.js para el modal de edición)
 const EDIT_INSUMOS_OPCIONES = [
-    'ETIQUETA','PLACA','PLASTIFLECHA','TRAZABILIDAD','ELASTICO',
-    'ARGOLLA','TENSOR','FRAMILON','TRANSFER','MARQUILLA',
-    'CIERRE','CORDON','HILADILLA','HERRAJE','HEBILLA','ABROCHADURA',
-    'APLIQUE','BOTON','GANCHO','PUNTERAS','COPA','ENCAJE','VARILLA',
-    'ENTRETELA','VELCRO','OJALES','REMACHES','OTROS'
+    'ETIQUETA', 'PLACA', 'PLASTIFLECHA', 'TRAZABILIDAD', 'ELASTICO',
+    'ARGOLLA', 'TENSOR', 'FRAMILON', 'TRANSFER', 'MARQUILLA',
+    'CIERRE', 'CORDON', 'HILADILLA', 'HERRAJE', 'HEBILLA', 'ABROCHADURA',
+    'APLIQUE', 'BOTON', 'GANCHO', 'PUNTERAS', 'COPA', 'ENCAJE', 'VARILLA',
+    'ENTRETELA', 'VELCRO', 'OJALES', 'REMACHES', 'OJALETES', 'OTROS'
 ];
 
 const EDIT_CORTE_OPCIONES = ['PIEZAS', 'SESGO', 'ENTRETELA'];
@@ -1475,7 +1475,7 @@ async function handleEditCodigosTipoChange() {
     const unidadesGroup = document.getElementById('editCodigosUnidadesGroup');
     const cantidadInput = document.getElementById('editCodigosCantidadTotal');
     const rowGrid = document.getElementById('editCodigosRowGrid');
-    
+
     if (tipo === 'LOTE_COMPLETO') {
         loteCompletoGroup.classList.remove('hidden');
         unidadesGroup.classList.add('hidden');
@@ -1486,7 +1486,7 @@ async function handleEditCodigosTipoChange() {
         unidadesGroup.classList.remove('hidden');
         cantidadInput.disabled = true;
         rowGrid.style.gridTemplateColumns = '1fr';
-        
+
         // Cargar la curva si no está cargada aún
         if (!window.EDIT_CODIGOS_TALLAS || !window.EDIT_CODIGOS_COLORES) {
             console.log('[handleEditCodigosTipoChange] Cargando curva para cambio a UNIDADES');
@@ -1495,7 +1495,7 @@ async function handleEditCodigosTipoChange() {
                 await cargarCurvaParaCodigosEdit(lote);
             }
         }
-        
+
         // Si no hay filas, agregar una por defecto
         const lista = document.getElementById('editCodigosList');
         if (lista.children.length === 0) {
@@ -1546,11 +1546,11 @@ async function editarNovedad(timestampId) {
         document.getElementById('editArea').value = nov.AREA || '';
         document.getElementById('editTipoNovedad').value = nov.TIPO_NOVEDAD || '';
         document.getElementById('editDescripcion').value = nov.DESCRIPCION || '';
-        
+
         // Cargar comentarios
         const comentariosField = document.getElementById('editComentarios');
         const comentariosContainer = document.getElementById('editComentariosContainer');
-        
+
         if (nov.COMENTARIOS) {
             comentariosField.value = nov.COMENTARIOS;
             comentariosContainer.style.display = 'block';
@@ -1558,7 +1558,7 @@ async function editarNovedad(timestampId) {
             comentariosField.value = '';
             comentariosContainer.style.display = 'none';
         }
-        
+
         // Cargar tipo de cobro si existe
         if (nov.COBRO) {
             seleccionarCobro(nov.COBRO);
@@ -1601,10 +1601,10 @@ async function editarNovedad(timestampId) {
                     // CÓDIGOS UNIDADES - Primero cargar la curva para tener las opciones
                     console.log('[editarNovedad] Cargando CÓDIGOS UNIDADES:', tipoDetalle);
                     document.getElementById('editCodigosTipoSolicitud').value = 'UNIDADES';
-                    
+
                     // Cargar curva para obtener opciones de tallas y colores
                     await cargarCurvaParaCodigosEdit(nov.LOTE);
-                    
+
                     // Agregar cada unidad
                     tipoDetalle.items.forEach((item, index) => {
                         agregarFilaCodigoEdit(item.talla || '', item.color || '', item.cantidad || '');
@@ -1637,7 +1637,7 @@ async function editarNovedad(timestampId) {
                 console.log('[editarNovedad] Cargando CÓDIGOS LOTE_COMPLETO:', tipoDetalle);
                 document.getElementById('editCodigosTipoSolicitud').value = 'LOTE_COMPLETO';
                 document.getElementById('editCodigosCantidadTotal').value = tipoDetalle.cantidad_total || 0;
-                
+
                 // Cargar la curva también para LOTE_COMPLETO por si el usuario quiere cambiar a UNIDADES
                 await cargarCurvaParaCodigosEdit(nov.LOTE);
             }
@@ -1668,7 +1668,7 @@ async function editarNovedad(timestampId) {
 
     // Mostrar modal siempre (incluso si hubo errores al cargar datos)
     document.getElementById('modalEditNovedad').style.display = 'flex';
-    
+
     // Expandir textarea después de que el modal sea visible
     const comentariosField = document.getElementById('editComentarios');
     if (comentariosField && comentariosField.value) {
@@ -1685,9 +1685,9 @@ function agregarFilaEditInsumo(tipoVal = '', cantVal = '') {
     const lista = document.getElementById('editInsumosList');
     const fila = document.createElement('div');
     fila.className = 'insumo-fila row-pc-grid mb-3';
-    
+
     const opcionesHTML = _buildOptionsEdit(EDIT_INSUMOS_OPCIONES);
-    
+
     fila.innerHTML = `
         <div class="input-with-icon">
             <i class="fas fa-tags input-icon"></i>
@@ -1710,12 +1710,12 @@ function agregarFilaEditInsumo(tipoVal = '', cantVal = '') {
             </button>
         </div>`;
     lista.appendChild(fila);
-    
+
     // Establecer el valor seleccionado
     if (tipoVal) {
         fila.querySelector('.insumo-tipo').value = tipoVal;
     }
-    
+
     actualizarBotonesEliminarEdit('editInsumosList');
 }
 
@@ -1733,9 +1733,9 @@ function agregarFilaEditCorte(tipoVal = '', cantVal = '') {
     const lista = document.getElementById('editCorteList');
     const fila = document.createElement('div');
     fila.className = 'insumo-fila row-pc-grid mb-3';
-    
+
     const opcionesHTML = _buildOptionsEdit(EDIT_CORTE_OPCIONES);
-    
+
     fila.innerHTML = `
         <div class="input-with-icon">
             <i class="fas fa-tags input-icon"></i>
@@ -1758,12 +1758,12 @@ function agregarFilaEditCorte(tipoVal = '', cantVal = '') {
             </button>
         </div>`;
     lista.appendChild(fila);
-    
+
     // Establecer el valor seleccionado
     if (tipoVal) {
         fila.querySelector('.insumo-tipo').value = tipoVal;
     }
-    
+
     actualizarBotonesEliminarEdit('editCorteList');
 }
 
@@ -1781,9 +1781,9 @@ function agregarFilaEditTela(tipoVal = '', cantVal = '') {
     const lista = document.getElementById('editTelasList');
     const fila = document.createElement('div');
     fila.className = 'insumo-fila row-pc-grid mb-3';
-    
+
     const opcionesHTML = _buildOptionsEdit(EDIT_TELAS_OPCIONES);
-    
+
     fila.innerHTML = `
         <div class="input-with-icon">
             <i class="fas fa-tags input-icon"></i>
@@ -1806,12 +1806,12 @@ function agregarFilaEditTela(tipoVal = '', cantVal = '') {
             </button>
         </div>`;
     lista.appendChild(fila);
-    
+
     // Establecer el valor seleccionado
     if (tipoVal) {
         fila.querySelector('.insumo-tipo').value = tipoVal;
     }
-    
+
     actualizarBotonesEliminarEdit('editTelasList');
 }
 
@@ -1827,17 +1827,17 @@ function eliminarFilaEditTela(btn) {
  */
 async function cargarCurvaParaCodigosEdit(op) {
     console.log('[cargarCurvaParaCodigosEdit] Preparando opciones para OP:', op);
-    
+
     if (!op) return;
 
     // Configurar opciones globales para el modal de edición
     window.EDIT_CODIGOS_TALLAS = EDIT_CODIGOS_TALLAS_LIST;
     window.EDIT_CODIGOS_COLORES = EDIT_CODIGOS_COLORES_LIST;
-    
+
     // Obtener cantidad del lote de la novedad actual
     const cantidadTotal = (currentEditNovedad && currentEditNovedad.CANTIDAD_LOTE) || 0;
     window.EDIT_CODIGOS_CANTIDAD_TOTAL = cantidadTotal;
-    
+
     // Establecer la cantidad total en el input si existe
     const cantidadInput = document.getElementById('editCodigosCantidadTotal');
     if (cantidadInput) {
@@ -1852,20 +1852,20 @@ function poblarCodigosDesdeDetallesEdit(detalles) {
     // Extraer opciones únicas de tallas y colores
     const tallasUnicas = [...new Set(detalles.map(d => d[3]))].sort();
     const coloresUnicos = [...new Set(detalles.map(d => d[1]))].sort();
-    
+
     // Calcular cantidad total del lote
     const cantidadTotal = detalles.reduce((sum, d) => sum + Number(d[4]), 0);
-    
+
     console.log('[poblarCodigosDesdeDetallesEdit] Tallas únicas:', tallasUnicas);
     console.log('[poblarCodigosDesdeDetallesEdit] Colores únicos:', coloresUnicos);
     console.log('[poblarCodigosDesdeDetallesEdit] Cantidad total del lote:', cantidadTotal);
-    
+
     // Guardar opciones y detalles globalmente para el modal de edición
     window.EDIT_CODIGOS_TALLAS = tallasUnicas;
     window.EDIT_CODIGOS_COLORES = coloresUnicos;
     window.EDIT_CODIGOS_DETALLES = detalles;
     window.EDIT_CODIGOS_CANTIDAD_TOTAL = cantidadTotal;
-    
+
     // Establecer la cantidad total en el input si existe
     const cantidadInput = document.getElementById('editCodigosCantidadTotal');
     if (cantidadInput) {
@@ -1878,20 +1878,20 @@ function poblarCodigosDesdeDetallesEdit(detalles) {
  */
 function agregarFilaCodigoEdit(tallaVal = '', colorVal = '', cantVal = '') {
     const lista = document.getElementById('editCodigosList');
-    const fila  = document.createElement('div');
+    const fila = document.createElement('div');
     fila.className = 'insumo-fila mb-3';
     fila.style.cssText = 'display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center;';
-    
+
     // Opciones de tallas
-    const tallasOpts = (window.EDIT_CODIGOS_TALLAS || []).map(t => 
+    const tallasOpts = (window.EDIT_CODIGOS_TALLAS || []).map(t =>
         `<option value="${t}" ${t === tallaVal ? 'selected' : ''}>${t}</option>`
     ).join('');
-    
+
     // Opciones de colores
-    const coloresOpts = (window.EDIT_CODIGOS_COLORES || []).map(c => 
+    const coloresOpts = (window.EDIT_CODIGOS_COLORES || []).map(c =>
         `<option value="${c}" ${c === colorVal ? 'selected' : ''}>${c}</option>`
     ).join('');
-    
+
     fila.innerHTML = `
         <div class="input-with-icon">
             <i class="fas fa-ruler input-icon"></i>
@@ -1932,7 +1932,7 @@ function agregarFilaCodigoEdit(tallaVal = '', colorVal = '', cantVal = '') {
 
     inputTalla.addEventListener('change', () => actualizarMaximoCodigoEdit(inputTalla));
     inputColor.addEventListener('change', () => actualizarMaximoCodigoEdit(inputColor));
-    
+
     // Si hay valores preseleccionados, actualizar el máximo
     if (tallaVal && colorVal) {
         const select = fila.querySelector('.codigo-talla');
@@ -1947,7 +1947,7 @@ function actualizarMaximoCodigoEdit(inputElement) {
     const fila = inputElement.closest('.insumo-fila');
     const inputCantidad = fila.querySelector('.codigo-cantidad');
     const maximo = window.EDIT_CODIGOS_CANTIDAD_TOTAL || 0;
-    
+
     if (maximo > 0) {
         inputCantidad.max = maximo;
         inputCantidad.placeholder = `Máx: ${maximo}`;
@@ -1959,7 +1959,7 @@ function actualizarMaximoCodigoEdit(inputElement) {
 /**
  * Configura el comportamiento de selector inteligente (Edición)
  */
-    // Función _setupSmartSelectEdit eliminada, usando datalist nativo
+// Función _setupSmartSelectEdit eliminada, usando datalist nativo
 
 /**
  * Elimina una fila de código del modal de edición
@@ -1977,14 +1977,14 @@ function eliminarFilaCodigoEdit(btn) {
 function actualizarBotonesEliminarEdit(listId) {
     const lista = document.getElementById(listId);
     if (!lista) return;
-    
+
     const filas = lista.querySelectorAll('.insumo-fila');
     const hayMultiples = filas.length > 1;
-    
+
     filas.forEach(fila => {
         const btn = fila.querySelector('.btn-eliminar-insumo');
         if (!btn) return;
-        
+
         if (hayMultiples) {
             // Mostrar botón y ajustar grid para incluirlo
             btn.style.display = 'flex';
@@ -2005,7 +2005,7 @@ function actualizarBotonesEliminarEdit(listId) {
 function cerrarModalEditNovedad() {
     document.getElementById('modalEditNovedad').style.display = 'none';
     currentEditNovedad = null;
-    
+
     // Limpiar listas dinámicas
     document.getElementById('editInsumosList').innerHTML = '';
     document.getElementById('editCorteList').innerHTML = '';
@@ -2040,11 +2040,11 @@ function _recolectarCodigosEdit() {
         const tallaSelect = fila.querySelector('.codigo-talla');
         const colorSelect = fila.querySelector('.codigo-color');
         const cantInput = fila.querySelector('.codigo-cantidad');
-        
+
         const talla = tallaSelect ? tallaSelect.value : '';
         const color = colorSelect ? colorSelect.value : '';
         const cant = cantInput ? cantInput.value : '';
-        
+
         if (!talla || !color || !cant) { valido = false; return; }
         datos.push({ talla, color, cantidad: parseInt(cant) });
     });
@@ -2089,7 +2089,7 @@ async function guardarEdicionNovedad() {
         } else if (area === 'CODIGOS') {
             const tipoSolicitud = document.getElementById('editCodigosTipoSolicitud').value;
             if (!tipoSolicitud) throw new Error('Seleccione el tipo de solicitud.');
-            
+
             if (tipoSolicitud === 'LOTE_COMPLETO') {
                 cantidadSolicitada = parseInt(document.getElementById('editCodigosCantidadTotal').value) || 0;
                 tipoDetalle = {
@@ -2099,7 +2099,7 @@ async function guardarEdicionNovedad() {
             } else if (tipoSolicitud === 'UNIDADES') {
                 const datos = _recolectarCodigosEdit();
                 if (!datos) throw new Error('Complete talla, color y cantidad de todos los códigos.');
-                
+
                 tipoDetalle = {
                     tipo_solicitud: 'UNIDADES',
                     items: datos
@@ -2192,7 +2192,7 @@ async function guardarEdicionNovedad() {
 }
 
 // Cerrar modal al hacer clic fuera
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const modal = document.getElementById('modalEditNovedad');
     if (e.target === modal) {
         cerrarModalEditNovedad();
@@ -2207,10 +2207,10 @@ function normalizeRecordKeys(record) {
     for (const key in record) {
         norm[key.toUpperCase()] = record[key];
     }
-    
+
     // Distinguir si es novedad o master para mapear LOTE y campos técnicos
     const isNov = (record.id_novedad !== undefined || record.ID_NOVEDAD !== undefined || record.idx !== undefined);
-    
+
     if (isNov) {
         // En novedades, LOTE está en 'id', 'ID' o 'LOTE'
         const loteVal = record.id || record.ID || record.LOTE || record.lote;
@@ -2240,7 +2240,7 @@ function normalizeRecordKeys(record) {
     if (record.fecha_salida !== undefined) norm.SALIDA = record.fecha_salida;
     if (record.nombre_planta !== undefined) norm.PLANTA = record.nombre_planta;
     if (record.id_novedad !== undefined) norm.ID_NOVEDAD = record.id_novedad;
-    
+
     return norm;
 }
 
@@ -2270,11 +2270,11 @@ function checkMissingMasterData(rawNov, rawMaster) {
         const valMaster = masterRecord[field.key];
 
         // Validar si el valor de nov es un placeholder o está vacío
-        const isNovPlaceholder = valNov === undefined || valNov === null || 
+        const isNovPlaceholder = valNov === undefined || valNov === null ||
             field.placeholders.some(p => String(valNov).trim().toUpperCase() === String(p).toUpperCase());
 
         // Validar si el masterRecord tiene un valor real (no vacío y no placeholder)
-        const isMasterValid = valMaster !== undefined && valMaster !== null && 
+        const isMasterValid = valMaster !== undefined && valMaster !== null &&
             String(valMaster).trim() !== '' &&
             !field.placeholders.some(p => String(valMaster).trim().toUpperCase() === String(p).toUpperCase());
 
@@ -2290,11 +2290,11 @@ function checkMissingMasterData(rawNov, rawMaster) {
 
 async function syncMissingMasterData(idNovedad, missingDataStr, btnElement) {
     if (!idNovedad || !missingDataStr) return;
-    
+
     let missingData = {};
     try {
         missingData = JSON.parse(decodeURIComponent(missingDataStr));
-    } catch(e) {
+    } catch (e) {
         console.error('[SYNC] Error al parsear missingData:', e);
         return;
     }
@@ -2305,7 +2305,7 @@ async function syncMissingMasterData(idNovedad, missingDataStr, btnElement) {
 
     try {
         console.log('[SYNC] Sincronizando campos faltantes desde Master para Novedad:', idNovedad, missingData);
-        
+
         let success = false;
         let errorMsg = '';
 
@@ -2381,8 +2381,8 @@ async function syncMissingMasterData(idNovedad, missingDataStr, btnElement) {
                 if (lookupKey === 'CUENTO') lookupKey = 'LINEA';
 
                 const rawPrevVal = novRecord ? novRecord[lookupKey] : '';
-                const prevValDisplay = (!rawPrevVal || String(rawPrevVal).trim() === '' || String(rawPrevVal).trim() === '--') 
-                    ? '<span style="color: #94a3b8; font-style: italic;">(vacío)</span>' 
+                const prevValDisplay = (!rawPrevVal || String(rawPrevVal).trim() === '' || String(rawPrevVal).trim() === '--')
+                    ? '<span style="color: #94a3b8; font-style: italic;">(vacío)</span>'
                     : `<span style="color: #ef4444; text-decoration: line-through; font-weight: 500;">"${rawPrevVal}"</span>`;
 
                 return `
