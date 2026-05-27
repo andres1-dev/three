@@ -16,9 +16,25 @@ let _markReadSent = false; // MARK_READ solo se envía una vez por apertura
 /* ── Badge de mensajes no leídos (USER-P/ADMIN en resolucion.html) ── */
 const CHAT_BADGE_KEY = 'busint_chat_seen';
 const OPERATOR_NOTIF_KEY = 'busint_op_notifs'; // persistencia notificaciones operador
+const CHAT_TOASTS_KEY = 'busint_chat_toasts_enabled';
 let _chatBadgeTimer = null;
 let _chatSeenTs = {};
 let _operatorChatNotifs = [];
+
+function _areChatToastsEnabled() {
+    try {
+        const v = localStorage.getItem(CHAT_TOASTS_KEY);
+        if (v === null) return false; // default OFF
+        return v === '1' || v === 'true';
+    } catch (_) {
+        return false;
+    }
+}
+
+// Toggle simple (consola): setChatToastsEnabled(true/false)
+window.setChatToastsEnabled = function (enabled) {
+    try { localStorage.setItem(CHAT_TOASTS_KEY, enabled ? '1' : '0'); } catch (_) { }
+};
 
 /* ── Panel GUEST ── */
 const GUEST_CHAT_KEY = 'busint_guest_chat_seen';
@@ -56,6 +72,12 @@ async function _chatFetch(body) {
 async function _readChatSheet(idNovedad = null) {
     try {
         let url;
+        const productora = String(
+            currentUser?.ID_PRODUCTORA ??
+            currentUser?.PRODUCTORA ??
+            currentUser?.productora ??
+            ''
+        ).trim();
         
         if (idNovedad) {
             if (Array.isArray(idNovedad)) {
@@ -63,9 +85,9 @@ async function _readChatSheet(idNovedad = null) {
             }
             
             const trimmedId = String(idNovedad).trim();
-            url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_messages&id_novedad=${encodeURIComponent(trimmedId)}`;
+            url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_messages&id_novedad=${encodeURIComponent(trimmedId)}&productora=${encodeURIComponent(productora)}`;
         } else {
-            url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_all`;
+            url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_all&productora=${encodeURIComponent(productora)}`;
         }
         
         const response = await fetch(url, {
@@ -674,6 +696,12 @@ async function _loadAndRender() {
         if (!id) {
             return;
         }
+        const productora = String(
+            currentUser?.ID_PRODUCTORA ??
+            currentUser?.PRODUCTORA ??
+            currentUser?.productora ??
+            ''
+        ).trim();
 
         // Cargar meta solo si no está cargada
         if (!_chatMetaLoaded) {
@@ -688,7 +716,7 @@ async function _loadAndRender() {
         let msgs = [];
         if (_chatArchived) {
             _stopChatPoll();
-            const data = await _chatFetch({ accion: 'GET_CHAT_MSGS', idNovedad: id });
+            const data = await _chatFetch({ accion: 'GET_CHAT_MSGS', idNovedad: id, productora });
             msgs = data.msgs || [];
             if (data.readReceipts) _chatReadReceipts = data.readReceipts;
             _renderMessages(msgs);
@@ -709,7 +737,7 @@ async function _loadAndRender() {
         if (!_markReadSent || hasNewOtherMsg) {
             _markReadSent = true;
             const rol = currentUser?.ROL || 'GUEST';
-            _chatFetch({ accion: 'MARK_READ', idNovedad: id, rol }).catch(() => { });
+            _chatFetch({ accion: 'MARK_READ', idNovedad: id, rol, productora }).catch(() => { });
         }
     } catch (e) { 
     }
@@ -938,7 +966,13 @@ function _startBadgePoll() {
 async function _pollChatBadges() {
     try {
         const myRol = currentUser?.ROL || 'GUEST';
-        const url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_latest_by_novedad&rol=${myRol === 'GUEST' ? 'ADMIN' : 'GUEST'}`;
+        const productora = String(
+            currentUser?.ID_PRODUCTORA ??
+            currentUser?.PRODUCTORA ??
+            currentUser?.productora ??
+            ''
+        ).trim();
+        const url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_latest_by_novedad&rol=${myRol === 'GUEST' ? 'ADMIN' : 'GUEST'}&productora=${encodeURIComponent(productora)}`;
         
         const response = await fetch(url, {
             method: 'GET',
@@ -1024,12 +1058,22 @@ function _addOperatorChatNotif(idNovedad, msg, lote, planta) {
         playChatSound();
     }
     if (typeof _showChatToast === 'function') {
-        _showChatToast(lote, msg);
+        if (_areChatToastsEnabled()) _showChatToast(lote, msg);
     }
 }
 
 function _persistOperatorNotifs() {
     try { localStorage.setItem(OPERATOR_NOTIF_KEY, JSON.stringify(_operatorChatNotifs)); } catch (_) { }
+}
+
+function _removeOperatorNotifsByNovedad(idNovedad) {
+    if (!_operatorChatNotifs || !_operatorChatNotifs.length) return;
+    const before = _operatorChatNotifs.length;
+    _operatorChatNotifs = _operatorChatNotifs.filter(n => n.idNovedad !== idNovedad);
+    if (_operatorChatNotifs.length !== before) {
+        _persistOperatorNotifs();
+        _updateOperatorBellBadge();
+    }
 }
 
 function _markCardUnread(idNovedad) {
@@ -1103,9 +1147,8 @@ function _markChatSeen(idNovedad, lastTs) {
         _chatSeenTs[idNovedad] = lastTs;
         try { localStorage.setItem(CHAT_BADGE_KEY, JSON.stringify(_chatSeenTs)); } catch (_) { }
         _markCardRead(idNovedad);
-        _operatorChatNotifs.forEach(n => { if (n.idNovedad === idNovedad) n.read = true; });
-        _persistOperatorNotifs();
-        _updateOperatorBellBadge();
+        // Al ver el chat, limpiar notificaciones de esa novedad
+        _removeOperatorNotifsByNovedad(idNovedad);
     }
 }
 
@@ -1160,8 +1203,8 @@ function _renderOperatorNotifPanel() {
 }
 
 function _openChatFromNotif(idNovedad, planta, lote, notifId) {
-    const n = _operatorChatNotifs.find(x => x.id === notifId);
-    if (n) n.read = true;
+    // Al abrir desde campana, eliminar la notificación (evita que quede “pegada”)
+    _operatorChatNotifs = _operatorChatNotifs.filter(x => x.id !== notifId);
     _persistOperatorNotifs();
     _updateOperatorBellBadge();
     const panel = document.getElementById('notif-panel');
@@ -1270,7 +1313,13 @@ async function _pollGuestChats() {
 
     try {
         // Obtener todos los mensajes y filtrar en memoria (más rápido que múltiples queries)
-        const url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_all`;
+        const productora = String(
+            currentUser?.ID_PRODUCTORA ??
+            currentUser?.PRODUCTORA ??
+            currentUser?.productora ??
+            ''
+        ).trim();
+        const url = `${CONFIG.FUNCTIONS_URL}/chat-realtime?action=get_all&productora=${encodeURIComponent(productora)}`;
         
         const response = await fetch(url, {
             method: 'GET',
@@ -1361,7 +1410,7 @@ function _addChatNotification(nov, msg) {
     }
 
     // Toast y Sonido
-    _showChatToast(nov.ID_NOVEDAD || 'S/N', msg);
+    if (_areChatToastsEnabled()) _showChatToast(nov.ID_NOVEDAD || 'S/N', msg);
     if (typeof playChatSound === 'function') {
         playChatSound();
     }

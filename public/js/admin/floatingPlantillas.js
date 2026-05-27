@@ -24,7 +24,8 @@ const LOCAL_TEMPLATES = [
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 20 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
     { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, ensambladas espalda con espalda, dobladas individualmente y con las etiquetas aseguradas y amarradas.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' }
+    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' },
+    { tipo: 'PAQUETEO', contenido: 'Paquetear blusa principal y combinaciones sin ensamblar, separadas por talla y color. ' }
 ];
 
 let plantillasData = [];
