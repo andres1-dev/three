@@ -356,6 +356,8 @@ function renderTabla(data = gsNovedades) {
         }) : null;
         const missingData = checkMissingMasterData(nov, masterRecord);
         const isLocked = !!missingData;
+        const mismatchData = checkMismatchMasterData(nov, masterRecord);
+        const hasMismatch = !!mismatchData && !isLocked;
 
         const card = document.createElement('div');
         const statusClass = `status-${estadoActual.toLowerCase()}`;
@@ -538,6 +540,11 @@ function renderTabla(data = gsNovedades) {
                 </div>
             </div>
             <div class="actions-tower-ultra">
+                ${hasMismatch ? `
+                <button class="btn-warning-ultra w-100" onclick="confirmMismatchMasterData('${nov.ID_NOVEDAD}', '${encodeURIComponent(JSON.stringify(mismatchData))}', this)" title="Diferencias detectadas con la Base Master">
+                    <i class="fas fa-exclamation-triangle"></i> VALIDAR CAMBIOS
+                </button>
+                ` : ''}
                 <div class="status-btn-lux ${sClass}">
                     <i class="fas fa-${sIcon}"></i>
                     <span>${sLab}</span>
@@ -2286,6 +2293,96 @@ function checkMissingMasterData(rawNov, rawMaster) {
     });
 
     return hasMissing ? missingData : null;
+}
+
+function checkMismatchMasterData(rawNov, rawMaster) {
+    if (!rawMaster) return null;
+    const nov = normalizeRecordKeys(rawNov);
+    const masterRecord = normalizeRecordKeys(rawMaster);
+
+    const fieldsToCheck = [
+        { key: 'PLANTA', dbKey: 'planta', label: 'Planta/Taller' },
+        { key: 'SALIDA', dbKey: 'salida', label: 'Fecha Salida' },
+        { key: 'PROCESO', dbKey: 'proceso', label: 'Proceso' }
+    ];
+
+    const fieldsToSync = {};
+    const summary = [];
+    let hasMismatch = false;
+
+    fieldsToCheck.forEach(field => {
+        let valNov = String(nov[field.key] || '').trim();
+        let valMaster = String(masterRecord[field.key] || '').trim();
+
+        const isMasterValid = valMaster && valMaster !== '--' && valMaster.toUpperCase() !== 'N/A' && valMaster.toUpperCase() !== 'NA' && valMaster.toUpperCase() !== 'UNDEFINED' && valMaster.toUpperCase() !== 'NULL';
+        const isNovValid = valNov && valNov !== '--' && valNov.toUpperCase() !== 'N/A' && valNov.toUpperCase() !== 'NA' && valNov.toUpperCase() !== 'UNDEFINED' && valNov.toUpperCase() !== 'NULL';
+
+        if (isMasterValid && isNovValid) {
+            let isDifferent = false;
+            
+            if (field.key === 'SALIDA') {
+                const dNov = parsearFechaLatina(valNov);
+                const dMaster = parsearFechaLatina(valMaster);
+                if (dNov && dMaster && dNov.getTime() !== dMaster.getTime()) {
+                    isDifferent = true;
+                    valNov = dNov.toLocaleDateString('es-CO');
+                    valMaster = dMaster.toLocaleDateString('es-CO');
+                } else if (!dNov || !dMaster) {
+                    if (valNov.toUpperCase() !== valMaster.toUpperCase()) isDifferent = true;
+                }
+            } else {
+                if (valNov.toUpperCase() !== valMaster.toUpperCase()) isDifferent = true;
+            }
+
+            if (isDifferent) {
+                fieldsToSync[field.dbKey] = masterRecord[field.key];
+                summary.push({
+                    label: field.label,
+                    nov: valNov,
+                    master: valMaster
+                });
+                hasMismatch = true;
+            }
+        }
+    });
+
+    return hasMismatch ? { fieldsToSync, summary } : null;
+}
+
+async function confirmMismatchMasterData(idNovedad, mismatchDataStr, btnElement) {
+    if (!idNovedad || !mismatchDataStr) return;
+    
+    let mismatchData = {};
+    try {
+        mismatchData = JSON.parse(decodeURIComponent(mismatchDataStr));
+    } catch(e) { return; }
+
+    const differencesHtml = mismatchData.summary.map(s => 
+        `<div style="text-align: left; margin-bottom: 8px; font-size: 0.9rem; padding: 8px; background: #f8fafc; border-radius: 6px; border-left: 3px solid #f59e0b;">
+            <strong style="color: #475569;">${s.label}:</strong><br>
+            <span style="color: #ef4444; text-decoration: line-through; margin-right: 8px;">${s.nov}</span>
+            <span style="color: #10b981; font-weight: bold;"><i class="fas fa-arrow-right" style="font-size: 0.8em; margin-right: 4px;"></i>${s.master}</span>
+        </div>`
+    ).join('');
+
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Diferencias con Master',
+        html: `Se han detectado diferencias entre los datos de la Novedad y la Base Master.<br><br>
+               ${differencesHtml}
+               <br><b>¿Desea actualizar la Novedad para que coincida con Master?</b><br>
+               <small style="color:#ef4444; font-weight: bold;">El operador debe validar si realmente corresponde al mismo lote y proceso antes de aceptar.</small>`,
+        showCancelButton: true,
+        confirmButtonColor: '#f59e0b',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: '<i class="fas fa-sync"></i> Sincronizar Datos',
+        cancelButtonText: 'Mantener Actuales'
+    });
+
+    if (result.isConfirmed) {
+        const fieldsToSyncStr = encodeURIComponent(JSON.stringify(mismatchData.fieldsToSync));
+        await syncMissingMasterData(idNovedad, fieldsToSyncStr, btnElement);
+    }
 }
 
 async function syncMissingMasterData(idNovedad, missingDataStr, btnElement) {

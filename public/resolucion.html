@@ -815,7 +815,8 @@
         .btn-print-ultra,
         .btn-notify-ultra,
         .btn-chat-print-ultra,
-        .btn-edit-ultra {
+        .btn-edit-ultra,
+        .btn-warning-ultra {
             height: auto;
             border-radius: 10px;
             color: white;
@@ -840,6 +841,17 @@
 
         .btn-edit-ultra:hover {
             background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-warning-ultra {
+            background: #ef4444;
+        }
+
+        .btn-warning-ultra:hover {
+            background: #dc2626;
             transform: translateY(-1px);
             filter: brightness(1.1);
             box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
