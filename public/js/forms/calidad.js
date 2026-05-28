@@ -850,68 +850,6 @@ async function handleCalidadSubmit(e) {
             throw new Error('No se recibió ID del reporte');
         }
 
-        // 2. Envío automático de correo en segundo plano (sin confirmación)
-        (async () => {
-            try {
-                // 2a. Buscar el correo registrado de la planta taller
-                let emailPlanta = '';
-                try {
-                    const plantas = await fetchPlantasData();
-                    const nombrePlanta = (payload.planta || '').trim().toLowerCase();
-                    const plantaObj = plantas.find(p =>
-                        (p.PLANTA || '').trim().toLowerCase() === nombrePlanta
-                    );
-                    emailPlanta = plantaObj ? (plantaObj.CORREO || plantaObj.EMAIL || '') : '';
-                } catch (ePlanta) {
-                    console.warn('[calidad] No se pudo obtener el email de la planta:', ePlanta);
-                }
-
-                if (!emailPlanta) {
-                    console.warn('[calidad] La planta no tiene correo registrado, no se enviará el correo automático.');
-                    return;
-                }
-
-                const repParaCorreo = {
-                    ID_REPORTE: idReporte,
-                    ID: payload.lote || '',
-                    REFERENCIA: payload.referencia || '',
-                    PLANTA: payload.planta || '',
-                    LINEA: payload.linea || payload.cuento || '',
-                    PROCESO: payload.proceso || '',
-                    PRENDA: payload.prenda || '',
-                    GENERO: payload.genero || '',
-                    TEJIDO: payload.tejido || '',
-                    CANTIDAD: payload.cantidad || '',
-                    TIPO_VISITA: tipoVisita,
-                    CONCLUSION: conclusion,
-                    OBSERVACIONES: finalObservaciones,
-                    FECHA: new Date().toISOString(),
-                    DESTINO_PROCESO: destino_proceso || '',
-                    DESTINO_PLANTA: destino_planta || '',
-                    AVANCE: avance || '',
-                    NOVEDADES_AUDITORIA: novedades_auditoria ? JSON.stringify(novedades_auditoria) : '',
-                    // Agregar fechas de entrega y recepción
-                    SALIDA: payload.salida || '',
-                    salida: payload.salida || '',
-                    ENTRADA: payload.entrada || '',
-                    entrada: payload.entrada || '',
-                    // Colocar el correo del auditor para resolver nombre y enlace de WhatsApp
-                    email: email,
-                    EMAIL: email
-                };
-
-                await sendToSupabase({
-                    accion: 'REPORTE_CALIDAD',
-                    email: emailPlanta, // Destinatario real (la planta taller)
-                    cc: ['coordinadorcalidad@tceluniverso.com', 'coordinadorlogistico@eltemplodelamoda.com.co'],
-                    //cc: ['coordinadorlogistico@eltemplodelamoda.com.co'],
-                    reporte: repParaCorreo,
-                });
-                console.log('[calidad] Correo de reporte enviado automáticamente a:', emailPlanta, idReporte);
-            } catch (mailErr) {
-                console.warn('[calidad] El correo no pudo enviarse automáticamente (no crítico):', mailErr);
-            }
-        })();
 
         // 3. UI libre
         Swal.fire({

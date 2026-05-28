@@ -335,8 +335,13 @@ function renderGroupedView() {
             const statusInfo = getStatusInfo(r.CONCLUSION);
 
             const nombreP = (r.PLANTA || r.planta || '').trim().toLowerCase();
-            const pObj = gsPlantas.find(p => (p.PLANTA || p.planta || '').trim().toLowerCase() === nombreP);
+            const repProductora = Number(r.PRODUCTORA || r.productora);
+            const pObj = gsPlantas.find(p =>
+                (p.PLANTA || p.planta || '').trim().toLowerCase() === nombreP &&
+                (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
+            );
             const tieneCorreo = !!(pObj && (pObj.CORREO || pObj.EMAIL || pObj.correo || pObj.email));
+            const tieneTelefono = !!(pObj && (pObj.TELEFONO || pObj.telefono));
 
             rowsHtml += `
                 <tr class="planta-row-mobile">
@@ -349,22 +354,23 @@ function renderGroupedView() {
                     <td>${r.PLANTA || '-'}</td>
                     <td><span class="status-badge-sm ${statusInfo.class} text-white">${statusInfo.label}</span></td>
                     <td>
-                        <div class="action-btns">
-                            <button class="action-btn action-btn-ver" onclick="expandReport(${globalIdx})" title="Ver detalle">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="action-btn action-btn-print" onclick="imprimirReporte(${globalIdx})" title="Imprimir">
-                                <i class="fas fa-print"></i>
-                            </button>
-                            <button class="action-btn action-btn-whatsapp" onclick="enviarWhatsAppIndividual(${globalIdx})" title="Enviar por WhatsApp">
-                                <i class="fab fa-whatsapp"></i>
-                            </button>
-                            ${tieneCorreo ? '' : `
-                            <button class="action-btn action-btn-email" onclick="enviarCorreoCalidad(${globalIdx})" title="Enviar por Correo">
-                                <i class="fas fa-envelope"></i>
-                            </button>
-                            `}
-                        </div>
+                         <div class="action-btns">
+                             <button class="action-btn action-btn-ver" onclick="expandReport(${globalIdx})" title="Ver detalle">
+                                 <i class="fas fa-eye"></i>
+                             </button>
+                             <button class="action-btn action-btn-print" onclick="imprimirReporte(${globalIdx})" title="Imprimir">
+                                 <i class="fas fa-print"></i>
+                             </button>
+                             <button class="action-btn action-btn-whatsapp" onclick="enviarWhatsAppIndividual(${globalIdx})" title="Enviar por WhatsApp" ${tieneTelefono ? '' : 'disabled style="opacity: 0.35; cursor: not-allowed;"'}>
+                                 <i class="fab fa-whatsapp"></i>
+                             </button>
+                             <button class="action-btn action-btn-email" onclick="enviarCorreoCalidad(${globalIdx})" title="Enviar por Correo" ${tieneCorreo ? '' : 'disabled style="opacity: 0.35; cursor: not-allowed;"'}>
+                                 <i class="fas fa-envelope"></i>
+                             </button>
+                             <button class="action-btn action-btn-editar-planta" onclick="abrirModalPlantaReporte(${globalIdx})" title="Validar / Editar Taller">
+                                 <i class="fas fa-address-card"></i>
+                             </button>
+                         </div>
                     </td>
                 </tr>
             `;
@@ -425,8 +431,10 @@ async function enviarCorreoCalidad(index) {
     try {
         const plantas = await fetchPlantasData();
         const nombrePlanta = (rep.PLANTA || rep.planta || '').trim().toLowerCase();
+        const repProductora = Number(rep.PRODUCTORA || rep.productora);
         plantaObj = plantas.find(p =>
-            (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta
+            (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta &&
+            (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
         );
 
         // Si no se encuentra con la consulta rápida/caché habitual, forzamos por la Edge Function (Bypass RLS)
@@ -434,7 +442,8 @@ async function enviarCorreoCalidad(index) {
             console.log('[mis-reportes] Planta no encontrada por RLS/SDK. Buscando por Edge Function...');
             const plantasEdge = await fetchPlantasData({ forceEdge: true });
             plantaObj = plantasEdge.find(p =>
-                (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta
+                (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta &&
+                (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
             );
         }
 
@@ -445,210 +454,18 @@ async function enviarCorreoCalidad(index) {
     }
 
     if (!emailPlanta) {
-        if (!plantaObj) {
-            const { value: formValues } = await Swal.fire({
-                icon: 'info',
-                title: 'Taller no registrado',
-                html: `
-                    <div style="text-align: left; line-height: 1.5; font-size: 0.95rem;">
-                        <p>El taller <b>${rep.PLANTA || 'N/A'}</b> no está registrado en el catálogo de plantas.<br>
-                        Por favor, ingrese los siguientes datos obligatorios para crearlo en el sistema y poder enviarle este reporte:</p>
-                        <div style="margin-bottom: 12px;">
-                            <label style="font-weight: 600; font-size: 0.85em; color: #475569;">Cédula o NIT del Taller <span style="color:#ef4444;">*</span></label>
-                            <input id="swal-planta-id" class="swal2-input" type="number" placeholder="Ej: 114416716" style="margin: 4px 0 0 0; width: 100%; box-sizing: border-box;">
-                        </div>
-                        <div style="margin-bottom: 12px;">
-                            <label style="font-weight: 600; font-size: 0.85em; color: #475569;">Teléfono / Celular <span style="color:#ef4444;">*</span></label>
-                            <input id="swal-planta-telefono" class="swal2-input" type="tel" placeholder="Ej: 3168007979" style="margin: 4px 0 0 0; width: 100%; box-sizing: border-box;">
-                        </div>
-                        <div style="margin-bottom: 12px;">
-                            <label style="font-weight: 600; font-size: 0.85em; color: #475569;">Correo Electrónico <span style="color:#ef4444;">*</span></label>
-                            <input id="swal-planta-email" class="swal2-input" type="email" placeholder="correo@taller.com" style="margin: 4px 0 0 0; width: 100%; box-sizing: border-box;">
-                        </div>
-                    </div>
-                `,
-                focusConfirm: false,
-                showCancelButton: true,
-                confirmButtonText: 'Registrar y enviar',
-                cancelButtonText: 'Cancelar',
-                confirmButtonColor: '#3F51B5',
-                preConfirm: () => {
-                    const id = document.getElementById('swal-planta-id').value.trim();
-                    const telefono = document.getElementById('swal-planta-telefono').value.trim();
-                    const email = document.getElementById('swal-planta-email').value.trim();
-
-                    if (!id) {
-                        Swal.showValidationMessage('¡La identificación es obligatoria!');
-                        return false;
-                    }
-                    if (!telefono) {
-                        Swal.showValidationMessage('¡El teléfono es obligatorio!');
-                        return false;
-                    }
-                    if (!email) {
-                        Swal.showValidationMessage('¡El correo electrónico es obligatorio!');
-                        return false;
-                    }
-
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(email)) {
-                        Swal.showValidationMessage('¡Por favor ingrese un correo válido!');
-                        return false;
-                    }
-
-                    return { id, telefono, email };
-                }
-            });
-
-            if (formValues) {
-                Swal.fire({
-                    title: 'Creando taller...',
-                    text: 'Registrando la nueva planta en el sistema.',
-                    allowOutsideClick: false,
-                    didOpen: () => Swal.showLoading()
-                });
-
-                try {
-                    const payloadCrear = {
-                        accion: 'CREAR_PLANTA',
-                        id: formValues.id,
-                        planta: (rep.PLANTA || rep.planta || '').trim().toUpperCase(),
-                        email: formValues.email.trim(),
-                        password: formValues.id + 'Tdm*', // Contraseña por defecto basada en su ID/NIT
-                        telefono: formValues.telefono.trim(),
-                        rol: 'GUEST',
-                        productora: rep.PRODUCTORA || rep.productora || null
-                    };
-
-                    const createResult = await sendToSupabase(payloadCrear);
-                    if (!createResult || !createResult.success) {
-                        throw new Error(createResult?.message || 'Error en la respuesta de la base de datos');
-                    }
-
-                    // Invalida caché de plantas
-                    if (typeof invalidateCache === 'function') {
-                        invalidateCache('PLANTAS');
-                    }
-
-                    await Swal.fire({
-                        icon: 'success',
-                        title: '¡Taller registrado!',
-                        text: 'El taller ha sido creado y registrado exitosamente.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-
-                    // Re-ejecutar el flujo de envío de correo
-                    enviarCorreoCalidad(index);
-                    return;
-                } catch (err) {
-                    console.error('[mis-reportes] Error al crear taller:', err);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error al registrar',
-                        text: 'No se pudo crear el taller en la base de datos. Detalle: ' + err.message,
-                        confirmButtonColor: '#3F51B5'
-                    });
-                    return;
-                }
-            } else {
-                return;
-            }
-        }
-
-        const { value: nuevoEmail } = await Swal.fire({
+        await Swal.fire({
             icon: 'info',
-            title: 'Registrar Correo Electrónico',
-            html: `El taller <b>${rep.PLANTA || 'N/A'}</b> no tiene un correo electrónico registrado en el sistema.<br><br>
-                   Por favor, ingrese el correo electrónico del taller para guardarlo y continuar con el envío del reporte:`,
-            input: 'email',
-            inputPlaceholder: 'correo@ejemplo.com',
-            showCancelButton: true,
-            confirmButtonText: 'Guardar y enviar',
-            cancelButtonText: 'Cancelar',
-            confirmButtonColor: '#3F51B5',
-            inputValidator: (value) => {
-                if (!value) {
-                    return '¡Debe ingresar un correo electrónico!';
-                }
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(value)) {
-                    return '¡Por favor ingrese un correo electrónico válido!';
-                }
-            }
+            title: 'Taller sin correo o no registrado',
+            text: 'Para enviar este reporte por correo, primero debe registrar o completar los datos del taller. Se abrirá el formulario de gestión.',
+            confirmButtonText: 'Completar Datos',
+            confirmButtonColor: '#3F51B5'
         });
 
-        if (nuevoEmail) {
-            Swal.fire({
-                title: 'Guardando correo...',
-                text: 'Actualizando los datos de la planta en el sistema.',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            try {
-                const payloadPlanta = {
-                    accion: 'ACTUALIZAR_PLANTA',
-                    id: plantaObj.ID_PLANTA || plantaObj.id_planta || plantaObj.ID || plantaObj.id,
-                    nombrePlanta: plantaObj.PLANTA || plantaObj.planta,
-                    telefono: plantaObj.TELEFONO || plantaObj.telefono || '',
-                    email: nuevoEmail.trim(),
-                    notificaciones: true,
-                    aceptaPoliticaDatos: true
-                };
-
-                const updateResult = await sendToSupabase(payloadPlanta);
-                if (!updateResult || !updateResult.success) {
-                    throw new Error(updateResult?.message || 'Error en la respuesta de la base de datos');
-                }
-
-                // Invalida caché de plantas
-                if (typeof invalidateCache === 'function') {
-                    invalidateCache('PLANTAS');
-                }
-
-                await Swal.fire({
-                    icon: 'success',
-                    title: '¡Correo guardado!',
-                    text: 'El correo electrónico ha sido guardado exitosamente.',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-
-                // Re-ejecutar el flujo de envío de correo
-                enviarCorreoCalidad(index);
-                return;
-            } catch (err) {
-                console.error('[mis-reportes] Error al actualizar correo de planta:', err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al guardar',
-                    text: 'No se pudo guardar el correo electrónico en la base de datos. Detalle: ' + err.message,
-                    confirmButtonColor: '#3F51B5'
-                });
-                return;
-            }
-        } else {
-            return;
-        }
+        abrirModalPlantaReporte(index);
+        return;
     }
 
-    const result = await Swal.fire({
-        icon: 'question',
-        title: 'Enviar Reporte por Correo',
-        html: `¿Está seguro de enviar este reporte de <b>${(rep.TIPO_VISITA || 'RONDA').toUpperCase()}</b> al taller <b>${rep.PLANTA || 'N/A'}</b>?<br><br>
-               <span style="font-size:0.85em; color:#64748b;">
-                Para: <b>${emailPlanta}</b><br>
-                CC: <b>coordinadorcalidad@tceluniverso.com</b><br>
-                CC: <b>coordinadorlogistico@eltemplodelamoda.com.co</b>
-               </span>`,
-        showCancelButton: true,
-        confirmButtonText: 'Sí, enviar',
-        cancelButtonText: 'Cancelar',
-        confirmButtonColor: '#3F51B5'
-    });
-
-    if (!result.isConfirmed) return;
 
     try {
         Swal.fire({
@@ -1433,26 +1250,22 @@ async function enviarWhatsAppIndividual(index) {
 
     if (!rep) return;
 
-    const user = window.currentUser || {};
+    // Buscar la planta correspondiente a este reporte
+    const nombrePlanta = (rep.PLANTA || rep.planta || '').trim().toLowerCase();
+    const repProductora = Number(rep.PRODUCTORA || rep.productora);
 
-    // =========================
-    // TELEFONO
-    // =========================
+    const plantaObj = gsPlantas.find(p =>
+        (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta &&
+        (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
+    );
 
-    const phoneNumber =
-        user.TELEFONO ||
-        user.phone ||
-        user.PHONE ||
-        user.CELULAR ||
-        user.telefono ||
-        '';
+    const phoneNumber = plantaObj ? (plantaObj.TELEFONO || plantaObj.telefono || '') : '';
 
     if (!phoneNumber) {
-
         Swal.fire({
             icon: 'warning',
             title: 'Sin número de teléfono',
-            text: 'No tienes un número registrado.',
+            text: 'Este taller no tiene un número registrado.',
             confirmButtonColor: '#3F51B5'
         });
 
@@ -1761,6 +1574,124 @@ async function enviarWhatsAppIndividual(index) {
     );
 }
 
+async function abrirModalPlantaReporte(index) {
+    const rep = gsFilteredReportes[index];
+    if (!rep) return;
+
+    // Búsqueda instantánea en el caché local en memoria
+    const nombrePlanta = (rep.PLANTA || rep.planta || '').trim().toLowerCase();
+    const repProductora = Number(rep.PRODUCTORA || rep.productora);
+
+    const plantaObj = gsPlantas.find(p =>
+        (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta &&
+        (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
+    );
+
+    document.getElementById('plantaModalIndex').value = index;
+    document.getElementById('plantaModalProductora').value = repProductora || '';
+
+    const inputId = document.getElementById('plantaModalId');
+    const inputNombre = document.getElementById('plantaModalNombre');
+    const inputTelefono = document.getElementById('plantaModalTelefono');
+    const inputEmail = document.getElementById('plantaModalEmail');
+
+    inputNombre.readOnly = true;
+
+    if (plantaObj) {
+        inputId.value = plantaObj.ID_PLANTA || plantaObj.id_planta || plantaObj.ID || plantaObj.id || '';
+        inputId.readOnly = true;
+        inputNombre.value = (plantaObj.PLANTA || plantaObj.planta || rep.PLANTA || '').trim().toUpperCase();
+        inputTelefono.value = plantaObj.TELEFONO || plantaObj.telefono || '';
+        inputEmail.value = plantaObj.CORREO || plantaObj.EMAIL || plantaObj.correo || plantaObj.email || '';
+    } else {
+        inputId.value = '';
+        inputId.readOnly = false;
+        inputNombre.value = (rep.PLANTA || '').trim().toUpperCase();
+        inputTelefono.value = '';
+        inputEmail.value = '';
+    }
+
+    const modal = document.getElementById('plantaModal');
+    if (modal) modal.classList.add('show');
+}
+
+function cerrarModalPlanta() {
+    const modal = document.getElementById('plantaModal');
+    if (modal) modal.classList.remove('show');
+}
+
+async function guardarDatosPlantaModal(event) {
+    event.preventDefault();
+
+    const index = document.getElementById('plantaModalIndex').value;
+    const rep = gsFilteredReportes[index];
+    if (!rep) return;
+
+    const productora = Number(document.getElementById('plantaModalProductora').value) || null;
+    const id = document.getElementById('plantaModalId').value.trim();
+    const nombre = document.getElementById('plantaModalNombre').value.trim().toUpperCase();
+    const telefono = document.getElementById('plantaModalTelefono').value.trim();
+    const email = document.getElementById('plantaModalEmail').value.trim();
+
+    if (!id || !nombre || !telefono || !email) {
+        Swal.fire('Error', 'Todos los campos son obligatorios.', 'error');
+        return;
+    }
+
+    const isEdit = document.getElementById('plantaModalId').readOnly;
+
+    Swal.fire({
+        title: isEdit ? 'Actualizando taller...' : 'Creando taller...',
+        text: 'Por favor espere mientras se procesa la solicitud.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+    });
+
+    try {
+        const payload = {
+            accion: isEdit ? 'ACTUALIZAR_PLANTA' : 'CREAR_PLANTA',
+            id: id,
+            planta: nombre,
+            nombrePlanta: nombre,
+            telefono: telefono,
+            email: email,
+            productora: productora
+        };
+
+        const result = await sendToSupabase(payload);
+        if (!result || !result.success) {
+            throw new Error(result?.message || 'Error en la respuesta de la base de datos');
+        }
+
+        if (typeof invalidateCache === 'function') {
+            invalidateCache('PLANTAS');
+        }
+
+        gsPlantas = await fetchPlantasData({ forceEdge: true });
+
+        cerrarModalPlanta();
+
+        await Swal.fire({
+            icon: 'success',
+            title: isEdit ? '¡Taller actualizado!' : '¡Taller registrado!',
+            text: 'Los datos han sido guardados exitosamente.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+
+        renderGroupedView();
+
+    } catch (err) {
+        console.error('Error al guardar taller:', err);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error al guardar',
+            text: err.message || 'No se pudo guardar la información del taller.',
+            confirmButtonColor: '#3F51B5'
+        });
+    }
+}
+
 window.toggleKPIs = toggleKPIs;
 window.handleSearch = handleSearch;
 window.expandReport = expandReport;
@@ -1770,3 +1701,6 @@ window.enviarWhatsApp = enviarWhatsApp;
 window.enviarWhatsAppIndividual = enviarWhatsAppIndividual;
 window.cerrarModalReporte = cerrarModalReporte;
 window.guardarCambiosReporte = guardarCambiosReporte;
+window.abrirModalPlantaReporte = abrirModalPlantaReporte;
+window.cerrarModalPlanta = cerrarModalPlanta;
+window.guardarDatosPlantaModal = guardarDatosPlantaModal;
