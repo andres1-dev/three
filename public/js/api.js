@@ -317,7 +317,7 @@ async function fetchNovedadesData(soloFinalizados = false, incluirTodos = false)
  * Si no hay sesión activa (ej: página de login), usa la Edge Function
  * para evitar el 401 de RLS.
  */
-async function fetchPlantasData() {
+async function fetchPlantasData(options = {}) {
     const sb = getSupabaseClient();
     let hasSession = false;
     if (sb) {
@@ -326,7 +326,8 @@ async function fetchPlantasData() {
     }
 
     // Con sesión: SDK directo (rápido, sin cold start)
-    if (hasSession) {
+    // Pero si forceEdge es true, se va por la Edge Function para saltarse RLS
+    if (hasSession && !options.forceEdge) {
         return fetchSupabaseData('plantas');
     }
 

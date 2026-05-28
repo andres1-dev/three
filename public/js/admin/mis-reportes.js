@@ -1,5 +1,6 @@
 let gsReportes = [];
 let gsFilteredReportes = [];
+let gsPlantas = [];
 let dateRangePicker = null;
 let selectedDateRange = null;
 
@@ -16,10 +17,10 @@ let globalReportesPromise = null;
         if (typeof fetchReportesData === 'function') {
             globalReportesPromise = fetchReportesData();
         }
-    } catch(e) {}
+    } catch (e) { }
 })();
 
-window.onload = async function() {
+window.onload = async function () {
     await loadUsers();
     const user = window.currentUser;
     if (!user || user.ROL !== 'USER-C') {
@@ -47,7 +48,23 @@ async function cargarMisReportesLocal(reportesPromise) {
     if (controls) controls.style.display = 'none';
 
     try {
-        const rawReportes = await (reportesPromise || fetchReportesData());
+        let rawReportes = [];
+        try {
+            const results = await Promise.all([
+                reportesPromise || fetchReportesData(),
+                fetchPlantasData({ forceEdge: true })
+            ]);
+            rawReportes = results[0] || [];
+            gsPlantas = results[1] || [];
+        } catch (ePar) {
+            console.warn('[mis-reportes] Error cargando datos en paralelo:', ePar);
+            rawReportes = await (reportesPromise || fetchReportesData());
+            try {
+                gsPlantas = await fetchPlantasData({ forceEdge: true });
+            } catch (ePl) {
+                gsPlantas = [];
+            }
+        }
 
         const user = window.currentUser || {};
         const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
@@ -91,8 +108,28 @@ async function recargarDatos() {
     if (controls) controls.style.display = 'none';
 
     try {
-        if (typeof invalidateCache === 'function') invalidateCache('REPORTES');
-        const rawReportes = await fetchReportesData();
+        if (typeof invalidateCache === 'function') {
+            invalidateCache('REPORTES');
+            invalidateCache('PLANTAS');
+        }
+
+        let rawReportes = [];
+        try {
+            const results = await Promise.all([
+                fetchReportesData(),
+                fetchPlantasData({ forceEdge: true })
+            ]);
+            rawReportes = results[0] || [];
+            gsPlantas = results[1] || [];
+        } catch (ePar) {
+            console.warn('[mis-reportes] Error recargando datos en paralelo:', ePar);
+            rawReportes = await fetchReportesData();
+            try {
+                gsPlantas = await fetchPlantasData({ forceEdge: true });
+            } catch (ePl) {
+                gsPlantas = [];
+            }
+        }
 
         const user = window.currentUser || {};
         const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
@@ -296,6 +333,11 @@ function renderGroupedView() {
         reports.forEach(r => {
             const globalIdx = gsFilteredReportes.indexOf(r);
             const statusInfo = getStatusInfo(r.CONCLUSION);
+
+            const nombreP = (r.PLANTA || r.planta || '').trim().toLowerCase();
+            const pObj = gsPlantas.find(p => (p.PLANTA || p.planta || '').trim().toLowerCase() === nombreP);
+            const tieneCorreo = !!(pObj && (pObj.CORREO || pObj.EMAIL || pObj.correo || pObj.email));
+
             rowsHtml += `
                 <tr class="planta-row-mobile">
                     <td colspan="6"><span>${r.PLANTA || '-'}</span></td>
@@ -317,6 +359,11 @@ function renderGroupedView() {
                             <button class="action-btn action-btn-whatsapp" onclick="enviarWhatsAppIndividual(${globalIdx})" title="Enviar por WhatsApp">
                                 <i class="fab fa-whatsapp"></i>
                             </button>
+                            ${tieneCorreo ? '' : `
+                            <button class="action-btn action-btn-email" onclick="enviarCorreoCalidad(${globalIdx})" title="Enviar por Correo">
+                                <i class="fas fa-envelope"></i>
+                            </button>
+                            `}
                         </div>
                     </td>
                 </tr>
@@ -367,6 +414,283 @@ function imprimirReporte(index) {
     window.open('plantilla-impresion-calidad.html', '_blank');
 }
 
+async function enviarCorreoCalidad(index) {
+    const rep = gsFilteredReportes[index];
+    if (!rep) return;
+
+    // Buscar el correo REGISTRADO de la planta (no el del auditor)
+    // En Supabase el campo se llama 'correo' → normalizado queda 'CORREO'
+    let emailPlanta = '';
+    let plantaObj = null;
+    try {
+        const plantas = await fetchPlantasData();
+        const nombrePlanta = (rep.PLANTA || rep.planta || '').trim().toLowerCase();
+        plantaObj = plantas.find(p =>
+            (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta
+        );
+
+        // Si no se encuentra con la consulta rápida/caché habitual, forzamos por la Edge Function (Bypass RLS)
+        if (!plantaObj) {
+            console.log('[mis-reportes] Planta no encontrada por RLS/SDK. Buscando por Edge Function...');
+            const plantasEdge = await fetchPlantasData({ forceEdge: true });
+            plantaObj = plantasEdge.find(p =>
+                (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta
+            );
+        }
+
+        // El campo puede venir como CORREO (Supabase) o EMAIL (hoja legado) tanto en mayúsculas como en minúsculas
+        emailPlanta = plantaObj ? (plantaObj.CORREO || plantaObj.EMAIL || plantaObj.correo || plantaObj.email || '') : '';
+    } catch (e) {
+        console.warn('[mis-reportes] No se pudo obtener email de planta:', e);
+    }
+
+    if (!emailPlanta) {
+        if (!plantaObj) {
+            const { value: formValues } = await Swal.fire({
+                icon: 'info',
+                title: 'Taller no registrado',
+                html: `
+                    <div style="text-align: left; line-height: 1.5; font-size: 0.95rem;">
+                        <p>El taller <b>${rep.PLANTA || 'N/A'}</b> no está registrado en el catálogo de plantas.<br>
+                        Por favor, ingrese los siguientes datos obligatorios para crearlo en el sistema y poder enviarle este reporte:</p>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight: 600; font-size: 0.85em; color: #475569;">Cédula o NIT del Taller <span style="color:#ef4444;">*</span></label>
+                            <input id="swal-planta-id" class="swal2-input" type="number" placeholder="Ej: 114416716" style="margin: 4px 0 0 0; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight: 600; font-size: 0.85em; color: #475569;">Teléfono / Celular <span style="color:#ef4444;">*</span></label>
+                            <input id="swal-planta-telefono" class="swal2-input" type="tel" placeholder="Ej: 3168007979" style="margin: 4px 0 0 0; width: 100%; box-sizing: border-box;">
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <label style="font-weight: 600; font-size: 0.85em; color: #475569;">Correo Electrónico <span style="color:#ef4444;">*</span></label>
+                            <input id="swal-planta-email" class="swal2-input" type="email" placeholder="correo@taller.com" style="margin: 4px 0 0 0; width: 100%; box-sizing: border-box;">
+                        </div>
+                    </div>
+                `,
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonText: 'Registrar y enviar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3F51B5',
+                preConfirm: () => {
+                    const id = document.getElementById('swal-planta-id').value.trim();
+                    const telefono = document.getElementById('swal-planta-telefono').value.trim();
+                    const email = document.getElementById('swal-planta-email').value.trim();
+
+                    if (!id) {
+                        Swal.showValidationMessage('¡La identificación es obligatoria!');
+                        return false;
+                    }
+                    if (!telefono) {
+                        Swal.showValidationMessage('¡El teléfono es obligatorio!');
+                        return false;
+                    }
+                    if (!email) {
+                        Swal.showValidationMessage('¡El correo electrónico es obligatorio!');
+                        return false;
+                    }
+
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(email)) {
+                        Swal.showValidationMessage('¡Por favor ingrese un correo válido!');
+                        return false;
+                    }
+
+                    return { id, telefono, email };
+                }
+            });
+
+            if (formValues) {
+                Swal.fire({
+                    title: 'Creando taller...',
+                    text: 'Registrando la nueva planta en el sistema.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                try {
+                    const payloadCrear = {
+                        accion: 'CREAR_PLANTA',
+                        id: formValues.id,
+                        planta: (rep.PLANTA || rep.planta || '').trim().toUpperCase(),
+                        email: formValues.email.trim(),
+                        password: formValues.id + 'Tdm*', // Contraseña por defecto basada en su ID/NIT
+                        telefono: formValues.telefono.trim(),
+                        rol: 'GUEST',
+                        productora: rep.PRODUCTORA || rep.productora || null
+                    };
+
+                    const createResult = await sendToSupabase(payloadCrear);
+                    if (!createResult || !createResult.success) {
+                        throw new Error(createResult?.message || 'Error en la respuesta de la base de datos');
+                    }
+
+                    // Invalida caché de plantas
+                    if (typeof invalidateCache === 'function') {
+                        invalidateCache('PLANTAS');
+                    }
+
+                    await Swal.fire({
+                        icon: 'success',
+                        title: '¡Taller registrado!',
+                        text: 'El taller ha sido creado y registrado exitosamente.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+
+                    // Re-ejecutar el flujo de envío de correo
+                    enviarCorreoCalidad(index);
+                    return;
+                } catch (err) {
+                    console.error('[mis-reportes] Error al crear taller:', err);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error al registrar',
+                        text: 'No se pudo crear el taller en la base de datos. Detalle: ' + err.message,
+                        confirmButtonColor: '#3F51B5'
+                    });
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+
+        const { value: nuevoEmail } = await Swal.fire({
+            icon: 'info',
+            title: 'Registrar Correo Electrónico',
+            html: `El taller <b>${rep.PLANTA || 'N/A'}</b> no tiene un correo electrónico registrado en el sistema.<br><br>
+                   Por favor, ingrese el correo electrónico del taller para guardarlo y continuar con el envío del reporte:`,
+            input: 'email',
+            inputPlaceholder: 'correo@ejemplo.com',
+            showCancelButton: true,
+            confirmButtonText: 'Guardar y enviar',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#3F51B5',
+            inputValidator: (value) => {
+                if (!value) {
+                    return '¡Debe ingresar un correo electrónico!';
+                }
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(value)) {
+                    return '¡Por favor ingrese un correo electrónico válido!';
+                }
+            }
+        });
+
+        if (nuevoEmail) {
+            Swal.fire({
+                title: 'Guardando correo...',
+                text: 'Actualizando los datos de la planta en el sistema.',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                const payloadPlanta = {
+                    accion: 'ACTUALIZAR_PLANTA',
+                    id: plantaObj.ID_PLANTA || plantaObj.id_planta || plantaObj.ID || plantaObj.id,
+                    nombrePlanta: plantaObj.PLANTA || plantaObj.planta,
+                    telefono: plantaObj.TELEFONO || plantaObj.telefono || '',
+                    email: nuevoEmail.trim(),
+                    notificaciones: true,
+                    aceptaPoliticaDatos: true
+                };
+
+                const updateResult = await sendToSupabase(payloadPlanta);
+                if (!updateResult || !updateResult.success) {
+                    throw new Error(updateResult?.message || 'Error en la respuesta de la base de datos');
+                }
+
+                // Invalida caché de plantas
+                if (typeof invalidateCache === 'function') {
+                    invalidateCache('PLANTAS');
+                }
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: '¡Correo guardado!',
+                    text: 'El correo electrónico ha sido guardado exitosamente.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // Re-ejecutar el flujo de envío de correo
+                enviarCorreoCalidad(index);
+                return;
+            } catch (err) {
+                console.error('[mis-reportes] Error al actualizar correo de planta:', err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al guardar',
+                    text: 'No se pudo guardar el correo electrónico en la base de datos. Detalle: ' + err.message,
+                    confirmButtonColor: '#3F51B5'
+                });
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+
+    const result = await Swal.fire({
+        icon: 'question',
+        title: 'Enviar Reporte por Correo',
+        html: `¿Está seguro de enviar este reporte de <b>${(rep.TIPO_VISITA || 'RONDA').toUpperCase()}</b> al taller <b>${rep.PLANTA || 'N/A'}</b>?<br><br>
+               <span style="font-size:0.85em; color:#64748b;">
+                Para: <b>${emailPlanta}</b><br>
+                CC: <b>coordinadorcalidad@tceluniverso.com</b><br>
+                CC: <b>coordinadorlogistico@eltemplodelamoda.com.co</b>
+               </span>`,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, enviar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#3F51B5'
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+        Swal.fire({
+            title: 'Enviando correo...',
+            text: 'Por favor espere mientras se procesa la solicitud.',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const payload = {
+            accion: 'REPORTE_CALIDAD',
+            email: emailPlanta,
+            cc: ['coordinadorcalidad@tceluniverso.com', 'coordinadorlogistico@eltemplodelamoda.com.co'],
+            //cc: ['coordinadorlogistico@eltemplodelamoda.com.co'],
+            reporte: rep
+        };
+
+        const resData = await sendToSupabase(payload);
+
+        if (resData && resData.success === true) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Correo Enviado',
+                html: `El reporte fue enviado al correo registrado de <b>${rep.PLANTA}</b>.`,
+                timer: 2500,
+                showConfirmButton: false
+            });
+        } else {
+            throw new Error((resData && resData.message) || 'Error al enviar el correo a través de Supabase');
+        }
+
+    } catch (error) {
+        console.error('Error al enviar correo:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Envío',
+            text: error.message || 'Ocurrió un problema de red. Por favor intente nuevamente más tarde.',
+            confirmButtonColor: '#3F51B5'
+        });
+    }
+}
+
 function applyFilters() {
     const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
     const hasSearch = searchTerm.length > 0;
@@ -415,7 +739,7 @@ function initDateRangePicker() {
         locale: 'es',
         allowInput: false,
         defaultDate: [today, today],
-        onChange: function(selectedDates) {
+        onChange: function (selectedDates) {
             if (selectedDates.length === 2) {
                 const startDate = new Date(selectedDates[0]);
                 startDate.setHours(0, 0, 0, 0);
@@ -430,7 +754,7 @@ function initDateRangePicker() {
                 applyFilters();
             }
         },
-        onClose: function(selectedDates) {
+        onClose: function (selectedDates) {
             if (selectedDates.length === 0) {
                 selectedDateRange = null;
                 applyFilters();
@@ -473,28 +797,28 @@ function expandReport(index) {
 
     // Llenar el modal con todos los datos del reporte
     document.getElementById('editReporteIndex').value = index;
-    
+
     // ID Reporte y Lote
     const idReporte = reportNormalized.id_reporte || reportNormalized.ID_REPORTE || '';
     const lote = reportNormalized.id || reportNormalized.ID || '';
     document.getElementById('editIdReporte').value = idReporte || 'N/A';
     document.getElementById('editLote').value = lote || 'N/A';
     toggleContainer('containerIdReporte', !isEmpty(idReporte) || !isEmpty(lote));
-    
+
     // Referencia y Fecha
     const referencia = reportNormalized.referencia || reportNormalized.REFERENCIA || '';
     const fecha = reportNormalized.fecha || reportNormalized.FECHA || '';
     document.getElementById('editReferencia').value = referencia || 'N/A';
     document.getElementById('editFecha').value = fecha || 'N/A';
     toggleContainer('containerReferencia', !isEmpty(referencia) || !isEmpty(fecha));
-    
+
     // Planta y Email
     const planta = reportNormalized.planta || reportNormalized.PLANTA || '';
     const email = reportNormalized.email || reportNormalized.EMAIL || '';
     document.getElementById('editPlanta').value = planta || 'N/A';
     document.getElementById('editEmail').value = email || 'N/A';
     toggleContainer('containerPlanta', !isEmpty(planta) || !isEmpty(email));
-    
+
     // Línea, Tipo Visita y Género
     const linea = reportNormalized.linea || reportNormalized.LINEA || '';
     const tipoVisita = reportNormalized.tipo_visita || reportNormalized.TIPO_VISITA || '';
@@ -503,7 +827,7 @@ function expandReport(index) {
     document.getElementById('editTipoVisita').value = tipoVisita || 'N/A';
     document.getElementById('editGenero').value = genero || 'N/A';
     toggleContainer('containerLinea', !isEmpty(linea) || !isEmpty(tipoVisita) || !isEmpty(genero));
-    
+
     // Campos del formulario de calidad
     const conclusion = (reportNormalized.conclusion || reportNormalized.CONCLUSION || 'PENDIENTE').toUpperCase();
     const observaciones = reportNormalized.observaciones || reportNormalized.OBSERVACIONES || '';
@@ -511,7 +835,7 @@ function expandReport(index) {
     document.getElementById('editObservaciones').value = observaciones;
     toggleContainer('containerConclusion', !isEmpty(conclusion));
     toggleContainer('containerObservaciones', !isEmpty(observaciones));
-    
+
     // Proceso, Cantidad y Prenda
     const proceso = reportNormalized.proceso || '';
     const cantidad = reportNormalized.cantidad || '';
@@ -520,21 +844,21 @@ function expandReport(index) {
     document.getElementById('editCantidad').value = cantidad || 'N/A';
     document.getElementById('editPrenda').value = prenda || 'N/A';
     toggleContainer('containerProceso', !isEmpty(proceso) || !isEmpty(cantidad) || !isEmpty(prenda));
-    
+
     // Destino Proceso y Destino Planta
     const destinoProceso = reportNormalized.destino_proceso || '';
     const destinoPlanta = reportNormalized.destino_planta || '';
     document.getElementById('editDestinoProceso').value = destinoProceso || 'N/A';
     document.getElementById('editDestinoPlanta').value = destinoPlanta || 'N/A';
     toggleContainer('containerDestino', !isEmpty(destinoProceso) || !isEmpty(destinoPlanta));
-    
+
     // Avance - ocultar si es 0
     const avance = reportNormalized.avance || '';
     document.getElementById('editAvance').value = avance || 'N/A';
     // Ocultar si es 0 o vacío
     const avanceNum = Number(avance);
     toggleContainer('containerAvance', !isEmpty(avance) && avanceNum !== 0);
-    
+
     // Salida, Entrada y Productora
     const salida = reportNormalized.salida || '';
     const entrada = reportNormalized.entrada || '';
@@ -543,7 +867,7 @@ function expandReport(index) {
     document.getElementById('editEntrada').value = entrada || 'N/A';
     document.getElementById('editProductora').value = productora || 'N/A';
     toggleContainer('containerFechas', !isEmpty(salida) || !isEmpty(entrada) || !isEmpty(productora));
-    
+
     // Localización - mostrar mapa de Google Maps
     const localizacion = reportNormalized.localizacion || '';
     const localizacionContainer = document.getElementById('editLocalizacionContainer');
@@ -568,12 +892,12 @@ function expandReport(index) {
         localizacionContainer.innerHTML = '';
         toggleContainer('containerLocalizacion', false);
     }
-    
+
     // Tejido - ocultar si es N/A o vacío
     const tejido = reportNormalized.tejido || '';
     document.getElementById('editTejido').value = tejido || 'N/A';
     toggleContainer('containerTejido', !isEmpty(tejido) && tejido !== 'N/A');
-    
+
     // Soporte (imagen) - expandida con lightbox como en plantilla de impresión
     const soporteUrl = reportNormalized.soporte || reportNormalized.SOPORTE;
     const soporteContainer = document.getElementById('editSoporteContainer');
@@ -591,11 +915,11 @@ function expandReport(index) {
         soporteContainer.innerHTML = '';
         toggleContainer('containerSoporte', false);
     }
-    
+
     // Novedades auditoría - mostrar como inputs estéticos
     let novedadesText = reportNormalized.novedades_auditoria || reportNormalized.NOVEDADES_AUDITORIA || '';
     const novedadesContainer = document.getElementById('editNovedadesContainer');
-    
+
     if (novedadesText && !isEmpty(novedadesText)) {
         let novedadesHtml = '';
         if (typeof novedadesText === 'string') {
@@ -608,13 +932,13 @@ function expandReport(index) {
                         novedadesHtml += `<label class="form-label fw-bold" style="color: #3f51b5; margin-bottom: 12px;">
                             <i class="fas fa-exclamation-triangle me-1"></i>${tipo}
                         </label>`;
-                        
+
                         if (nov.codigos && Array.isArray(nov.codigos)) {
                             nov.codigos.forEach((codigo, cIdx) => {
                                 const talla = codigo.talla || codigo.TALLA || 'N/A';
                                 const color = codigo.color || codigo.COLOR || 'N/A';
                                 const cantidad = codigo.cantidad || codigo.CANTIDAD || '0';
-                                
+
                                 novedadesHtml += `<div class="row mb-2" style="margin-left: -8px; margin-right: -8px;">`;
                                 novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
                                 novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Talla</label>`;
@@ -728,7 +1052,7 @@ async function guardarCambiosReporte() {
         // Enviar actualización a Supabase
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
         const sb = supabase.createClient("https://zpikjjcbievfpzegupmw.supabase.co", SUPABASE_KEY);
-        
+
         const { error } = await sb
             .from('reportes_calidad')
             .update(updateData)
@@ -788,7 +1112,7 @@ async function obtenerProductoras() {
         const productoras = r.productoras || [];
         localStorage.setItem('busint_productoras_cache', JSON.stringify(productoras));
         return productoras;
-    } catch(e) {
+    } catch (e) {
         return [];
     }
 }
@@ -1168,14 +1492,14 @@ async function enviarWhatsAppIndividual(index) {
             reportNormalized.CONCLUSION ||
             'PENDIENTE'
         )
-        .toUpperCase();
+            .toUpperCase();
 
     const proceso =
         (
             reportNormalized.proceso ||
             'N/A'
         )
-        .toUpperCase();
+            .toUpperCase();
 
     const referencia =
         reportNormalized.referencia ||
@@ -1199,7 +1523,7 @@ async function enviarWhatsAppIndividual(index) {
             reportNormalized.destino_proceso ||
             'N/A'
         )
-        .toUpperCase();
+            .toUpperCase();
 
     const lugar =
         String(
@@ -1240,7 +1564,7 @@ async function enviarWhatsAppIndividual(index) {
             fechaLarga.charAt(0).toUpperCase() +
             fechaLarga.slice(1);
 
-    } catch(e) {
+    } catch (e) {
 
         fechaLarga =
             formatFechaCompacta(
@@ -1359,11 +1683,11 @@ async function enviarWhatsAppIndividual(index) {
 
                         const talla =
                             String(c.talla || '-')
-                            .padEnd(maxTallaLength, ' ');
+                                .padEnd(maxTallaLength, ' ');
 
                         const color =
                             String(c.color || '-')
-                            .padEnd(maxColorLength, ' ');
+                                .padEnd(maxColorLength, ' ');
 
                         const cantidad =
                             String(c.cantidad || '0');
@@ -1376,7 +1700,7 @@ async function enviarWhatsAppIndividual(index) {
                 });
             }
 
-        } catch(e) {
+        } catch (e) {
 
             console.error(
                 'Error parseando novedades:',

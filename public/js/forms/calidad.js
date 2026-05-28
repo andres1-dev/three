@@ -10,71 +10,71 @@
 const AQL_LETRAS = {
     // [nivel_I, nivel_II, nivel_III]
     ranges: [
-        { min: 2,     max: 8,      I: 'A', II: 'A', III: 'B' },
-        { min: 9,     max: 15,     I: 'A', II: 'B', III: 'C' },
-        { min: 16,    max: 25,     I: 'B', II: 'C', III: 'D' },
-        { min: 26,    max: 50,     I: 'C', II: 'D', III: 'E' },
-        { min: 51,    max: 90,     I: 'C', II: 'E', III: 'F' },
-        { min: 91,    max: 150,    I: 'D', II: 'F', III: 'G' },
-        { min: 151,   max: 280,    I: 'E', II: 'G', III: 'H' },
-        { min: 281,   max: 500,    I: 'F', II: 'H', III: 'J' },
-        { min: 501,   max: 1200,   I: 'G', II: 'J', III: 'K' },
-        { min: 1201,  max: 3200,   I: 'H', II: 'K', III: 'L' },
-        { min: 3201,  max: 10000,  I: 'J', II: 'L', III: 'M' },
-        { min: 10001, max: 35000,  I: 'K', II: 'M', III: 'N' },
+        { min: 2, max: 8, I: 'A', II: 'A', III: 'B' },
+        { min: 9, max: 15, I: 'A', II: 'B', III: 'C' },
+        { min: 16, max: 25, I: 'B', II: 'C', III: 'D' },
+        { min: 26, max: 50, I: 'C', II: 'D', III: 'E' },
+        { min: 51, max: 90, I: 'C', II: 'E', III: 'F' },
+        { min: 91, max: 150, I: 'D', II: 'F', III: 'G' },
+        { min: 151, max: 280, I: 'E', II: 'G', III: 'H' },
+        { min: 281, max: 500, I: 'F', II: 'H', III: 'J' },
+        { min: 501, max: 1200, I: 'G', II: 'J', III: 'K' },
+        { min: 1201, max: 3200, I: 'H', II: 'K', III: 'L' },
+        { min: 3201, max: 10000, I: 'J', II: 'L', III: 'M' },
+        { min: 10001, max: 35000, I: 'K', II: 'M', III: 'N' },
         { min: 35001, max: 150000, I: 'L', II: 'N', III: 'P' },
     ],
 };
 
 // Muestras por letra de código y nivel AQL: [n, ac, re]
 const AQL_MUESTRAS = {
-    'A': { '1.0': [2,0,1],   '1.5': [2,0,1],   '2.5': [2,0,1],   '4.0': [2,0,1],   '6.5': [2,0,1]   },
-    'B': { '1.0': [3,0,1],   '1.5': [3,0,1],   '2.5': [3,0,1],   '4.0': [3,0,1],   '6.5': [3,0,1]   },
-    'C': { '1.0': [5,0,1],   '1.5': [5,0,1],   '2.5': [5,0,1],   '4.0': [5,0,1],   '6.5': [5,1,2]   },
-    'D': { '1.0': [8,0,1],   '1.5': [8,0,1],   '2.5': [8,0,1],   '4.0': [8,0,1],   '6.5': [8,1,2]   },
-    'E': { '1.0': [13,0,1],  '1.5': [13,0,1],  '2.5': [13,0,1],  '4.0': [13,1,2],  '6.5': [13,1,2]  },
-    'F': { '1.0': [20,0,1],  '1.5': [20,0,1],  '2.5': [20,1,2],  '4.0': [20,1,2],  '6.5': [20,2,3]  },
-    'G': { '1.0': [32,0,1],  '1.5': [32,1,2],  '2.5': [32,1,2],  '4.0': [32,2,3],  '6.5': [32,3,4]  },
-    'H': { '1.0': [50,0,1],  '1.5': [50,1,2],  '2.5': [50,2,3],  '4.0': [50,3,4],  '6.5': [50,5,6]  },
-    'J': { '1.0': [80,1,2],  '1.5': [80,1,2],  '2.5': [80,3,4],  '4.0': [80,5,6],  '6.5': [80,7,8]  },
-    'K': { '1.0': [125,1,2], '1.5': [125,2,3], '2.5': [125,5,6], '4.0': [125,7,8], '6.5': [125,10,11]},
-    'L': { '1.0': [200,2,3], '1.5': [200,3,4], '2.5': [200,7,8], '4.0': [200,10,11],'6.5': [200,14,15]},
-    'M': { '1.0': [315,3,4], '1.5': [315,5,6], '2.5': [315,10,11],'4.0': [315,14,15],'6.5': [315,21,22]},
-    'N': { '1.0': [500,5,6], '1.5': [500,7,8], '2.5': [500,14,15],'4.0': [500,21,22],'6.5': [500,21,22]},
-    'P': { '1.0': [800,7,8], '1.5': [800,10,11],'2.5': [800,21,22],'4.0': [800,21,22],'6.5': [800,21,22]},
+    'A': { '1.0': [2, 0, 1], '1.5': [2, 0, 1], '2.5': [2, 0, 1], '4.0': [2, 0, 1], '6.5': [2, 0, 1] },
+    'B': { '1.0': [3, 0, 1], '1.5': [3, 0, 1], '2.5': [3, 0, 1], '4.0': [3, 0, 1], '6.5': [3, 0, 1] },
+    'C': { '1.0': [5, 0, 1], '1.5': [5, 0, 1], '2.5': [5, 0, 1], '4.0': [5, 0, 1], '6.5': [5, 1, 2] },
+    'D': { '1.0': [8, 0, 1], '1.5': [8, 0, 1], '2.5': [8, 0, 1], '4.0': [8, 0, 1], '6.5': [8, 1, 2] },
+    'E': { '1.0': [13, 0, 1], '1.5': [13, 0, 1], '2.5': [13, 0, 1], '4.0': [13, 1, 2], '6.5': [13, 1, 2] },
+    'F': { '1.0': [20, 0, 1], '1.5': [20, 0, 1], '2.5': [20, 1, 2], '4.0': [20, 1, 2], '6.5': [20, 2, 3] },
+    'G': { '1.0': [32, 0, 1], '1.5': [32, 1, 2], '2.5': [32, 1, 2], '4.0': [32, 2, 3], '6.5': [32, 3, 4] },
+    'H': { '1.0': [50, 0, 1], '1.5': [50, 1, 2], '2.5': [50, 2, 3], '4.0': [50, 3, 4], '6.5': [50, 5, 6] },
+    'J': { '1.0': [80, 1, 2], '1.5': [80, 1, 2], '2.5': [80, 3, 4], '4.0': [80, 5, 6], '6.5': [80, 7, 8] },
+    'K': { '1.0': [125, 1, 2], '1.5': [125, 2, 3], '2.5': [125, 5, 6], '4.0': [125, 7, 8], '6.5': [125, 10, 11] },
+    'L': { '1.0': [200, 2, 3], '1.5': [200, 3, 4], '2.5': [200, 7, 8], '4.0': [200, 10, 11], '6.5': [200, 14, 15] },
+    'M': { '1.0': [315, 3, 4], '1.5': [315, 5, 6], '2.5': [315, 10, 11], '4.0': [315, 14, 15], '6.5': [315, 21, 22] },
+    'N': { '1.0': [500, 5, 6], '1.5': [500, 7, 8], '2.5': [500, 14, 15], '4.0': [500, 21, 22], '6.5': [500, 21, 22] },
+    'P': { '1.0': [800, 7, 8], '1.5': [800, 10, 11], '2.5': [800, 21, 22], '4.0': [800, 21, 22], '6.5': [800, 21, 22] },
 };
 
 function calcularAQL() {
     const cantidadRaw = document.getElementById('cantidad')?.value || '';
     const cantidad = parseInt(cantidadRaw.replace(/[^0-9]/g, ''));
-    const aql    = document.getElementById('aqlNivel')?.value || '4.0';
-    const nivel  = document.getElementById('aqlNivelInspeccion')?.value || 'II';
-    const btn    = document.getElementById('aqlBtn');
+    const aql = document.getElementById('aqlNivel')?.value || '4.0';
+    const nivel = document.getElementById('aqlNivelInspeccion')?.value || 'II';
+    const btn = document.getElementById('aqlBtn');
 
     if (!cantidad || cantidad < 2) {
         if (btn) btn.style.display = 'none';
         return;
     }
 
-    const fila  = AQL_LETRAS.ranges.find(r => cantidad >= r.min && cantidad <= r.max)
-                || AQL_LETRAS.ranges[AQL_LETRAS.ranges.length - 1];
+    const fila = AQL_LETRAS.ranges.find(r => cantidad >= r.min && cantidad <= r.max)
+        || AQL_LETRAS.ranges[AQL_LETRAS.ranges.length - 1];
     const letra = fila[nivel];
     const datos = AQL_MUESTRAS[letra];
     const [muestra, ac, re] = (datos && datos[aql]) ? datos[aql] : [0, 0, 1];
 
-    document.getElementById('aqlMuestra').textContent  = muestra;
-    document.getElementById('aqlAceptar').textContent  = ac;
+    document.getElementById('aqlMuestra').textContent = muestra;
+    document.getElementById('aqlAceptar').textContent = ac;
     document.getElementById('aqlRechazar').textContent = re;
-    document.getElementById('aqlLetra').textContent    =
+    document.getElementById('aqlLetra').textContent =
         `Código ${letra} · Lote: ${cantidad.toLocaleString()} uds. · Nivel ${nivel}`;
 
     const resumen = document.getElementById('aqlBtnResumen');
     if (resumen) resumen.textContent = `Revisar ${muestra} uds. · Ac:${ac} Re:${re}`;
-    const btnMuestra   = document.getElementById('aqlBtnMuestra');
-    const btnAceptar   = document.getElementById('aqlBtnAceptar');
-    const btnRechazar  = document.getElementById('aqlBtnRechazar');
-    if (btnMuestra)  btnMuestra.textContent  = muestra;
-    if (btnAceptar)  btnAceptar.textContent  = ac;
+    const btnMuestra = document.getElementById('aqlBtnMuestra');
+    const btnAceptar = document.getElementById('aqlBtnAceptar');
+    const btnRechazar = document.getElementById('aqlBtnRechazar');
+    if (btnMuestra) btnMuestra.textContent = muestra;
+    if (btnAceptar) btnAceptar.textContent = ac;
     if (btnRechazar) btnRechazar.textContent = re;
     if (btn) btn.style.display = 'flex';
 }
@@ -95,35 +95,35 @@ function cerrarModalAQL() {
 function autogenerarPlantillaCalidad() {
     const tipo = (document.getElementById('tipoVisita')?.value || '').toUpperCase();
     if (!tipo) return "";
-    
+
     const conclusion = (document.getElementById('conclusion')?.value || '').toUpperCase();
-    
+
     // Condición estricta: solo aparece cuando se completan tipo de visita y conclusión (si la requiere)
     const requiereConclusion = ['AUDITORIA', 'RONDA', 'CONTRAMUESTRA'].includes(tipo);
     if (requiereConclusion && !conclusion) {
         return "";
     }
-    
+
     const proceso = (document.getElementById('proceso')?.value || '').trim();
     const prenda = (document.getElementById('prenda')?.value || '').trim();
     const genero = (document.getElementById('genero')?.value || '').trim();
     const tejido = (document.getElementById('tejido')?.value || '').trim();
     const avance = document.getElementById('avancePorcentaje')?.value || '0';
-    
+
     // Obtener estilo elegido del dropdown
     const estiloDropdown = document.getElementById('redaccionEstilo');
     const estilo = estiloDropdown ? estiloDropdown.value : 'ESTANDAR';
-    
+
     // Obtener conector de recomendación
     const conectorDropdown = document.getElementById('conectorRedaccion');
     const conectorTexto = conectorDropdown ? conectorDropdown.value : '';
-    
+
     // Obtener destino del lote si aplica (SOLO EN AUDITORIA APROBADA)
     const destinoTipoVal = document.getElementById('destinoTipo')?.value || '';
     const destinoProcesoVal = document.getElementById('destinoProceso')?.value || '';
     const destinoOtroVal = document.getElementById('destinoOtro')?.value || '';
     const destinoPlantaVal = document.getElementById('destinoPlanta')?.value || '';
-    
+
     let destinoTipoData = "";
     let destinoProc = "";
     let destinoPlan = "";
@@ -134,7 +134,7 @@ function autogenerarPlantillaCalidad() {
             destinoPlan = destinoPlantaVal.trim();
         }
     }
-    
+
     const datos = {
         tipo,
         conclusion,
@@ -147,33 +147,33 @@ function autogenerarPlantillaCalidad() {
         destinoProceso: destinoProc,
         destinoPlanta: destinoPlan
     };
-    
+
     // Delegar al módulo dedicado de plantillas premium
     if (typeof generarRedaccionPlantilla === 'function') {
         return generarRedaccionPlantilla(datos, estilo, conectorTexto);
     }
-    
+
     return "";
 }
 
 function actualizarPlantillaCalidadTextarea(forceUpdate = false) {
     const textarea = document.getElementById('observacionesCalidad');
     if (!textarea) return;
-    
+
     const plantilla = autogenerarPlantillaCalidad() || "";
-    
+
     // Actualizar placeholder en todo caso para guiar al usuario
     if (plantilla) {
         textarea.placeholder = `${plantilla}... (Escribe aquí los detalles y recomendaciones)`;
     } else {
         textarea.placeholder = "Detalla los hallazgos encontrados...";
     }
-    
+
     // Pre-escribir en el textarea si está vacío o si el valor actual coincide con una plantilla previa
     const valActual = textarea.value.trim();
     const plantillaPrevia = textarea.getAttribute('data-auto-generated') || "";
     const esPlantillaPrevia = valActual === plantillaPrevia.trim();
-    
+
     if (forceUpdate || !valActual || esPlantillaPrevia) {
         textarea.value = plantilla;
         textarea.setAttribute('data-auto-generated', plantilla);
@@ -184,11 +184,11 @@ function actualizarPlantillaCalidadTextarea(forceUpdate = false) {
 }
 
 function initCalidadForm() {
-    const tipoVisita  = document.getElementById('tipoVisita');
-    const conclusion  = document.getElementById('conclusion');
-    const avanceSlider  = document.getElementById('avanceSlider');
-    const avanceValor   = document.getElementById('avanceValor');
-    const avancePct     = document.getElementById('avancePorcentaje');
+    const tipoVisita = document.getElementById('tipoVisita');
+    const conclusion = document.getElementById('conclusion');
+    const avanceSlider = document.getElementById('avanceSlider');
+    const avanceValor = document.getElementById('avanceValor');
+    const avancePct = document.getElementById('avancePorcentaje');
     const redaccionEstilo = document.getElementById('redaccionEstilo');
     const incluirRecomendaciones = document.getElementById('incluirRecomendaciones');
 
@@ -206,7 +206,7 @@ function initCalidadForm() {
         _actualizarCamposCalidad();
         actualizarPlantillaCalidadTextarea(true);
     });
-    
+
     if (conclusion) {
         conclusion.addEventListener('change', () => {
             _actualizarCamposCalidad();
@@ -296,14 +296,14 @@ function initCalidadForm() {
 function _actualizarCamposCalidad() {
     const tipo = (document.getElementById('tipoVisita')?.value || '').toUpperCase();
     const conclusionWrap = document.getElementById('conclusion')?.closest('.mb-3');
-    const avanceSection  = document.getElementById('avanceSection');
-    const conclusion     = document.getElementById('conclusion');
-    const avanceSlider   = document.getElementById('avanceSlider');
+    const avanceSection = document.getElementById('avanceSection');
+    const conclusion = document.getElementById('conclusion');
+    const avanceSlider = document.getElementById('avanceSlider');
     const conclusionLabel = conclusionWrap?.querySelector('label');
-    const avanceLabel     = avanceSection?.querySelector('label.form-label');
+    const avanceLabel = avanceSection?.querySelector('label.form-label');
 
-    const esAuditoria     = tipo === 'AUDITORIA';
-    const esRonda         = tipo === 'RONDA';
+    const esAuditoria = tipo === 'AUDITORIA';
+    const esRonda = tipo === 'RONDA';
     const esContramuestra = tipo === 'CONTRAMUESTRA';
 
     // ── Conclusión ──
@@ -313,7 +313,7 @@ function _actualizarCamposCalidad() {
     if (conclusion) {
         conclusion.required = mostrarConclusion;
         if (!mostrarConclusion) conclusion.value = '';
-        
+
         // La conclusión PAUSADO solo está disponible para RONDA
         Array.from(conclusion.options).forEach(opt => {
             if (opt.value === 'PAUSADO') {
@@ -355,9 +355,9 @@ function _actualizarCamposCalidad() {
         avanceSlider.required = esRonda && !esPausado;
         avanceSlider.value = 0;
         const avanceValor = document.getElementById('avanceValor');
-        const avancePct   = document.getElementById('avancePorcentaje');
+        const avancePct = document.getElementById('avancePorcentaje');
         if (avanceValor) avanceValor.textContent = '0%';
-        if (avancePct)   avancePct.value = '0';
+        if (avancePct) avancePct.value = '0';
     }
 
     // ── Destino del Lote ──
@@ -373,7 +373,7 @@ function _actualizarCamposCalidad() {
         if (esAuditoria && conclusion && conclusion.value === 'APROBADO') {
             destinoSection.style.display = '';
             if (destinoTipo) destinoTipo.required = true;
-            
+
             if (destinoTipo && destinoTipo.value === 'PROCESO') {
                 if (destinoProcesoContainer) destinoProcesoContainer.style.display = '';
                 if (destinoProceso) destinoProceso.required = true;
@@ -436,12 +436,12 @@ function agregarBloqueNovedadCalidad(editIndex = null, subEditIndex = null) {
     if (editIndex !== null) {
         const data = window._novedadesCalidadState[editIndex];
         selectTipo.value = data.tipo;
-        
+
         handleModalCalidadNovedadTipoChange();
         if (data.tipo === 'PROMOCIONES') {
             sinProcesoCheck.checked = data.sin_proceso;
         }
-        
+
         if (subEditIndex !== null) {
             title.textContent = 'Editar Detalle';
             agregarFilaModalNovedad(data.codigos[subEditIndex]);
@@ -476,7 +476,7 @@ function agregarFilaModalNovedad(datosIniciales = null) {
     const listContainer = document.getElementById('novedadModalCodigosList');
     const fila = document.createElement('div');
     fila.className = 'insumo-fila mb-3 fila-3-cols';
-    
+
     const tallasFiltradas = (typeof getFilteredSizes === 'function') ? getFilteredSizes() : (window.CODIGOS_TALLAS || CODIGOS_TALLAS_LIST || []);
     const coloresFiltrados = CODIGOS_COLORES_LIST || [];
 
@@ -611,7 +611,7 @@ function guardarNovedadCalidad() {
     // Buscamos si existe el grupo destino (puede ser el mismo si no cambió de tipo)
     const isSinProceso = (tipo === 'PROMOCIONES' && sinProceso);
     const destinoIndex = window._novedadesCalidadState.findIndex(n => n.tipo === tipo && !!n.sin_proceso === !!isSinProceso);
-    
+
     if (destinoIndex >= 0) {
         const destino = window._novedadesCalidadState[destinoIndex];
         const combinados = destino.codigos.concat(codigosCompactados);
@@ -632,11 +632,11 @@ function eliminarNovedadCalidad(index) {
     renderTarjetasNovedadesCalidad();
 }
 
-window.editarSubNovedadCalidad = function(tipoIndex, codigoIndex) {
+window.editarSubNovedadCalidad = function (tipoIndex, codigoIndex) {
     agregarBloqueNovedadCalidad(tipoIndex, codigoIndex);
 }
 
-window.eliminarSubNovedadCalidad = function(tipoIndex, codigoIndex) {
+window.eliminarSubNovedadCalidad = function (tipoIndex, codigoIndex) {
     const novedad = window._novedadesCalidadState[tipoIndex];
     novedad.codigos.splice(codigoIndex, 1);
     if (novedad.codigos.length === 0) {
@@ -648,7 +648,7 @@ window.eliminarSubNovedadCalidad = function(tipoIndex, codigoIndex) {
 function renderTarjetasNovedadesCalidad() {
     const lista = document.getElementById('calidadNovedadesList');
     const dropzone = document.getElementById('calidadNovedadesDropzone');
-    
+
     lista.innerHTML = '';
 
     if (window._novedadesCalidadState.length === 0) {
@@ -665,9 +665,9 @@ function renderTarjetasNovedadesCalidad() {
         let bgTheme = '#eff6ff';
         let iconName = 'fa-tag';
         let displayTipo = novedad.tipo;
-        
+
         if (novedad.tipo === 'SIN CONFECCIONAR') { colorTheme = '#ef4444'; bgTheme = '#fef2f2'; iconName = 'fa-cut'; }
-        if (novedad.tipo === 'PROMOCIONES') { 
+        if (novedad.tipo === 'PROMOCIONES') {
             if (novedad.sin_proceso) {
                 colorTheme = '#db2777'; // Pink for Sin Proceso
                 bgTheme = '#fdf2f8';
@@ -675,13 +675,13 @@ function renderTarjetasNovedadesCalidad() {
                 displayTipo = 'PROM. SIN PROCESO';
             } else {
                 colorTheme = '#f59e0b'; // Orange
-                bgTheme = '#fffbeb'; 
-                iconName = 'fa-percentage'; 
+                bgTheme = '#fffbeb';
+                iconName = 'fa-percentage';
             }
         }
         if (novedad.tipo === 'COBROS') { colorTheme = '#10b981'; bgTheme = '#ecfdf5'; iconName = 'fa-file-invoice-dollar'; }
         if (novedad.tipo === 'LAVADO') { colorTheme = '#6366f1'; bgTheme = '#eef2ff'; iconName = 'fa-water'; }
-        
+
         let codigosHtml = '';
         novedad.codigos.forEach((c, codigoIndex) => {
             const isLast = codigoIndex === novedad.codigos.length - 1;
@@ -701,7 +701,7 @@ function renderTarjetasNovedadesCalidad() {
 
         const tarjeta = document.createElement('div');
         tarjeta.style.cssText = `background:#ffffff; border:1px solid #e2e8f0; border-top:4px solid ${colorTheme}; border-radius:12px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,0.02); overflow:hidden;`;
-        
+
         tarjeta.innerHTML = `
             <!-- HEADER -->
             <div style="display:flex; justify-content:space-between; align-items:center; background:${bgTheme}; padding:10px 14px; border-bottom:1px solid #e2e8f0;">
@@ -730,7 +730,7 @@ function renderTarjetasNovedadesCalidad() {
         `;
         lista.appendChild(tarjeta);
     });
-    
+
     // Añadir botón compacto al final para agregar más si ya hay tarjetas
     if (window._novedadesCalidadState.length > 0) {
         const addMore = document.createElement('div');
@@ -775,14 +775,14 @@ async function handleCalidadSubmit(e) {
     console.log('[calidad] Iniciando envío de formulario');
 
     try {
-        const lotData      = collectLotData();
-        const email        = document.getElementById('email').value;
+        const lotData = collectLotData();
+        const email = document.getElementById('email').value;
         const localizacion = document.getElementById('localizacion')?.value || 'No disponible';
-        const tipoVisita   = document.getElementById('tipoVisita').value;
-        const conclusion   = document.getElementById('conclusion').value;
-        const observaciones= document.getElementById('observacionesCalidad').value;
-        const avance       = document.getElementById('avancePorcentaje')?.value || '';
-        const soporteFile  = document.getElementById('soporte').files?.[0] || null;
+        const tipoVisita = document.getElementById('tipoVisita').value;
+        const conclusion = document.getElementById('conclusion').value;
+        const observaciones = document.getElementById('observacionesCalidad').value;
+        const avance = document.getElementById('avancePorcentaje')?.value || '';
+        const soporteFile = document.getElementById('soporte').files?.[0] || null;
 
         console.log('[calidad] Datos recopilados:', {
             lote: lotData.lote,
@@ -798,16 +798,16 @@ async function handleCalidadSubmit(e) {
         if (window.FirmaTaller && !window.FirmaTaller.isEmpty()) {
             firmaSvg = window.FirmaTaller.getSVG();
         }
-        
+
         // Obtener destino del lote si aplica (solo en Auditoria Aprobada)
         const destinoTipoVal = document.getElementById('destinoTipo')?.value || '';
         const destinoProcesoVal = document.getElementById('destinoProceso')?.value || '';
         const destinoOtroVal = document.getElementById('destinoOtro')?.value || '';
         const destinoPlantaVal = document.getElementById('destinoPlanta')?.value || '';
-        
+
         let destino_proceso = "";
         let destino_planta = "";
-        
+
         if (tipoVisita.toUpperCase() === 'AUDITORIA' && conclusion === 'APROBADO') {
             if (destinoTipoVal === 'CDI') {
                 destino_proceso = 'CDI';
@@ -843,14 +843,77 @@ async function handleCalidadSubmit(e) {
         };
 
         const result = await sendToGAS(payload);
-        
+
         const idReporte = result.id || result.ID_REPORTE;
 
         if (!idReporte) {
             throw new Error('No se recibió ID del reporte');
         }
 
-        // 2. UI libre
+        // 2. Envío automático de correo en segundo plano (sin confirmación)
+        (async () => {
+            try {
+                // 2a. Buscar el correo registrado de la planta taller
+                let emailPlanta = '';
+                try {
+                    const plantas = await fetchPlantasData();
+                    const nombrePlanta = (payload.planta || '').trim().toLowerCase();
+                    const plantaObj = plantas.find(p =>
+                        (p.PLANTA || '').trim().toLowerCase() === nombrePlanta
+                    );
+                    emailPlanta = plantaObj ? (plantaObj.CORREO || plantaObj.EMAIL || '') : '';
+                } catch (ePlanta) {
+                    console.warn('[calidad] No se pudo obtener el email de la planta:', ePlanta);
+                }
+
+                if (!emailPlanta) {
+                    console.warn('[calidad] La planta no tiene correo registrado, no se enviará el correo automático.');
+                    return;
+                }
+
+                const repParaCorreo = {
+                    ID_REPORTE: idReporte,
+                    ID: payload.lote || '',
+                    REFERENCIA: payload.referencia || '',
+                    PLANTA: payload.planta || '',
+                    LINEA: payload.linea || payload.cuento || '',
+                    PROCESO: payload.proceso || '',
+                    PRENDA: payload.prenda || '',
+                    GENERO: payload.genero || '',
+                    TEJIDO: payload.tejido || '',
+                    CANTIDAD: payload.cantidad || '',
+                    TIPO_VISITA: tipoVisita,
+                    CONCLUSION: conclusion,
+                    OBSERVACIONES: finalObservaciones,
+                    FECHA: new Date().toISOString(),
+                    DESTINO_PROCESO: destino_proceso || '',
+                    DESTINO_PLANTA: destino_planta || '',
+                    AVANCE: avance || '',
+                    NOVEDADES_AUDITORIA: novedades_auditoria ? JSON.stringify(novedades_auditoria) : '',
+                    // Agregar fechas de entrega y recepción
+                    SALIDA: payload.salida || '',
+                    salida: payload.salida || '',
+                    ENTRADA: payload.entrada || '',
+                    entrada: payload.entrada || '',
+                    // Colocar el correo del auditor para resolver nombre y enlace de WhatsApp
+                    email: email,
+                    EMAIL: email
+                };
+
+                await sendToSupabase({
+                    accion: 'REPORTE_CALIDAD',
+                    email: emailPlanta, // Destinatario real (la planta taller)
+                    cc: ['coordinadorcalidad@tceluniverso.com', 'coordinadorlogistico@eltemplodelamoda.com.co'],
+                    //cc: ['coordinadorlogistico@eltemplodelamoda.com.co'],
+                    reporte: repParaCorreo,
+                });
+                console.log('[calidad] Correo de reporte enviado automáticamente a:', emailPlanta, idReporte);
+            } catch (mailErr) {
+                console.warn('[calidad] El correo no pudo enviarse automáticamente (no crítico):', mailErr);
+            }
+        })();
+
+        // 3. UI libre
         Swal.fire({
             title: '¡Reporte guardado!',
             text: 'El reporte de calidad fue guardado exitosamente.',
@@ -860,7 +923,7 @@ async function handleCalidadSubmit(e) {
         });
 
         e.target.reset();
-        
+
         // Limpiar inputs de búsqueda principales
         const loteInput = document.getElementById('loteInput');
         const plantaFilterInput = document.getElementById('plantaFilterInput');
@@ -874,15 +937,15 @@ async function handleCalidadSubmit(e) {
         if (typeof showEmptyState === 'function') {
             showEmptyState();
         }
-        
+
         // Limpiar firma canvas tras envío exitoso
         if (window.FirmaTaller) window.FirmaTaller.clear();
         if (typeof clearVersionHistory === 'function') clearVersionHistory();
-        
+
         // Limpiar novedades de auditoría
         window._novedadesCalidadState = [];
         renderTarjetasNovedadesCalidad();
-        
+
         _actualizarCamposCalidad();
         hideSections();
 
