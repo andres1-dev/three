@@ -386,7 +386,7 @@
                                 <div style="margin-top: 5px; font-size: 11px; padding: 4px; border-top: 1px solid #eee;">
                                     <strong>Salida:</strong> ${formatearFecha(nov.SALIDA)} 
                                     <span class="text-danger" style="font-size:0.85em;">
-                                        (Hace ${calcularDiasHabilesHastaHoy(nov.SALIDA)} días hábiles)
+                                        (${calcularDiasHabiles(nov.SALIDA, nov.FECHA || nov.TIMESTAMP)} días hábiles)
                                     </span>
                                 </div>
                             ` : ''}
@@ -603,61 +603,71 @@
             return limpio.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
         }
 
-        function parsearFechaLatina(dateString) {
-            if (!dateString) return null;
-            if (dateString instanceof Date) return dateString;
+        function parsearFechaLatina(d) {
+            if (!d) return null;
+            if (d instanceof Date) return d;
+            let s = String(d).replace('T', ' ').trim();
+            if (!s) return null;
 
-            if (typeof dateString === 'string') {
-                const cleaned = dateString.toLowerCase().trim();
+            // 1. Detectar Separadores (Soporte para / y -)
+            const sep = s.includes('/') ? '/' : (s.includes('-') ? '-' : null);
 
-                // --- 1. SOPORTE PARA FORMATO SISPRO "02-mar-26" ---
-                if (cleaned.includes('-')) {
-                    const parts = cleaned.split('-');
-                    if (parts.length === 3) {
-                        const dia = parseInt(parts[0], 10);
-                        const mesNom = parts[1].substring(0, 3);
-                        let anioVal = parseInt(parts[2], 10);
+            if (sep) {
+                const parts = s.split(/\s+/); // Separa fecha de hora
+                const dateParts = parts[0].split(sep);
 
-                        if (anioVal < 100) anioVal += 2000;
+                if (dateParts.length === 3) {
+                    let dia, mes, anio;
 
-                        const mesesMap = {
-                            'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5,
-                            'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11
-                        };
+                    // Caso YYYY-MM-DD (Formato ISO de Sheets)
+                    if (dateParts[0].length === 4) {
+                        anio = parseInt(dateParts[0]);
+                        mes = parseInt(dateParts[1]) - 1;
+                        dia = parseInt(dateParts[2]);
+                    }
+                    // Caso DD/MM/YYYY o DD-MM-YYYY (Formato Latino)
+                    else if (dateParts[2].length === 4) {
+                        dia = parseInt(dateParts[0]);
+                        mes = parseInt(dateParts[1]) - 1;
+                        anio = parseInt(dateParts[2]);
+                    }
+                    // Caso DD/MM/YY o DD-MM-YY (Año corto)
+                    else if (dateParts[2].length === 2) {
+                        dia = parseInt(dateParts[0]);
+                        mes = parseInt(dateParts[1]) - 1;
+                        anio = parseInt('20' + dateParts[2]);
+                    }
+                    // Caso con mes en texto (ene, feb, mar...)
+                    else if (isNaN(dateParts[1])) {
+                        dia = parseInt(dateParts[0]);
+                        const meses = { 'ene': 0, 'feb': 1, 'mar': 2, 'abr': 3, 'may': 4, 'jun': 5, 'jul': 6, 'ago': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dic': 11 };
+                        mes = meses[dateParts[1].toLowerCase().substring(0, 3)] || 0;
+                        anio = parseInt(dateParts[2].length === 2 ? '20' + dateParts[2] : dateParts[2]);
+                    }
 
-                        if (mesesMap.hasOwnProperty(mesNom) && !isNaN(dia) && !isNaN(anioVal)) {
-                            return new Date(anioVal, mesesMap[mesNom], dia);
+                    if (!isNaN(dia) && !isNaN(mes) && !isNaN(anio)) {
+                        let fecha = new Date(anio, mes, dia);
+                        // Si hay hora (HH:mm:ss)
+                        if (parts[1] && parts[1].includes(':')) {
+                            const timeParts = parts[1].split(':');
+                            fecha.setHours(parseInt(timeParts[0]) || 0, parseInt(timeParts[1]) || 0, parseInt(timeParts[2]) || 0);
+                        }
+
+                        // Validar que la fecha sea válida
+                        if (!isNaN(fecha.getTime())) {
+                            return fecha;
                         }
                     }
                 }
-
-                // --- 2. SOPORTE PARA FORMATO LATINO "10/3/2026, 21:16:21" ---
-                if (cleaned.includes('/')) {
-                    const str = cleaned.split(',')[0].trim();
-                    const parts = str.split('/');
-                    if (parts.length === 3) {
-                        const d = parseInt(parts[0], 10);
-                        const m = parseInt(parts[1], 10) - 1;
-                        const y = parseInt(parts[2], 10);
-
-                        let hr = 0, min = 0, sec = 0;
-                        if (dateString.includes(',')) {
-                            const timeParts = dateString.split(',')[1].trim().split(':');
-                            if (timeParts.length >= 2) {
-                                hr = parseInt(timeParts[0], 10);
-                                min = parseInt(timeParts[1], 10);
-                                sec = timeParts[2] ? parseInt(timeParts[2], 10) : 0;
-                            }
-                        }
-                        return new Date(y, m, d, hr, min, sec);
-                    }
-                }
-
-                const dt = new Date(dateString);
-                if (!isNaN(dt.getTime())) return dt;
             }
-            const dt = new Date(dateString);
-            return isNaN(dt.getTime()) ? null : dt;
+
+            // Fallback al parse nativo solo si lo de arriba falla
+            const dtFallback = new Date(d);
+            if (!isNaN(dtFallback.getTime())) {
+                return dtFallback;
+            }
+
+            return null;
         }
 
         function formatearFecha(dateString) {
@@ -674,11 +684,16 @@
         }
 
         function calcularDiasHabilesHastaHoy(fechaInicioStr) {
+            return calcularDiasHabiles(fechaInicioStr, new Date());
+        }
+
+        function calcularDiasHabiles(fechaInicioStr, fechaFinStr) {
             const d1 = parsearFechaLatina(fechaInicioStr);
-            if (!d1) return null;
+            const d2 = parsearFechaLatina(fechaFinStr || new Date());
+            if (!d1 || !d2) return 0;
 
             let start = new Date(d1);
-            let end = new Date();
+            let end = new Date(d2);
 
             if (start > end) return 0; // Es futuro
 
