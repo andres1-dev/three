@@ -958,7 +958,7 @@
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title fw-bold" id="editReporteModalTitle">
+                        <h5 class="modal-title fw-bold">
                             <i class="fas fa-eye me-2"></i>Ver Reporte
                         </h5>
                         <button type="button" class="btn-close" onclick="cerrarModalReporte()"></button>
@@ -1016,13 +1016,7 @@
                                 <div class="col-md-4">
                                     <label class="form-label small fw-bold" style="color: #3f51b5;"><i
                                             class="fas fa-clipboard-check me-1"></i>Tipo Visita</label>
-                                    <input type="text" id="editTipoVisita" class="form-control view-only" readonly>
-                                    <select id="editTipoVisitaSelect" class="form-control edit-only">
-                                        <option value="AUDITORIA">AUDITORIA</option>
-                                        <option value="RONDA">RONDA</option>
-                                        <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
-                                        <option value="SEGUIMIENTO">SEGUIMIENTO</option>
-                                    </select>
+                                    <input type="text" id="editTipoVisita" class="form-control" readonly>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small fw-bold" style="color: #3f51b5;"><i
@@ -1038,33 +1032,14 @@
                                 <label class="form-label fw-bold" style="color: #3f51b5;">
                                     <i class="fas fa-check-circle me-1"></i>Conclusión
                                 </label>
-                                <input type="text" id="editConclusion" class="form-control view-only" readonly>
-                                <select id="editConclusionSelect" class="form-control edit-only">
-                                    <option value="">Seleccione una conclusión...</option>
-                                    <option value="APROBADO">APROBADO</option>
-                                    <option value="RECHAZADO">RECHAZADO</option>
-                                    <option value="PAUSADO">PAUSADO</option>
-                                </select>
+                                <input type="text" id="editConclusion" class="form-control" readonly>
                             </div>
 
                             <div class="mb-3" id="containerObservaciones">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <label class="form-label fw-bold mb-0" style="color: #3f51b5;">
-                                        <i class="fas fa-comment-alt me-1"></i>Observaciones Generales
-                                    </label>
-                                    <div class="edit-only">
-                                        <button type="button" class="btn-action-muted" onclick="mejorarRedaccionReporte('editObservacionesEditable')" title="Mejorar redacción y ortografía">
-                                            <i class="fas fa-wand-magic-sparkles"></i> Mejorar
-                                        </button>
-                                        <button type="button" class="btn-restore-text" id="btnRestoreTextModal" onclick="restaurarTextoOriginalReporte('editObservacionesEditable')" title="Restaurar texto original" style="display: none;">
-                                            <i class="fas fa-undo"></i> Restaurar
-                                        </button>
-                                    </div>
-                                </div>
-                                <textarea id="editObservaciones" class="form-control view-only" rows="6" readonly></textarea>
-                                <div class="ai-textarea-wrapper edit-only">
-                                    <textarea id="editObservacionesEditable" class="form-control" rows="6"></textarea>
-                                </div>
+                                <label class="form-label fw-bold" style="color: #3f51b5;">
+                                    <i class="fas fa-comment-alt me-1"></i>Observaciones Generales
+                                </label>
+                                <textarea id="editObservaciones" class="form-control" rows="6" readonly></textarea>
                             </div>
 
                             <div class="row mb-3" id="containerProceso">
@@ -1088,8 +1063,7 @@
                                 </div>
                             </div>
 
-                            <!-- Destino View Section -->
-                            <div class="row mb-3 view-only" id="containerDestino">
+                            <div class="row mb-3" id="containerDestino">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold" style="color: #3f51b5;">
                                         <i class="fas fa-route me-1"></i>Destino Proceso
@@ -1104,71 +1078,11 @@
                                 </div>
                             </div>
 
-                            <!-- Destino Edit Section -->
-                            <div id="editDestinoSection" class="edit-only mb-3" style="display: none;">
-                                <div class="mb-3">
-                                    <label for="editDestinoTipo" class="form-label fw-bold mb-1" style="color: #3f51b5;"><i class="fas fa-route me-1"></i>¿Para dónde va el lote?</label>
-                                    <select id="editDestinoTipo" class="form-control">
-                                        <option value="">Seleccione el destino...</option>
-                                        <option value="CDI">CDI (Centro de Distribución)</option>
-                                        <option value="PROCESO">Otro Proceso / Taller</option>
-                                    </select>
-                                </div>
-                                <div id="editDestinoProcesoContainer" style="display:none;">
-                                    <div class="mb-3">
-                                        <label for="editDestinoProcesoSelect" class="form-label fw-bold mb-1" style="color: #3f51b5;">Seleccione el proceso de destino:</label>
-                                        <select id="editDestinoProcesoSelect" class="form-control">
-                                            <option value="">Seleccione...</option>
-                                            <option value="CONFECCION">CONFECCIÓN</option>
-                                            <option value="ESTAMPADO">ESTAMPADO</option>
-                                            <option value="OJAL Y BOTON">OJAL Y BOTÓN</option>
-                                            <option value="BOTONADO">BOTONADO</option>
-                                            <option value="TRANSFER">TRANSFER</option>
-                                            <option value="OJALETE">OJALETE</option>
-                                            <option value="APLIQUE">APLIQUE</option>
-                                            <option value="RESORTADO">RESORTADO</option>
-                                            <option value="FUSIONADO">FUSIONADO</option>
-                                            <option value="OTROS">OTROS (Especificar...)</option>
-                                        </select>
-                                    </div>
-                                    <div id="editDestinoOtroSection" class="mb-3" style="display:none;">
-                                        <input type="text" id="editDestinoOtro" class="form-control" placeholder="Escriba el proceso de destino...">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="editDestinoPlantaInput" class="form-label fw-bold mb-1" style="color: #3f51b5;">¿A qué planta/taller va?</label>
-                                        <input type="text" id="editDestinoPlantaInput" class="form-control" placeholder="Escriba la planta..." list="plantasDatalistModal" autocomplete="off">
-                                        <datalist id="plantasDatalistModal"></datalist>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Avance View Section -->
-                            <div class="mb-3 view-only" id="containerAvance">
+                            <div class="mb-3" id="containerAvance">
                                 <label class="form-label fw-bold" style="color: #3f51b5;">
                                     <i class="fas fa-percentage me-1"></i>Avance
                                 </label>
                                 <input type="text" id="editAvance" class="form-control" readonly>
-                            </div>
-
-                            <!-- Avance Edit Section -->
-                            <div class="mb-3 edit-only" id="containerAvanceEdit" style="display:none;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                    <label class="form-label fw-bold mb-0" style="color: #3f51b5;">
-                                        <i class="fas fa-percentage me-1"></i>Avance de producción:
-                                    </label>
-                                    <span id="editAvanceValor" style="font-size:1.1rem; font-weight:800; color:#3F51B5; min-width:42px; text-align:right;">0%</span>
-                                </div>
-                                <div style="position:relative; padding: 6px 0;">
-                                    <input type="range" id="editAvanceSlider" min="0" max="100" step="5" value="0" style="width:100%; accent-color:#3F51B5; height:6px; cursor:pointer;">
-                                    <div style="display:flex; justify-content:space-between; margin-top:4px;">
-                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">0%</span>
-                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">25%</span>
-                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">50%</span>
-                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">75%</span>
-                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">100%</span>
-                                    </div>
-                                </div>
-                                <input type="hidden" id="editAvancePorcentaje">
                             </div>
 
                             <div class="row mb-3" id="containerFechas">
@@ -1201,60 +1115,22 @@
                                 <input type="text" id="editTejido" class="form-control" readonly>
                             </div>
 
-                            <!-- Soporte View Section -->
-                            <div class="mb-3 view-only" id="containerSoporte">
+                            <div class="mb-3" id="containerSoporte">
                                 <label class="form-label small fw-bold" style="color: #3f51b5;"><i
                                         class="fas fa-image me-1"></i>Soporte (Imagen)</label>
                                 <div id="editSoporteContainer"></div>
                             </div>
 
-                            <!-- Soporte Edit Section -->
-                            <div class="mb-3 edit-only" id="containerSoporteEdit">
-                                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-camera me-1"></i>Cambiar Soporte (Imagen)</label>
-                                <div class="file-dropzone" id="editSoporteDropzone" role="button" tabindex="0">
-                                    <i class="fas fa-camera file-dropzone__icon"></i>
-                                    <div class="file-dropzone__text">
-                                        <span class="file-dropzone__action">Haz clic para subir soporte técnico</span>
-                                        <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
-                                    </div>
-                                    <span class="file-dropzone__name" id="editSoporteName"></span>
-                                </div>
-                                <input type="file" id="editSoporteInput" class="file-dropzone__input" accept="image/*" capture="environment">
-                            </div>
-
-                            <!-- Novedades Section -->
                             <div class="mb-3" id="containerNovedades">
-                                <label class="form-label fw-bold" style="color: #3f51b5;">
-                                    <i class="fas fa-exclamation-circle me-1"></i>Novedades Auditoría
-                                </label>
-                                <div class="edit-only mb-2">
-                                    <div id="editNovedadesDropzone" class="file-dropzone" role="button" tabindex="0" onclick="agregarBloqueNovedadCalidadModal()" style="padding:1rem;">
-                                        <i class="fas fa-clipboard-list file-dropzone__icon"></i>
-                                        <div class="file-dropzone__text">
-                                            <span class="file-dropzone__action">Toca aquí para reportar una novedad</span>
-                                            <span class="file-dropzone__hint">Sin confeccionar, Promociones, Cobros, Lavado</span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                        class="fas fa-exclamation-circle me-1"></i>Novedades Auditoría</label>
                                 <div id="editNovedadesContainer"></div>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <!-- View Only Buttons -->
-                        <button type="button" class="btn btn-secondary view-only" onclick="cerrarModalReporte()">
+                        <button type="button" class="btn btn-primary" onclick="cerrarModalReporte()">
                             <i class="fas fa-times me-1"></i>Cerrar
-                        </button>
-                        <button type="button" class="btn btn-warning view-only text-white" onclick="entrarModoEdicion()" style="background-color: #f59e0b; border: none;">
-                            <i class="fas fa-edit me-1"></i>Editar Reporte
-                        </button>
-
-                        <!-- Edit Only Buttons -->
-                        <button type="button" class="btn btn-secondary edit-only" onclick="salirModoEdicion()">
-                            <i class="fas fa-undo me-1"></i>Cancelar
-                        </button>
-                        <button type="button" class="btn btn-primary edit-only" onclick="guardarCambiosReporte()">
-                            <i class="fas fa-save me-1"></i>Guardar Cambios
                         </button>
                     </div>
                 </div>
@@ -1324,82 +1200,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Modal Novedades Calidad -->
-        <div id="novedadesCalidadModal" style="display:none; position:fixed; inset:0; z-index:9000;
-               background:rgba(15,23,42,0.45); backdrop-filter:blur(4px);
-               align-items:center; justify-content:center;">
-          <div id="novedadesModalContent"
-            style="background:white; border-radius:20px; padding:24px; width:450px;
-                      max-width:calc(100vw - 32px); box-shadow:0 20px 50px rgba(0,0,0,0.2); max-height:90vh; display:flex; flex-direction:column;">
-
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-              <div style="display:flex; align-items:center; gap:8px;">
-                <i class="fas fa-clipboard-list" style="color:#3F51B5; font-size:1.1rem;"></i>
-                <span id="novedadesModalTitle" style="font-size:1.1rem; font-weight:800; color:#1e293b;">Reportar Novedad</span>
-              </div>
-              <button type="button" onclick="cerrarModalNovedadCalidad()"
-                style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:4px; transition:color 0.2s;"
-                onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-
-            <div style="flex:1; overflow-y:auto; padding-right:4px;">
-              <div class="mb-3">
-                <label class="form-label" style="font-size:0.75rem;">Tipo de Novedad: <span
-                    style="color:#ef4444;">*</span></label>
-                <div class="input-with-icon">
-                  <i class="fas fa-tag input-icon"></i>
-                  <select id="novedadModalTipo" class="form-control" onchange="handleModalCalidadNovedadTipoChange()">
-                    <option value="">Seleccione tipo...</option>
-                    <option value="SIN CONFECCIONAR">SIN CONFECCIONAR</option>
-                    <option value="PROMOCIONES">PROMOCIONES</option>
-                    <option value="COBROS">COBROS</option>
-                    <option value="LAVADO">LAVADO</option>
-                  </select>
-                </div>
-              </div>
-
-              <div id="novedadModalSinProceso" class="mb-3" style="display:none;">
-                <label
-                  style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; font-size:0.85rem; font-weight:700; color:#475569;">
-                  <input type="checkbox" id="novedadModalSinProcesoCheck" value="SI"
-                    style="accent-color:#3F51B5; width:16px; height:16px;">
-                  MARCAR COMO SIN PROCESO
-                </label>
-                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px; margin-left:24px;">Las unidades no se
-                  cobrarán en este proceso.</div>
-              </div>
-
-              <div style="margin-top:20px;">
-                <div
-                  style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
-                  <span
-                    style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.05em;">Unidades afectadas</span>
-                  <button type="button" class="btn-action-muted" onclick="agregarFilaModalNovedad()"
-                    title="Agregar código" style="font-size:0.75rem; padding:4px 8px;">
-                    <i class="fas fa-plus"></i> Añadir fila
-                  </button>
-                </div>
-                <div id="novedadModalCodigosList"></div>
-              </div>
-            </div>
-
-            <div style="margin-top:20px; display:flex; gap:12px;">
-              <button type="button" onclick="cerrarModalNovedadCalidad()" style="flex:1; padding:12px; border-radius:10px; border:1px solid #cbd5e1;
-                         background:white; color:#475569; font-weight:700; font-size:0.85rem; cursor:pointer;">
-                Cancelar
-              </button>
-              <button type="button" onclick="guardarNovedadCalidad()"
-                style="flex:2; padding:12px; border-radius:10px; border:none;
-                         background:#3F51B5; color:white; font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 6px -1px rgba(63,81,181,0.2);">
-                Guardar Novedad
-              </button>
-            </div>
-
-          </div>
         </div>
 
         <style>
@@ -1691,20 +1491,6 @@
                     flex: 0 0 50% !important;
                     max-width: 50% !important;
                 }
-            }
-
-            /* View / Edit Mode Toggles */
-            #reporteModal:not(.is-editing) .edit-only {
-                display: none !important;
-            }
-            #reporteModal.is-editing .view-only {
-                display: none !important;
-            }
-            #reporteModal:not(.is-editing) .nov-action-btn {
-                display: none !important;
-            }
-            #reporteModal.is-editing .nov-action-btn {
-                display: inline-block !important;
             }
         </style>
     </div>
