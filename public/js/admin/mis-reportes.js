@@ -2005,11 +2005,19 @@ async function enviarWhatsApp() {
     // LIMPIAR NUMERO
     // =========================
 
-    const cleanPhone =
+    let cleanPhone =
         phoneNumber.replace(
             /[\s\-\(\)]/g,
             ''
         );
+
+    // =========================
+    // ASEGURAR PREFIJO 57 (COLOMBIA)
+    // =========================
+
+    if (cleanPhone && !cleanPhone.startsWith('57')) {
+        cleanPhone = '57' + cleanPhone;
+    }
 
     // =========================
     // ENCODE URL
@@ -2339,11 +2347,19 @@ async function enviarWhatsAppIndividual(index) {
     // NUMERO
     // =========================
 
-    const cleanPhone =
+    let cleanPhone =
         phoneNumber.replace(
             /[\s\-\(\)]/g,
             ''
         );
+
+    // =========================
+    // ASEGURAR PREFIJO 57 (COLOMBIA)
+    // =========================
+
+    if (cleanPhone && !cleanPhone.startsWith('57')) {
+        cleanPhone = '57' + cleanPhone;
+    }
 
     // =========================
     // URL
