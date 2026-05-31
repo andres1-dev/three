@@ -420,8 +420,35 @@
 
             /* ── Pure CSS Table-to-Card transformation ── */
             .planta-row-mobile {
+                display: block !important;
+                background: #f8fafc !important;
+                color: #1e293b !important;
+                padding: 10px 14px !important;
+                border-radius: 12px 12px 0 0 !important;
+                margin-bottom: -1px !important;
+                border: 1px solid #e2e8f0 !important;
+                border-bottom: none !important;
+            }
+
+            .planta-row-mobile td {
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                display: block !important;
+                text-align: center !important;
+            }
+
+            .planta-row-mobile span {
+                font-size: 0.85rem !important;
+                font-weight: 600 !important;
+                color: #3f51b5 !important;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+
+            /* Evitar que planta-row-mobile tenga pseudo-elementos ::before */
+            .planta-row-mobile td::before {
                 display: none !important;
-                /* Hide native plant row since we show it inline */
             }
 
             .report-table,
@@ -448,7 +475,7 @@
             .report-table tr:not(.planta-row-mobile) {
                 background: #ffffff !important;
                 border: 1px solid rgba(226, 232, 240, 0.9) !important;
-                border-radius: 16px !important;
+                border-radius: 0 0 16px 16px !important;
                 padding: 14px 16px !important;
                 box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
                 display: flex !important;
@@ -457,6 +484,7 @@
                 position: relative !important;
                 transition: transform 0.2s ease, box-shadow 0.2s ease !important;
                 -webkit-tap-highlight-color: transparent;
+                margin-top: -13px !important;
             }
 
             .report-table tr:not(.planta-row-mobile):active {
@@ -466,7 +494,7 @@
 
             /* Styling each field inside the card */
             .report-table td {
-                padding: 6px 0 !important;
+                padding: 8px 0 !important;
                 border-bottom: 1px solid #f1f5f9 !important;
                 display: flex !important;
                 justify-content: space-between !important;
@@ -475,6 +503,7 @@
                 width: 100% !important;
                 text-align: left !important;
                 background: transparent !important;
+                min-height: 32px !important;
             }
 
             /* Ordering cells for premium visual layout */
@@ -490,33 +519,36 @@
             }
 
             .report-table td:nth-child(2)::before {
-                content: "Lote: " !important;
-                font-weight: 700 !important;
-                color: #64748b !important;
-                font-size: 0.72rem !important;
+                content: "Lote" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
                 text-transform: uppercase !important;
                 letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
             }
 
             /* 2. Fecha */
             .report-table td:nth-child(1) {
                 order: 2 !important;
-                font-size: 0.78rem !important;
+                font-size: 0.85rem !important;
                 color: #64748b !important;
                 font-weight: 500 !important;
                 padding-top: 0 !important;
                 padding-bottom: 8px !important;
-                border-bottom: 1px solid #e2e8f0 !important;
                 margin-bottom: 4px !important;
             }
 
             .report-table td:nth-child(1)::before {
-                content: "Registrado" !important;
+                content: "Fecha" !important;
                 font-weight: 600 !important;
                 color: #94a3b8 !important;
-                font-size: 0.68rem !important;
+                font-size: 0.7rem !important;
                 text-transform: uppercase !important;
-                letter-spacing: 0.02em !important;
+                letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
             }
 
             /* 3. Referencia */
@@ -534,23 +566,13 @@
                 font-size: 0.7rem !important;
                 text-transform: uppercase !important;
                 letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
             }
 
-            /* 4. Planta */
+            /* 4. Planta - OCULTAR EN MÓVIL YA QUE SE MUESTRA EN planta-row-mobile */
             .report-table td:nth-child(4) {
-                order: 4 !important;
-                display: flex !important;
-                font-weight: 600 !important;
-                color: #334155 !important;
-            }
-
-            .report-table td:nth-child(4)::before {
-                content: "Taller / Planta" !important;
-                font-weight: 600 !important;
-                color: #94a3b8 !important;
-                font-size: 0.7rem !important;
-                text-transform: uppercase !important;
-                letter-spacing: 0.03em !important;
+                display: none !important;
             }
 
             /* 5. Conclusion (Status badge) */
@@ -560,12 +582,14 @@
             }
 
             .report-table td:nth-child(5)::before {
-                content: "Resultado" !important;
+                content: "Estado" !important;
                 font-weight: 600 !important;
                 color: #94a3b8 !important;
                 font-size: 0.7rem !important;
                 text-transform: uppercase !important;
                 letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
             }
 
             .status-badge-sm {
@@ -574,44 +598,53 @@
                 font-weight: 700 !important;
             }
 
-            /* 6. Acciones */
+            /* 6. Acciones - Segmented Control Style */
             .report-table td:nth-child(6) {
                 order: 6 !important;
                 display: flex !important;
-                justify-content: space-between !important;
+                justify-content: center !important;
                 align-items: center !important;
                 border-bottom: none !important;
-                margin-top: 6px !important;
-                padding-top: 10px !important;
-                border-top: 1px dashed #e2e8f0 !important;
+                margin-top: 8px !important;
+                padding-top: 8px !important;
+                border-top: 1px solid #e2e8f0 !important;
             }
 
             .report-table td:nth-child(6)::before {
-                content: "Acciones rápidas" !important;
-                font-weight: 600 !important;
-                color: #94a3b8 !important;
-                font-size: 0.7rem !important;
-                text-transform: uppercase !important;
-                letter-spacing: 0.03em !important;
+                display: none !important;
             }
 
             .action-btns {
+                display: flex !important;
                 flex-direction: row !important;
-                gap: 8px !important;
+                gap: 0 !important;
+                /*background: #e2e8f0 !important;*/
+                border-radius: 8px !important;
+                padding: 2px !important;
+                width: 100% !important;
             }
 
             .action-btn {
-                font-size: 0.95rem !important;
-                padding: 6px 12px !important;
-                border-radius: 8px !important;
-                border: 1px solid #e2e8f0 !important;
-                background: #f8fafc !important;
+                font-size: 0.9rem !important;
+                padding: 8px 0 !important;
+                border-radius: 6px !important;
+                border: none !important;
+                background: transparent !important;
                 transition: all 0.15s ease !important;
+                flex: 1 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-height: 36px !important;
+            }
+
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.5) !important;
             }
 
             .action-btn:active {
-                transform: scale(0.9);
-                background: #e2e8f0 !important;
+                background: #ffffff !important;
+                transform: scale(0.98);
             }
 
             .action-btn-ver {
@@ -632,6 +665,11 @@
 
             .action-btn-editar-planta {
                 color: #f59e0b !important;
+            }
+
+            .action-btn:disabled {
+                opacity: 0.3 !important;
+                cursor: not-allowed !important;
             }
 
             /* Modern Group Headers */
@@ -678,6 +716,105 @@
 
             .kpi-chip-val {
                 font-size: 1rem !important;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .wrapper-dashboard {
+                padding: 0.75rem 0.25rem;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                padding: 10px 10px !important;
+                gap: 6px !important;
+            }
+
+            .report-table td {
+                font-size: 0.75rem !important;
+                padding: 6px 0 !important;
+                min-height: 28px !important;
+            }
+
+            /* Ajustar planta-row-mobile en pantallas pequeñas */
+            .planta-row-mobile {
+                padding: 8px 10px !important;
+            }
+
+            .planta-row-mobile span {
+                font-size: 0.8rem !important;
+            }
+
+            /* Ajustar etiquetas de campos */
+            .report-table td:nth-child(2)::before,
+            .report-table td:nth-child(1)::before,
+            .report-table td:nth-child(3)::before,
+            .report-table td:nth-child(5)::before {
+                font-size: 0.65rem !important;
+                min-width: 60px !important;
+                margin-right: 6px !important;
+            }
+
+            /* Ajustar botones de acción segmented control */
+            .action-btn {
+                font-size: 0.85rem !important;
+                padding: 6px 0 !important;
+                min-height: 32px !important;
+            }
+
+            /* Reducir padding de las tarjetas */
+            .group-header {
+                padding: 10px 12px !important;
+            }
+
+            .group-title {
+                font-size: 0.85rem !important;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .wrapper-dashboard {
+                padding: 0.5rem 0.25rem;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                padding: 8px 8px !important;
+                gap: 4px !important;
+            }
+
+            .report-table td {
+                font-size: 0.7rem !important;
+                padding: 4px 0 !important;
+                min-height: 26px !important;
+            }
+
+            /* Ajustar planta-row-mobile en pantallas muy pequeñas */
+            .planta-row-mobile {
+                padding: 6px 8px !important;
+            }
+
+            .planta-row-mobile span {
+                font-size: 0.75rem !important;
+            }
+
+            /* Ajustar etiquetas de campos */
+            .report-table td:nth-child(2)::before,
+            .report-table td:nth-child(1)::before,
+            .report-table td:nth-child(3)::before,
+            .report-table td:nth-child(5)::before {
+                font-size: 0.6rem !important;
+                min-width: 55px !important;
+                margin-right: 4px !important;
+            }
+
+            /* Ajustar botones de acción segmented control */
+            .action-btn {
+                font-size: 0.8rem !important;
+                padding: 5px 0 !important;
+                min-height: 28px !important;
+            }
+
+            .action-btns {
+                padding: 1px !important;
             }
         }
 
@@ -815,6 +952,32 @@
 
             .whatsapp-float-btn:hover {
                 transform: scale(1.1);
+            }
+        }
+
+        @media (max-width: 375px) {
+            .whatsapp-float-btn {
+                bottom: 16px;
+                right: 16px;
+                width: 52px;
+                height: 52px;
+            }
+
+            .whatsapp-float-btn i {
+                font-size: 26px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .whatsapp-float-btn {
+                bottom: 12px;
+                right: 12px;
+                width: 48px;
+                height: 48px;
+            }
+
+            .whatsapp-float-btn i {
+                font-size: 24px;
             }
         }
     </style>
@@ -1240,22 +1403,26 @@
                             </div>
                         </form>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc;">
                         <!-- View Only Buttons -->
-                        <button type="button" class="btn btn-secondary view-only" onclick="cerrarModalReporte()">
-                            <i class="fas fa-times me-1"></i>Cerrar
-                        </button>
-                        <button type="button" class="btn btn-warning view-only text-white" onclick="entrarModoEdicion()" style="background-color: #f59e0b; border: none;">
-                            <i class="fas fa-edit me-1"></i>Editar Reporte
-                        </button>
+                        <div class="d-flex gap-2 w-100 view-only">
+                            <button type="button" class="btn flex-1" onclick="cerrarModalReporte()" style="background: #e2e8f0; border: none; color: #475569; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-times me-1"></i>Cerrar
+                            </button>
+                            <button type="button" class="btn flex-1 text-white" onclick="entrarModoEdicion()" style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </button>
+                        </div>
 
                         <!-- Edit Only Buttons -->
-                        <button type="button" class="btn btn-secondary edit-only" onclick="salirModoEdicion()">
-                            <i class="fas fa-undo me-1"></i>Cancelar
-                        </button>
-                        <button type="button" class="btn btn-primary edit-only" onclick="guardarCambiosReporte()">
-                            <i class="fas fa-save me-1"></i>Guardar Cambios
-                        </button>
+                        <div class="d-flex gap-2 w-100 edit-only">
+                            <button type="button" class="btn flex-1" onclick="salirModoEdicion()" style="background: #e2e8f0; border: none; color: #475569; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-undo me-1"></i>Cancelar
+                            </button>
+                            <button type="button" class="btn flex-1 text-white" onclick="guardarCambiosReporte()" style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-save me-1"></i>Guardar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1284,30 +1451,27 @@
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted"><i
-                                        class="fas fa-id-card me-1"></i>Cédula o NIT <span
-                                        class="text-danger">*</span></label>
-                                <input type="number" id="plantaModalId" class="form-control" placeholder="" required>
+                                        class="fas fa-id-card me-1"></i>Cédula o NIT</label>
+                                <input type="number" id="plantaModalId" class="form-control" placeholder="">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted"><i
-                                        class="fas fa-signature me-1"></i>Nombre del taller <span
-                                        class="text-danger">*</span></label>
-                                <input type="text" id="plantaModalNombre" class="form-control" placeholder="" required
+                                        class="fas fa-signature me-1"></i>Nombre del taller</label>
+                                <input type="text" id="plantaModalNombre" class="form-control" placeholder=""
                                     style="text-transform: uppercase;">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted"><i
-                                        class="fas fa-phone me-1"></i>Celular <span class="text-danger">*</span></label>
-                                <input type="tel" id="plantaModalTelefono" class="form-control" placeholder="" required>
+                                        class="fas fa-phone me-1"></i>Celular</label>
+                                <input type="tel" id="plantaModalTelefono" class="form-control" placeholder="">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label small fw-bold text-muted"><i
-                                        class="fas fa-envelope me-1"></i>Correo<span
-                                        class="text-danger">*</span></label>
-                                <input type="email" id="plantaModalEmail" class="form-control" placeholder="" required>
+                                        class="fas fa-envelope me-1"></i>Correo</label>
+                                <input type="email" id="plantaModalEmail" class="form-control" placeholder="">
                             </div>
 
                             <div class="d-flex justify-content-end gap-2 mt-4">
@@ -1317,7 +1481,7 @@
                                 </button>
                                 <button type="submit" class="btn btn-primary"
                                     style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.5rem 1.5rem;">
-                                    <i class="fas fa-save me-1"></i>Guardar y Validar
+                                    <i class="fas fa-save me-1"></i>Guardar
                                 </button>
                             </div>
                         </form>
@@ -1530,15 +1694,12 @@
             #reporteModal .modal-body {
                 background-color: white;
                 padding: 2rem !important;
+                padding-bottom: 1rem !important;
             }
 
             #reporteModal .modal-footer {
                 padding: 0.5rem 2rem !important;
                 margin-top: 0 !important;
-            }
-
-            #reporteModal .modal-body {
-                padding-bottom: 0 !important;
             }
 
             #reporteModal .mb-3:last-child {
@@ -1665,19 +1826,36 @@
                     width: 133.33%;
                 }
 
+                #reporteModal .modal-body {
+                    padding: 1rem 1.5rem 0 !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
                 #reporteModal .modal-footer {
-                    padding: 0.5rem 1.5rem !important;
-                    margin-top: 0 !important;
+                    padding: 0.5rem 1rem !important;
+                    margin-top: -2rem !important;
                     transform: scale(0.75);
                     transform-origin: bottom left;
                     width: 133.33%;
                 }
 
-                #reporteModal .modal-body {
+                #reporteModal .mb-3:last-child {
+                    margin-bottom: 0 !important;
                     padding-bottom: 0 !important;
                 }
 
-                #reporteModal .mb-3:last-child {
+                #reporteModal #containerNovedades {
+                    margin-bottom: 0 !important;
+                    padding-bottom: 0 !important;
+                }
+
+                #reporteModal .row:last-child {
+                    margin-bottom: 0 !important;
+                }
+
+                #reporteModal form {
                     margin-bottom: 0 !important;
                 }
 

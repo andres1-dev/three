@@ -744,58 +744,73 @@ function expandReport(index) {
 
     if (novedadesText && !isEmpty(novedadesText)) {
         let novedadesHtml = '';
+        let parsed = null;
+
+        // Intentar parsear el JSON, manejando ambos formatos (compacto y con formato)
         if (typeof novedadesText === 'string') {
             try {
-                const parsed = JSON.parse(novedadesText);
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                    parsed.forEach((nov, idx) => {
-                        const tipo = nov.tipo || nov.TIPO || 'N/A';
-                        novedadesHtml += `<div class="mb-3 p-3" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 1px solid #e2e8f0;">`;
-                        novedadesHtml += `<label class="form-label fw-bold" style="color: #3f51b5; margin-bottom: 12px;">
-                            <i class="fas fa-exclamation-triangle me-1"></i>${tipo}
-                        </label>`;
+                parsed = JSON.parse(novedadesText);
+            } catch (e) {
+                // Si falla, intentar limpiar el string y volver a intentar
+                try {
+                    const cleaned = novedadesText.trim().replace(/\n/g, '').replace(/\s+/g, ' ');
+                    parsed = JSON.parse(cleaned);
+                } catch (e2) {
+                    // Si aún falla, mostrar el JSON crudo
+                    novedadesHtml = '<div class="p-3 bg-light rounded"><pre class="mb-0" style="font-size: 0.8rem;">' + novedadesText + '</pre></div>';
+                }
+            }
+        } else if (typeof novedadesText === 'object') {
+            parsed = novedadesText;
+        }
 
-                        if (nov.codigos && Array.isArray(nov.codigos)) {
-                            nov.codigos.forEach((codigo, cIdx) => {
-                                const talla = codigo.talla || codigo.TALLA || 'N/A';
-                                const color = codigo.color || codigo.COLOR || 'N/A';
-                                const cantidad = codigo.cantidad || codigo.CANTIDAD || '0';
+        // Si se pudo parsear, renderizar como tabla
+        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+            parsed.forEach((nov, idx) => {
+                const tipo = nov.tipo || nov.TIPO || 'N/A';
+                novedadesHtml += `<div class="mb-3 p-3" style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; border: 1px solid #e2e8f0;">`;
+                novedadesHtml += `<label class="form-label fw-bold" style="color: #3f51b5; margin-bottom: 12px;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>${tipo}
+                </label>`;
 
-                                novedadesHtml += `<div class="row mb-2" style="margin-left: -8px; margin-right: -8px;">`;
-                                novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
-                                novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Talla</label>`;
-                                novedadesHtml += `<input type="text" class="form-control" value="${talla}" readonly style="font-size: 0.875rem; padding: 6px 10px;">`;
-                                novedadesHtml += `</div>`;
-                                novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
-                                novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Color</label>`;
-                                novedadesHtml += `<input type="text" class="form-control" value="${color}" readonly style="font-size: 0.875rem; padding: 6px 10px;">`;
-                                novedadesHtml += `</div>`;
-                                novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
-                                novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Cantidad</label>`;
-                                novedadesHtml += `<input type="text" class="form-control" value="${cantidad}" readonly style="font-size: 0.875rem; padding: 6px 10px;">`;
-                                novedadesHtml += `</div>`;
-                                novedadesHtml += `</div>`;
-                            });
-                        } else {
-                            const sinProceso = nov.sin_proceso !== undefined ? (nov.sin_proceso ? 'Sí' : 'No') : '';
-                            novedadesHtml += `<div class="text-muted" style="font-style: italic;">${sinProceso ? 'Sin proceso' : 'Sin códigos'}</div>`;
-                        }
+                if (nov.codigos && Array.isArray(nov.codigos)) {
+                    nov.codigos.forEach((codigo, cIdx) => {
+                        const talla = codigo.talla || codigo.TALLA || 'N/A';
+                        const color = codigo.color || codigo.COLOR || 'N/A';
+                        const cantidad = codigo.cantidad || codigo.CANTIDAD || '0';
+
+                        novedadesHtml += `<div class="row mb-2" style="margin-left: -8px; margin-right: -8px;">`;
+                        novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
+                        novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Talla</label>`;
+                        novedadesHtml += `<input type="text" class="form-control" value="${talla}" readonly style="font-size: 0.875rem; padding: 6px 10px;">`;
+                        novedadesHtml += `</div>`;
+                        novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
+                        novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Color</label>`;
+                        novedadesHtml += `<input type="text" class="form-control" value="${color}" readonly style="font-size: 0.875rem; padding: 6px 10px;">`;
+                        novedadesHtml += `</div>`;
+                        novedadesHtml += `<div class="col-md-4 px-2" style="margin-bottom: 8px;">`;
+                        novedadesHtml += `<label class="form-label small text-muted" style="font-size: 0.75rem; margin-bottom: 2px;">Cantidad</label>`;
+                        novedadesHtml += `<input type="text" class="form-control" value="${cantidad}" readonly style="font-size: 0.875rem; padding: 6px 10px;">`;
+                        novedadesHtml += `</div>`;
                         novedadesHtml += `</div>`;
                     });
                 } else {
-                    novedadesHtml = '<div class="p-3 bg-light rounded"><pre class="mb-0" style="font-size: 0.8rem;">' + JSON.stringify(parsed, null, 2) + '</pre></div>';
+                    const sinProceso = nov.sin_proceso !== undefined ? (nov.sin_proceso ? 'Sí' : 'No') : '';
+                    novedadesHtml += `<div class="text-muted" style="font-style: italic;">${sinProceso ? 'Sin proceso' : 'Sin códigos'}</div>`;
                 }
-            } catch (e) {
-                novedadesHtml = '<div class="p-3 bg-light rounded"><pre class="mb-0" style="font-size: 0.8rem;">' + novedadesText + '</pre></div>';
-            }
-        } else if (typeof novedadesText === 'object') {
-            novedadesHtml = '<div class="p-3 bg-light rounded"><pre class="mb-0" style="font-size: 0.8rem;">' + JSON.stringify(novedadesText, null, 2) + '</pre></div>';
+                novedadesHtml += `</div>`;
+            });
+        } else if (!novedadesHtml) {
+            // Si no se pudo renderizar como tabla y no hay HTML, mostrar JSON crudo
+            novedadesHtml = '<div class="p-3 bg-light rounded"><pre class="mb-0" style="font-size: 0.8rem;">' + JSON.stringify(parsed || novedadesText, null, 2) + '</pre></div>';
         }
+
         novedadesContainer.innerHTML = novedadesHtml;
         toggleContainer('containerNovedades', true);
     } else {
         novedadesContainer.innerHTML = '';
-        toggleContainer('containerNovedades', false);
+        // Siempre mostrar el contenedor para permitir agregar novedades
+        toggleContainer('containerNovedades', true);
     }
 
     // Mostrar el modal
@@ -1146,15 +1161,10 @@ function actualizarCamposEdicionCalidad() {
         }
     }
 
-    // Novedades
+    // Novedades - Siempre mostrar dropzone en modo edición
     const editNovedadesDropzone = document.getElementById('editNovedadesDropzone');
     if (editNovedadesDropzone) {
-        editNovedadesDropzone.style.display = esAuditoria ? '' : 'none';
-    }
-    
-    if (!esAuditoria) {
-        window._novedadesCalidadState = [];
-        renderTarjetasNovedadesCalidadModal();
+        editNovedadesDropzone.style.display = '';
     }
 }
 
@@ -2439,11 +2449,6 @@ async function guardarDatosPlantaModal(event) {
     const nombre = document.getElementById('plantaModalNombre').value.trim().toUpperCase();
     const telefono = document.getElementById('plantaModalTelefono').value.trim();
     const email = document.getElementById('plantaModalEmail').value.trim();
-
-    if (!id || !nombre || !telefono || !email) {
-        Swal.fire('Error', 'Todos los campos son obligatorios.', 'error');
-        return;
-    }
 
     const isEdit = document.getElementById('plantaModalId').readOnly;
 

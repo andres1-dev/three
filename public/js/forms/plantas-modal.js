@@ -33,7 +33,8 @@ async function abrirFormularioPlantaCompleto(plantaData = null, onSuccess = null
                 ${formHTML}
             </div>
         `,
-        width: '900px',
+        width: '95%',
+        maxWidth: '600px',
         showCancelButton: true,
         confirmButtonText: 'Guardar',
         cancelButtonText: 'Cancelar',
@@ -87,7 +88,7 @@ async function abrirFormularioPlantaCompleto(plantaData = null, onSuccess = null
             }
         },
         preConfirm: () => {
-            // Validar campos obligatorios
+            // Recopilar datos sin validaciones obligatorias
             const cedula = document.getElementById('cedulaPlanta').value.trim();
             const nombre = document.getElementById('nombrePlanta').value.trim();
             const direccion = document.getElementById('direccionPlanta').value.trim();
@@ -96,21 +97,11 @@ async function abrirFormularioPlantaCompleto(plantaData = null, onSuccess = null
             const departamento = document.getElementById('departamentoPlanta').value;
             const ciudad = document.getElementById('ciudadPlanta').value;
             const barrio = document.getElementById('barrioPlanta').value || document.getElementById('barrioPlantaManual').value;
-            
-            if (!cedula || !nombre || !direccion || !telefono || !email || !departamento || !ciudad || !barrio) {
-                Swal.showValidationMessage('Por favor complete todos los campos obligatorios');
-                return false;
-            }
-            
-            // Validar checkboxes
+
+            // Validar checkboxes (opcional)
             const checkPolitica = document.getElementById('checkPoliticaDatos');
             const checkNotif = document.getElementById('checkNotificaciones');
-            
-            if (!checkPolitica.checked || !checkNotif.checked) {
-                Swal.showValidationMessage('Debe aceptar la política de datos y las notificaciones');
-                return false;
-            }
-            
+
             // Recopilar todos los datos
             return {
                 cedula,
@@ -125,7 +116,7 @@ async function abrirFormularioPlantaCompleto(plantaData = null, onSuccess = null
                 comuna: document.getElementById('comunaPlanta').value,
                 contacto: document.getElementById('contactoPlanta').value,
                 localizacion: document.getElementById('localizacionPlanta').value,
-                notificaciones: checkNotif.checked
+                notificaciones: checkNotif ? checkNotif.checked : false
             };
         }
     });

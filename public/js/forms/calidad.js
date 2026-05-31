@@ -839,7 +839,7 @@ async function handleCalidadSubmit(e) {
             productora: (typeof currentUser !== 'undefined') ? (currentUser.ID_PRODUCTORA || currentUser.productora) : null,
             soporte: '',   // se actualizará en background
             ...(firmaSvg && { firma_svg: firmaSvg }),  // solo si hay firma
-            ...(novedades_auditoria && { novedades_auditoria: JSON.stringify(novedades_auditoria) }),
+            ...(novedades_auditoria && { novedades_auditoria }),
         };
 
         const result = await sendToGAS(payload);
