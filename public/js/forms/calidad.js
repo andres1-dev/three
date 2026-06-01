@@ -752,7 +752,8 @@ async function handleCalidadSubmit(e) {
 
     // Validar que la firma esté presente
     const firmaValidada = document.getElementById('firmaValidada');
-    if (!firmaValidada || !firmaValidada.value) {
+    const tieneFirma = (window.FirmaTaller && !window.FirmaTaller.isEmpty()) || (firmaValidada && firmaValidada.value);
+    if (!tieneFirma) {
         const btn = e.target.querySelector('button[type="submit"]');
         btn.disabled = false;
         btn.textContent = 'Enviar Reporte';
