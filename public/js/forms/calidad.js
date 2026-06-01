@@ -750,6 +750,15 @@ function renderTarjetasNovedadesCalidad() {
 async function handleCalidadSubmit(e) {
     e.preventDefault();
 
+    // Validar que la firma esté presente
+    const firmaValidada = document.getElementById('firmaValidada');
+    if (!firmaValidada || !firmaValidada.value) {
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = false;
+        btn.textContent = 'Enviar Reporte';
+        return;
+    }
+
     const tipo = (document.getElementById('tipoVisita')?.value || '').toUpperCase();
     const esRonda = tipo === 'RONDA';
 

@@ -291,6 +291,12 @@ const FirmaTaller = {
             }
             self._currentStroke = null;
             self.isDrawing = false;
+
+            // Llenar campo oculto de validación de firma
+            const firmaValidada = document.getElementById('firmaValidada');
+            if (firmaValidada && !self.isEmpty()) {
+                firmaValidada.value = 'validada';
+            }
         };
         this.canvas.addEventListener('mouseup',    stopInline);
         this.canvas.addEventListener('mouseleave', stopInline);

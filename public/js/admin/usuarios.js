@@ -682,10 +682,26 @@ async function openEditModal(targetId) {
                             <span class="phone-prefix-text">+57</span>
                         </div>
                         <input type="tel" id="edit-telefono" class="input-lux"
-                            value="${(() => { const d = String(entry.TELEFONO || '').replace(/\D/g, '').slice(0, 10); if (d.length === 10) return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6); if (d.length > 6) return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6); if (d.length > 3) return '(' + d.slice(0, 3) + ') ' + d.slice(3); return d; })()}"
+                            value="${(() => { let d = String(entry.TELEFONO || '').replace(/\D/g, ''); if (d.startsWith('57')) d = d.slice(2); d = d.slice(0, 10); if (d.length === 10) return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6); if (d.length > 6) return '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6); if (d.length > 3) return '(' + d.slice(0, 3) + ') ' + d.slice(3); return d; })()}"
                             style="border:none !important; outline:none !important; box-shadow:none !important; height:38px !important; flex:1; background:transparent !important;"
                             placeholder="">
                     </div>
+                </div>
+
+                <div class="field-container-lux" style="margin-top:14px; margin-bottom:0">
+                    <label class="label-lux"><i class="fas fa-copy"></i> Recibir Copias (CC)</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <label class="switch" style="position:relative; display:inline-block; width:44px; height:24px;">
+                            <input type="checkbox" id="edit-email-copia" ${entry.EMAIL_COPIA ? 'checked' : ''} style="opacity:0; width:0; height:0;">
+                            <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:24px;"></span>
+                            <span class="slider-circle" style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%;"></span>
+                        </label>
+                        <span style="font-size:0.8rem; color:#64748b; font-weight:500;">${entry.EMAIL_COPIA ? 'Activado' : 'Desactivado'}</span>
+                    </div>
+                    <style>
+                        .switch input:checked + .slider { background-color: #3f51b5; }
+                        .switch input:checked + .slider + .slider-circle { transform: translateX(20px); }
+                    </style>
                 </div>
 
                 ${isPlant ? `
@@ -1074,6 +1090,7 @@ async function openEditModal(targetId) {
                 nombre: document.getElementById('edit-nombre').value.trim(),
                 correo: document.getElementById('edit-correo').value.trim(),
                 telefono: document.getElementById('edit-telefono').value.replace(/\D/g, '').slice(0, 10),
+                email_copia: document.getElementById('edit-email-copia') ? document.getElementById('edit-email-copia').checked : false,
                 direccion: isPlant ? document.getElementById('edit-direccion').value.trim() : null,
                 rol: document.getElementById('edit-rol').value,
                 password: document.getElementById('edit-password').value.trim(),
@@ -1102,7 +1119,8 @@ async function openEditModal(targetId) {
                 password: formValues.password,
                 firma_svg: formValues.firma_svg,
                 id_productora: formValues.id_productora ? parseInt(formValues.id_productora) : null,
-                productora: formValues.id_productora ? (productorasList.find(p => String(p.id_productora) === String(formValues.id_productora))?.productora || null) : null
+                productora: formValues.id_productora ? (productorasList.find(p => String(p.id_productora) === String(formValues.id_productora))?.productora || null) : null,
+                email_copia: formValues.email_copia || ''
             };
 
             const response = await sendToGAS(payload);
@@ -1207,6 +1225,21 @@ async function openCreateModal() {
                             </div>
                             <input type="tel" id="create-telefono" class="input-lux" style="border:none !important; height:38px !important; flex:1;" placeholder="300 123 4567">
                         </div>
+                    </div>
+                    <div class="field-container-lux" style="margin-top:14px; margin-bottom:0">
+                        <label class="label-lux"><i class="fas fa-copy"></i> Recibir Copias (CC)</label>
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <label class="switch" style="position:relative; display:inline-block; width:44px; height:24px;">
+                                <input type="checkbox" id="create-email-copia" style="opacity:0; width:0; height:0;">
+                                <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#ccc; transition:.4s; border-radius:24px;"></span>
+                                <span class="slider-circle" style="position:absolute; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:.4s; border-radius:50%;"></span>
+                            </label>
+                            <span style="font-size:0.8rem; color:#64748b; font-weight:500;">Desactivado</span>
+                        </div>
+                        <style>
+                            .switch input:checked + .slider { background-color: #3f51b5; }
+                            .switch input:checked + .slider + .slider-circle { transform: translateX(20px); }
+                        </style>
                     </div>
                     ${isPlant ? `
                     <div class="field-container-lux" style="margin-top:14px; margin-bottom:0">
@@ -1448,6 +1481,7 @@ async function openCreateModal() {
             }
             return {
                 id, name, email, phone, pass, rol,
+                email_copia: document.getElementById('create-email-copia') ? document.getElementById('create-email-copia').checked : false,
                 direccion: isPlant ? document.getElementById('create-direccion').value.trim() : null,
                 firma_svg: getSVGFromStrokes(window.userSignatureStrokes),
                 id_productora: document.getElementById('create-productora') ? document.getElementById('create-productora').value : null
@@ -1472,7 +1506,8 @@ async function openCreateModal() {
                 password: formValues.pass,
                 firma_svg: formValues.firma_svg,
                 id_productora: formValues.id_productora ? parseInt(formValues.id_productora) : null,
-                productora: formValues.id_productora ? (productorasList.find(p => String(p.id_productora) === String(formValues.id_productora))?.productora || null) : null
+                productora: formValues.id_productora ? (productorasList.find(p => String(p.id_productora) === String(formValues.id_productora))?.productora || null) : null,
+                email_copia: formValues.email_copia || ''
             };
 
             const response = await sendToGAS(payload);

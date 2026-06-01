@@ -1,6 +1,7 @@
 let gsReportes = [];
 let gsFilteredReportes = [];
 let gsPlantas = [];
+let gsUsuarios = [];
 let dateRangePicker = null;
 let selectedDateRange = null;
 
@@ -26,6 +27,11 @@ window.onload = async function () {
     if (!user || user.ROL !== 'USER-C') {
         window.location.replace('index.html');
         return;
+    }
+
+    // Cargar usuarios en gsUsuarios para uso en envío de correos
+    if (window.allUsers) {
+        gsUsuarios = window.allUsers;
     }
 
     initDateRangePicker();
@@ -475,11 +481,24 @@ async function enviarCorreoCalidad(index) {
             didOpen: () => Swal.showLoading()
         });
 
+        // Obtener copias de usuarios ADMIN/MODERATOR con email_copia activado
+        let ccEmails = [];
+        if (gsUsuarios && gsUsuarios.length > 0) {
+            ccEmails = gsUsuarios
+                .filter(u => {
+                    const rol = (u.ROL || u.rol || '').toUpperCase();
+                    const emailCopia = u.EMAIL_COPIA || u.email_copia || false;
+                    const correo = u.CORREO || u.correo || '';
+                    return (rol === 'ADMIN' || rol === 'MODERATOR') && emailCopia === true && correo;
+                })
+                .map(u => u.CORREO || u.correo)
+                .filter(email => email);
+        }
+
         const payload = {
             accion: 'REPORTE_CALIDAD',
             email: emailPlanta,
-            cc: ['coordinadorcalidad@tceluniverso.com', 'coordinadorlogistico@eltemplodelamoda.com.co'],
-            //cc: ['coordinadorlogistico@eltemplodelamoda.com.co'],
+            cc: ccEmails.length > 0 ? ccEmails : [],
             reporte: {
                 ...rep,
                 fecha_entrega: rep.fecha_entrega || rep.FECHA_ENTREGA || rep.entrada || rep.ENTRADA || '',
@@ -818,6 +837,27 @@ function expandReport(index) {
     modalEl.style.display = 'flex';
     modalEl.classList.add('show');
     document.body.style.overflow = 'hidden';
+
+    // Validar si han pasado 24 horas para deshabilitar botón de edición
+    const fechaReporte = reportNormalized.fecha || reportNormalized.FECHA || '';
+    const btnEditar = modalEl.querySelector('button[onclick="entrarModoEdicion()"]');
+    if (btnEditar && fechaReporte) {
+        const fechaReporteDate = new Date(fechaReporte);
+        const ahora = new Date();
+        const horasDiferencia = (ahora - fechaReporteDate) / (1000 * 60 * 60);
+
+        if (horasDiferencia > 24) {
+            btnEditar.disabled = true;
+            btnEditar.style.opacity = '0.5';
+            btnEditar.style.cursor = 'not-allowed';
+            btnEditar.title = 'Tiempo de edición expirado (más de 24 horas)';
+        } else {
+            btnEditar.disabled = false;
+            btnEditar.style.opacity = '1';
+            btnEditar.style.cursor = 'pointer';
+            btnEditar.title = 'Editar reporte';
+        }
+    }
 }
 
 function cerrarModalReporte() {
@@ -878,9 +918,6 @@ function entrarModoEdicion() {
     const modalEl = document.getElementById('reporteModal');
     if (!modalEl) return;
 
-    modalEl.classList.add('is-editing');
-    document.getElementById('editReporteModalTitle').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Reporte <span class="badge bg-warning ms-2" style="font-size: 0.75rem; vertical-align: middle;">Modo Edición</span>';
-
     const index = parseInt(document.getElementById('editReporteIndex').value);
     const rep = gsFilteredReportes[index];
     if (!rep) return;
@@ -890,6 +927,27 @@ function entrarModoEdicion() {
     for (const key in rep) {
         reportNormalized[key.toLowerCase()] = rep[key];
     }
+
+    // Validar que hayan pasado menos de 24 horas desde el reporte
+    const fechaReporte = reportNormalized.fecha || reportNormalized.FECHA || '';
+    if (fechaReporte) {
+        const fechaReporteDate = new Date(fechaReporte);
+        const ahora = new Date();
+        const horasDiferencia = (ahora - fechaReporteDate) / (1000 * 60 * 60);
+
+        if (horasDiferencia > 24) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Tiempo de edición expirado',
+                text: 'Solo puedes editar reportes dentro de las 24 horas posteriores a su creación.',
+                confirmButtonColor: '#3F51B5'
+            });
+            return;
+        }
+    }
+
+    modalEl.classList.add('is-editing');
+    document.getElementById('editReporteModalTitle').innerHTML = '<i class="fas fa-edit me-2"></i>Editar Reporte <span class="badge bg-warning ms-2" style="font-size: 0.75rem; vertical-align: middle;">Modo Edición</span>';
 
     // Inicializar listeners si no están listos
     initEditModeListeners();
@@ -2017,7 +2075,7 @@ async function enviarWhatsApp() {
 
     let cleanPhone =
         phoneNumber.replace(
-            /[\s\-\(\)]/g,
+            /[\s\-\(\)\+]/g,
             ''
         );
 
@@ -2359,7 +2417,7 @@ async function enviarWhatsAppIndividual(index) {
 
     let cleanPhone =
         phoneNumber.replace(
-            /[\s\-\(\)]/g,
+            /[\s\-\(\)\+]/g,
             ''
         );
 
