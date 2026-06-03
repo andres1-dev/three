@@ -181,6 +181,10 @@
                     <div class="seg-resumen-lbl">Nuevos</div>
                 </div>
                 <div class="seg-resumen-stat">
+                    <div class="seg-resumen-num" id="res-duplicates" style="color: #f59e0b;">0</div>
+                    <div class="seg-resumen-lbl">Duplicados</div>
+                </div>
+                <div class="seg-resumen-stat">
                     <div class="seg-resumen-num" id="res-errors" style="color: #ef4444;">0</div>
                     <div class="seg-resumen-lbl">Errores</div>
                 </div>
@@ -189,6 +193,16 @@
             <button onclick="resetUpload()" class="btn-sync" style="margin: 0 auto;">
                 <i class="fas fa-arrow-left"></i> Volver a la tabla
             </button>
+
+            <!-- Duplicados detallados -->
+            <div id="duplicates-section" style="display: none; margin-top: 2rem;">
+                <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 12px; padding: 1.5rem;">
+                    <h4 style="font-weight: 800; color: #92400e; margin-bottom: 1rem; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-exclamation-triangle"></i> Registros Duplicados Omitidos
+                    </h4>
+                    <div id="duplicates-list" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
         </div>
     </div>
   </div>

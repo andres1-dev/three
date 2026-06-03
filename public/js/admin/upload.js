@@ -373,6 +373,8 @@ class Application {
         this.toggleActionTools(false);
         document.getElementById('jsonPreview').style.display      = 'none';
         document.getElementById('results-view').style.display     = 'none';
+        document.getElementById('duplicates-section').style.display = 'none';
+        document.getElementById('duplicates-list').innerHTML    = '';
         document.getElementById('spreadsheet-wrapper').style.display = 'block';
     }
 
@@ -380,6 +382,12 @@ class Application {
         if (this.jsonData.length === 0) return;
         if (_syncing) return; // ya hay un sync en curso
         _syncing = true;
+
+        // Limpiar duplicados de sincronizaciones anteriores
+        const dupSection = document.getElementById('duplicates-section');
+        const dupList = document.getElementById('duplicates-list');
+        if (dupSection) dupSection.style.display = 'none';
+        if (dupList) dupList.innerHTML = '';
 
         // Resolver productora
         let idProductora = parseInt(window.currentUser?.ID_PRODUCTORA);
@@ -465,11 +473,10 @@ class Application {
             });
             const res1 = await r1.json();
             if (!r1.ok) throw new Error(res1.message || res1.error || 'Error en lote 1');
-            if (res1.errors?.length > 0) {
-                throw new Error('Errores al insertar lote 1 en master: \n' + res1.errors.join('\n'));
-            }
 
             let totalInserted = res1.inserted || 0;
+            let allDuplicates = res1.duplicates || [];
+            let allErrors = res1.errors?.filter(e => !e.includes('Registros duplicados omitidos')) || [];
 
             // PASO 2: Chunks adicionales con accion=APPEND (solo inserta, sin borrar)
             const appendAccion = _uploadMode === 'plantas' ? 'APPEND_PLANTAS' : 'APPEND_MASTER';
@@ -484,13 +491,16 @@ class Application {
                 });
                 const resN = await rN.json();
                 if (!rN.ok) throw new Error(resN.message || resN.error || `Error en lote ${lote}`);
-                if (resN.errors?.length > 0) {
-                    throw new Error(`Errores al insertar lote ${lote} en master: \n` + resN.errors.join('\n'));
-                }
+
                 totalInserted += resN.inserted || 0;
+                if (resN.duplicates) allDuplicates = allDuplicates.concat(resN.duplicates);
+                if (resN.errors) {
+                    const chunkErrors = resN.errors.filter(e => !e.includes('Registros duplicados omitidos'));
+                    allErrors = allErrors.concat(chunkErrors);
+                }
             }
 
-            const result = { inserted: totalInserted, errors: [] };
+            const result = { inserted: totalInserted, errors: allErrors, duplicates: allDuplicates };
 
             const now = new Date().toLocaleString();
             localStorage.setItem(_uploadMode === 'plantas' ? 'plantas_last_sync' : 'busint_last_sync', now);
@@ -501,9 +511,73 @@ class Application {
             document.getElementById('results-view').style.display         = 'block';
             document.getElementById('res-updated').textContent  = 0;
             document.getElementById('res-inserted').textContent = result.inserted || 0;
+            document.getElementById('res-duplicates').textContent = result.duplicates?.length || 0;
             document.getElementById('res-errors').textContent   = result.errors?.length || 0;
 
             this.setStatus('Sincronización completada', 'ready');
+
+            // Mostrar duplicados detallados en la sección de resultados
+            if (result.duplicates && result.duplicates.length > 0) {
+                const dupSection = document.getElementById('duplicates-section');
+                const dupList = document.getElementById('duplicates-list');
+                dupSection.style.display = 'block';
+
+                let html = '';
+                result.duplicates.forEach((dup, idx) => {
+                    const existing = dup.existing;
+                    const duplicate = dup.duplicate;
+
+                    html += `
+                        <div style="background: white; border-radius: 10px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid #fcd34d; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                            <div style="font-weight: 700; color: #92400e; margin-bottom: 0.75rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3px;">
+                                <i class="fas fa-copy"></i> Duplicado #${idx + 1}: id_master: ${dup.key.split('_')[0]} | proceso: ${dup.key.split('_')[1]} | productora: ${dup.key.split('_')[2]}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                <div>
+                                    <div style="font-weight: 700; color: #16a34a; margin-bottom: 0.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px;">
+                                        <i class="fas fa-check-circle"></i> Registro Mantenido
+                                    </div>
+                                    <div style="background: #f0fdf4; padding: 0.75rem; border-radius: 8px; border: 1px solid #bbf7d0;">
+                                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; font-size: 0.75rem; color: #374151;">
+                                            <span style="font-weight: 600; color: #64748b;">Planta:</span>
+                                            <span>${existing.nombre_planta || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Cantidad:</span>
+                                            <span>${existing.cantidad || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Referencia:</span>
+                                            <span>${existing.referencia || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Fecha Salida:</span>
+                                            <span>${existing.fecha_salida || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Fecha Entrega:</span>
+                                            <span>${existing.fecha_entrega || '-'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #ef4444; margin-bottom: 0.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3px;">
+                                        <i class="fas fa-times-circle"></i> Registro Omitido
+                                    </div>
+                                    <div style="background: #fef2f2; padding: 0.75rem; border-radius: 8px; border: 1px solid #fecaca;">
+                                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 0.5rem; font-size: 0.75rem; color: #374151;">
+                                            <span style="font-weight: 600; color: #64748b;">Planta:</span>
+                                            <span>${duplicate.nombre_planta || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Cantidad:</span>
+                                            <span>${duplicate.cantidad || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Referencia:</span>
+                                            <span>${duplicate.referencia || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Fecha Salida:</span>
+                                            <span>${duplicate.fecha_salida || '-'}</span>
+                                            <span style="font-weight: 600; color: #64748b;">Fecha Entrega:</span>
+                                            <span>${duplicate.fecha_entrega || '-'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                dupList.innerHTML = html;
+            }
 
         } catch (error) {
             Swal.fire('Error', error.message, 'error');
