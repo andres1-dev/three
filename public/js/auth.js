@@ -712,6 +712,9 @@ function createSidebar() {
                 <a href="rutero.html" class="sidebar-link ${path.includes('rutero.html') ? 'active' : ''}">
                     <i class="fas fa-route"></i> Rutero
                 </a>
+                <a href="aprobacion.html" class="sidebar-link ${path.includes('aprobacion.html') ? 'active' : ''}">
+                    <i class="fas fa-check-circle"></i> Aprobación
+                </a>
             ` : ''}
             ${user.ROL === 'USER-C' ? `
                 <a href="mis-reportes.html" class="sidebar-link ${path.includes('mis-reportes.html') ? 'active' : ''}">
