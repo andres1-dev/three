@@ -257,22 +257,28 @@ function initMaquinariaField() {
         if (customInput) customInput.value = '';
         if (customContainer) customContainer.style.display = 'none';
     });
+}
 
-    function renderMaquinariaLista() {
-        lista.innerHTML = '';
-        maquinariaState.forEach((item, index) => {
-            const div = document.createElement('div');
-            div.className = 'maquinaria-item';
-            div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8fafc; border-radius: 8px; margin-bottom: 0.5rem;';
-            div.innerHTML = `
-                <span><strong>${item.tipo}</strong> - Cantidad: ${item.cantidad}</span>
-                <button type="button" class="btn btn-sm btn-danger" onclick="removeMaquinaria(${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            lista.appendChild(div);
-        });
-    }
+/**
+ * Renderiza la lista de maquinaria
+ */
+function renderMaquinariaLista() {
+    const lista = document.getElementById('maquinariaLista');
+    if (!lista) return;
+    
+    lista.innerHTML = '';
+    maquinariaState.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'maquinaria-item';
+        div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8fafc; border-radius: 8px; margin-bottom: 0.5rem;';
+        div.innerHTML = `
+            <span><strong>${item.tipo}</strong> - Cantidad: ${item.cantidad}</span>
+            <button type="button" class="btn btn-sm btn-danger" onclick="removeMaquinaria(${index})">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        lista.appendChild(div);
+    });
 }
 
 /**
@@ -532,6 +538,22 @@ function initFormSubmit() {
         const fecha = document.getElementById('fechaAprobacion')?.value;
         const comentarios = document.getElementById('comentariosAprobacion')?.value;
         
+        // Capturar tipo_visita
+        const tipoVisita = document.getElementById('tipoVisita')?.value || 'APROBACION';
+        
+        // Capturar tejidos seleccionados (checkboxes)
+        const tejidosSeleccionados = [];
+        if (document.getElementById('tejidoPLANO')?.checked) tejidosSeleccionados.push('PLANO');
+        if (document.getElementById('tejidoPUNTO')?.checked) tejidosSeleccionados.push('PUNTO');
+        if (document.getElementById('tejidoINDIGO')?.checked) tejidosSeleccionados.push('INDIGO');
+        
+        // Capturar email del usuario logueado
+        const emailUsuario = window.currentUser?.EMAIL || window.currentUser?.email || window.currentUser?.CORREO || window.currentUser?.correo || null;
+        
+        // Capturar archivo de soporte
+        const soporteInput = document.getElementById('soporte');
+        const soporteFile = soporteInput?.files?.[0] || null;
+        
         // Capturar firma SVG desde FirmaTaller
         let firma = null;
         if (window.FirmaTaller && !window.FirmaTaller.isEmpty()) {
@@ -624,14 +646,16 @@ function initFormSubmit() {
         const payload = {
             id_planta_anexo: parseInt(idPlantaAnexo),
             planta_anexo: plantaAnexo,
+            tipo_visita: tipoVisita,
             correo: document.getElementById('correoAprobacion')?.value || null,
+            email_usuario: emailUsuario,
             telefono: parseInt(telefono),
             productora: parseInt(productora),
             operarios: document.getElementById('operariosAprobacion')?.value ? parseInt(document.getElementById('operariosAprobacion').value) : null,
             maquinaria: maquinariaState.length > 0 ? { items: maquinariaState } : null,
             horarios: horariosData,
             direccion: direccion,
-            tejido: document.getElementById('tejidoAprobacion')?.value || null,
+            tejido: tejidosSeleccionados.length > 0 ? tejidosSeleccionados : null,
             fuerte: fuerteState.length > 0 ? fuerteState : null,
             localizacion: localizacion,
             comuna: document.getElementById('comunaAprobacion')?.value ? parseInt(document.getElementById('comunaAprobacion').value) : null,
@@ -639,7 +663,8 @@ function initFormSubmit() {
             estado: estado,
             fecha_hora: fecha,
             comentarios: comentarios || null,
-            firma_svg: firma
+            firma_svg: firma,
+            soporte: '' // Se actualizará después de subir el archivo
         };
 
         try {
@@ -647,6 +672,19 @@ function initFormSubmit() {
             if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            }
+
+            // Subir archivo de soporte si existe
+            if (soporteFile) {
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo soporte...';
+                try {
+                    const soporteUrl = await uploadToSupabase(soporteFile, productora, 'plantas_anexos');
+                    payload.soporte = soporteUrl;
+                } catch (uploadError) {
+                    console.error('[APROBACION] Error subiendo soporte:', uploadError);
+                    Swal.fire('Error', 'No se pudo subir el soporte fotográfico', 'error');
+                    return;
+                }
             }
 
             // Obtener token de sesión

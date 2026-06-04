@@ -174,16 +174,51 @@
         </div>
         <div class="row">
           <div class="col-md-6 mb-3">
-            <label for="tejidoAprobacion" class="form-label">Tipo de Tejido</label>
+            <label for="tipoVisita" class="form-label">Tipo de Visita</label>
             <div class="input-with-icon">
-              <i class="fas fa-tshirt input-icon"></i>
-              <select class="form-control" id="tejidoAprobacion">
-                <option value="" disabled selected>Seleccione tipo</option>
-                <option value="PLANO">PLANO</option>
-                <option value="PUNTO">PUNTO</option>
-                <option value="INDIGO">INDIGO</option>
-              </select>
+              <i class="fas fa-clipboard-check input-icon"></i>
+              <input type="text" class="form-control" id="tipoVisita" value="APROBACION" readonly>
             </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="emailUsuarioAprobacion" class="form-label">Email Usuario</label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" class="form-control" id="emailUsuarioAprobacion" readonly>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Tipo de Tejido</label>
+            <div class="d-flex gap-3">
+              <div class="flex-fill text-center">
+                <div style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">PLANO</div>
+                <input class="form-check-input" type="checkbox" id="tejidoPLANO" value="PLANO" style="width: 1.5em; height: 1.5em; margin: 0 auto;">
+              </div>
+              <div class="flex-fill text-center">
+                <div style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">PUNTO</div>
+                <input class="form-check-input" type="checkbox" id="tejidoPUNTO" value="PUNTO" style="width: 1.5em; height: 1.5em; margin: 0 auto;">
+              </div>
+              <div class="flex-fill text-center">
+                <div style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">INDIGO</div>
+                <input class="form-check-input" type="checkbox" id="tejidoINDIGO" value="INDIGO" style="width: 1.5em; height: 1.5em; margin: 0 auto;">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-camera me-1"></i>Soporte Fotográfico</label>
+            <div class="file-dropzone" id="soporteDropzone" role="button" tabindex="0">
+              <i class="fas fa-camera file-dropzone__icon"></i>
+              <div class="file-dropzone__text">
+                <span class="file-dropzone__action">Haz clic para subir soporte fotográfico</span>
+                <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
+              </div>
+              <span class="file-dropzone__name" id="soporteName"></span>
+            </div>
+            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*" capture="environment">
           </div>
         </div>
       </div>
@@ -429,6 +464,7 @@
   <script src="js/api.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/data/colombia-locations.js"></script>
+  <script src="js/forms/dropzone.js"></script>
   <script src="js/firma.js"></script>
   <script src="js/forms/aprobacion.js"></script>
 
@@ -474,6 +510,22 @@
 
     // Capturar fecha/hora al cargar
     capturarFechaHora();
+
+    // Llenar email del usuario logueado
+    if (window.currentUser) {
+      const emailUsuario = window.currentUser.EMAIL || window.currentUser.email || window.currentUser.CORREO || window.currentUser.correo || '';
+      const emailInput = document.getElementById('emailUsuarioAprobacion');
+      if (emailInput) {
+        emailInput.value = emailUsuario;
+      }
+    }
+
+    // Inicializar dropzone de soporte
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.initDropzones) {
+        window.initDropzones();
+      }
+    });
 
     // Inicializar FirmaTaller
     document.addEventListener('DOMContentLoaded', function() {
