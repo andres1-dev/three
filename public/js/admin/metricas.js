@@ -7,6 +7,8 @@ let filteredData = [];
 let chartArea = null;
 let chartTrend = null;
 let chartItems = null;
+let chartCobros = null;
+let chartTiempoRespuesta = null;
 let activeWeek = null;
 let fpInstance = null;
 let gsPlantas = []; // para enriquecer los csv si es posible
@@ -414,6 +416,180 @@ function updateCharts() {
             }
         }
     });
+
+    // --- 4. PROCESAR COBROS ---
+    const cobroMap = {};
+    let totalCobros = 0;
+    
+    filteredData.forEach(n => {
+        const cobro = n.COBRO || 'Sin Cobro';
+        const cantidad = parseFloat(n.CANTIDAD_SOLICITADA || 0);
+        if (!cobroMap[cobro]) {
+            cobroMap[cobro] = { registros: 0, cantidad: 0 };
+        }
+        cobroMap[cobro].registros += 1;
+        cobroMap[cobro].cantidad += cantidad;
+        totalCobros += cantidad;
+    });
+
+    const cobroLabels = Object.keys(cobroMap);
+    const cobroRegistros = cobroLabels.map(c => cobroMap[c].registros);
+    const cobroCantidades = cobroLabels.map(c => cobroMap[c].cantidad);
+    const cobroPorcentajes = cobroLabels.map(c => totalCobros > 0 ? ((cobroMap[c].cantidad / totalCobros) * 100).toFixed(1) : 0);
+
+    const cobroLabelsWithInfo = cobroLabels.map((c, i) => {
+        return `${c} (${cobroRegistros[i]} reg, ${cobroCantidades[i].toLocaleString()} uds, ${cobroPorcentajes[i]}%)`;
+    });
+
+    const cobroPalette = [
+        'rgba(16, 185, 129, 0.28)',
+        'rgba(245, 158, 11, 0.28)',
+        'rgba(239, 68, 68, 0.28)',
+        'rgba(139, 92, 246, 0.28)',
+        'rgba(59, 130, 246, 0.28)'
+    ];
+
+    if (chartCobros) chartCobros.destroy();
+    chartCobros = new Chart(document.getElementById('chartCobros'), {
+        type: 'bar',
+        data: {
+            labels: cobroLabelsWithInfo,
+            datasets: [{
+                label: 'Cantidad de Unidades',
+                data: cobroCantidades,
+                backgroundColor: cobroPalette,
+                borderColor: cobroPalette.map(c => c.replace('0.28', '0.5')),
+                borderWidth: 1,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { maxTicksLimit: isMobile ? 5 : 8 }
+                },
+                x: {
+                    grid: { color: 'rgba(15, 23, 42, 0.08)' },
+                    ticks: {
+                        maxRotation: isMobile ? 45 : 0,
+                        minRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: isMobile ? 6 : 12
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: `Total: ${totalCobros.toLocaleString()} unidades`,
+                    color: '#10b981',
+                    font: { size: isMobile ? 12 : 14, weight: 'bold' }
+                }
+            }
+        }
+    });
+
+    // --- 5. PROCESAR TIEMPO DE RESPUESTA ---
+    const tiempos = {
+        'Reporte → Elaboración': { total: 0, count: 0 },
+        'Elaboración → Finalización': { total: 0, count: 0 }
+    };
+
+    filteredData.forEach(n => {
+        const historial = n.HISTORIAL_ESTADOS || n.historial_estados;
+        if (!historial) return;
+
+        const transiciones = historial.split('|');
+        const fechasTransicion = {};
+
+        transiciones.forEach(trans => {
+            const match = trans.match(/(.+)->(.+)@(.+)/);
+            if (match) {
+                const estadoOrigen = match[1];
+                const estadoDestino = match[2];
+                const fecha = new Date(match[3]);
+                if (!isNaN(fecha)) {
+                    const key = `${estadoOrigen}->${estadoDestino}`;
+                    fechasTransicion[key] = fecha;
+                }
+            }
+        });
+
+        console.log('Registro:', n.id_novedad, 'Fecha:', n.FECHA, 'Transiciones:', fechasTransicion);
+
+        // Calcular tiempo Reporte → Elaboración
+        // Fecha de reporte es la fecha del registro (campo FECHA)
+        // Fecha de elaboración es la fecha de transición PENDIENTE->ELABORACION
+        if (n.FECHA && fechasTransicion['PENDIENTE->ELABORACION']) {
+            const fechaReporte = new Date(n.FECHA);
+            const fechaElaboracion = fechasTransicion['PENDIENTE->ELABORACION'];
+            const tiempoHoras = (fechaElaboracion - fechaReporte) / (1000 * 60 * 60);
+            console.log('Reporte→Elaboración:', fechaReporte, '→', fechaElaboracion, '=', tiempoHoras, 'horas');
+            if (tiempoHoras > 0) {
+                tiempos['Reporte → Elaboración'].total += tiempoHoras;
+                tiempos['Reporte → Elaboración'].count += 1;
+            }
+        }
+
+        // Calcular tiempo Elaboración → Finalización
+        // Fecha de elaboración es la fecha de transición PENDIENTE->ELABORACION
+        // Fecha de finalización es la fecha de transición ELABORACION->FINALIZADO
+        if (fechasTransicion['PENDIENTE->ELABORACION'] && fechasTransicion['ELABORACION->FINALIZADO']) {
+            const fechaElaboracion = fechasTransicion['PENDIENTE->ELABORACION'];
+            const fechaFinalizacion = fechasTransicion['ELABORACION->FINALIZADO'];
+            const tiempoHoras = (fechaFinalizacion - fechaElaboracion) / (1000 * 60 * 60);
+            console.log('Elaboración→Finalización:', fechaElaboracion, '→', fechaFinalizacion, '=', tiempoHoras, 'horas');
+            if (tiempoHoras > 0) {
+                tiempos['Elaboración → Finalización'].total += tiempoHoras;
+                tiempos['Elaboración → Finalización'].count += 1;
+            }
+        }
+    });
+
+    console.log('Tiempos finales:', tiempos);
+
+    // Generar tabla HTML
+    const tablaTiempo = document.getElementById('tablaTiempoRespuesta');
+    if (tablaTiempo) {
+        let tablaHtml = `
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                <thead>
+                    <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                        <th style="padding: 12px; text-align: left; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 0.75rem;">Transición</th>
+                        <th style="padding: 12px; text-align: center; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 0.75rem;">Registros</th>
+                        <th style="padding: 12px; text-align: center; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 0.75rem;">Tiempo Promedio (Horas)</th>
+                        <th style="padding: 12px; text-align: center; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 0.75rem;">Tiempo Promedio (Días)</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        Object.keys(tiempos).forEach(transicion => {
+            const data = tiempos[transicion];
+            const promedioHoras = data.count > 0 ? (data.total / data.count).toFixed(2) : 0;
+            const promedioDias = data.count > 0 ? (data.total / data.count / 24).toFixed(2) : 0;
+            
+            tablaHtml += `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 12px; font-weight: 600; color: #1e293b;">${transicion}</td>
+                    <td style="padding: 12px; text-align: center; color: #64748b;">${data.count}</td>
+                    <td style="padding: 12px; text-align: center; font-weight: 700; color: #f59e0b;">${promedioHoras} h</td>
+                    <td style="padding: 12px; text-align: center; font-weight: 700; color: #3b82f6;">${promedioDias} días</td>
+                </tr>
+            `;
+        });
+
+        tablaHtml += `
+                </tbody>
+            </table>
+        `;
+
+        tablaTiempo.innerHTML = tablaHtml;
+    }
 }
 
 function updateAreaModeButtons() {
@@ -440,7 +616,7 @@ function initResponsiveCharts() {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(function() {
             const nextIsMobile = window.matchMedia('(max-width: 767px)').matches;
-            [chartArea, chartTrend, chartItems].forEach(function(chart) {
+            [chartArea, chartTrend, chartItems, chartCobros, chartTiempoRespuesta].forEach(function(chart) {
                 if (chart) chart.resize();
             });
 
