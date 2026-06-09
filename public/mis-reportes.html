@@ -1029,6 +1029,10 @@
                     <span class="kpi-chip-lab">Seguimientos</span>
                 </div>
                 <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#10b981;" id="kpi-aprobacion">0</span>
+                    <span class="kpi-chip-lab">Aprobaciones</span>
+                </div>
+                <div class="kpi-chip">
                     <span class="kpi-chip-val" style="color:#64748b;" id="kpi-plants">0</span>
                     <span class="kpi-chip-lab">Talleres</span>
                 </div>
@@ -1583,7 +1587,7 @@
             }
 
             #reporteModal .modal-dialog {
-                z-index: 1056 !important;
+                z-index: 2000 !important;
                 position: relative !important;
                 margin: 0 !important;
                 max-width: 800px !important;
@@ -1627,7 +1631,7 @@
             }
 
             #plantaModal .modal-dialog {
-                z-index: 1056 !important;
+                z-index: 2000 !important;
                 position: relative !important;
                 margin: 0 !important;
                 max-width: 500px !important;
@@ -1883,6 +1887,137 @@
             }
             #reporteModal.is-editing .nov-action-btn {
                 display: inline-block !important;
+            }
+
+            #aprobacionModal.show {
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 1055 !important;
+                background-color: rgba(0, 0, 0, 0.5);
+                padding-top: 80px !important;
+                overflow-y: auto !important;
+            }
+
+            #aprobacionModal .modal-dialog {
+                z-index: 2000 !important;
+                position: relative !important;
+                margin: 0 !important;
+                width: 100%;
+                max-width: 900px;
+                margin-bottom: 50px !important;
+            }
+
+            #aprobacionModal .modal-content {
+                border-radius: 16px;
+                border: none;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                background-color: white;
+            }
+
+            #aprobacionModal .modal-header {
+                background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+                color: white;
+                border-radius: 16px 16px 0 0;
+                border: none;
+            }
+
+            #aprobacionModal .btn-close {
+                filter: brightness(0) invert(1);
+            }
+
+            #aprobacionModal .form-label {
+                color: #64748b;
+                font-weight: 600;
+            }
+
+            #aprobacionModal .form-control[readonly] {
+                background-color: #f8fafc;
+                color: #64748b;
+            }
+
+            #aprobacionModal .form-control:not([readonly]),
+            #aprobacionModal .form-select {
+                background-color: white;
+                color: #212529;
+                border-color: #dee2e6;
+            }
+
+            #aprobacionModal .form-control:focus,
+            #aprobacionModal .form-select:focus {
+                border-color: #3f51b5;
+                box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+                background-color: white;
+            }
+
+            #aprobacionModal .modal-body {
+                background-color: white;
+                padding: 2rem !important;
+                padding-bottom: 1rem !important;
+            }
+
+            #aprobacionModal .modal-footer {
+                padding: 0.5rem 2rem !important;
+                margin-top: 0 !important;
+            }
+
+            #aprobacionModal .mb-3:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            @media (max-width: 768px) {
+                #aprobacionModal .modal-dialog {
+                    width: 98% !important;
+                    max-width: 98% !important;
+                    margin-bottom: 10px !important;
+                }
+
+                #aprobacionModal .modal-body {
+                    padding: 1rem 1.5rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .modal-content {
+                    overflow: hidden;
+                }
+
+                #aprobacionModal .modal-header {
+                    padding: 0.5rem 1.5rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .modal-body {
+                    padding: 1rem 1.5rem 0 !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .modal-footer {
+                    padding: 0.5rem 1rem !important;
+                    margin-top: -2rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .mb-3:last-child {
+                    margin-bottom: 0 !important;
+                    padding-bottom: 0 !important;
+                }
+
+                #aprobacionModal .row:last-child {
+                    margin-bottom: 0 !important;
+                }
             }
         </style>
     </div>

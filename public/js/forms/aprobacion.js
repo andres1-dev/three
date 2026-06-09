@@ -540,24 +540,19 @@ function initFormSubmit() {
         
         // Capturar tipo_visita
         const tipoVisita = document.getElementById('tipoVisita')?.value || 'APROBACION';
-        console.log('[APROBACION] tipo_visita:', tipoVisita);
         
         // Capturar tejidos seleccionados (checkboxes)
         const tejidosSeleccionados = [];
         if (document.getElementById('tejidoPLANO')?.checked) tejidosSeleccionados.push('PLANO');
         if (document.getElementById('tejidoPUNTO')?.checked) tejidosSeleccionados.push('PUNTO');
         if (document.getElementById('tejidoINDIGO')?.checked) tejidosSeleccionados.push('INDIGO');
-        console.log('[APROBACION] tejidosSeleccionados:', tejidosSeleccionados);
         
         // Capturar email del usuario logueado
         const emailUsuario = window.currentUser?.EMAIL || window.currentUser?.email || window.currentUser?.CORREO || window.currentUser?.correo || null;
-        console.log('[APROBACION] emailUsuario:', emailUsuario);
-        console.log('[APROBACION] window.currentUser:', window.currentUser);
         
         // Capturar archivo de soporte
         const soporteInput = document.getElementById('soporte');
         const soporteFile = soporteInput?.files?.[0] || null;
-        console.log('[APROBACION] soporteFile:', soporteFile);
         
         // Capturar firma SVG desde FirmaTaller
         let firma = null;
@@ -660,6 +655,8 @@ function initFormSubmit() {
             maquinaria: maquinariaState.length > 0 ? { items: maquinariaState } : null,
             horarios: horariosData,
             direccion: direccion,
+            departamento: document.getElementById('departamentoAprobacion')?.value || null,
+            ciudad: document.getElementById('ciudadAprobacion')?.value || null,
             tejido: tejidosSeleccionados.length > 0 ? tejidosSeleccionados : null,
             fuerte: fuerteState.length > 0 ? fuerteState : null,
             localizacion: localizacion,
@@ -671,8 +668,6 @@ function initFormSubmit() {
             firma_svg: firma,
             soporte: '' // Se actualizará después de subir el archivo
         };
-        
-        console.log('[APROBACION] Payload completo:', payload);
 
         try {
             const btn = form.querySelector('button[type="submit"]');

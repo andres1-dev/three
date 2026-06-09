@@ -304,7 +304,6 @@ function getSB() {
 }
 
 async function loadUsers() {
-    console.log("[AUTH] Iniciando carga de perfiles...");
     if (typeof fetchUsuariosData !== 'function') {
         console.warn("[AUTH] fetchUsuariosData no disponible");
         return;
@@ -321,8 +320,6 @@ async function loadUsers() {
             pPromise.catch(e => { console.error("Error en fetchPlantasData:", e); return []; })
         ]);
 
-        console.log(`[AUTH] Datos recibidos: ${u.length} usuarios, ${p.length} plantas`);
-
         // GUARDAR GLOBALMENTE para compatibilidad con usuarios.js
         window.allUsers = u;
         window.allPlantas = p;
@@ -335,8 +332,6 @@ async function loadUsers() {
             const real = u.find(x => String(x.ID_USUARIO || '').trim().toLowerCase() === String(window.currentUser.ID_USUARIO || '').trim().toLowerCase()) ||
                 p.find(x => String(x.ID_PLANTA || '').trim().toLowerCase() === String(window.currentUser.ID_PLANTA || '').trim().toLowerCase());
             if (real) {
-                console.log("[AUTH] Perfil completo vinculado:", real.USUARIO || real.PLANTA);
-                
                 // Si el perfil de planta tiene productora y no tenemos una guardada, usarla
                 if (!savedProductora && real.productora) {
                     savedProductora = parseInt(real.productora);
@@ -720,6 +715,14 @@ function createSidebar() {
                 <a href="mis-reportes.html" class="sidebar-link ${path.includes('mis-reportes.html') ? 'active' : ''}">
                     <i class="fas fa-clipboard-list"></i> Mis Reportes
                 </a>
+                <a href="liquidacion-rodamiento.html" class="sidebar-link ${path.includes('liquidacion-rodamiento.html') ? 'active' : ''}">
+                    <i class="fas fa-calculator"></i> Liquidación
+                </a>
+            ` : ''}
+            ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR') ? `
+                <a href="liquidacion-admin.html" class="sidebar-link ${path.includes('liquidacion-admin.html') ? 'active' : ''}">
+                    <i class="fas fa-cogs"></i> Admin Liquidaciones
+                </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'USER-P') ? `
                 <a href="upload.html" class="sidebar-link ${path.includes('upload.html') ? 'active' : ''}">
@@ -818,8 +821,6 @@ window.updateAuthUI = updateAuthUI;
 function applyAccessControl() {
     const user = window.currentUser;
     if (!user) return;
-
-    console.log(`[AUTH] Aplicando control de acceso para rol: ${user.ROL}`);
 
     // Ocultar elementos protegidos por defecto
     const protectedElements = document.querySelectorAll('[data-role-min]');

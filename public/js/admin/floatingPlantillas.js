@@ -32,32 +32,9 @@ let plantillasData = [];
 let currentTab = 'UBICACION';
 
 /**
- * Consulta asíncrona no bloqueante a Supabase.
- * Actualiza los datos y re-renderiza cuando la red responde.
+ * Carga plantillas locales (tabla plantillas eliminada de Supabase).
  */
 async function loadTemplates() {
-    try {
-        if (typeof fetchSupabaseData === 'function') {
-            console.log('[Plantillas] Consultando base de datos Supabase en segundo plano...');
-            const data = await fetchSupabaseData('plantillas');
-            if (data && data.length > 0) {
-                // Normalizar estructura
-                const loaded = data.map(item => ({
-                    tipo: (item.tipo || item.TIPO || '').toUpperCase(),
-                    contenido: item.contenido || item.CONTENIDO || ''
-                })).filter(item => item.tipo && item.contenido);
-
-                if (loaded.length > 0) {
-                    plantillasData = loaded;
-                    console.log(`[Plantillas] Base de datos Supabase sincronizada con ${plantillasData.length} registros.`);
-                    return;
-                }
-            }
-        }
-    } catch (error) {
-        console.warn('[Plantillas] Sincronización en background omitida. Usando caché local segura.', error);
-    }
-    // Mantener la carga inicial en caso de error
     if (plantillasData.length === 0) {
         plantillasData = [...LOCAL_TEMPLATES];
     }
@@ -682,6 +659,8 @@ function initFloatingTemplates() {
     // 7. Cargar desde Supabase en background sin interrumpir ni bloquear la UI del usuario
     loadTemplates().then(() => {
         renderTemplates();
+    }).catch(() => {
+        // Error ya manejado en loadTemplates, no hacer nada
     });
 }
 

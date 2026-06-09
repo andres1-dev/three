@@ -27,7 +27,6 @@
         }
         
         // 2. Disparar el fetch de inmediato en paralelo
-        console.log('[FAST-LOAD] 🚀 Ejecutando prefetch paralelo de base de datos...');
         fetchSupabaseData('master').catch(()=>null);
         fetchSupabaseData('plantas').catch(()=>null);
         

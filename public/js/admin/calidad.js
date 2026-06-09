@@ -69,7 +69,6 @@ function enrichReporteRecord(r) {
 (function initFastPrefetch() {
     try {
         if (typeof fetchReportesData === 'function') {
-            console.log('[FAST-LOAD] 🚀 Ejecutando prefetch de calidad...');
             globalReportesPromise = fetchReportesData();
         }
     } catch (e) { }

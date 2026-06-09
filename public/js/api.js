@@ -21,12 +21,22 @@ const BUSINT_MAP = {
 // ── Clave anon pública (segura con RLS activo) ──
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
 
+function getAppConfig() {
+    return (typeof window !== 'undefined' && window.CONFIG) ? window.CONFIG : {
+        FUNCTIONS_URL: 'https://zpikjjcbievfpzegupmw.supabase.co/functions/v1'
+    };
+}
+
+function getFunctionsUrl() {
+    return getAppConfig().FUNCTIONS_URL;
+}
+
 /**
  * No-op de compatibilidad: CONFIG ya está definido en config.js,
  * no requiere fetch. Se mantiene para no romper llamadas existentes.
  */
 async function fetchSecureConfig() {
-    return CONFIG;
+    return getAppConfig();
 }
 
 // ── Cliente Supabase singleton ──
@@ -34,7 +44,7 @@ let _sbClient = null;
 window.getSupabaseClient = function() {
     if (_sbClient) return _sbClient;
     if (typeof supabase === 'undefined' || !supabase.createClient) return null;
-    const projectUrl = CONFIG.FUNCTIONS_URL.split('/functions/')[0];
+    const projectUrl = getFunctionsUrl().split('/functions/')[0];
     _sbClient = supabase.createClient(projectUrl, SUPABASE_KEY);
     return _sbClient;
 };
@@ -276,7 +286,7 @@ async function fetchNovedadesData(soloFinalizados = false, incluirTodos = false)
             }
         } catch(e) {}
 
-        const resp = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+        const resp = await fetch(`${getFunctionsUrl()}/operations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -333,7 +343,7 @@ async function fetchPlantasData(options = {}) {
 
     // Sin sesión (login page): Edge Function con service_role
     try {
-        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+        const response = await fetch(`${getFunctionsUrl()}/operations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -374,7 +384,7 @@ async function fetchUsuariosData() {
         // Solo administradores pueden listar TODO. Otros usan la resolución de login.
         const accion = isAdmin ? 'LISTAR_USUARIOS' : 'RESOLVER_USUARIOS_LOGIN';
 
-        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+        const response = await fetch(`${getFunctionsUrl()}/operations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -411,7 +421,7 @@ async function fetchReportesData() {
             }
         } catch(e) {}
 
-        const resp = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+        const resp = await fetch(`${getFunctionsUrl()}/operations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -443,7 +453,7 @@ async function fetchReportesData() {
         } catch(e) {}
 
         try {
-            const resp = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+            const resp = await fetch(`${getFunctionsUrl()}/operations`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -467,6 +477,46 @@ async function fetchReportesData() {
 }
 
 /**
+ * Obtiene aprobaciones de plantas_anexos.
+ */
+async function fetchAprobacionesData() {
+    const sessionUser = (typeof currentUser !== 'undefined') ? currentUser : null;
+    
+    // Si el rol es USER-C, leer via Edge Function para evitar restricciones de RLS
+    if (sessionUser && sessionUser.ROL === 'USER-C') {
+        let sessionToken = SUPABASE_KEY;
+        try {
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && k.includes('-auth-token')) {
+                    const s = JSON.parse(localStorage.getItem(k));
+                    if (s?.access_token) { sessionToken = s.access_token; break; }
+                }
+            }
+        } catch(e) {}
+
+        const resp = await fetch(`${getFunctionsUrl()}/operations`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${sessionToken}`
+            },
+            body: JSON.stringify({
+                accion: 'LISTAR_APROBACIONES',
+                email: sessionUser.EMAIL || sessionUser.CORREO
+            })
+        });
+        if (!resp.ok) throw new Error('Error al obtener aprobaciones');
+        const resJson = await resp.json();
+        const aprobaciones = resJson.aprobaciones || [];
+        return _normalizeSupabaseData(aprobaciones, 'aprobaciones');
+    }
+
+    return fetchSupabaseData('plantas_anexos');
+}
+
+/**
  * Obtiene el rutero.
  */
 async function fetchRuteroData() {
@@ -485,7 +535,7 @@ async function callSupabaseAI(text, promptType = 'CHAT_CORRECTION', context = nu
             const { data: { session } } = await sb.auth.getSession();
             if (session) token = session.access_token;
         }
-        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/ai`, {
+        const response = await fetch(`${getFunctionsUrl()}/ai`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -512,7 +562,7 @@ async function callSupabaseAI(text, promptType = 'CHAT_CORRECTION', context = nu
 async function warmUpSupabaseAI() {
     try {
         console.log('[API] Calentando Edge Function de IA...');
-        fetch(`${CONFIG.FUNCTIONS_URL}/ai`, {
+        fetch(`${getFunctionsUrl()}/ai`, {
             method: 'OPTIONS',
             headers: { 'apikey': SUPABASE_KEY }
         }).catch(() => {});
@@ -546,7 +596,7 @@ async function uploadToSupabase(file, productoraId = null, hoja = null) {
 
         console.log(`[API UPLOAD] Enviando con Productora ID: ${pId} | Hoja: ${hoja}`);
 
-        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+        const response = await fetch(`${getFunctionsUrl()}/operations`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -627,7 +677,7 @@ async function fetchTallasColores(idMaster) {
         const { data: { session } } = await sb.auth.getSession();
         if (session) token = session.access_token;
     }
-    const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+    const response = await fetch(`${getFunctionsUrl()}/operations`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

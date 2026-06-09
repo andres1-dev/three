@@ -9,7 +9,8 @@ const TIPO_CONFIG = {
     AUDITORIA: { icon: 'fa-clipboard-check', color: '#8b5cf6', bg: '#f5f3ff', label: 'Auditorías' },
     RONDA: { icon: 'fa-route', color: '#06b6d4', bg: '#ecfeff', label: 'Rondas' },
     CONTRAMUESTRA: { icon: 'fa-vial', color: '#f59e0b', bg: '#fffbeb', label: 'Contramuestras' },
-    SEGUIMIENTO: { icon: 'fa-tasks', color: '#ec4899', bg: '#fdf2f8', label: 'Seguimientos' }
+    SEGUIMIENTO: { icon: 'fa-tasks', color: '#ec4899', bg: '#fdf2f8', label: 'Seguimientos' },
+    APROBACION: { icon: 'fa-check-circle', color: '#10b981', bg: '#f0fdf4', label: 'Aprobaciones' }
 };
 
 let globalReportesPromise = null;
@@ -55,16 +56,20 @@ async function cargarMisReportesLocal(reportesPromise) {
 
     try {
         let rawReportes = [];
+        let rawAprobaciones = [];
         try {
             const results = await Promise.all([
                 reportesPromise || fetchReportesData(),
+                fetchAprobacionesData(),
                 fetchPlantasData({ forceEdge: true })
             ]);
             rawReportes = results[0] || [];
-            gsPlantas = results[1] || [];
+            rawAprobaciones = results[1] || [];
+            gsPlantas = results[2] || [];
         } catch (ePar) {
             console.warn('[mis-reportes] Error cargando datos en paralelo:', ePar);
             rawReportes = await (reportesPromise || fetchReportesData());
+            rawAprobaciones = await fetchAprobacionesData();
             try {
                 gsPlantas = await fetchPlantasData({ forceEdge: true });
             } catch (ePl) {
@@ -74,9 +79,46 @@ async function cargarMisReportesLocal(reportesPromise) {
 
         const user = window.currentUser || {};
         const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
+        
+        // Filtrar reportes por email
         gsReportes = (rawReportes || []).filter(r => {
             return (r.EMAIL || '').toLowerCase().trim() === userEmail;
         });
+
+        // Filtrar aprobaciones por email_usuario y normalizar estructura
+        const aprobacionesNormalizadas = (rawAprobaciones || []).filter(r => {
+            const emailApr = (r.email_usuario || r.EMAIL_USUARIO || '').toLowerCase().trim();
+            return emailApr === userEmail;
+        }).map(apr => ({
+            ...apr,
+            ID: apr.id_planta_anexo || apr.ID_PLANTA_ANEXO,
+            LOTE: apr.id_planta_anexo || apr.ID_PLANTA_ANEXO,
+            REFERENCIA: apr.planta_anexo || apr.PLANTA_ANEXO,
+            PLANTA: apr.planta_anexo || apr.PLANTA_ANEXO,
+            FECHA: apr.fecha_hora || apr.FECHA_HORA,
+            TIPO_VISITA: 'APROBACION',
+            CONCLUSION: apr.estado || apr.ESTADO,
+            EMAIL: apr.email_usuario || apr.EMAIL_USUARIO,
+            PRODUCTORA: apr.productora || apr.PRODUCTORA,
+            TELEFONO: apr.telefono || apr.TELEFONO,
+            DIRECCION: apr.direccion || apr.DIRECCION,
+            DEPARTAMENTO: apr.departamento || apr.DEPARTAMENTO,
+            CIUDAD: apr.ciudad || apr.CIUDAD,
+            COMUNA: apr.comuna || apr.COMUNA,
+            BARRIO: apr.barrio || apr.BARRIO,
+            LOCALIZACION: apr.localizacion || apr.LOCALIZACION,
+            OPERARIOS: apr.operarios || apr.OPERARIOS,
+            MAQUINARIA: apr.maquinaria || apr.MAQUINARIA,
+            HORARIOS: apr.horarios || apr.HORARIOS,
+            TEJIDO: apr.tejido || apr.TEJIDO,
+            FUERTE: apr.fuerte || apr.FUERTE,
+            COMENTARIOS: apr.comentarios || apr.COMENTARIOS,
+            FIRMA_SVG: apr.firma_svg || apr.FIRMA_SVG,
+            SOPORTE: apr.soporte || apr.SOPORTE
+        }));
+
+        // Combinar reportes y aprobaciones
+        gsReportes = [...gsReportes, ...aprobacionesNormalizadas];
 
         gsReportes.sort((a, b) => {
             const dateA = parsearFechaLatina(String(a.TIMESTAMP || a.FECHA || '')) || new Date(0);
@@ -227,6 +269,7 @@ function actualizarKPIs() {
         document.getElementById('kpi-ronda').textContent = '0';
         document.getElementById('kpi-contramuestra').textContent = '0';
         document.getElementById('kpi-seguimiento').textContent = '0';
+        document.getElementById('kpi-aprobacion').textContent = '0';
         document.getElementById('kpi-plants').textContent = '0';
         return;
     }
@@ -239,6 +282,7 @@ function actualizarKPIs() {
     let rondas = 0;
     let contramuestras = 0;
     let seguimientos = 0;
+    let aprobaciones = 0;
 
     data.forEach(r => {
         const conclusion = (r.CONCLUSION || '').toUpperCase().trim();
@@ -253,6 +297,7 @@ function actualizarKPIs() {
         else if (tipoVisita === 'RONDA') rondas++;
         else if (tipoVisita === 'CONTRAMUESTRA') contramuestras++;
         else if (tipoVisita === 'SEGUIMIENTO') seguimientos++;
+        else if (tipoVisita === 'APROBACION') aprobaciones++;
     });
 
     document.getElementById('kpi-ok').textContent = aprobados;
@@ -261,6 +306,7 @@ function actualizarKPIs() {
     document.getElementById('kpi-ronda').textContent = rondas;
     document.getElementById('kpi-contramuestra').textContent = contramuestras;
     document.getElementById('kpi-seguimiento').textContent = seguimientos;
+    document.getElementById('kpi-aprobacion').textContent = aprobaciones;
 
     const plantasUnicas = new Set(
         data.map(r => (r.PLANTA || '').trim()).filter(p => p && p !== '')
@@ -317,7 +363,7 @@ function renderGroupedView() {
         return;
     }
 
-    const groups = { AUDITORIA: [], RONDA: [], CONTRAMUESTRA: [], SEGUIMIENTO: [] };
+    const groups = { AUDITORIA: [], RONDA: [], CONTRAMUESTRA: [], SEGUIMIENTO: [], APROBACION: [] };
 
     gsFilteredReportes.forEach(r => {
         const tipo = (r.TIPO_VISITA || 'RONDA').toUpperCase();
@@ -325,7 +371,7 @@ function renderGroupedView() {
         else groups['RONDA'].push(r);
     });
 
-    const tipoOrder = ['AUDITORIA', 'RONDA', 'CONTRAMUESTRA', 'SEGUIMIENTO'];
+    const tipoOrder = ['AUDITORIA', 'RONDA', 'CONTRAMUESTRA', 'SEGUIMIENTO', 'APROBACION'];
 
     tipoOrder.forEach(tipo => {
         const reports = groups[tipo];
@@ -339,6 +385,7 @@ function renderGroupedView() {
         reports.forEach(r => {
             const globalIdx = gsFilteredReportes.indexOf(r);
             const statusInfo = getStatusInfo(r.CONCLUSION);
+            const isAprobacion = (r.TIPO_VISITA || '').toUpperCase() === 'APROBACION';
 
             const nombreP = (r.PLANTA || r.planta || '').trim().toLowerCase();
             const repProductora = Number(r.PRODUCTORA || r.productora);
@@ -346,8 +393,11 @@ function renderGroupedView() {
                 (p.PLANTA || p.planta || '').trim().toLowerCase() === nombreP &&
                 (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
             );
-            const tieneCorreo = !!(pObj && (pObj.CORREO || pObj.EMAIL || pObj.correo || pObj.email));
-            const tieneTelefono = !!(pObj && (pObj.TELEFONO || pObj.telefono));
+            
+            // Para aprobaciones, usar teléfono y correo del propio registro
+            // Para reportes, usar teléfono y correo de la tabla de plantas
+            const tieneCorreo = isAprobacion ? !!(r.EMAIL || r.email) : !!(pObj && (pObj.CORREO || pObj.EMAIL || pObj.correo || pObj.email));
+            const tieneTelefono = isAprobacion ? !!(r.TELEFONO || r.telefono) : !!(pObj && (pObj.TELEFONO || pObj.telefono));
 
             rowsHtml += `
                 <tr class="planta-row-mobile">
@@ -355,27 +405,31 @@ function renderGroupedView() {
                 </tr>
                 <tr>
                     <td><span style="font-weight:600; white-space:nowrap;">${formatFechaCompacta(r.FECHA)}</span></td>
-                    <td><span style="font-weight:700; color:#3f51b5;">${r.ID || 'OP'}</span></td>
-                    <td>${r.REFERENCIA || '-'}</td>
+                    <td><span style="font-weight:700; color:#3f51b5;">${isAprobacion ? r.ID || '-' : (r.ID || 'OP')}</span></td>
+                    <td>${isAprobacion ? (r.DIRECCION || '-') : (r.REFERENCIA || '-')}</td>
                     <td>${r.PLANTA || '-'}</td>
                     <td><span class="status-badge-sm ${statusInfo.class} text-white">${statusInfo.label}</span></td>
                     <td>
                          <div class="action-btns">
-                             <button class="action-btn action-btn-ver" onclick="expandReport(${globalIdx})" title="Ver detalle">
+                             <button class="action-btn action-btn-ver" onclick="${isAprobacion ? 'expandAprobacion' : 'expandReport'}(${globalIdx})" title="Ver detalle">
                                  <i class="fas fa-eye"></i>
                              </button>
+                             ${isAprobacion ? '' : `
                              <button class="action-btn action-btn-print" onclick="imprimirReporte(${globalIdx})" title="Imprimir">
                                  <i class="fas fa-print"></i>
                              </button>
-                             <button class="action-btn action-btn-whatsapp" onclick="enviarWhatsAppIndividual(${globalIdx})" title="Enviar por WhatsApp" ${tieneTelefono ? '' : 'disabled style="opacity: 0.35; cursor: not-allowed;"'}>
+                             `}
+                             <button class="action-btn action-btn-whatsapp" onclick="${isAprobacion ? 'enviarWhatsAppAprobacion' : 'enviarWhatsAppIndividual'}(${globalIdx})" title="Enviar por WhatsApp" ${tieneTelefono ? '' : 'disabled style="opacity: 0.35; cursor: not-allowed;"'}>
                                  <i class="fab fa-whatsapp"></i>
                              </button>
-                             <button class="action-btn action-btn-email" onclick="enviarCorreoCalidad(${globalIdx})" title="Enviar por Correo" ${tieneCorreo ? '' : 'disabled style="opacity: 0.35; cursor: not-allowed;"'}>
+                             <button class="action-btn action-btn-email" onclick="${isAprobacion ? 'enviarCorreoAprobacion' : 'enviarCorreoCalidad'}(${globalIdx})" title="Enviar por Correo" ${tieneCorreo ? '' : 'disabled style="opacity: 0.35; cursor: not-allowed;"'}>
                                  <i class="fas fa-envelope"></i>
                              </button>
+                             ${isAprobacion ? '' : `
                              <button class="action-btn action-btn-editar-planta" onclick="abrirModalPlantaReporte(${globalIdx})" title="Validar / Editar Taller">
                                  <i class="fas fa-address-card"></i>
                              </button>
+                             `}
                          </div>
                     </td>
                 </tr>
@@ -607,6 +661,565 @@ function initDateRangePicker() {
     const endDate = new Date(today);
     endDate.setHours(23, 59, 59, 999);
     selectedDateRange = { start: startDate, end: endDate };
+}
+
+function expandAprobacion(index) {
+    const rep = gsFilteredReportes[index];
+    if (!rep) return;
+
+    // Crear modal específico para aprobaciones con el mismo diseño que reportes
+    const modalHtml = `
+        <div class="modal fade" id="aprobacionModal" tabindex="-1" style="display: none;">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fas fa-check-circle me-2"></i>Ver Aprobación
+                        </h5>
+                        <button type="button" class="btn-close" onclick="cerrarModalAprobacion()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-hashtag me-1"></i>ID Planta Anexo</label>
+                                <input type="text" class="form-control" value="${rep.ID || rep.id_planta_anexo || 'N/A'}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-calendar-alt me-1"></i>Fecha</label>
+                                <input type="text" class="form-control" value="${formatFechaCompacta(rep.FECHA)}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-industry me-1"></i>Nombre de Planta</label>
+                                <input type="text" class="form-control" value="${rep.PLANTA || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-envelope me-1"></i>Email Usuario</label>
+                                <input type="text" class="form-control" value="${rep.EMAIL || 'N/A'}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-phone me-1"></i>Teléfono</label>
+                                <input type="text" class="form-control" value="${rep.TELEFONO || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-map me-1"></i>Departamento</label>
+                                <input type="text" class="form-control" value="${rep.DEPARTAMENTO || 'N/A'}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-city me-1"></i>Ciudad</label>
+                                <input type="text" class="form-control" value="${rep.CIUDAD || 'N/A'}" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-users me-1"></i>Operarios</label>
+                                <input type="text" class="form-control" value="${rep.OPERARIOS || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-road me-1"></i>Dirección</label>
+                                <input type="text" class="form-control" value="${rep.DIRECCION || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-map-marked-alt me-1"></i>Comuna</label>
+                                <input type="text" class="form-control" value="${rep.COMUNA || 'N/A'}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-home me-1"></i>Barrio</label>
+                                <input type="text" class="form-control" value="${rep.BARRIO || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-map-marker-alt me-1"></i>Localización</label>
+                                <input type="text" class="form-control" value="${rep.LOCALIZACION || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-tshirt me-1"></i>Tipo de Tejido</label>
+                                <input type="text" class="form-control" value="${Array.isArray(rep.TEJIDO) ? rep.TEJIDO.join(', ') : (rep.TEJIDO || 'N/A')}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-tag me-1"></i>Tipos de Prendas</label>
+                                <input type="text" class="form-control" value="${Array.isArray(rep.FUERTE) ? rep.FUERTE.join(', ') : (rep.FUERTE || 'N/A')}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-clipboard-check me-1"></i>Estado</label>
+                                <input type="text" class="form-control" value="${rep.CONCLUSION || 'N/A'}" readonly>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-comment me-1"></i>Comentarios</label>
+                                <textarea class="form-control" rows="2" readonly>${rep.COMENTARIOS || 'N/A'}</textarea>
+                            </div>
+                        </div>
+                        ${rep.SOPORTE ? `
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-camera me-1"></i>Soporte Fotográfico</label>
+                                <div class="zoom-container" onclick="abrirLightbox('${rep.SOPORTE}')" style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer;">
+                                    <img src="${rep.SOPORTE}" style="width: 100%; height: 100%; object-fit: cover;" alt="Soporte visual">
+                                    <div class="zoom-overlay">
+                                        <i class="fas fa-search-plus"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${rep.FIRMA_SVG ? `
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-signature me-1"></i>Firma Digital</label>
+                                <div style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                    ${rep.FIRMA_SVG}
+                                </div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+                        <div class="d-flex gap-2 w-100">
+                            <button type="button" class="btn flex-1" onclick="cerrarModalAprobacion()" style="background: #e2e8f0; border: none; color: #475569; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-times me-1"></i>Cerrar
+                            </button>
+                            <button type="button" class="btn flex-1 text-white" onclick="imprimirAprobacion('${rep.ID || rep.id_planta_anexo}')" style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-print me-1"></i>Imprimir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Eliminar modal anterior si existe
+    const existingModal = document.getElementById('aprobacionModal');
+    if (existingModal) existingModal.remove();
+
+    // Agregar nuevo modal
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Mostrar modal - misma lógica que expandReport
+    const modalEl = document.getElementById('aprobacionModal');
+    modalEl.style.display = 'flex';
+    modalEl.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalAprobacion() {
+    const modal = document.getElementById('aprobacionModal');
+    if (modal) {
+        modal.classList.remove('show');
+        setTimeout(() => modal.remove(), 200);
+    }
+    document.body.style.overflow = '';
+}
+
+function imprimirAprobacion(id) {
+    const rep = gsReportes.find(r => (r.ID || r.id_planta_anexo) === id);
+    if (!rep) return;
+
+    // Crear ventana de impresión
+    const printWindow = window.open('', '_blank');
+    
+    // Obtener nombre de productora
+    const productoraNombre = rep.PRODUCTORA ? obtenerNombreProductora(rep.PRODUCTORA, gsProductoras) : 'N/A';
+
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Aprobación - ${rep.PLANTA || 'N/A'}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 20px;
+                    max-width: 800px;
+                    margin: 0 auto;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 2px solid #3f51b5;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #3f51b5;
+                    margin: 0;
+                }
+                .section {
+                    margin-bottom: 25px;
+                }
+                .section-title {
+                    font-weight: bold;
+                    color: #3f51b5;
+                    font-size: 16px;
+                    margin-bottom: 10px;
+                    border-bottom: 1px solid #e2e8f0;
+                    padding-bottom: 5px;
+                }
+                .field {
+                    margin-bottom: 10px;
+                }
+                .field-label {
+                    font-weight: 600;
+                    color: #64748b;
+                }
+                .field-value {
+                    color: #212529;
+                }
+                .status-badge {
+                    display: inline-block;
+                    padding: 5px 15px;
+                    border-radius: 20px;
+                    font-weight: bold;
+                    color: white;
+                }
+                .status-aprobado { background: #10b981; }
+                .status-rechazado { background: #ef4444; }
+                .status-pendiente { background: #f59e0b; }
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #e2e8f0;
+                    text-align: center;
+                    color: #64748b;
+                    font-size: 12px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🏭 APROBACIÓN DE PLANTA</h1>
+                <p style="margin: 5px 0 0 0; color: #64748b;">ID: ${rep.ID || rep.id_planta_anexo || 'N/A'}</p>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📋 DATOS GENERALES</div>
+                <div class="field">
+                    <span class="field-label">Planta:</span> <span class="field-value">${rep.PLANTA || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Fecha:</span> <span class="field-value">${formatFechaCompacta(rep.FECHA)}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Estado:</span> 
+                    <span class="status-badge ${getStatusInfo(rep.CONCLUSION).class}">${rep.CONCLUSION || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">📍 UBICACIÓN</div>
+                <div class="field">
+                    <span class="field-label">Departamento:</span> <span class="field-value">${rep.DEPARTAMENTO || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Ciudad:</span> <span class="field-value">${rep.CIUDAD || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Comuna:</span> <span class="field-value">${rep.COMUNA || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Barrio:</span> <span class="field-value">${rep.BARRIO || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Dirección:</span> <span class="field-value">${rep.DIRECCION || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Localización:</span> <span class="field-value">${rep.LOCALIZACION || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">👥 CONTACTO</div>
+                <div class="field">
+                    <span class="field-label">Email:</span> <span class="field-value">${rep.EMAIL || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Teléfono:</span> <span class="field-value">${rep.TELEFONO || 'N/A'}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">👷 CAPACIDAD</div>
+                <div class="field">
+                    <span class="field-label">Operarios:</span> <span class="field-value">${rep.OPERARIOS || 'N/A'}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Tipo de Tejido:</span> <span class="field-value">${Array.isArray(rep.TEJIDO) ? rep.TEJIDO.join(', ') : (rep.TEJIDO || 'N/A')}</span>
+                </div>
+                <div class="field">
+                    <span class="field-label">Tipos de Prendas:</span> <span class="field-value">${Array.isArray(rep.FUERTE) ? rep.FUERTE.join(', ') : (rep.FUERTE || 'N/A')}</span>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">💬 OBSERVACIONES</div>
+                <div class="field">
+                    <span class="field-value">${rep.COMENTARIOS || 'Sin comentarios'}</span>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p>Productora: ${productoraNombre || 'N/A'}</p>
+                <p>Fecha de impresión: ${new Date().toLocaleString()}</p>
+            </div>
+        </body>
+        </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+async function enviarWhatsAppAprobacion(index) {
+    const rep = gsFilteredReportes[index];
+    if (!rep) return;
+
+    // Usar el teléfono directamente del reporte de aprobación
+    const phoneNumber = rep.TELEFONO || rep.telefono || '';
+
+    if (!phoneNumber) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Sin número de teléfono',
+            text: 'Esta aprobación no tiene un número de teléfono registrado.',
+            confirmButtonColor: '#3F51B5'
+        });
+        return;
+    }
+
+    // Obtener nombre de productora
+    const productorasList = await obtenerProductoras();
+    const productoraNombre = obtenerNombreProductora(rep.PRODUCTORA || rep.productora, productorasList);
+
+    // Parsear maquinaria y horarios
+    let maquinariaText = 'N/A';
+    let horariosText = 'N/A';
+    
+    console.log('[WhatsApp Aprobacion] Datos del rep:', rep);
+    console.log('[WhatsApp Aprobacion] maquinaria:', rep.maquinaria, rep.MAQUINARIA);
+    console.log('[WhatsApp Aprobacion] horarios:', rep.horarios, rep.HORARIOS);
+    
+    // Maquinaria - puede ser string JSON o objeto JSONB
+    try {
+        const maquinariaRaw = rep.maquinaria || rep.MAQUINARIA;
+        console.log('[WhatsApp Aprobacion] maquinariaRaw:', maquinariaRaw, typeof maquinariaRaw);
+        if (maquinariaRaw) {
+            let maquinariaData;
+            if (typeof maquinariaRaw === 'string') {
+                maquinariaData = JSON.parse(maquinariaRaw);
+            } else {
+                maquinariaData = maquinariaRaw;
+            }
+            console.log('[WhatsApp Aprobacion] maquinariaData:', maquinariaData);
+            if (maquinariaData.items && maquinariaData.items.length > 0) {
+                maquinariaText = maquinariaData.items.map(item => `${item.tipo} (x${item.cantidad})`).join(', ');
+            }
+        }
+    } catch (e) {
+        console.warn('Error al parsear maquinaria:', e);
+    }
+    
+    // Horarios - puede ser string JSON o objeto JSONB
+    try {
+        const horariosRaw = rep.horarios || rep.HORARIOS;
+        console.log('[WhatsApp Aprobacion] horariosRaw:', horariosRaw, typeof horariosRaw);
+        if (horariosRaw) {
+            let horariosData;
+            if (typeof horariosRaw === 'string') {
+                horariosData = JSON.parse(horariosRaw);
+            } else {
+                horariosData = horariosRaw;
+            }
+            console.log('[WhatsApp Aprobacion] horariosData:', horariosData);
+            
+            // Convertir hora a formato AM/PM
+            const formatHora = (hora) => {
+                if (!hora) return 'N/A';
+                const [h, m] = hora.split(':');
+                const horaNum = parseInt(h);
+                const ampm = horaNum >= 12 ? 'PM' : 'AM';
+                const hora12 = horaNum % 12 || 12;
+                return `${hora12}:${m} ${ampm}`;
+            };
+            
+            // Obtener días laborales
+            const diasLaborales = (dias) => {
+                switch(parseInt(dias)) {
+                    case 5: return 'Lunes a Viernes';
+                    case 6: return 'Lunes a Sábado';
+                    case 7: return 'Lunes a Domingo';
+                    default: return `${dias} días`;
+                }
+            };
+            
+            horariosText = `${formatHora(horariosData.inicio)} - ${formatHora(horariosData.fin)} (${diasLaborales(horariosData.dias)})`;
+            horariosText += `\n*Desayuno:* ${horariosData.desayuno} min`;
+            horariosText += `\n*Almuerzo:* ${horariosData.almuerzo} min`;
+            horariosText += `\n*Operación diaria:* ${horariosData.minutos_dia} min`;
+            horariosText += `\n*Operación semanal:* ${horariosData.minutos_semanales} min`;
+        }
+    } catch (e) {
+        console.warn('Error al parsear horarios:', e);
+    }
+
+    // FECHA LARGA
+    let fechaLarga = '';
+    try {
+        const fechaObj = parsearFechaLatina(rep.FECHA);
+        fechaLarga = fechaObj.toLocaleDateString('es-ES', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+        fechaLarga = fechaLarga.charAt(0).toUpperCase() + fechaLarga.slice(1);
+    } catch (e) {
+        fechaLarga = formatFechaCompacta(rep.FECHA);
+    }
+
+    // Crear mensaje de WhatsApp siguiendo estructura de reportes (sin emojis)
+    let message = '';
+    
+    message += '*APROBACIÓN DE PLANTA*\n';
+    message += `*\`${(rep.PLANTA || productoraNombre || 'N/A').toUpperCase()}\`*\n`;
+    message += `*${fechaLarga}*\n\n`;
+    
+    // DATOS GENERALES
+    message += '*Conclusión:*\n';
+    message += `> ${(rep.CONCLUSION || 'N/A').toUpperCase()}\n\n`;
+    
+    message += `*ID:* ${rep.ID || rep.id_planta_anexo || 'N/A'}\n`;
+    message += `*Operarios:* ${rep.OPERARIOS || 'N/A'}\n`;
+    message += `*Tipo de Tejido:* ${Array.isArray(rep.TEJIDO) ? rep.TEJIDO.join(', ') : (rep.TEJIDO || 'N/A')}\n`;
+    message += `*Tipos de Prendas:* ${Array.isArray(rep.FUERTE) ? rep.FUERTE.join(', ') : (rep.FUERTE || 'N/A')}\n\n`;
+    
+    // UBICACIÓN
+    message += '*Ubicación:*\n';
+    message += `*Departamento:* ${rep.DEPARTAMENTO || 'N/A'}\n`;
+    message += `*Ciudad:* ${rep.CIUDAD || 'N/A'}\n`;
+    message += `*Comuna:* ${rep.COMUNA || 'N/A'}\n`;
+    message += `*Barrio:* ${rep.BARRIO || 'N/A'}\n`;
+    message += `*Dirección:* ${rep.DIRECCION || 'N/A'}\n`;
+    message += `*Localización:* ${rep.LOCALIZACION || 'N/A'}\n\n`;
+    
+    // MAQUINARIA
+    message += `*Maquinaria:* ${maquinariaText}\n`;
+    message += `*Horarios:* ${horariosText}\n\n`;
+    
+    // CONTACTO
+    message += '*Contacto:*\n';
+    message += `*Correo:* ${rep.CORREO || rep.correo || 'N/A'}\n`;
+    message += `*Teléfono:* ${rep.TELEFONO || 'N/A'}\n\n`;
+    
+    // OBSERVACIONES
+    if (rep.COMENTARIOS) {
+        message += '*Observaciones:*\n';
+        message += `> ${rep.COMENTARIOS}\n\n`;
+    }
+    
+    message += `*Productora:* ${productoraNombre || 'N/A'}\n`;
+
+    // Abrir WhatsApp
+    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+}
+
+async function enviarCorreoAprobacion(index) {
+    const rep = gsFilteredReportes[index];
+    if (!rep) return;
+
+    // Buscar la planta correspondiente a esta aprobación
+    const nombrePlanta = (rep.PLANTA || rep.planta || '').trim().toLowerCase();
+    const repProductora = Number(rep.PRODUCTORA || rep.productora);
+
+    let plantaObj;
+    try {
+        const plantasEdge = await fetchPlantasData({ forceEdge: true });
+        plantaObj = plantasEdge.find(p =>
+            (p.PLANTA || p.planta || '').trim().toLowerCase() === nombrePlanta &&
+            (!repProductora || Number(p.PRODUCTORA || p.productora) === repProductora)
+        );
+    } catch (e) {
+        console.warn('[mis-reportes] No se pudo obtener email de planta:', e);
+    }
+
+    const emailPlanta = plantaObj ? (plantaObj.CORREO || plantaObj.EMAIL || plantaObj.correo || plantaObj.email || '') : '';
+
+    if (!emailPlanta) {
+        await Swal.fire({
+            icon: 'info',
+            title: 'Taller sin correo o no registrado',
+            text: 'Para enviar esta aprobación por correo, primero debe registrar o completar los datos del taller.',
+            confirmButtonColor: '#3F51B5'
+        });
+        return;
+    }
+
+    try {
+        Swal.fire({
+            title: 'Enviando correo...',
+            text: 'Por favor espere mientras se procesa la solicitud.',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        // Obtener copias de usuarios ADMIN/MODERATOR con email_copia activado
+        let ccEmails = [];
+        if (gsUsuarios && gsUsuarios.length > 0) {
+            ccEmails = gsUsuarios
+                .filter(u => {
+                    const rol = (u.ROL || u.rol || '').toUpperCase();
+                    const emailCopia = u.EMAIL_COPIA || u.email_copia || false;
+                    const correo = u.CORREO || u.correo || '';
+                    return (rol === 'ADMIN' || rol === 'MODERATOR') && emailCopia === true && correo;
+                })
+                .map(u => u.CORREO || u.correo)
+                .filter(email => email);
+        }
+
+        const payload = {
+            accion: 'APROBACION_PLANTA',
+            email: emailPlanta,
+            cc: ccEmails.length > 0 ? ccEmails : [],
+            aprobacion: rep
+        };
+
+        const resData = await sendToSupabase(payload);
+
+        if (resData && resData.success === true) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Correo Enviado',
+                html: `La aprobación fue enviada al correo registrado de <b>${rep.PLANTA}</b>.`,
+                timer: 2500,
+                showConfirmButton: false
+            });
+        } else {
+            throw new Error((resData && resData.message) || 'Error al enviar el correo a través de Supabase');
+        }
+
+    } catch (error) {
+        console.error('Error al enviar correo:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error de Envío',
+            text: error.message || 'Ocurrió un problema de red. Por favor intente nuevamente más tarde.',
+            confirmButtonColor: '#3F51B5'
+        });
+    }
 }
 
 function expandReport(index) {

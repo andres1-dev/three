@@ -58,7 +58,6 @@ let globalPlantasPromise = null;
             }
         }
 
-        console.log('[FAST-LOAD] 🚀 Ejecutando prefetch paralelo para Resolución...');
         globalNovedadesPromise = fetchNovedadesData(false);
         globalPlantasPromise = fetchPlantasData();
 
