@@ -120,17 +120,59 @@ async function cargarDatos() {
  */
 async function cargarLiquidacionDesdeAdmin() {
     try {
-        const correo = sessionStorage.getItem('liquidacion_admin_correo');
-        const periodo = sessionStorage.getItem('liquidacion_admin_periodo');
-        const id = sessionStorage.getItem('liquidacion_admin_id');
-        const descuentos = sessionStorage.getItem('liquidacion_admin_descuentos') || '';
+        // Leer parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const admin = urlParams.get('admin');
 
-        if (!correo || !periodo) {
-            console.error('No se encontraron datos de liquidación en sessionStorage');
+        if (!id || admin !== 'true') {
+            console.log('No es modo admin o no hay ID');
             return;
         }
 
-        console.log('Cargando liquidación desde admin:', { correo, periodo, id, descuentos });
+        console.log('Cargando liquidación desde admin con ID:', id);
+
+        // Buscar liquidación en Supabase usando el ID
+        const sb = getSupabaseClient();
+        if (!sb) {
+            console.error('Supabase client no disponible');
+            return;
+        }
+
+        const { data: liquidacion, error } = await sb
+            .from('liquidaciones_rodamiento')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error) {
+            console.error('Error al buscar liquidación:', error);
+            alert('Error al cargar la liquidación desde Supabase');
+            return;
+        }
+
+        if (!liquidacion) {
+            console.error('No se encontró liquidación con ID:', id);
+            alert('No se encontró la liquidación');
+            return;
+        }
+
+        console.log('Liquidación encontrada:', liquidacion);
+
+        const { correo, periodo, descuentos } = liquidacion;
+
+        console.log('Datos de liquidación:', { correo, periodo, descuentos });
+        console.log('Reportes antes de filtro:', liqReportes.length, liqAprobaciones.length);
+        console.log('Muestra de reportes:', liqReportes.slice(0, 3));
+        console.log('Muestra de aprobaciones:', liqAprobaciones.slice(0, 3));
+        
+        // Mostrar las claves del primer reporte para ver qué campos existen
+        if (liqReportes.length > 0) {
+            console.log('Claves del primer reporte:', Object.keys(liqReportes[0]));
+            console.log('Primer reporte completo:', liqReportes[0]);
+            console.log('Todas las claves disponibles:', Object.keys(liqReportes[0]).join(', '));
+            console.log('Valor del campo EMAIL en el primer reporte:', liqReportes[0].EMAIL);
+        }
 
         // Parsear periodo para obtener mes, año, quincena
         // Formato esperado: "DEL 1 DE JUNIO DEL 2026 AL 15 DE JUNIO DEL 2026"
@@ -183,15 +225,9 @@ async function cargarLiquidacionDesdeAdmin() {
 
         // Guardar ID en el container para uso posterior
         const container = document.getElementById('liquidacionContainer');
-        if (container && id) {
+        if (container) {
             container.dataset.liquidacionId = id;
         }
-
-        // Limpiar sessionStorage
-        sessionStorage.removeItem('liquidacion_admin_id');
-        sessionStorage.removeItem('liquidacion_admin_correo');
-        sessionStorage.removeItem('liquidacion_admin_periodo');
-        sessionStorage.removeItem('liquidacion_admin_descuentos');
 
     } catch (error) {
         console.error('Error al cargar liquidación desde admin:', error);
@@ -263,6 +299,13 @@ async function guardarLiquidacionGenerada() {
             if (text.includes('AUDITORA:')) correo = text.replace('AUDITORA:', '').trim();
             if (text.includes('PERIODO:')) periodo = text.replace('PERIODO:', '').trim();
         });
+    }
+
+    // Obtener correo electrónico de los reportes en lugar del header
+    // El header tiene el nombre, pero necesitamos el correo para filtrar
+    if (liqReportes.length > 0) {
+        correo = liqReportes[0].EMAIL || liqReportes[0].email || correo;
+        console.log('Correo obtenido de reportes:', correo);
     }
 
     // Obtener descuentos
@@ -829,17 +872,19 @@ async function guardarLiquidacionEnSupabase(liquidacionId, cc, correo, periodo, 
             console.log('Actualización exitosa:', dataUpdate);
             return existente.id;
         } else {
-            // Insertar nuevo registro (solo metadatos)
-            console.log('Insertando nueva liquidación:', liquidacionId);
+            // Insertar o actualizar registro (upsert) usando el ID
+            console.log('Upsert liquidación con ID:', liquidacionId);
             const { data, error } = await sb
                 .from('liquidaciones_rodamiento')
-                .insert({
+                .upsert({
                     id: liquidacionId,
                     cc: cc,
                     correo: correo,
                     periodo: periodo,
                     descuentos: descuentos,
                     fecha_generacion: new Date().toISOString()
+                }, {
+                    onConflict: 'id'
                 });
             
             if (error) {
@@ -848,7 +893,7 @@ async function guardarLiquidacionEnSupabase(liquidacionId, cc, correo, periodo, 
                 return false;
             }
             
-            console.log('Guardado exitoso:', data);
+            console.log('Guardado exitoso (upsert):', data);
             return liquidacionId;
         }
     } catch (error) {
@@ -1204,13 +1249,6 @@ async function imprimirLiquidacion() {
                         </div>
                         <div class="header-data">
                             ${headerHtml}
-                        </div>
-                        <div class="header-footer">
-                            <img src="icons/app.svg" alt="Logo" class="logo-print">
-                            <div style="text-align: center;">
-                                <img src="${qrCodeUrl}" alt="QR Code" class="qr-code">
-                                <p class="qr-info">Escanear para validar</p>
-                            </div>
                         </div>
                     </div>
                 ` : ''}

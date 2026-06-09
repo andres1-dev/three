@@ -246,12 +246,11 @@ function renderizarLiquidaciones(liquidaciones, columnaFiltro = 'correo') {
  * Redirige al módulo de liquidación con los datos pre-cargados
  */
 function verLiquidacion(id, correo, periodo, descuentos) {
-    // Guardar datos en sessionStorage para el módulo de liquidación
-    sessionStorage.setItem('liquidacion_admin_id', id);
-    sessionStorage.setItem('liquidacion_admin_correo', correo);
-    sessionStorage.setItem('liquidacion_admin_periodo', periodo);
-    sessionStorage.setItem('liquidacion_admin_descuentos', descuentos);
+    // Pasar solo ID y admin=true por URL
+    const params = new URLSearchParams();
+    params.append('id', id);
+    params.append('admin', 'true');
     
-    // Redirigir al módulo de liquidación
-    window.location.href = 'liquidacion-rodamiento.html?admin=true';
+    // Redirigir al módulo de liquidación con parámetros en URL
+    window.location.href = `liquidacion-rodamiento.html?${params.toString()}`;
 }
