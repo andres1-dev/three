@@ -96,38 +96,7 @@ function initializeForm() {
     });
 }
 
-function aplicarValidacionInputsNumericos() {
-    // Buscar todos los inputs de tipo number
-    const numberInputs = document.querySelectorAll('input[type="number"]');
-    numberInputs.forEach(input => {
-        // Remover event listeners existentes para evitar duplicados
-        input.removeEventListener('keydown', prevenirLetraEPuntos);
-        input.removeEventListener('input', limpiarLetraEPuntos);
-        
-        // Agregar event listeners
-        input.addEventListener('keydown', prevenirLetraEPuntos);
-        input.addEventListener('input', limpiarLetraEPuntos);
-    });
-}
-
-function prevenirLetraEPuntos(e) {
-    if (['e', 'E', '+', '-', '.', ','].includes(e.key)) {
-        e.preventDefault();
-    }
-}
-
-function limpiarLetraEPuntos(e) {
-    const value = e.target.value;
-    const cleanedValue = value.replace(/[eE+\.,]/g, '');
-    if (value !== cleanedValue) {
-        e.target.value = cleanedValue;
-    }
-}
-
 function attachEventListeners() {
-    // Aplicar validación de inputs numéricos
-    aplicarValidacionInputsNumericos();
-
     const opSearchInput = document.getElementById('opSearchInput');
     if (opSearchInput) {
         opSearchInput.addEventListener('keydown', (e) => {
@@ -785,9 +754,6 @@ function _crearFilaDinamica(opciones, listId, removeFn) {
         </button>
     `;
     lista.appendChild(fila);
-    
-    // Aplicar validación de inputs numéricos a los nuevos inputs
-    aplicarValidacionInputsNumericos();
 }
 
 function _eliminarFilaDinamica(btn, listId) {
@@ -904,9 +870,6 @@ function agregarFilaCodigo() {
         inputCantidad.max = maximo;
         inputCantidad.placeholder = `Máx: ${maximo}`;
     }
-    
-    // Aplicar validación de inputs numéricos a los nuevos inputs
-    aplicarValidacionInputsNumericos();
 }
 
 function handleFileSelect(e) {
