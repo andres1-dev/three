@@ -82,15 +82,26 @@ const PersistenciaFormularios = (function() {
         // Para archivos, guardamos el nombre y el contenido en base64
         if (element.files && element.files.length > 0) {
           formData[element.id + '_name'] = element.files[0].name;
-          console.log('[Persistencia] Convirtiendo archivo a base64:', element.id, element.files[0].name);
           // Convertir imagen a base64 de forma asíncrona
           const promise = fileToBase64(element.files[0]).then(base64 => {
             formData[element.id + '_base64'] = base64;
-            console.log('[Persistencia] Archivo convertido a base64:', element.id, base64.length, 'bytes');
           }).catch(error => {
             console.error('[Persistencia] Error al convertir archivo a base64:', error);
           });
           filePromises.push(promise);
+        } else {
+          // Si no hay archivo en el input, preservar la imagen base64 si ya existe en localStorage
+          const storageKey = STORAGE_KEYS[formId];
+          if (storageKey) {
+            const savedData = localStorage.getItem(storageKey);
+            if (savedData) {
+              const savedFormData = JSON.parse(savedData);
+              if (savedFormData[element.id + '_base64']) {
+                formData[element.id + '_base64'] = savedFormData[element.id + '_base64'];
+                formData[element.id + '_name'] = savedFormData[element.id + '_name'];
+              }
+            }
+          }
         }
       } else {
         formData[element.id] = element.value;
@@ -106,10 +117,7 @@ const PersistenciaFormularios = (function() {
     // Guardar en localStorage
     const storageKey = STORAGE_KEYS[formId];
     if (storageKey) {
-      const jsonString = JSON.stringify(formData);
-      console.log('[Persistencia] Guardando en localStorage:', formId, 'Tamaño:', jsonString.length, 'bytes');
-      localStorage.setItem(storageKey, jsonString);
-      console.log('[Persistencia] Guardado exitoso en localStorage:', storageKey);
+      localStorage.setItem(storageKey, JSON.stringify(formData));
     }
   }
 
@@ -268,6 +276,39 @@ const PersistenciaFormularios = (function() {
           element.value = formData[fieldId];
         }
       }
+      
+      // Restaurar imágenes específicas (imagen y soporte) que no están en el loop de elementos
+      if (formData.imagen_base64) {
+        const preview = document.getElementById('imagenPreview');
+        const icon = document.getElementById('imagenIcon');
+        const text = document.getElementById('imagenText');
+        const rotationControls = document.getElementById('imagenRotationControls');
+        
+        if (preview) {
+          preview.src = formData.imagen_base64;
+          preview.style.display = 'block';
+        }
+        
+        if (icon) icon.style.display = 'none';
+        if (text) text.style.display = 'none';
+        if (rotationControls) rotationControls.style.display = 'flex';
+      }
+      
+      if (formData.soporte_base64) {
+        const preview = document.getElementById('soportePreview');
+        const icon = document.getElementById('soporteIcon');
+        const text = document.getElementById('soporteText');
+        const rotationControls = document.getElementById('soporteRotationControls');
+        
+        if (preview) {
+          preview.src = formData.soporte_base64;
+          preview.style.display = 'block';
+        }
+        
+        if (icon) icon.style.display = 'none';
+        if (text) text.style.display = 'none';
+        if (rotationControls) rotationControls.style.display = 'flex';
+      }
 
       // Cargar listas dinámicas
       cargarListasDinamicas(formId, formData);
@@ -335,17 +376,23 @@ const PersistenciaFormularios = (function() {
       // Cargar slider de avance
       if (formData.avanceSlider) {
         const avanceSlider = document.getElementById('avanceSlider');
-        if (avanceSlider) avanceSlider.value = formData.avanceSlider;
+        if (avanceSlider) {
+          avanceSlider.value = formData.avanceSlider;
+        }
       }
       
       if (formData.avancePorcentaje) {
         const avancePorcentaje = document.getElementById('avancePorcentaje');
-        if (avancePorcentaje) avancePorcentaje.value = formData.avancePorcentaje;
+        if (avancePorcentaje) {
+          avancePorcentaje.value = formData.avancePorcentaje;
+        }
       }
       
       if (formData.avanceValor) {
         const avanceValor = document.getElementById('avanceValor');
-        if (avanceValor) avanceValor.textContent = formData.avanceValor;
+        if (avanceValor) {
+          avanceValor.textContent = formData.avanceValor;
+        }
       }
       
       // Restaurar firma digital desde trazos SVG
@@ -446,41 +493,53 @@ const PersistenciaFormularios = (function() {
     // Cargar datos guardados al iniciar
     cargarFormulario(formId);
 
-    // Guardar datos cuando cambian los campos
-    form.addEventListener('input', function() {
-      guardarFormulario(formId).catch(error => {
-        console.error('[Persistencia] Error al guardar en input:', error);
-      });
+    // Guardar datos cuando cambian los campos (input)
+    form.addEventListener('input', function(e) {
+      guardarFormulario(formId).catch(() => {});
     });
 
-    form.addEventListener('change', function() {
-      guardarFormulario(formId).catch(error => {
-        console.error('[Persistencia] Error al guardar en change:', error);
-      });
+    // Guardar datos cuando cambian los campos (change)
+    form.addEventListener('change', function(e) {
+      guardarFormulario(formId).catch(() => {});
+    });
+
+    // Guardar datos cuando se pierde el foco de un campo (blur)
+    form.addEventListener('blur', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        guardarFormulario(formId).catch(() => {});
+      }
+    }, true); // Use capture para asegurar que se dispare
+
+    // Guardar datos cuando se presiona una tecla (keyup) para textareas e inputs de texto
+    form.addEventListener('keyup', function(e) {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') {
+        guardarFormulario(formId).catch(() => {});
+      }
     });
 
     // Guardar datos cuando se hace click en el formulario (para sliders y elementos interactivos)
     form.addEventListener('click', function(e) {
       // Pequeño delay para permitir que el valor se actualice
       setTimeout(() => {
-        guardarFormulario(formId).catch(error => {
-          console.error('[Persistencia] Error al guardar en click:', error);
-        });
+        guardarFormulario(formId).catch(() => {});
       }, 100);
     });
 
-    // Guardar datos periódicamente cada 5 segundos (backup adicional)
+    // Guardar datos periódicamente cada 3 segundos (backup adicional más frecuente)
     setInterval(() => {
-      guardarFormulario(formId).catch(error => {
-        console.error('[Persistencia] Error al guardar periódicamente:', error);
-      });
-    }, 5000);
+      guardarFormulario(formId).catch(() => {});
+    }, 3000);
 
     // Guardar antes de salir de la página
     window.addEventListener('beforeunload', function() {
-      guardarFormulario(formId).catch(error => {
-        console.error('[Persistencia] Error al guardar en beforeunload:', error);
-      });
+      guardarFormulario(formId).catch(() => {});
+    });
+
+    // Guardar cuando la página pierde visibilidad (usuario cambia de pestaña)
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        guardarFormulario(formId).catch(() => {});
+      }
     });
   }
 

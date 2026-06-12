@@ -126,8 +126,12 @@ function _bindDropzone(zoneId, inputId, nameId, validateVideo = false) {
             zone.classList.add('has-file');
             if (nameEl) nameEl.textContent = file.name;
         } else {
-            zone.classList.remove('has-file');
-            if (nameEl) nameEl.textContent = '';
+            // Solo limpiar si no hay preview restaurado desde localStorage
+            const preview = document.getElementById(inputId + 'Preview');
+            if (!preview || preview.style.display === 'none') {
+                zone.classList.remove('has-file');
+                if (nameEl) nameEl.textContent = '';
+            }
         }
     });
 

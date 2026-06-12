@@ -349,11 +349,14 @@ function _actualizarCamposCalidad() {
     }
     if (avanceSlider) {
         avanceSlider.required = esRonda && !esPausado;
-        avanceSlider.value = 0;
-        const avanceValor = document.getElementById('avanceValor');
-        const avancePct = document.getElementById('avancePorcentaje');
-        if (avanceValor) avanceValor.textContent = '0%';
-        if (avancePct) avancePct.value = '0';
+        // Solo resetear a 0 si el slider está vacío (no tiene valor restaurado desde localStorage)
+        if (avanceSlider.value === '' || avanceSlider.value === '0') {
+            avanceSlider.value = 0;
+            const avanceValor = document.getElementById('avanceValor');
+            const avancePct = document.getElementById('avancePorcentaje');
+            if (avanceValor) avanceValor.textContent = '0%';
+            if (avancePct) avancePct.value = '0';
+        }
     }
 
     // ── Destino del Lote ──
