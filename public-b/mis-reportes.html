@@ -1,0 +1,2043 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Mis Reportes - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    </noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    </noscript>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
+            rel="stylesheet">
+    </noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print"
+        onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    </noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" media="print"
+        onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css">
+    </noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --color-primary: #3f51b5;
+            --border-radius: 16px;
+        }
+
+        body {
+            padding-top: 0;
+            background-attachment: fixed;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ── KPI Chips ── */
+        .kpi-toggle-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 0;
+            margin-bottom: 8px;
+            color: #94a3b8;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .kpi-toggle-btn i {
+            transition: transform 0.2s;
+            font-size: 0.6rem;
+        }
+
+        .kpi-toggle-btn.open i {
+            transform: rotate(180deg);
+        }
+
+        .kpi-compact-row {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            margin-bottom: 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .kpi-compact-row.open {
+            display: grid;
+        }
+
+        .kpi-chip {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 8px;
+            gap: 2px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .kpi-chip:nth-child(4n) {
+            border-right: none;
+        }
+
+        .kpi-chip:nth-child(n+5) {
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .kpi-chip-val {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        .kpi-chip-lab {
+            font-size: 0.58rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* ── Toolbar ── */
+        .toolbar-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: stretch;
+        }
+
+        @media (max-width: 767px) {
+            .toolbar-container {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+
+        /* ── Grouped View by Type ── */
+        #myReportsFeed {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .report-group {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .group-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .group-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .group-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .group-title {
+            font-size: 1rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .group-count {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            background: #e2e8f0;
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+
+        /* ── Report Table ── */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .report-table thead {
+            background: #f1f5f9;
+        }
+
+        .report-table th {
+            padding: 10px 14px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .report-table td {
+            padding: 10px 14px;
+            color: #1e293b;
+            font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .report-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .report-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .status-badge-sm {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            white-space: nowrap;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            background: none;
+            transition: opacity 0.15s ease;
+            text-decoration: none;
+        }
+
+        .action-btn:hover {
+            opacity: 0.6;
+        }
+
+        .action-btn-ver {
+            color: #3f51b5;
+        }
+
+        .action-btn-print {
+            color: #6c757d;
+        }
+
+        .action-btn-whatsapp {
+            color: #128C7E;
+        }
+
+        .action-btn-email {
+            color: #ea4335;
+        }
+
+        .action-btn-editar-planta {
+            color: #f59e0b;
+        }
+
+        .planta-row-mobile {
+            display: none;
+        }
+
+        @media (max-width: 767px) {
+            .wrapper-dashboard {
+                padding: 1.25rem 0.75rem;
+                width: 100%;
+                max-width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+                border-radius: 0;
+                border-left: none;
+                border-right: none;
+                box-shadow: none;
+                margin-top: 72px;
+            }
+
+            #myReportsFeed {
+                gap: 18px;
+            }
+
+            /* ── Swipe track for KPIs ── */
+            .kpi-toggle-btn {
+                margin-bottom: 6px;
+                padding-left: 4px;
+            }
+
+            .kpi-compact-row {
+                display: none;
+                /* controlled by JS open class */
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                scroll-snap-type: x mandatory !important;
+                gap: 10px !important;
+                border: none !important;
+                background: transparent !important;
+                padding: 6px 4px 12px 4px !important;
+                margin-bottom: 12px !important;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .kpi-compact-row::-webkit-scrollbar {
+                display: none;
+            }
+
+            .kpi-compact-row.open {
+                display: flex !important;
+            }
+
+            .kpi-chip {
+                flex: 0 0 135px !important;
+                scroll-snap-align: start !important;
+                background: rgba(255, 255, 255, 0.95) !important;
+                backdrop-filter: blur(8px) !important;
+                border: 1px solid rgba(226, 232, 240, 0.8) !important;
+                border-radius: 14px !important;
+                padding: 12px 10px !important;
+                box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03) !important;
+                transition: transform 0.15s ease, box-shadow 0.15s ease;
+                text-align: center;
+                border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+                border-top: none !important;
+            }
+
+            .kpi-chip:active {
+                transform: scale(0.95);
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02) !important;
+            }
+
+            .kpi-chip:nth-child(4n) {
+                border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+            }
+
+            .kpi-chip:nth-child(2n) {
+                border-right: 1px solid rgba(226, 232, 240, 0.8) !important;
+            }
+
+            .kpi-chip:nth-child(n+3) {
+                border-top: none !important;
+            }
+
+            /* ── Modern inputs styling on mobile ── */
+            .toolbar-container {
+                flex-direction: column;
+                gap: 10px;
+                padding: 0 4px;
+            }
+
+            .toolbar-container input.form-control {
+                height: 46px !important;
+                border-radius: 12px !important;
+                border: 1px solid #cbd5e1 !important;
+                background: #ffffff !important;
+                font-size: 0.88rem !important;
+                transition: all 0.25s ease !important;
+            }
+
+            .toolbar-container input.form-control:focus {
+                border-color: #3f51b5 !important;
+                box-shadow: 0 0 0 4px rgba(63, 81, 181, 0.12) !important;
+            }
+
+            /* ── Pure CSS Table-to-Card transformation ── */
+            .planta-row-mobile {
+                display: block !important;
+                background: #f8fafc !important;
+                color: #1e293b !important;
+                padding: 10px 14px !important;
+                border-radius: 12px 12px 0 0 !important;
+                margin-bottom: -1px !important;
+                border: 1px solid #e2e8f0 !important;
+                border-bottom: none !important;
+            }
+
+            .planta-row-mobile td {
+                padding: 0 !important;
+                border: none !important;
+                background: transparent !important;
+                display: block !important;
+                text-align: center !important;
+            }
+
+            .planta-row-mobile span {
+                font-size: 0.85rem !important;
+                font-weight: 600 !important;
+                color: #3f51b5 !important;
+                text-transform: uppercase;
+                letter-spacing: 0.3px;
+            }
+
+            /* Evitar que planta-row-mobile tenga pseudo-elementos ::before */
+            .planta-row-mobile td::before {
+                display: none !important;
+            }
+
+            .report-table,
+            .report-table thead,
+            .report-table tbody,
+            .report-table tr,
+            .report-table td {
+                display: block !important;
+            }
+
+            .report-table thead {
+                display: none !important;
+                /* Hide column labels table header */
+            }
+
+            .report-table tbody {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 14px !important;
+                padding: 8px 4px !important;
+                background: transparent !important;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                background: #ffffff !important;
+                border: 1px solid rgba(226, 232, 240, 0.9) !important;
+                border-radius: 0 0 16px 16px !important;
+                padding: 14px 16px !important;
+                box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
+                position: relative !important;
+                transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+                -webkit-tap-highlight-color: transparent;
+                margin-top: -13px !important;
+            }
+
+            .report-table tr:not(.planta-row-mobile):active {
+                transform: scale(0.985);
+                box-shadow: 0 2px 6px rgba(15, 23, 42, 0.02) !important;
+            }
+
+            /* Styling each field inside the card */
+            .report-table td {
+                padding: 8px 0 !important;
+                border-bottom: 1px solid #f1f5f9 !important;
+                display: flex !important;
+                justify-content: space-between !important;
+                align-items: center !important;
+                font-size: 0.85rem !important;
+                width: 100% !important;
+                text-align: left !important;
+                background: transparent !important;
+                min-height: 32px !important;
+            }
+
+            /* Ordering cells for premium visual layout */
+            /* 1. Lote / ID */
+            .report-table td:nth-child(2) {
+                order: 1 !important;
+                font-size: 1.05rem !important;
+                font-weight: 800 !important;
+                color: #3f51b5 !important;
+                border-bottom: none !important;
+                padding-bottom: 0 !important;
+                padding-top: 0 !important;
+            }
+
+            .report-table td:nth-child(2)::before {
+                content: "Lote" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
+            }
+
+            /* 2. Fecha */
+            .report-table td:nth-child(1) {
+                order: 2 !important;
+                font-size: 0.85rem !important;
+                color: #64748b !important;
+                font-weight: 500 !important;
+                padding-top: 0 !important;
+                padding-bottom: 8px !important;
+                margin-bottom: 4px !important;
+            }
+
+            .report-table td:nth-child(1)::before {
+                content: "Fecha" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
+            }
+
+            /* 3. Referencia */
+            .report-table td:nth-child(3) {
+                order: 3 !important;
+                display: flex !important;
+                font-weight: 600 !important;
+                color: #334155 !important;
+            }
+
+            .report-table td:nth-child(3)::before {
+                content: "Referencia" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
+            }
+
+            /* 4. Planta - OCULTAR EN MÓVIL YA QUE SE MUESTRA EN planta-row-mobile */
+            .report-table td:nth-child(4) {
+                display: none !important;
+            }
+
+            /* 5. Conclusion (Status badge) */
+            .report-table td:nth-child(5) {
+                order: 5 !important;
+                display: flex !important;
+            }
+
+            .report-table td:nth-child(5)::before {
+                content: "Estado" !important;
+                font-weight: 600 !important;
+                color: #94a3b8 !important;
+                font-size: 0.7rem !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.03em !important;
+                min-width: 70px !important;
+                margin-right: 8px !important;
+            }
+
+            .status-badge-sm {
+                font-size: 0.6rem !important;
+                padding: 3px 8px !important;
+                font-weight: 700 !important;
+            }
+
+            /* 6. Acciones - Segmented Control Style */
+            .report-table td:nth-child(6) {
+                order: 6 !important;
+                display: flex !important;
+                justify-content: center !important;
+                align-items: center !important;
+                border-bottom: none !important;
+                margin-top: 8px !important;
+                padding-top: 8px !important;
+                border-top: 1px solid #e2e8f0 !important;
+            }
+
+            .report-table td:nth-child(6)::before {
+                display: none !important;
+            }
+
+            .action-btns {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 0 !important;
+                /*background: #e2e8f0 !important;*/
+                border-radius: 8px !important;
+                padding: 2px !important;
+                width: 100% !important;
+            }
+
+            .action-btn {
+                font-size: 0.9rem !important;
+                padding: 8px 0 !important;
+                border-radius: 6px !important;
+                border: none !important;
+                background: transparent !important;
+                transition: all 0.15s ease !important;
+                flex: 1 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                min-height: 36px !important;
+            }
+
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.5) !important;
+            }
+
+            .action-btn:active {
+                background: #ffffff !important;
+                transform: scale(0.98);
+            }
+
+            .action-btn-ver {
+                color: #3f51b5 !important;
+            }
+
+            .action-btn-print {
+                color: #6c757d !important;
+            }
+
+            .action-btn-whatsapp {
+                color: #128C7E !important;
+            }
+
+            .action-btn-email {
+                color: #ea4335 !important;
+            }
+
+            .action-btn-editar-planta {
+                color: #f59e0b !important;
+            }
+
+            .action-btn:disabled {
+                opacity: 0.3 !important;
+                cursor: not-allowed !important;
+            }
+
+            /* Modern Group Headers */
+            .group-header {
+                padding: 12px 14px !important;
+                background: rgba(248, 250, 252, 0.9) !important;
+                backdrop-filter: blur(5px) !important;
+            }
+
+            .group-icon {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 0.8rem !important;
+                border-radius: 8px !important;
+            }
+
+            .group-title {
+                font-size: 0.9rem !important;
+            }
+
+            .group-count {
+                font-size: 0.68rem !important;
+                padding: 2px 10px !important;
+            }
+        }
+
+        @media (max-width: 430px) {
+            .wrapper-dashboard {
+                padding: 1rem 0.5rem;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                padding: 12px 12px !important;
+            }
+
+            .report-table td {
+                font-size: 0.8rem !important;
+            }
+
+            .kpi-chip {
+                flex: 0 0 120px !important;
+                padding: 10px 8px !important;
+            }
+
+            .kpi-chip-val {
+                font-size: 1rem !important;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .wrapper-dashboard {
+                padding: 0.75rem 0.25rem;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                padding: 10px 10px !important;
+                gap: 6px !important;
+            }
+
+            .report-table td {
+                font-size: 0.75rem !important;
+                padding: 6px 0 !important;
+                min-height: 28px !important;
+            }
+
+            /* Ajustar planta-row-mobile en pantallas pequeñas */
+            .planta-row-mobile {
+                padding: 8px 10px !important;
+            }
+
+            .planta-row-mobile span {
+                font-size: 0.8rem !important;
+            }
+
+            /* Ajustar etiquetas de campos */
+            .report-table td:nth-child(2)::before,
+            .report-table td:nth-child(1)::before,
+            .report-table td:nth-child(3)::before,
+            .report-table td:nth-child(5)::before {
+                font-size: 0.65rem !important;
+                min-width: 60px !important;
+                margin-right: 6px !important;
+            }
+
+            /* Ajustar botones de acción segmented control */
+            .action-btn {
+                font-size: 0.85rem !important;
+                padding: 6px 0 !important;
+                min-height: 32px !important;
+            }
+
+            /* Reducir padding de las tarjetas */
+            .group-header {
+                padding: 10px 12px !important;
+            }
+
+            .group-title {
+                font-size: 0.85rem !important;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .wrapper-dashboard {
+                padding: 0.5rem 0.25rem;
+            }
+
+            .report-table tr:not(.planta-row-mobile) {
+                padding: 8px 8px !important;
+                gap: 4px !important;
+            }
+
+            .report-table td {
+                font-size: 0.7rem !important;
+                padding: 4px 0 !important;
+                min-height: 26px !important;
+            }
+
+            /* Ajustar planta-row-mobile en pantallas muy pequeñas */
+            .planta-row-mobile {
+                padding: 6px 8px !important;
+            }
+
+            .planta-row-mobile span {
+                font-size: 0.75rem !important;
+            }
+
+            /* Ajustar etiquetas de campos */
+            .report-table td:nth-child(2)::before,
+            .report-table td:nth-child(1)::before,
+            .report-table td:nth-child(3)::before,
+            .report-table td:nth-child(5)::before {
+                font-size: 0.6rem !important;
+                min-width: 55px !important;
+                margin-right: 4px !important;
+            }
+
+            /* Ajustar botones de acción segmented control */
+            .action-btn {
+                font-size: 0.8rem !important;
+                padding: 5px 0 !important;
+                min-height: 28px !important;
+            }
+
+            .action-btns {
+                padding: 1px !important;
+            }
+        }
+
+        #scrollLoader {
+            text-align: center;
+            padding: 2rem;
+            display: none;
+        }
+
+        /* ── Flatpickr — neutro ── */
+        .flatpickr-calendar {
+            border-radius: 12px !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+            border: 1px solid #e2e8f0 !important;
+            font-family: 'Inter', sans-serif !important;
+        }
+
+        .flatpickr-months {
+            border-radius: 12px 12px 0 0 !important;
+            background: #f8fafc !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+
+        .flatpickr-current-month,
+        .flatpickr-prev-month,
+        .flatpickr-next-month {
+            color: #1e293b !important;
+        }
+
+        .flatpickr-prev-month svg,
+        .flatpickr-next-month svg {
+            fill: #64748b !important;
+        }
+
+        .flatpickr-prev-month:hover svg,
+        .flatpickr-next-month:hover svg {
+            fill: #1e293b !important;
+        }
+
+        .flatpickr-weekday {
+            color: #94a3b8 !important;
+            font-weight: 700 !important;
+            font-size: 0.7rem !important;
+            background: transparent !important;
+        }
+
+        .flatpickr-day {
+            border-radius: 8px !important;
+            font-size: 0.82rem !important;
+            color: #475569 !important;
+        }
+
+        .flatpickr-day:hover {
+            background: #f1f5f9 !important;
+            border-color: #e2e8f0 !important;
+        }
+
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange {
+            background: #1e293b !important;
+            border-color: #1e293b !important;
+            color: white !important;
+        }
+
+        .flatpickr-day.inRange {
+            background: #f1f5f9 !important;
+            border-color: transparent !important;
+            box-shadow: none !important;
+            color: #475569 !important;
+        }
+
+        span.flatpickr-weekday {
+            background: transparent !important;
+        }
+
+        .swal2-container {
+            z-index: 9998 !important;
+        }
+
+        .swal2-popup {
+            margin-top: 80px !important;
+        }
+
+        @media (max-width: 768px) {
+            .swal2-popup {
+                margin-top: 70px !important;
+            }
+        }
+
+        /* ── WhatsApp Floating Button ── */
+        .whatsapp-float-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1000;
+            text-decoration: none;
+            box-shadow: none;
+            border: none;
+        }
+
+        .whatsapp-float-btn:hover {
+            background: linear-gradient(135deg, #128C7E 0%, #075E54 100%);
+        }
+
+        .whatsapp-float-btn:active {
+            background: linear-gradient(135deg, #075E54 0%, #128C7E 100%);
+        }
+
+        .whatsapp-float-btn i {
+            color: white;
+            font-size: 34px;
+        }
+
+        @media (max-width: 767px) {
+            .whatsapp-float-btn {
+                bottom: 24px;
+                right: 24px;
+                width: 58px;
+                height: 58px;
+                border-width: 2.5px;
+            }
+
+            .whatsapp-float-btn i {
+                font-size: 30px;
+            }
+
+            .whatsapp-float-btn:hover {
+                transform: scale(1.1);
+            }
+        }
+
+        @media (max-width: 375px) {
+            .whatsapp-float-btn {
+                bottom: 16px;
+                right: 16px;
+                width: 52px;
+                height: 52px;
+            }
+
+            .whatsapp-float-btn i {
+                font-size: 26px;
+            }
+        }
+
+        @media (max-width: 320px) {
+            .whatsapp-float-btn {
+                bottom: 12px;
+                right: 12px;
+                width: 48px;
+                height: 48px;
+            }
+
+            .whatsapp-float-btn i {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper-dashboard">
+
+        <!-- ── Header ── -->
+        <div class="text-center text-lg-start mb-3">
+
+        </div>
+
+        <!-- Controles de Filtros y KPIs agrupados -->
+        <div id="reportsHeaderControls" style="display: none;">
+            <!-- ── KPI Row ── -->
+            <button class="kpi-toggle-btn" id="kpiToggleBtn" onclick="toggleKPIs()">
+                <span>Indicadores de Gestión</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+
+            <div class="kpi-compact-row" id="kpiContainer">
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" id="kpi-total">0</span>
+                    <span class="kpi-chip-lab">Total</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#10b981;" id="kpi-ok">0</span>
+                    <span class="kpi-chip-lab">Aprobados</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#ef4444;" id="kpi-rejected">0</span>
+                    <span class="kpi-chip-lab">Rechazados</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#8b5cf6;" id="kpi-audit">0</span>
+                    <span class="kpi-chip-lab">Auditorías</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#06b6d4;" id="kpi-ronda">0</span>
+                    <span class="kpi-chip-lab">Rondas</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#f59e0b;" id="kpi-contramuestra">0</span>
+                    <span class="kpi-chip-lab">Contramuestras</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#ec4899;" id="kpi-seguimiento">0</span>
+                    <span class="kpi-chip-lab">Seguimientos</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#10b981;" id="kpi-aprobacion">0</span>
+                    <span class="kpi-chip-lab">Aprobaciones</span>
+                </div>
+                <div class="kpi-chip">
+                    <span class="kpi-chip-val" style="color:#64748b;" id="kpi-plants">0</span>
+                    <span class="kpi-chip-lab">Talleres</span>
+                </div>
+            </div>
+
+            <!-- ── Toolbar with Filters ── -->
+            <div class="toolbar-container">
+                <div class="input-with-icon" style="flex:1;">
+                    <i class="codicon codicon-search input-icon"></i>
+                    <input type="text" id="searchInput" class="form-control"
+                        placeholder="Buscar por lote, referencia, planta..." oninput="handleSearch()"
+                        style="border-radius: var(--radius-input); height: 45px; padding-left: 40px;">
+                </div>
+                <div class="input-with-icon" style="flex:1;">
+                    <i class="codicon codicon-calendar input-icon"></i>
+                    <input type="text" id="dateRangePicker" class="form-control" placeholder="Rango de fechas" readonly
+                        style="cursor:pointer; border-radius: var(--radius-input); height: 45px; padding-left: 40px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Módulo Principal Loader Skeleton ── -->
+        <div id="initialLoader" class="py-3">
+            <style>
+                @keyframes skeleton-loading {
+                    0% {
+                        background-position: 200% 0;
+                    }
+
+                    100% {
+                        background-position: -200% 0;
+                    }
+                }
+
+                .skeleton-line {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+            </style>
+
+            <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <div class="skeleton-line" style="width: 120px; height: 32px; border-radius: 20px;"></div>
+            </div>
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; margin-bottom: 24px;">
+                <div
+                    style="background: white; border: 1px solid #e2e8f0; padding: 12px; border-radius: 12px; display:flex; flex-direction:column; gap:6px;">
+                    <div class="skeleton-line" style="width: 40%; height: 18px;"></div>
+                    <div class="skeleton-line" style="width: 60%; height: 10px;"></div>
+                </div>
+                <div class="skeleton-line" style="flex: 1; min-width: 200px; height: 45px; border-radius: 10px;"></div>
+                <div class="skeleton-line" style="flex: 1; min-width: 200px; height: 45px; border-radius: 10px;"></div>
+            </div>
+            <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden;">
+                <div
+                    style="height: 50px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 0 20px; display: flex; align-items: center;">
+                    <div class="skeleton-line" style="width: 150px; height: 18px;"></div>
+                </div>
+                <div style="padding: 14px 20px;">
+                    <div class="skeleton-line" style="width: 100%; height: 14px; margin-bottom: 10px;"></div>
+                    <div class="skeleton-line" style="width: 80%; height: 14px; margin-bottom: 10px;"></div>
+                    <div class="skeleton-line" style="width: 60%; height: 14px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="myReportsFeed" style="display: none;"></div>
+
+        <!-- WhatsApp Floating Button -->
+        <button class="whatsapp-float-btn" onclick="enviarWhatsApp()" title="Enviar WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </button>
+
+        <div id="scrollLoader" style="display: none; padding: 1rem 0;">
+            <style>
+                .skeleton-scroll {
+                    background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    border-radius: 6px;
+                }
+            </style>
+            <div class="skeleton-scroll" style="width: 150px; height: 16px; margin: 0 auto;"></div>
+        </div>
+
+        <!-- Modal para ver/editar reporte -->
+        <div id="reporteModal" class="modal fade" tabindex="-1" style="display: none;">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="editReporteModalTitle">
+                            <i class="fas fa-eye me-2"></i>Ver Reporte
+                        </h5>
+                        <button type="button" class="btn-close" onclick="cerrarModalReporte()"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formEditarReporte">
+                            <input type="hidden" id="editReporteIndex">
+
+                            <!-- Información básica -->
+                            <div class="row mb-3" id="containerIdReporte">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-hashtag me-1"></i>ID Reporte</label>
+                                    <input type="text" id="editIdReporte" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-barcode me-1"></i>Lote / OP</label>
+                                    <input type="text" id="editLote" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3" id="containerReferencia">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-tag me-1"></i>Referencia</label>
+                                    <input type="text" id="editReferencia" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-calendar-alt me-1"></i>Fecha</label>
+                                    <input type="text" id="editFecha" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3" id="containerPlanta">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-address-card me-1"></i>Planta</label>
+                                    <input type="text" id="editPlanta" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-envelope me-1"></i>Email</label>
+                                    <input type="text" id="editEmail" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3" id="containerLinea">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-layer-group me-1"></i>Línea</label>
+                                    <input type="text" id="editLinea" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-clipboard-check me-1"></i>Tipo Visita</label>
+                                    <input type="text" id="editTipoVisita" class="form-control view-only" readonly>
+                                    <select id="editTipoVisitaSelect" class="form-control edit-only">
+                                        <option value="AUDITORIA">AUDITORIA</option>
+                                        <option value="RONDA">RONDA</option>
+                                        <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                                        <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-venus-mars me-1"></i>Género</label>
+                                    <input type="text" id="editGenero" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <hr class="my-3" id="separator1">
+
+                            <!-- Campos del formulario de calidad -->
+                            <div class="mb-3" id="containerConclusion">
+                                <label class="form-label fw-bold" style="color: #3f51b5;">
+                                    <i class="fas fa-check-circle me-1"></i>Conclusión
+                                </label>
+                                <input type="text" id="editConclusion" class="form-control view-only" readonly>
+                                <select id="editConclusionSelect" class="form-control edit-only">
+                                    <option value="">Seleccione una conclusión...</option>
+                                    <option value="APROBADO">APROBADO</option>
+                                    <option value="RECHAZADO">RECHAZADO</option>
+                                    <option value="PAUSADO">PAUSADO</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3" id="containerObservaciones">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label fw-bold mb-0" style="color: #3f51b5;">
+                                        <i class="fas fa-comment-alt me-1"></i>Observaciones Generales
+                                    </label>
+                                    <div class="edit-only">
+                                        <button type="button" class="btn-action-muted" onclick="mejorarRedaccionReporte('editObservacionesEditable')" title="Mejorar redacción y ortografía">
+                                            <i class="fas fa-wand-magic-sparkles"></i> Mejorar
+                                        </button>
+                                        <button type="button" class="btn-restore-text" id="btnRestoreTextModal" onclick="restaurarTextoOriginalReporte('editObservacionesEditable')" title="Restaurar texto original" style="display: none;">
+                                            <i class="fas fa-undo"></i> Restaurar
+                                        </button>
+                                    </div>
+                                </div>
+                                <textarea id="editObservaciones" class="form-control view-only" rows="6" readonly></textarea>
+                                <div class="ai-textarea-wrapper edit-only">
+                                    <textarea id="editObservacionesEditable" class="form-control" rows="6"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3" id="containerProceso">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold" style="color: #3f51b5;">
+                                        <i class="fas fa-cogs me-1"></i>Proceso
+                                    </label>
+                                    <input type="text" id="editProceso" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold" style="color: #3f51b5;">
+                                        <i class="fas fa-box me-1"></i>Cantidad
+                                    </label>
+                                    <input type="text" id="editCantidad" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold" style="color: #3f51b5;">
+                                        <i class="fas fa-tshirt me-1"></i>Prenda
+                                    </label>
+                                    <input type="text" id="editPrenda" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Destino View Section -->
+                            <div class="row mb-3 view-only" id="containerDestino">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold" style="color: #3f51b5;">
+                                        <i class="fas fa-route me-1"></i>Destino Proceso
+                                    </label>
+                                    <input type="text" id="editDestinoProceso" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold" style="color: #3f51b5;">
+                                        <i class="fas fa-map-marker-alt me-1"></i>Destino Planta
+                                    </label>
+                                    <input type="text" id="editDestinoPlanta" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Destino Edit Section -->
+                            <div id="editDestinoSection" class="edit-only mb-3" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="editDestinoTipo" class="form-label fw-bold mb-1" style="color: #3f51b5;"><i class="fas fa-route me-1"></i>¿Para dónde va el lote?</label>
+                                    <select id="editDestinoTipo" class="form-control">
+                                        <option value="">Seleccione el destino...</option>
+                                        <option value="CDI">CDI (Centro de Distribución)</option>
+                                        <option value="PROCESO">Otro Proceso / Taller</option>
+                                    </select>
+                                </div>
+                                <div id="editDestinoProcesoContainer" style="display:none;">
+                                    <div class="mb-3">
+                                        <label for="editDestinoProcesoSelect" class="form-label fw-bold mb-1" style="color: #3f51b5;">Seleccione el proceso de destino:</label>
+                                        <select id="editDestinoProcesoSelect" class="form-control">
+                                            <option value="">Seleccione...</option>
+                                            <option value="CONFECCION">CONFECCIÓN</option>
+                                            <option value="ESTAMPADO">ESTAMPADO</option>
+                                            <option value="OJAL Y BOTON">OJAL Y BOTÓN</option>
+                                            <option value="BOTONADO">BOTONADO</option>
+                                            <option value="TRANSFER">TRANSFER</option>
+                                            <option value="OJALETE">OJALETE</option>
+                                            <option value="APLIQUE">APLIQUE</option>
+                                            <option value="RESORTADO">RESORTADO</option>
+                                            <option value="FUSIONADO">FUSIONADO</option>
+                                            <option value="OTROS">OTROS (Especificar...)</option>
+                                        </select>
+                                    </div>
+                                    <div id="editDestinoOtroSection" class="mb-3" style="display:none;">
+                                        <input type="text" id="editDestinoOtro" class="form-control" placeholder="Escriba el proceso de destino...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="editDestinoPlantaInput" class="form-label fw-bold mb-1" style="color: #3f51b5;">¿A qué planta/taller va?</label>
+                                        <input type="text" id="editDestinoPlantaInput" class="form-control" placeholder="Escriba la planta..." list="plantasDatalistModal" autocomplete="off">
+                                        <datalist id="plantasDatalistModal"></datalist>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Avance View Section -->
+                            <div class="mb-3 view-only" id="containerAvance">
+                                <label class="form-label fw-bold" style="color: #3f51b5;">
+                                    <i class="fas fa-percentage me-1"></i>Avance
+                                </label>
+                                <input type="text" id="editAvance" class="form-control" readonly>
+                            </div>
+
+                            <!-- Avance Edit Section -->
+                            <div class="mb-3 edit-only" id="containerAvanceEdit" style="display:none;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                                    <label class="form-label fw-bold mb-0" style="color: #3f51b5;">
+                                        <i class="fas fa-percentage me-1"></i>Avance de producción:
+                                    </label>
+                                    <span id="editAvanceValor" style="font-size:1.1rem; font-weight:800; color:#3F51B5; min-width:42px; text-align:right;">0%</span>
+                                </div>
+                                <div style="position:relative; padding: 6px 0;">
+                                    <input type="range" id="editAvanceSlider" min="0" max="100" step="5" value="0" style="width:100%; accent-color:#3F51B5; height:6px; cursor:pointer;">
+                                    <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">0%</span>
+                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">25%</span>
+                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">50%</span>
+                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">75%</span>
+                                        <span style="font-size:0.65rem; color:#94a3b8; font-weight:600;">100%</span>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="editAvancePorcentaje">
+                            </div>
+
+                            <div class="row mb-3" id="containerFechas">
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-sign-out-alt me-1"></i>Salida</label>
+                                    <input type="text" id="editSalida" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-sign-in-alt me-1"></i>Entrada</label>
+                                    <input type="text" id="editEntrada" class="form-control" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                            class="fas fa-building me-1"></i>Productora</label>
+                                    <input type="text" id="editProductora" class="form-control" readonly>
+                                </div>
+                            </div>
+
+                            <div class="mb-3" id="containerLocalizacion">
+                                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                        class="fas fa-map-marked-alt me-1"></i>Localización</label>
+                                <div id="editLocalizacionContainer"></div>
+                            </div>
+
+                            <div class="mb-3" id="containerTejido">
+                                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                        class="fas fa-scroll me-1"></i>Tejido</label>
+                                <input type="text" id="editTejido" class="form-control" readonly>
+                            </div>
+
+                            <!-- Soporte View Section -->
+                            <div class="mb-3 view-only" id="containerSoporte">
+                                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                                        class="fas fa-image me-1"></i>Soporte (Imagen)</label>
+                                <div id="editSoporteContainer"></div>
+                            </div>
+
+                            <!-- Soporte Edit Section -->
+                            <div class="mb-3 edit-only" id="containerSoporteEdit">
+                                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-camera me-1"></i>Cambiar Soporte (Imagen)</label>
+                                <div class="file-dropzone" id="editSoporteDropzone" role="button" tabindex="0">
+                                    <i class="fas fa-camera file-dropzone__icon"></i>
+                                    <div class="file-dropzone__text">
+                                        <span class="file-dropzone__action">Haz clic para subir soporte técnico</span>
+                                        <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
+                                    </div>
+                                    <span class="file-dropzone__name" id="editSoporteName"></span>
+                                </div>
+                                <input type="file" id="editSoporteInput" class="file-dropzone__input" accept="image/*" capture="environment">
+                            </div>
+
+                            <!-- Novedades Section -->
+                            <div class="mb-3" id="containerNovedades">
+                                <label class="form-label fw-bold" style="color: #3f51b5;">
+                                    <i class="fas fa-exclamation-circle me-1"></i>Novedades Auditoría
+                                </label>
+                                <div class="edit-only mb-2">
+                                    <div id="editNovedadesDropzone" class="file-dropzone" role="button" tabindex="0" onclick="agregarBloqueNovedadCalidadModal()" style="padding:1rem;">
+                                        <i class="fas fa-clipboard-list file-dropzone__icon"></i>
+                                        <div class="file-dropzone__text">
+                                            <span class="file-dropzone__action">Toca aquí para reportar una novedad</span>
+                                            <span class="file-dropzone__hint">Sin confeccionar, Promociones, Cobros, Lavado</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="editNovedadesContainer"></div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer" style="padding: 1rem 1.5rem; border-top: 1px solid #e2e8f0; background: #f8fafc;">
+                        <!-- View Only Buttons -->
+                        <div class="d-flex gap-2 w-100 view-only">
+                            <button type="button" class="btn flex-1" onclick="cerrarModalReporte()" style="background: #e2e8f0; border: none; color: #475569; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-times me-1"></i>Cerrar
+                            </button>
+                            <button type="button" class="btn flex-1 text-white" onclick="entrarModoEdicion()" style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </button>
+                        </div>
+
+                        <!-- Edit Only Buttons -->
+                        <div class="d-flex gap-2 w-100 edit-only">
+                            <button type="button" class="btn flex-1" onclick="salirModoEdicion()" style="background: #e2e8f0; border: none; color: #475569; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-undo me-1"></i>Cancelar
+                            </button>
+                            <button type="button" class="btn flex-1 text-white" onclick="guardarCambiosReporte()" style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500;">
+                                <i class="fas fa-save me-1"></i>Guardar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightbox Modal para imagen -->
+        <div id="lightboxModal" class="lightbox-modal" onclick="cerrarLightbox()">
+            <span class="lightbox-close">&times;</span>
+            <img id="lightboxImage" src="" alt="Imagen grande">
+        </div>
+
+        <!-- Modal Profesional para Gestión de Taller / Planta -->
+        <div id="plantaModal" class="modal fade" tabindex="-1" style="display: none;">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fas fa-address-card me-2"></i>Gestión de Planta
+                        </h5>
+                        <button type="button" class="btn-close" onclick="cerrarModalPlanta()"></button>
+                    </div>
+                    <div class="modal-body" style="padding: 1.5rem 2rem;">
+                        <form id="formGestionPlanta" onsubmit="guardarDatosPlantaModal(event)">
+                            <input type="hidden" id="plantaModalIndex">
+                            <input type="hidden" id="plantaModalProductora">
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted"><i
+                                        class="fas fa-id-card me-1"></i>Cédula o NIT</label>
+                                <input type="number" id="plantaModalId" class="form-control" placeholder="">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted"><i
+                                        class="fas fa-signature me-1"></i>Nombre del taller</label>
+                                <input type="text" id="plantaModalNombre" class="form-control" placeholder=""
+                                    style="text-transform: uppercase;">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted"><i
+                                        class="fas fa-phone me-1"></i>Celular</label>
+                                <input type="tel" id="plantaModalTelefono" class="form-control" placeholder="">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold text-muted"><i
+                                        class="fas fa-envelope me-1"></i>Correo</label>
+                                <input type="email" id="plantaModalEmail" class="form-control" placeholder="">
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-secondary" onclick="cerrarModalPlanta()"
+                                    style="border-radius: 8px;">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-primary"
+                                    style="background: #3f51b5; border: none; border-radius: 8px; padding: 0.5rem 1.5rem;">
+                                    <i class="fas fa-save me-1"></i>Guardar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Novedades Calidad -->
+        <div id="novedadesCalidadModal" style="display:none; position:fixed; inset:0; z-index:9000;
+               background:rgba(15,23,42,0.45); backdrop-filter:blur(4px);
+               align-items:center; justify-content:center;">
+          <div id="novedadesModalContent"
+            style="background:white; border-radius:20px; padding:24px; width:450px;
+                      max-width:calc(100vw - 32px); box-shadow:0 20px 50px rgba(0,0,0,0.2); max-height:90vh; display:flex; flex-direction:column;">
+
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-clipboard-list" style="color:#3F51B5; font-size:1.1rem;"></i>
+                <span id="novedadesModalTitle" style="font-size:1.1rem; font-weight:800; color:#1e293b;">Reportar Novedad</span>
+              </div>
+              <button type="button" onclick="cerrarModalNovedadCalidad()"
+                style="background:none; border:none; color:#94a3b8; font-size:1.2rem; cursor:pointer; padding:4px; transition:color 0.2s;"
+                onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#94a3b8'">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div style="flex:1; overflow-y:auto; padding-right:4px;">
+              <div class="mb-3">
+                <label class="form-label" style="font-size:0.75rem;">Tipo de Novedad: <span
+                    style="color:#ef4444;">*</span></label>
+                <div class="input-with-icon">
+                  <i class="fas fa-tag input-icon"></i>
+                  <select id="novedadModalTipo" class="form-control" onchange="handleModalCalidadNovedadTipoChange()">
+                    <option value="">Seleccione tipo...</option>
+                    <option value="SIN CONFECCIONAR">SIN CONFECCIONAR</option>
+                    <option value="PROMOCIONES">PROMOCIONES</option>
+                    <option value="COBROS">COBROS</option>
+                    <option value="LAVADO">LAVADO</option>
+                  </select>
+                </div>
+              </div>
+
+              <div id="novedadModalSinProceso" class="mb-3" style="display:none;">
+                <label
+                  style="display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; font-size:0.85rem; font-weight:700; color:#475569;">
+                  <input type="checkbox" id="novedadModalSinProcesoCheck" value="SI"
+                    style="accent-color:#3F51B5; width:16px; height:16px;">
+                  MARCAR COMO SIN PROCESO
+                </label>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px; margin-left:24px;">Las unidades no se
+                  cobrarán en este proceso.</div>
+              </div>
+
+              <div style="margin-top:20px;">
+                <div
+                  style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #e2e8f0; padding-bottom:8px;">
+                  <span
+                    style="font-size:0.75rem; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:0.05em;">Unidades afectadas</span>
+                  <button type="button" class="btn-action-muted" onclick="agregarFilaModalNovedad()"
+                    title="Agregar código" style="font-size:0.75rem; padding:4px 8px;">
+                    <i class="fas fa-plus"></i> Añadir fila
+                  </button>
+                </div>
+                <div id="novedadModalCodigosList"></div>
+              </div>
+            </div>
+
+            <div style="margin-top:20px; display:flex; gap:12px;">
+              <button type="button" onclick="cerrarModalNovedadCalidad()" style="flex:1; padding:12px; border-radius:10px; border:1px solid #cbd5e1;
+                         background:white; color:#475569; font-weight:700; font-size:0.85rem; cursor:pointer;">
+                Cancelar
+              </button>
+              <button type="button" onclick="guardarNovedadCalidad()"
+                style="flex:2; padding:12px; border-radius:10px; border:none;
+                         background:#3F51B5; color:white; font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 4px 6px -1px rgba(63,81,181,0.2);">
+                Guardar Novedad
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <style>
+            #reporteModal.show {
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 1055 !important;
+                background-color: rgba(0, 0, 0, 0.5);
+                padding-top: 80px !important;
+                overflow-y: auto !important;
+            }
+
+            #reporteModal .modal-dialog {
+                z-index: 2000 !important;
+                position: relative !important;
+                margin: 0 !important;
+                max-width: 800px !important;
+                width: 90% !important;
+                margin-bottom: 50px !important;
+            }
+
+            #reporteModal .modal-content {
+                border-radius: 16px;
+                border: none;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                z-index: 1057 !important;
+                position: relative;
+                background-color: white;
+            }
+
+            #reporteModal .modal-header {
+                background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+                color: white;
+                border-radius: 16px 16px 0 0;
+                border: none;
+            }
+
+            #reporteModal .btn-close {
+                filter: brightness(0) invert(1);
+            }
+
+            /* plantaModal styling */
+            #plantaModal.show {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 1055 !important;
+                background-color: rgba(0, 0, 0, 0.5);
+                overflow-y: auto !important;
+            }
+
+            #plantaModal .modal-dialog {
+                z-index: 2000 !important;
+                position: relative !important;
+                margin: 0 !important;
+                max-width: 500px !important;
+                width: 90% !important;
+            }
+
+            #plantaModal .modal-content {
+                border-radius: 16px;
+                border: none;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                z-index: 1057 !important;
+                position: relative;
+                background-color: white;
+            }
+
+            #plantaModal .modal-header {
+                color: white;
+                border-radius: 16px 16px 0 0;
+                border: none;
+            }
+
+            #plantaModal .btn-close {
+                filter: brightness(0) invert(1);
+            }
+
+            #plantaModal .form-control {
+                background-color: white;
+                color: #212529;
+                border-color: #dee2e6;
+                border-radius: 8px;
+            }
+
+            #plantaModal .form-control:focus {
+                border-color: #3f51b5;
+                box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+            }
+
+            #plantaModal .form-control[readonly] {
+                background-color: #f8fafc !important;
+                color: #64748b !important;
+                cursor: not-allowed;
+                border-color: #cbd5e1 !important;
+            }
+
+            #reporteModal .form-control[readonly] {
+                background-color: #f8fafc;
+                color: #64748b;
+            }
+
+            #reporteModal .form-control:not([readonly]),
+            #reporteModal .form-select {
+                background-color: white;
+                color: #212529;
+                border-color: #dee2e6;
+            }
+
+            #reporteModal .form-control:focus,
+            #reporteModal .form-select:focus {
+                border-color: #3f51b5;
+                box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+                background-color: white;
+            }
+
+            #reporteModal .modal-body {
+                background-color: white;
+                padding: 2rem !important;
+                padding-bottom: 1rem !important;
+            }
+
+            #reporteModal .modal-footer {
+                padding: 0.5rem 2rem !important;
+                margin-top: 0 !important;
+            }
+
+            #reporteModal .mb-3:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            /* Lightbox para imagen */
+            .zoom-container {
+                position: relative;
+                cursor: pointer;
+                display: inline-block;
+            }
+
+            .zoom-container:hover .zoom-overlay {
+                opacity: 1;
+            }
+
+            .zoom-overlay {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(15, 23, 42, 0.4);
+                opacity: 0;
+                transition: opacity 0.2s ease;
+                border-radius: 8px;
+            }
+
+            .zoom-overlay i {
+                color: white;
+                font-size: 24px;
+                background: rgba(15, 23, 42, 0.75);
+                padding: 12px;
+                border-radius: 50%;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+            }
+
+            .lightbox-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.9);
+                display: none;
+                align-items: flex-start;
+                justify-content: center;
+                padding-top: 80px;
+                z-index: 10000;
+            }
+
+            .lightbox-modal.show {
+                display: flex;
+            }
+
+            .lightbox-modal img {
+                max-width: 90%;
+                max-height: 90%;
+                object-fit: contain;
+                border-radius: 8px;
+            }
+
+            .lightbox-close {
+                position: absolute;
+                top: 100px;
+                right: 20px;
+                color: white;
+                font-size: 24px;
+                font-weight: 600;
+                cursor: pointer;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+                transition: all 0.3s ease;
+                z-index: 10001;
+            }
+
+            .lightbox-close:hover {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.15) 100%);
+                transform: scale(1.1);
+                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            }
+
+            .lightbox-close:active {
+                transform: scale(0.95);
+            }
+
+            /* Responsive para móvil - mantener columnas como PC */
+            @media (max-width: 768px) {
+                #reporteModal .modal-dialog {
+                    width: 98% !important;
+                    max-width: 98% !important;
+                    margin-bottom: 10px !important;
+                }
+
+                #reporteModal .modal-body {
+                    padding: 1rem 1.5rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                    /* Compensar el scale */
+                }
+
+                #reporteModal .modal-content {
+                    overflow: hidden;
+                }
+
+                #reporteModal .modal-header {
+                    padding: 0.5rem 1.5rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #reporteModal .modal-body {
+                    padding: 1rem 1.5rem 0 !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #reporteModal .modal-footer {
+                    padding: 0.5rem 1rem !important;
+                    margin-top: -2rem !important;
+                    transform: scale(0.75);
+                    transform-origin: bottom left;
+                    width: 133.33%;
+                }
+
+                #reporteModal .mb-3:last-child {
+                    margin-bottom: 0 !important;
+                    padding-bottom: 0 !important;
+                }
+
+                #reporteModal #containerNovedades {
+                    margin-bottom: 0 !important;
+                    padding-bottom: 0 !important;
+                }
+
+                #reporteModal .row:last-child {
+                    margin-bottom: 0 !important;
+                }
+
+                #reporteModal form {
+                    margin-bottom: 0 !important;
+                }
+
+                /* Mantener columnas como en PC */
+                .col-md-4 {
+                    flex: 0 0 33.333333% !important;
+                    max-width: 33.333333% !important;
+                }
+
+                .col-md-6 {
+                    flex: 0 0 50% !important;
+                    max-width: 50% !important;
+                }
+            }
+
+            /* View / Edit Mode Toggles */
+            #reporteModal:not(.is-editing) .edit-only {
+                display: none !important;
+            }
+            #reporteModal.is-editing .view-only {
+                display: none !important;
+            }
+            #reporteModal:not(.is-editing) .nov-action-btn {
+                display: none !important;
+            }
+            #reporteModal.is-editing .nov-action-btn {
+                display: inline-block !important;
+            }
+
+            #aprobacionModal.show {
+                display: flex !important;
+                align-items: flex-start !important;
+                justify-content: center !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 1055 !important;
+                background-color: rgba(0, 0, 0, 0.5);
+                padding-top: 80px !important;
+                overflow-y: auto !important;
+            }
+
+            #aprobacionModal .modal-dialog {
+                z-index: 2000 !important;
+                position: relative !important;
+                margin: 0 !important;
+                width: 100%;
+                max-width: 900px;
+                margin-bottom: 50px !important;
+            }
+
+            #aprobacionModal .modal-content {
+                border-radius: 16px;
+                border: none;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+                background-color: white;
+            }
+
+            #aprobacionModal .modal-header {
+                background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+                color: white;
+                border-radius: 16px 16px 0 0;
+                border: none;
+            }
+
+            #aprobacionModal .btn-close {
+                filter: brightness(0) invert(1);
+            }
+
+            #aprobacionModal .form-label {
+                color: #64748b;
+                font-weight: 600;
+            }
+
+            #aprobacionModal .form-control[readonly] {
+                background-color: #f8fafc;
+                color: #64748b;
+            }
+
+            #aprobacionModal .form-control:not([readonly]),
+            #aprobacionModal .form-select {
+                background-color: white;
+                color: #212529;
+                border-color: #dee2e6;
+            }
+
+            #aprobacionModal .form-control:focus,
+            #aprobacionModal .form-select:focus {
+                border-color: #3f51b5;
+                box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1);
+                background-color: white;
+            }
+
+            #aprobacionModal .modal-body {
+                background-color: white;
+                padding: 2rem !important;
+                padding-bottom: 1rem !important;
+            }
+
+            #aprobacionModal .modal-footer {
+                padding: 0.5rem 2rem !important;
+                margin-top: 0 !important;
+            }
+
+            #aprobacionModal .mb-3:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            @media (max-width: 768px) {
+                #aprobacionModal .modal-dialog {
+                    width: 98% !important;
+                    max-width: 98% !important;
+                    margin-bottom: 10px !important;
+                }
+
+                #aprobacionModal .modal-body {
+                    padding: 1rem 1.5rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .modal-content {
+                    overflow: hidden;
+                }
+
+                #aprobacionModal .modal-header {
+                    padding: 0.5rem 1.5rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .modal-body {
+                    padding: 1rem 1.5rem 0 !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .modal-footer {
+                    padding: 0.5rem 1rem !important;
+                    margin-top: -2rem !important;
+                    transform: scale(0.75);
+                    transform-origin: top left;
+                    width: 133.33%;
+                }
+
+                #aprobacionModal .mb-3:last-child {
+                    margin-bottom: 0 !important;
+                    padding-bottom: 0 !important;
+                }
+
+                #aprobacionModal .row:last-child {
+                    margin-bottom: 0 !important;
+                }
+            }
+        </style>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/admin/mis-reportes.js"></script>
+</body>
+
+</html>

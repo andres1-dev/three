@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Actualizar - Grupo TDM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#3b82f6">
+  
+  <!-- jspreadsheet -->
+  <script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
+  <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
+  <script src="https://jsuites.net/v4/jsuites.js"></script>
+  <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/footer.css">
+
+  <style>
+    body { opacity: 0; visibility: hidden; transition: opacity 0.2s; }
+    body.auth-shield-pass { opacity: 1; visibility: visible; }
+
+    .wrapper-dashboard {
+      width: 96%;
+      max-width: 1400px;
+      margin: 80px auto 2rem;
+      padding: 2rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+
+    @media (max-width: 767px) {
+      .wrapper-dashboard {
+        width: 100%; border-radius: 0; border-left: none; border-right: none;
+        box-shadow: none; padding: 2rem;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .wrapper-dashboard { padding: 3rem; }
+    }
+
+    /* ── Vista Resumen (Estilo Rutero) ── */
+    .seg-resumen {
+      background: white;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 0;
+    }
+    .seg-resumen-stat {
+      flex: 1; text-align: center; padding: 0 12px;
+    }
+    .seg-resumen-stat + .seg-resumen-stat {
+      border-left: 1px solid #f1f5f9;
+    }
+    .seg-resumen-num { font-size: 1.6rem; font-weight: 900; line-height: 1; color: #1e293b; }
+    .seg-resumen-lbl { font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+                      color: #94a3b8; margin-top: 3px; letter-spacing: 0.4px; }
+
+    /* Spreadsheet container */
+    .spreadsheet-container {
+      width: 100%; overflow-x: auto; border: 1px solid #e2e8f0;
+      border-radius: 12px; background: #f8fafc; margin-bottom: 20px;
+    }
+    .jexcel_content { max-height: 500px; }
+
+    /* Footer & Actions */
+    .upload-status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1rem 1.5rem; background: #f1f5f9; border-radius: 12px; margin-bottom: 20px;
+    }
+    .status-indicator { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.85rem; color: #64748b; }
+    .status-indicator.ready { color: #10b981; }
+    .status-indicator.processing { color: #3b82f6; }
+    .status-indicator.error { color: #ef4444; }
+
+    .action-group { display: flex; gap: 8px; }
+    .btn-sync {
+      background: #3F51B5; color: white; border: none; padding: 8px 20px;
+      border-radius: 10px; font-weight: 700; font-size: 0.85rem;
+      display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-sync:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(63,81,181,0.3); }
+    .btn-sync:disabled { background: #cbd5e1; cursor: not-allowed; }
+
+    .btn-clear { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; padding: 8px 16px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; }
+    .btn-tool { background: white; color: #64748b; border: 1px solid #e2e8f0; padding: 8px 12px; border-radius: 10px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .btn-tool:hover { border-color: #3F51B5; color: #3F51B5; }
+    .btn-db { background: #ede9fe; color: #7c3aed; border: 1px solid #ddd6fe; padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+    .view-results { display: none; animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper-dashboard">
+    <!-- Resumen -->
+    <div class="seg-resumen" id="statsArea">
+      <div class="seg-resumen-stat">
+        <div class="seg-resumen-num" id="stat-total">0</div>
+        <div class="seg-resumen-lbl">Registros</div>
+      </div>
+      <div class="seg-resumen-stat">
+        <div class="seg-resumen-num" id="stat-type">-</div>
+        <div class="seg-resumen-lbl">Formato</div>
+      </div>
+      <div class="seg-resumen-stat">
+        <div class="seg-resumen-num" id="stat-last-sync" style="font-size: 0.9rem;">Nunca</div>
+        <div class="seg-resumen-lbl">Última Sincro</div>
+      </div>
+    </div>
+
+    <!-- Spreadsheet -->
+    <div class="spreadsheet-container" id="spreadsheet-wrapper">
+      <div id="spreadsheet"></div>
+    </div>
+
+    <!-- Preview -->
+    <div id="jsonPreview" style="display: none; margin-bottom: 20px; border: 1.5px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+        <div style="background: #f8fafc; padding: 8px 16px; border-bottom: 1.5px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px;">
+            <span style="font-weight: 700; color: #475569;"><i class="fas fa-code"></i> Vista Previa JSON</span>
+            <span id="jsonCount" style="color: #94a3b8;">0 registros</span>
+        </div>
+        <pre id="jsonContent" style="margin: 0; background: #1e293b; color: #e2e8f0; padding: 15px; font-size: 11px; overflow: auto; max-height: 250px; font-family: monospace;"></pre>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="upload-status-bar">
+      <div class="status-indicator" id="upload-status">
+        <i class="fas fa-info-circle"></i>
+        <span>Esperando datos de Excel...</span>
+      </div>
+      
+      <div style="display: flex; gap: 8px; align-items: center;">
+          <div id="action-tools" style="display: flex; gap: 6px; opacity: 0; pointer-events: none; transition: all 0.3s;">
+              <button onclick="handleToggleJSONView()" class="btn-tool" id="viewJsonBtn"><i class="fas fa-eye"></i> Ver</button>
+              <button onclick="handleDownloadJSON()" class="btn-tool"><i class="fas fa-download"></i></button>
+              <button onclick="handleCopyJSON()" class="btn-tool" id="copyJsonBtn"><i class="fas fa-copy"></i></button>
+          </div>
+
+          <button onclick="triggerCSVImport()" class="btn-tool" style="background: #f0fdf4; color: #16a34a; border-color: #bbf7d0;"><i class="fas fa-file-csv"></i> Subir CSV</button>
+          <input type="file" id="csvImportFileInput" accept=".csv" style="display: none;" onchange="handleCSVImport(event)">
+
+          <button onclick="handleDownloadFullTable()" class="btn-db" id="downloadFullCsvBtn"><i class="fas fa-database"></i> BD Full</button>
+
+          <div style="margin-left: 10px; border-left: 1.5px solid #e2e8f0; padding-left: 10px;">
+            <button class="btn-clear" onclick="resetUpload()">Limpiar Tabla</button>
+          </div>
+      </div>
+    </div>
+    
+    <!-- Results -->
+    <div class="view-results" id="results-view">
+        <div style="background: white; border-radius: 14px; padding: 2rem; text-align: center; border: 1.5px solid #e2e8f0;">
+            <div style="width: 60px; height: 60px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.2rem;">
+                <i class="fas fa-check" style="font-size: 24px; color: #16a34a;"></i>
+            </div>
+            <h3 style="font-weight: 900; color: #1e293b; margin-bottom: 4px; font-size: 1.25rem;">¡Sincronización Exitosa!</h3>
+            <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Los registros han sido procesados y almacenados.</p>
+
+            <div class="seg-resumen" style="max-width: 500px; margin: 0 auto 1.5rem;">
+                <div class="seg-resumen-stat">
+                    <div class="seg-resumen-num" id="res-updated" style="color: #3b82f6;">0</div>
+                    <div class="seg-resumen-lbl">Actualizados</div>
+                </div>
+                <div class="seg-resumen-stat">
+                    <div class="seg-resumen-num" id="res-inserted" style="color: #16a34a;">0</div>
+                    <div class="seg-resumen-lbl">Nuevos</div>
+                </div>
+                <div class="seg-resumen-stat">
+                    <div class="seg-resumen-num" id="res-duplicates" style="color: #f59e0b;">0</div>
+                    <div class="seg-resumen-lbl">Duplicados</div>
+                </div>
+                <div class="seg-resumen-stat">
+                    <div class="seg-resumen-num" id="res-errors" style="color: #ef4444;">0</div>
+                    <div class="seg-resumen-lbl">Errores</div>
+                </div>
+            </div>
+
+            <button onclick="resetUpload()" class="btn-sync" style="margin: 0 auto;">
+                <i class="fas fa-arrow-left"></i> Volver a la tabla
+            </button>
+
+            <!-- Duplicados detallados -->
+            <div id="duplicates-section" style="display: none; margin-top: 2rem;">
+                <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 12px; padding: 1.5rem;">
+                    <h4 style="font-weight: 800; color: #92400e; margin-bottom: 1rem; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-exclamation-triangle"></i> Registros Duplicados Omitidos
+                    </h4>
+                    <div id="duplicates-list" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <style>
+    .btn-tool {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .btn-tool:hover {
+        background: #eff6ff; color: #3b82f6; border-color: #bfdbfe;
+        transform: translateY(-1px);
+    }
+    .btn-db {
+        background: #eff6ff;
+        color: #3b82f6;
+        border: 1px solid #dbeafe;
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .btn-db:hover {
+        background: #dbeafe;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    }
+  </style>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  
+  <script src="js/admin/upload.js"></script>
+</body>
+
+</html>
