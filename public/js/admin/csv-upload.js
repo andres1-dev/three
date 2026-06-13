@@ -52,9 +52,10 @@ function createFloatingCSVButton() {
 }
 
 // Crear el botón al cargar el script
-if (typeof currentUser !== 'undefined' && currentUser) {
-  createFloatingCSVButton();
-}
+// Comentado: el módulo de upload ya es funcional
+// if (typeof currentUser !== 'undefined' && currentUser) {
+//   createFloatingCSVButton();
+// }
 
 /* ══════════════════════════════════════════════════════════════════════════
    Modal de carga CSV (estilo profesional similar a index.html)
