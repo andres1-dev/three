@@ -162,12 +162,8 @@ function actualizarPlantillaCalidadTextarea(forceUpdate = false) {
 
     const plantilla = autogenerarPlantillaCalidad() || "";
 
-    // Actualizar placeholder en todo caso para guiar al usuario
-    if (plantilla) {
-        textarea.placeholder = `${plantilla}... (Escribe aquí los detalles y recomendaciones)`;
-    } else {
-        textarea.placeholder = "Detalla los hallazgos encontrados...";
-    }
+    // Placeholder siempre fijo para mantener consistencia
+    textarea.placeholder = "Detalla los hallazgos encontrados...";
 
     // Pre-escribir en el textarea si está vacío o si el valor actual coincide con una plantilla previa
     const valActual = textarea.value.trim();
@@ -353,11 +349,14 @@ function _actualizarCamposCalidad() {
     }
     if (avanceSlider) {
         avanceSlider.required = esRonda && !esPausado;
-        avanceSlider.value = 0;
-        const avanceValor = document.getElementById('avanceValor');
-        const avancePct = document.getElementById('avancePorcentaje');
-        if (avanceValor) avanceValor.textContent = '0%';
-        if (avancePct) avancePct.value = '0';
+        // Solo resetear a 0 si el slider está vacío (no tiene valor restaurado desde localStorage)
+        if (avanceSlider.value === '' || avanceSlider.value === '0') {
+            avanceSlider.value = 0;
+            const avanceValor = document.getElementById('avanceValor');
+            const avancePct = document.getElementById('avancePorcentaje');
+            if (avanceValor) avanceValor.textContent = '0%';
+            if (avancePct) avancePct.value = '0';
+        }
     }
 
     // ── Destino del Lote ──
@@ -869,6 +868,11 @@ async function handleCalidadSubmit(e) {
             timer: 2500,
             showConfirmButton: false,
         });
+
+        // Limpiar localStorage después de envío exitoso
+        if (typeof PersistenciaFormularios !== 'undefined') {
+            PersistenciaFormularios.limpiarFormulario('calidadForm');
+        }
 
         e.target.reset();
 

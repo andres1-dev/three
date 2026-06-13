@@ -180,7 +180,7 @@ const PLANTILLAS_CALIDAD = {
         },
         CONTRAMUESTRA: {
             APROBADO: {
-                obs: "Se realiza aprobación de contramuestra para {prenda_genero}{tejido}{avance}, validando la simetría y el cumplimiento estricto de las especificaciones de la ficha técnica para dar inicio a la producción masiva{destino}.",
+                obs: "Se realiza aprobación de contramuestra para {prenda_genero}{tejido}{avance}, verificando la correcta simetría de la prenda y el cumplimiento de las especificaciones establecidas en la ficha técnica, así como que los hilos e hilazas se encuentren tono a tono de acuerdo con los requerimientos de la prenda. {destino}.",
                 rec: "Se recomienda que "
             },
             RECHAZADO: {

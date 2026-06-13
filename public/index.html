@@ -745,20 +745,35 @@
         </div>
 
         <div class="mb-4">
-          <label class="form-label">Evidencia Fotográfica:</label>
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label mb-0">Evidencia Fotográfica:</label>
+            <div id="imagenRotationControls" style="display: none;">
+              <button type="button" onclick="rotarImagen('imagen', -90)" class="btn-action-muted" style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
+                <i class="fas fa-undo"></i> Girar
+              </button>
+            </div>
+          </div>
           <div class="file-dropzone" id="imagenDropzone" role="button" tabindex="0">
-            <i class="fas fa-camera file-dropzone__icon"></i>
-            <div class="file-dropzone__text">
+            <i class="fas fa-camera file-dropzone__icon" id="imagenIcon"></i>
+            <div class="file-dropzone__text" id="imagenText">
               <span class="file-dropzone__action">Haz clic para subir imagen</span>
               <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
             </div>
             <span class="file-dropzone__name" id="imagenName"></span>
+            
+            <!-- Preview de imagen dentro del dropzone -->
+            <img id="imagenPreview" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain;" />
           </div>
           <input type="file" id="imagen" class="file-dropzone__input" accept="image/*" capture="environment">
         </div>
 
         <div class="text-center">
-          <button type="submit" class="btn btn-primary">Enviar Reporte de Novedad</button>
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioNovedades()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+          <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-paper-plane"></i> Enviar
+          </button>
         </div>
       </div>
     </form>
@@ -1214,19 +1229,29 @@ RESULTADOS:
           </div>
           <div class="ai-textarea-wrapper">
             <textarea id="observacionesCalidad" class="form-control" placeholder="Detalla los hallazgos encontrados..."
-              rows="4" required></textarea>
+              rows="4" required style="resize: vertical; min-height: 100px;"></textarea>
           </div>
         </div>
 
         <div class="mb-4">
-          <label class="form-label">Soporte:</label>
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label mb-0">Soporte:</label>
+            <div id="soporteRotationControls" style="display: none;">
+              <button type="button" onclick="rotarImagen('soporte', -90)" class="btn-action-muted" style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
+                <i class="fas fa-undo"></i> Girar
+              </button>
+            </div>
+          </div>
           <div class="file-dropzone" id="soporteDropzone" role="button" tabindex="0">
-            <i class="fas fa-camera file-dropzone__icon"></i>
-            <div class="file-dropzone__text">
+            <i class="fas fa-camera file-dropzone__icon" id="soporteIcon"></i>
+            <div class="file-dropzone__text" id="soporteText">
               <span class="file-dropzone__action">Haz clic para subir soporte técnico</span>
               <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
             </div>
             <span class="file-dropzone__name" id="soporteName"></span>
+            
+            <!-- Preview de imagen dentro del dropzone -->
+            <img id="soportePreview" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain;" />
           </div>
           <input type="file" id="soporte" class="file-dropzone__input" accept="image/*" capture="environment">
         </div>
@@ -1236,7 +1261,12 @@ RESULTADOS:
         <input type="hidden" id="firmaValidada" name="firmaValidada" required>
 
         <div class="mb-3 text-center">
-          <button type="submit" class="btn btn-primary">Enviar Reporte</button>
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioCalidad()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+          <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-paper-plane"></i> Enviar
+          </button>
         </div>
       </div>
     </form>
@@ -1293,8 +1323,11 @@ RESULTADOS:
         </div>
 
         <div class="mb-3 text-center">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-route"></i> Agregar al Rutero
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioRutero()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+          <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-paper-plane"></i> Enviar
           </button>
         </div>
       </div>
@@ -1818,8 +1851,11 @@ RESULTADOS:
         </div>
 
         <div class="mb-3 text-center">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-save"></i> Guardar
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioActualizarDatos()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+          <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
+            <i class="fas fa-paper-plane"></i> Enviar
           </button>
         </div>
       </div>
@@ -2089,6 +2125,94 @@ RESULTADOS:
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') cerrarPoliticaDatos();
     });
+
+    // Funciones globales para limpiar formularios
+    function limpiarFormularioNovedades() {
+      if (confirm('¿Está seguro de que desea limpiar todos los datos del formulario de novedades?')) {
+        PersistenciaFormularios.limpiarFormularioCompleto('novedadesForm');
+      }
+    }
+
+    function limpiarFormularioCalidad() {
+      if (confirm('¿Está seguro de que desea limpiar todos los datos del formulario de calidad?')) {
+        PersistenciaFormularios.limpiarFormularioCompleto('calidadForm');
+      }
+    }
+
+    function limpiarFormularioRutero() {
+      if (confirm('¿Está seguro de que desea limpiar todos los datos del formulario rutero?')) {
+        PersistenciaFormularios.limpiarFormularioCompleto('ruteroForm');
+      }
+    }
+
+    function limpiarFormularioActualizarDatos() {
+      if (confirm('¿Está seguro de que desea limpiar todos los datos del formulario de actualizar datos?')) {
+        PersistenciaFormularios.limpiarFormularioCompleto('actualizarDatosForm');
+      }
+    }
+
+    // Variables globales para rotación de imágenes
+    window.imagenRotacion = { imagen: 0, soporte: 0 };
+
+    // Función para mostrar preview de imagen cuando se selecciona
+    function mostrarImagenPreview(inputId) {
+      const input = document.getElementById(inputId);
+      const preview = document.getElementById(inputId + 'Preview');
+      const icon = document.getElementById(inputId + 'Icon');
+      const text = document.getElementById(inputId + 'Text');
+      const rotationControls = document.getElementById(inputId + 'RotationControls');
+      
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+          
+          // Ocultar icono y texto
+          if (icon) icon.style.display = 'none';
+          if (text) text.style.display = 'none';
+          
+          // Mostrar controles de rotación (ahora están fuera del dropzone)
+          if (rotationControls) rotationControls.style.display = 'flex';
+          
+          window.imagenRotacion[inputId] = 0;
+          preview.style.transform = 'rotate(0deg)';
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    // Función para rotar imagen
+    function rotarImagen(inputId, grados) {
+      const preview = document.getElementById(inputId + 'Preview');
+      if (!preview) return;
+      
+      window.imagenRotacion[inputId] = (window.imagenRotacion[inputId] || 0) + grados;
+      preview.style.transform = 'rotate(' + window.imagenRotacion[inputId] + 'deg)';
+      
+      // Guardar la rotación en localStorage
+      const formId = inputId === 'imagen' ? 'novedadesForm' : 'calidadForm';
+      if (typeof PersistenciaFormularios !== 'undefined') {
+        PersistenciaFormularios.guardarFormulario(formId);
+      }
+    }
+
+    // Agregar listeners para mostrar preview cuando se selecciona imagen
+    document.addEventListener('DOMContentLoaded', function() {
+      const imagenInput = document.getElementById('imagen');
+      if (imagenInput) {
+        imagenInput.addEventListener('change', function() {
+          mostrarImagenPreview('imagen');
+        });
+      }
+      
+      const soporteInput = document.getElementById('soporte');
+      if (soporteInput) {
+        soporteInput.addEventListener('change', function() {
+          mostrarImagenPreview('soporte');
+        });
+      }
+    });
   </script>
 
   <!-- Selector Obligatorio de Productora (Full Screen Overlay) -->
@@ -2179,6 +2303,7 @@ RESULTADOS:
   <script src="js/forms/plantas.js"></script> <!-- formulario plantas + Google Maps -->
   <script src="js/forms/dropzone.js"></script> <!-- dropzone personalizado de archivos -->
   <script src="js/forms/rutero.js"></script> <!-- formulario rutero -->
+  <script src="js/forms/persistencia.js"></script> <!-- persistencia de formularios con localStorage -->
 
   <script src="js/particles-config.js"></script>
   <script src="js/sounds.js"></script>

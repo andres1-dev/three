@@ -78,6 +78,11 @@ async function handleRuteroSubmit(e) {
             confirmButtonText: 'OK',
         });
 
+        // Limpiar localStorage después de envío exitoso
+        if (typeof PersistenciaFormularios !== 'undefined') {
+            PersistenciaFormularios.limpiarFormulario('ruteroForm');
+        }
+
         e.target.reset();
         hideSections();
 

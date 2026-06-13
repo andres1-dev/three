@@ -13,19 +13,19 @@
 // 18 Plantillas predeterminadas de calidad listas para renderizado inmediato
 const LOCAL_TEMPLATES = [
     // UBICACION
-    { tipo: 'UBICACION', contenido: 'Manga izquierda de la prenda puesta, ubicada entre costuras.' },
-    { tipo: 'UBICACION', contenido: 'Pasador delantero izquierdo de la prenda puesta.' },
-    { tipo: 'UBICACION', contenido: 'Marquilla de talla.' },
-    { tipo: 'UBICACION', contenido: 'Delantero izquierdo de la prenda puesta, ubicada entre costuras a 5 cm del costado.' },
-    { tipo: 'UBICACION', contenido: 'Sisa izquierda de la prenda puesta, ubicada entre costuras.' },
-    { tipo: 'UBICACION', contenido: 'En la tira libre izquierda de la prenda puesta.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Manga izquierda de la prenda puesta, ubicada entre costuras.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Pasador delantero izquierdo de la prenda puesta.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Marquilla de talla.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Delantero izquierdo de la prenda puesta, ubicada entre costuras a 5 cm del costado.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Sisa izquierda de la prenda puesta, ubicada entre costuras.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: En la tira libre izquierda de la prenda puesta.' },
 
     // PAQUETEO
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 20 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, ensambladas espalda con espalda, dobladas individualmente y con las etiquetas aseguradas y amarradas.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' },
-    { tipo: 'PAQUETEO', contenido: 'Paquetear blusa principal y combinaciones sin ensamblar, separadas por talla y color. ' }
+    { tipo: 'PAQUETEO', contenido: 'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
+    { tipo: 'PAQUETEO', contenido: 'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 20 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
+    { tipo: 'PAQUETEO', contenido: 'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, ensambladas espalda con espalda, dobladas individualmente y con las etiquetas aseguradas y amarradas.' },
+    { tipo: 'PAQUETEO', contenido: 'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.' },
+    { tipo: 'PAQUETEO', contenido: 'INSTRUCCIÓN DE PAQUETEO: Paquetear blusa principal y combinaciones sin ensamblar, separadas por talla y color. ' }
 ];
 
 let plantillasData = [];
@@ -630,7 +630,7 @@ function initFloatingTemplates() {
             const mes = meses[d.getMonth()];
             const anio = d.getFullYear();
             
-            const texto = `Compromiso de entrega: ${diaSemana}, ${diaNum} de ${mes} del ${anio}.`;
+            const texto = `COMPROMISO DE ENTREGA: ${diaSemana}, ${diaNum} de ${mes} del ${anio}.`;
             insertTextIntoObservations(texto);
             _calSelectedDate = null;
             document.getElementById('compromisoSelectedDisplay').textContent = '';

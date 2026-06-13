@@ -891,6 +891,11 @@ async function handleNovedadesSubmit(e) {
             showConfirmButton: false,
         });
 
+        // Limpiar localStorage después de envío exitoso
+        if (typeof PersistenciaFormularios !== 'undefined') {
+            PersistenciaFormularios.limpiarFormulario('novedadesForm');
+        }
+
         e.target.reset();
         
         // Limpiar inputs de búsqueda principales

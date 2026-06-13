@@ -938,6 +938,11 @@ async function handleActualizarDatosSubmit(e) {
             showConfirmButton: false,
         });
 
+        // Limpiar localStorage después de envío exitoso
+        if (typeof PersistenciaFormularios !== 'undefined') {
+            PersistenciaFormularios.limpiarFormulario('actualizarDatosForm');
+        }
+
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 1500);
