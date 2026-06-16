@@ -473,39 +473,6 @@ async function fetchReportesData() {
         }
     }
 
-    // Si el rol es USER-I, leer via Edge Function para evitar restricciones de RLS
-    if (sessionUser && sessionUser.ROL === 'USER-I') {
-        let sessionToken = SUPABASE_KEY;
-        try {
-            for (let i = 0; i < localStorage.length; i++) {
-                const k = localStorage.key(i);
-                if (k && k.includes('-auth-token')) {
-                    const s = JSON.parse(localStorage.getItem(k));
-                    if (s?.access_token) { sessionToken = s.access_token; break; }
-                }
-            }
-        } catch(e) {}
-
-        try {
-            const resp = await fetch(`${getFunctionsUrl()}/operations`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_KEY,
-                    'Authorization': `Bearer ${sessionToken}`
-                },
-                body: JSON.stringify({ accion: 'LISTAR_REPORTES', productora: sessionUser.ID_PRODUCTORA })
-            });
-            if (!resp.ok) throw new Error('Error al obtener reportes');
-            const resJson = await resp.json();
-            const reportes = resJson.reportes || [];
-            return _normalizeSupabaseData(reportes, 'reportes');
-        } catch (e) {
-            console.warn('[API] LISTAR_REPORTES falló para USER-I:', e);
-            // fallback a fetchSupabaseData
-        }
-    }
-
     return fetchSupabaseData('reportes');
 }
 

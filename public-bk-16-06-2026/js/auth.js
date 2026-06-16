@@ -679,11 +679,9 @@ function createSidebar() {
         </div>
         <div class="sidebar-body">
             <div class="sidebar-label">MENÚ DE ACCESO</div>
-            ${user.ROL !== 'USER-I' ? `
             <a href="index.html" class="sidebar-link ${path.includes('index.html') ? 'active' : ''}">
                 <i class="fas fa-home"></i> Reportes
             </a>
-            ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR' || user.ROL === 'USER-P') ? `
                 <a href="resolucion.html" class="sidebar-link ${path.includes('resolucion.html') ? 'active' : ''}">
                     <i class="fas fa-desktop"></i> Novedades
@@ -703,11 +701,6 @@ function createSidebar() {
             ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR' || user.ROL === 'USER-P') ? `
                 <a href="calidad.html" class="sidebar-link ${path.includes('calidad.html') ? 'active' : ''}">
                     <i class="fas fa-microscope"></i> Calidad
-                </a>
-            ` : ''}
-            ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR' || user.ROL === 'USER-I') ? `
-                <a href="reportes-analizados.html" class="sidebar-link ${path.includes('reportes-analizados.html') ? 'active' : ''}">
-                    <i class="fas fa-clipboard-check"></i> Reportes Analizados
                 </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'USER-C' || user.ROL === 'MODERATOR') ? `
@@ -839,25 +832,6 @@ function applyAccessControl() {
             el.style.display = ''; // Restaurar si tiene permiso
         }
     });
-
-    // Protección de rutas por rol
-    const path = window.location.pathname;
-    
-    // USER-I solo puede acceder a reportes-analizados.html
-    if (user.ROL === 'USER-I') {
-        if (path.includes('index.html') || path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html')) {
-            console.warn('[AUTH] USER-I intentando acceder a página restringida, redirigiendo a reportes-analizados.html');
-            window.location.replace('reportes-analizados.html');
-        }
-    }
-    
-    // GUEST no puede acceder a páginas de administración
-    if (user.ROL === 'GUEST') {
-        if (path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html') || path.includes('reportes-analizados.html')) {
-            console.warn('[AUTH] GUEST intentando acceder a página restringida, redirigiendo a index.html');
-            window.location.replace('index.html');
-        }
-    }
 }
 
 function _hasPermission(userRole, minRoleRequired) {

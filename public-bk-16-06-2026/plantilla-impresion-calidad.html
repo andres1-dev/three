@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Calidad - Impresión</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #3F51B5;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            margin: 0;
+            padding: 10px;
+            background: #fff;
+            line-height: 1.3;
+            font-size: 11px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        /* Utilidades de impresión */
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0; font-size: 11px; }
+            .container { max-width: 100%; width: 100%; }
+            .page-break { page-break-before: always; }
+            .avoid-break { page-break-inside: avoid; }
+            
+            /* Forzar fondos */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        /* Layout & Componentes */
+        .header-main {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header-logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 30%;
+        }
+
+        .header-title-area {
+            text-align: center;
+            flex: 1;
+        }
+
+        .header-title-area h1 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--primary);
+        }
+
+        .header-title-area p {
+            margin: 4px 0 0;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-meta-area {
+            text-align: right;
+            width: 30%;
+        }
+
+        .report-id {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .report-date {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin: 4px 0 0;
+        }
+
+        /* Secciones */
+        .section {
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: var(--bg-light);
+            padding: 6px 12px;
+            font-weight: 700;
+            font-size: 11px;
+            border-bottom: 1px solid var(--border);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-transform: uppercase;
+        }
+
+        .section-content {
+            padding: 10px 12px;
+        }
+
+        /* Grid de Datos */
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .data-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
+        .data-grid.grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+        .data-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .data-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .data-value {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-dark);
+            word-break: break-word;
+        }
+
+        /* Conclusión Especial */
+        .conclusion-card {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            gap: 15px;
+        }
+
+        .conclusion-badge {
+            padding: 0;
+            font-weight: 900;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .conclusion-badge.aprobado { color: #166534; }
+        .conclusion-badge.rechazado { color: #991b1b; }
+
+        .destino-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border-left: 2px solid rgba(0,0,0,0.1);
+            padding-left: 15px;
+        }
+
+        /* Novedades Table */
+        .nov-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+
+        .nov-table th, .nov-table td {
+            border: 1px solid var(--border);
+            padding: 4px 8px;
+            text-align: left;
+        }
+
+        .nov-table th {
+            font-weight: 700;
+            color: var(--text-muted);
+            background: #f1f5f9;
+            text-transform: uppercase;
+            font-size: 9px;
+        }
+
+        .nov-table td {
+            font-weight: 500;
+        }
+        
+        .nov-table .text-right { text-align: right; }
+        .nov-table .text-center { text-align: center; }
+
+        .group-header {
+            padding: 6px 8px;
+            font-weight: 800;
+            font-size: 10px;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .group-wrapper {
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border: 1px solid #e2e8f0;
+            page-break-inside: avoid;
+        }
+
+        .obs-box {
+            background: #f1f5f9;
+            padding: 15px 18px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            border-left: 4px solid var(--primary);
+            font-size: 13.5px;
+            font-weight: 500;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: var(--text-dark);
+        }
+
+        /* Firmas y Soportes */
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+            page-break-inside: avoid;
+        }
+
+        .soporte-img {
+            width: 100%;
+            height: 200px;
+            object-fit: contain;
+            border: 1px dashed #cbd5e1;
+            border-radius: 4px;
+            background: #f8fafc;
+        }
+
+        .zoom-container {
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+        }
+
+        .zoom-container:hover .zoom-overlay {
+            opacity: 1 !important;
+        }
+
+        @media print {
+            .zoom-overlay {
+                display: none !important;
+            }
+        }
+
+        .firma-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 200px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 4px;
+            padding: 10px;
+            background: #f8fafc;
+            position: relative;
+        }
+
+        .firma-svg {
+            max-width: 100%;
+            max-height: 120px;
+            margin-bottom: 10px;
+        }
+
+        .firma-line {
+            width: 80%;
+            border-top: 1px solid #1e293b;
+            margin: 10px 0 5px;
+        }
+
+        /* UI Elements */
+        .btn-print {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-print:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-print-action {
+            border: none;
+            border-radius: 50px;
+            padding: 12px 24px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        .btn-print-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.2);
+            filter: brightness(1.05);
+        }
+        .btn-print-action:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Skeleton Loader -->
+    <div id="loadingIndicator" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; padding: 20px;">
+        <div style="max-width: 850px; width: 100%;">
+            <!-- Header Skeleton -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="width: 30%;">
+                    <div class="skeleton-box" style="height: 42px; width: 42px; border-radius: 50%; margin-bottom: 8px;"></div>
+                    <div class="skeleton-box" style="height: 12px; width: 80%;"></div>
+                </div>
+                <div style="flex: 1; text-align: center;">
+                    <div class="skeleton-box" style="height: 18px; width: 60%; margin: 0 auto 6px;"></div>
+                    <div class="skeleton-box" style="height: 11px; width: 40%; margin: 0 auto;"></div>
+                </div>
+                <div style="width: 30%; text-align: right;">
+                    <div class="skeleton-box" style="height: 15px; width: 60%; margin-left: auto;"></div>
+                    <div class="skeleton-box" style="height: 10px; width: 40%; margin-left: auto; margin-top: 4px;"></div>
+                </div>
+            </div>
+            <!-- Conclusion Card Skeleton -->
+            <div class="skeleton-box" style="height: 60px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Section Skeleton -->
+            <div class="skeleton-box" style="height: 120px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Geoloc/Evidence Skeleton -->
+            <div class="skeleton-box" style="height: 200px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Observations Skeleton -->
+            <div class="skeleton-box" style="height: 80px; margin-bottom: 15px; border-radius: 6px;"></div>
+            <!-- Signatures Skeleton -->
+            <div class="skeleton-box" style="height: 200px; border-radius: 6px;"></div>
+        </div>
+        <style>
+            .skeleton-box {
+                background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+                background-size: 200% 100%;
+                animation: shimmer 1.5s infinite;
+            }
+            @keyframes shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+        </style>
+    </div>
+
+    <div class="container" id="reporteContenedor">
+        <!-- Renderizado Dinámico -->
+    </div>
+
+    <!-- Panel de Botones Flotantes Moderno -->
+    <div class="print-btn-area no-print" style="position: fixed; bottom: 20px; right: 20px; display: flex; gap: 12px; z-index: 10000;">
+        <button class="btn-print-action" onclick="window.print()" style="background: #3F51B5; color: white;">
+            <i class="fas fa-print"></i> Imprimir / Guardar PDF
+        </button>
+    </div>
+
+    <!-- Scripts externos cargados al final para no bloquear renderizado -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        function formatearFecha(dateString) {
+            if (!dateString) return 'N/A';
+            try {
+                const d = new Date(dateString);
+                if (isNaN(d.getTime())) return dateString;
+                return d.toLocaleString('es-CO', { 
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', hour12: true 
+                });
+            } catch(e) { return dateString; }
+        }
+
+        function renderNovedadesAuditoria(jsonString) {
+            if (!jsonString) return '<p style="color:var(--text-muted); font-style:italic; margin:0;">No se registraron novedades cuantitativas.</p>';
+            
+            try {
+                let parsed = jsonString;
+                // Manejar doble escape
+                if (typeof parsed === 'string') { parsed = JSON.parse(parsed); }
+                if (typeof parsed === 'string') { parsed = JSON.parse(parsed); }
+
+                if (!Array.isArray(parsed) || parsed.length === 0) {
+                    return '<p style="color:var(--text-muted); font-style:italic; margin:0;">No se registraron novedades cuantitativas.</p>';
+                }
+
+                let html = '';
+                parsed.forEach(novedad => {
+                    const totalUnidades = novedad.codigos.reduce((sum, c) => sum + (Number(c.cantidad)||0), 0);
+                    
+                    let bgColor = '#3b82f6';
+                    let iconName = 'fa-tag';
+                    let displayTipo = novedad.tipo;
+                    
+                    if (novedad.tipo === 'SIN CONFECCIONAR') { bgColor = '#ef4444'; iconName = 'fa-cut'; }
+                    if (novedad.tipo === 'PROMOCIONES') { 
+                        if (novedad.sin_proceso) {
+                            bgColor = '#db2777'; 
+                            iconName = 'fa-exclamation-triangle';
+                            displayTipo = 'PROM. SIN PROCESO';
+                        } else {
+                            bgColor = '#f59e0b'; 
+                            iconName = 'fa-percentage'; 
+                        }
+                    }
+                    if (novedad.tipo === 'COBROS') { bgColor = '#10b981'; iconName = 'fa-file-invoice-dollar'; }
+                    if (novedad.tipo === 'LAVADO') { bgColor = '#6366f1'; iconName = 'fa-water'; }
+
+                    html += `
+                        <div class="group-wrapper">
+                            <div class="group-header" style="background-color: ${bgColor};">
+                                <div><i class="fas ${iconName}" style="margin-right:6px;"></i> ${displayTipo}</div>
+                                <div>${totalUnidades} UNDS.</div>
+                            </div>
+                            <table class="nov-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:40%">TALLA</th>
+                                        <th style="width:40%">COLOR</th>
+                                        <th style="width:20%" class="text-right">CANTIDAD</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    novedad.codigos.forEach(c => {
+                        html += `
+                            <tr>
+                                <td>${c.talla || '-'}</td>
+                                <td>${c.color || '-'}</td>
+                                <td class="text-right">${c.cantidad || '0'}</td>
+                            </tr>
+                        `;
+                    });
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                });
+
+                return html;
+            } catch (e) {
+                console.error("Error parseando novedades_auditoria", e);
+                return `<p style="color:#ef4444; font-size:10px;">Error al leer novedades de auditoría.</p>`;
+            }
+        }
+
+        // Caché simple para datos de planta
+        const plantaCache = new Map();
+
+        async function obtenerDatosPlanta(plantaNombre) {
+            if (!plantaNombre) return { nombre: 'N/A', cedula: 'N/A' };
+            
+            // Verificar caché primero
+            const cacheKey = plantaNombre.trim().toLowerCase();
+            if (plantaCache.has(cacheKey)) {
+                return plantaCache.get(cacheKey);
+            }
+            
+            try {
+                const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
+                const sb = supabase.createClient("https://zpikjjcbievfpzegupmw.supabase.co", SUPABASE_KEY);
+                const { data, error } = await sb.from('plantas').select('id_planta, planta').ilike('planta', plantaNombre.trim()).single();
+                if (error) {
+                    const { data: dataEq, error: errorEq } = await sb.from('plantas').select('id_planta, planta').eq('planta', plantaNombre.trim()).single();
+                    if (errorEq) throw errorEq;
+                    const result = { nombre: dataEq?.planta || plantaNombre, cedula: dataEq?.id_planta || 'N/A' };
+                    plantaCache.set(cacheKey, result);
+                    return result;
+                }
+                const result = { nombre: data?.planta || plantaNombre, cedula: data?.id_planta || 'N/A' };
+                plantaCache.set(cacheKey, result);
+                return result;
+            } catch(e) {
+                console.error("Error al obtener datos de la planta:", e);
+                const result = { nombre: plantaNombre, cedula: 'N/A' };
+                plantaCache.set(cacheKey, result);
+                return result;
+            }
+        }
+
+        // Caché simple para datos de auditor
+        const auditorCache = new Map();
+
+        async function obtenerDatosAuditor(email) {
+            if (!email) return { nombre: 'N/A', cedula: 'N/A', firmaSvg: null };
+            
+            // Verificar caché primero
+            const cacheKey = String(email).toLowerCase();
+            if (auditorCache.has(cacheKey)) {
+                return auditorCache.get(cacheKey);
+            }
+            
+            try {
+                const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
+                const response = await fetch("https://zpikjjcbievfpzegupmw.supabase.co/functions/v1/operations", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_KEY}`,
+                        'apikey': SUPABASE_KEY
+                    },
+                    body: JSON.stringify({ accion: 'RESOLVER_USUARIOS_LOGIN' })
+                });
+                if (!response.ok) throw new Error('Error HTTP ' + response.status);
+                const result = await response.json();
+                const users = result.users || [];
+                const foundUser = users.find(u => String(u.CORREO || '').toLowerCase() === String(email).toLowerCase());
+                let auditorResult;
+                if (foundUser) {
+                    auditorResult = {
+                        nombre: foundUser.NOMBRE || email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+                        cedula: foundUser.ID_USUARIO || 'N/A',
+                        firmaSvg: foundUser.FIRMA_SVG || null
+                    };
+                } else {
+                    const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    auditorResult = { nombre: username, cedula: 'N/A', firmaSvg: null };
+                }
+                auditorCache.set(cacheKey, auditorResult);
+                return auditorResult;
+            } catch(e) {
+                console.error("Error al obtener datos de auditor:", e);
+                const username = email.split('@')[0].replace(/[^a-zA-Z0-9]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                const auditorResult = { nombre: username, cedula: 'N/A', firmaSvg: null };
+                auditorCache.set(cacheKey, auditorResult);
+                return auditorResult;
+            }
+        }
+
+        // Caché simple para datos de productora
+        const productoraCache = new Map();
+
+        async function obtenerNombreProductora(productoraId) {
+            if (!productoraId) return 'N/A';
+            
+            // Verificar caché primero
+            const cacheKey = String(productoraId);
+            if (productoraCache.has(cacheKey)) {
+                return productoraCache.get(cacheKey);
+            }
+            
+            try {
+                const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwaWtqamNiaWV2ZnB6ZWd1cG13Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4NzU1NDEsImV4cCI6MjA5MjQ1MTU0MX0.HJxSSIcUSVrf5IAsjwnkf3eq0xZobchtlg1k_iFjW_g";
+                const sb = supabase.createClient("https://zpikjjcbievfpzegupmw.supabase.co", SUPABASE_KEY);
+                const { data, error } = await sb.from('productoras').select('productora').eq('id_productora', parseInt(productoraId)).single();
+                if (error) throw error;
+                const result = data?.productora || 'N/A';
+                productoraCache.set(cacheKey, result);
+                return result;
+            } catch(e) {
+                console.error("Error al obtener productora:", e);
+                const result = 'N/A';
+                productoraCache.set(cacheKey, result);
+                return result;
+            }
+        }
+
+        function abrirImagenGrande(src) {
+            if (!src) return;
+            const modal = document.createElement('div');
+            modal.id = 'imagenGrandeModal';
+            modal.style.position = 'fixed';
+            modal.style.top = '0';
+            modal.style.left = '0';
+            modal.style.width = '100vw';
+            modal.style.height = '100vh';
+            modal.style.backgroundColor = 'rgba(15, 23, 42, 0.9)';
+            modal.style.backdropFilter = 'blur(8px)';
+            modal.style.display = 'flex';
+            modal.style.alignItems = 'center';
+            modal.style.justifyContent = 'center';
+            modal.style.zIndex = '99999';
+            modal.style.cursor = 'zoom-out';
+            modal.style.opacity = '0';
+            modal.style.transition = 'opacity 0.25s ease';
+
+            modal.innerHTML = `
+                <div style="position: relative; max-width: 90%; max-height: 90%; display: flex; align-items: center; justify-content: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);">
+                    <img src="${src}" style="max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 8px; border: 3px solid rgba(255,255,255,0.1);">
+                    <button style="position: absolute; top: -45px; right: 0; background: rgba(255,255,255,0.2); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; font-size: 18px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.4)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            modal.onclick = () => {
+                modal.style.opacity = '0';
+                setTimeout(() => modal.remove(), 250);
+            };
+
+            document.body.appendChild(modal);
+            setTimeout(() => {
+                modal.style.opacity = '1';
+            }, 10);
+        }
+
+        async function init() {
+            try {
+                const dataRaw = localStorage.getItem('printReporteCalidad');
+                if (!dataRaw) {
+                    document.body.innerHTML = '<h2 style="padding:20px; text-align:center; color:#ef4444;">No hay datos para imprimir. Por favor genere el reporte desde el sistema.</h2>';
+                    return;
+                }
+
+                // El backend/localstorage devuelve un array o un objeto
+                let rep = JSON.parse(dataRaw);
+                if (Array.isArray(rep)) rep = rep[0]; // Si es array tomar el primero
+                
+                if (!rep) throw new Error("Datos vacíos");
+                
+                window.printData = rep; // Guardar referencia global para el descargador PDF
+
+                const contenedor = document.getElementById('reporteContenedor');
+                
+                const conclusionAprobado = String(rep.conclusion).toUpperCase() === 'APROBADO';
+                const conclusionIcon = conclusionAprobado ? 'fa-check-circle' : 'fa-times-circle';
+                const conclusionClass = conclusionAprobado ? 'aprobado' : 'rechazado';
+                const bgHeaderConclusion = conclusionAprobado ? '#f0fdf4' : '#fef2f2';
+
+                // Obtener nombre de la productora, datos del auditor y de la planta confección
+                let productoraNombre, auditorNombre, auditorCedula, auditorFirmaSvg, plantaDatos;
+                
+                if (window.preloadedDatos) {
+                    productoraNombre = window.preloadedDatos.productoraNombre || 'N/A';
+                    auditorNombre = window.preloadedDatos.auditorNombre || 'N/A';
+                    auditorCedula = window.preloadedDatos.auditorCedula || 'N/A';
+                    auditorFirmaSvg = window.preloadedDatos.auditorFirmaSvg || null;
+                    plantaDatos = {
+                        nombre: window.preloadedDatos.plantaNombre || 'N/A',
+                        cedula: window.preloadedDatos.plantaCedula || 'N/A'
+                    };
+                } else {
+                    // Ejecutar las 3 llamadas en paralelo para reducir tiempo de espera
+                    const [productoraNombreResult, auditorDatos, plantaDatosResult] = await Promise.all([
+                        obtenerNombreProductora(rep.productora),
+                        obtenerDatosAuditor(rep.email),
+                        obtenerDatosPlanta(rep.planta)
+                    ]);
+                    productoraNombre = productoraNombreResult;
+                    auditorNombre = auditorDatos.nombre;
+                    auditorCedula = auditorDatos.cedula;
+                    auditorFirmaSvg = auditorDatos.firmaSvg || null;
+                    plantaDatos = plantaDatosResult;
+                }
+
+                // Construir bloque de geolocalización y evidencia fotográfica dinámicamente según requerimientos
+                let geolocYEvidenciaHtml = '';
+                const tieneGeoloc = rep.localizacion && rep.localizacion.includes(',');
+                const tieneSoporte = !!rep.soporte;
+
+                if (tieneGeoloc) {
+                    if (tieneSoporte) {
+                        // Ambos existen: Geolocalización en 2/3 y Evidencia en 1/3
+                        geolocYEvidenciaHtml = `
+                            <div class="footer-grid avoid-break" style="margin-top: 0; margin-bottom: 15px; display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                                <!-- Geolocalización (2/3) -->
+                                <div class="section" style="margin:0;">
+                                    <div class="section-header"><i class="fas fa-map-marked-alt"></i> Geolocalización de la Inspección</div>
+                                    <div class="section-content" style="padding:0; height:200px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0 0 6px 6px; margin-top:-1px;">
+                                        <div class="map-container-dynamic" style="width:100%; height:100%;">
+                                            <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(rep.localizacion.trim())}&z=16&output=embed" 
+                                                    width="100%" 
+                                                    height="200" 
+                                                    style="border:none;" 
+                                                    allowfullscreen="" 
+                                                    loading="lazy">
+                                            </iframe>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Foto Evidencia (1/3) -->
+                                <div class="section" style="margin:0;">
+                                    <div class="section-header"><i class="fas fa-camera"></i> Evidencia Fotográfica</div>
+                                    <div class="section-content" style="text-align:center; padding:0; height:200px; display:flex; align-items:center; justify-content:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0 0 6px 6px; margin-top:-1px; overflow:hidden;">
+                                        <div class="zoom-container" onclick="abrirImagenGrande('${rep.soporte}')">
+                                            <img src="${rep.soporte}" class="soporte-img" style="width:100%; height:100%; object-fit:cover; border:none; border-radius:0;" alt="Soporte visual">
+                                            <div class="zoom-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.4); opacity: 0; transition: opacity 0.2s ease;">
+                                                <i class="fas fa-search-plus" style="color: white; font-size: 22px; background: rgba(15, 23, 42, 0.75); padding: 10px; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.15);"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Solo Geolocalización: Muestra únicamente la geolocalización a ancho completo (100%)
+                        geolocYEvidenciaHtml = `
+                            <div class="section avoid-break">
+                                <div class="section-header"><i class="fas fa-map-marked-alt"></i> Geolocalización de la Inspección</div>
+                                <div class="section-content" style="padding:0; height:200px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0 0 6px 6px; margin-top:-1px;">
+                                    <div class="map-container-dynamic" style="width:100%; height:100%;">
+                                        <iframe src="https://maps.google.com/maps?q=${encodeURIComponent(rep.localizacion.trim())}&z=16&output=embed" 
+                                                width="100%" 
+                                                height="200" 
+                                                style="border:none;" 
+                                                allowfullscreen="" 
+                                                loading="lazy">
+                                        </iframe>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else if (tieneSoporte) {
+                    // Solo Evidencia: Muestra únicamente el soporte a ancho completo
+                    geolocYEvidenciaHtml = `
+                        <div class="section avoid-break">
+                            <div class="section-header"><i class="fas fa-camera"></i> Evidencia Fotográfica</div>
+                            <div class="section-content" style="text-align:center; padding:0; height:200px; display:flex; align-items:center; justify-content:center; background:#f8fafc; border:1px solid #e2e8f0; border-radius:0 0 6px 6px; margin-top:-1px; overflow:hidden;">
+                                <div class="zoom-container" onclick="abrirImagenGrande('${rep.soporte}')">
+                                    <img src="${rep.soporte}" class="soporte-img" style="width:100%; height:100%; object-fit:cover; border:none; border-radius:0;" alt="Soporte visual">
+                                    <div class="zoom-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.4); opacity: 0; transition: opacity 0.2s ease;">
+                                        <i class="fas fa-search-plus" style="color: white; font-size: 24px; background: rgba(15, 23, 42, 0.75); padding: 12px; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.15);"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let html = `
+                    <!-- Encabezado -->
+                    <div class="header-main">
+                        <div class="header-logo-area" style="display:flex; align-items:center; gap:8px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" style="width: 42px; height: 42px; object-fit: contain;">
+                              <defs>
+                                <linearGradient id="grad" gradientUnits="userSpaceOnUse" x1="433.52756" y1="929" x2="500" y2="94">
+                                  <stop offset="0" stop-color="#3f51b5"/>
+                                  <stop offset="1" stop-color="#3f51b5"/>
+                                </linearGradient>
+                              </defs>
+                              <path fill="url(#grad)" d="M501.29 94.22C502.23 94.18 503.17 94.14 504.11 94.12C610.95 90.39 714.86 129.47 792.76 202.68C874.77 279.04 922.28 385.41 924.41 497.45C927.94 610.9 886.34 721.12 808.73 803.95C735.84 880.85 628.02 926.37 522.38 929.03C415.75 931.76 312.19 893.19 233.33 821.37C147.09 742.19 103.37 637.2 99.56 521.11C97.15 417.07 135.16 308.02 205.34 230.91C285.17 143.21 383.61 99.15 501.29 94.22Z"/>
+                              <path fill="url(#grad)" d="M426.33 154.08C431.45 149.93 470.37 144.28 478.06 144.29C493.6 144.31 511.27 140.43 526.43 142.84L526.05 142.87C528.52 143.6 538.76 143.93 542.62 144.48L542.9 145.34C590.46 150.07 630.89 160.44 674.28 181.54C683.92 182.53 702.83 193.82 710.49 199.47C756.29 225.96 812.88 288.53 836.35 338.09C836.52 338.45 836.62 340.12 836.65 340.55C837.08 341.98 841.18 350.22 842.02 351.99C845.51 359.13 848.7 366.43 851.56 373.84C865.26 409.89 873.53 447.76 876.12 486.24C877.68 507.61 876.43 530.03 873.9 551.29C865.2 628.47 832.97 701.1 781.58 759.34C654.1 906.04 420.5 918.78 275.08 791.32C216.44 740.15 175.56 671.7 158.32 595.81C153.45 573.29 150.3 550.43 148.91 527.43C147.98 513.34 148.62 500.36 149.48 486.32C154.25 409.18 186.54 328.14 237.67 269.84C241.59 264.43 251.37 254.42 256.21 249.54C287.76 217.42 325.27 191.75 366.65 173.98C375.73 170.05 388.39 164.92 397.97 162.32C403.22 159.73 419.84 156.03 426.33 154.08Z"/>
+                              <path fill="url(#grad)" d="M674.28 181.54C683.92 182.53 702.83 193.82 710.49 199.47C756.29 225.96 812.88 288.53 836.35 338.09C836.52 338.45 836.62 340.12 836.65 340.55C835.47 338.85 834.08 336.24 833.07 334.38C826.41 322.04 819.19 310.62 811.06 299.18C790.65 270.64 766.57 244.91 739.44 222.67C734.02 218.27 728.46 214.04 722.77 209.98C720.4 208.31 714.89 204.93 712.99 203.31L712.41 202.82C708.35 200.78 700.78 195.84 696.53 193.35C689.25 189.18 681.83 185.23 674.28 181.54Z"/>
+                              <path fill="url(#grad)" d="M426.33 154.08C431.45 149.93 470.37 144.28 478.06 144.29C493.6 144.31 511.27 140.43 526.43 142.84L526.05 142.87C528.52 143.6 538.76 143.93 542.62 144.48L542.9 145.34C497.25 142.81 470.71 144.81 426.33 154.08Z"/>
+                              <path fill="#ffffff" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.4 550.72 591.4 550.72 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 754.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C390.86 502.65 390.86 502.65 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
+                            </svg>
+                            <div style="display:flex; flex-direction:column; gap:1px;">
+                                <span style="font-weight:800; color:var(--primary); font-size:13px; letter-spacing:0.5px;">GRUPO TDM</span>
+                                <span style="font-weight:500; color:var(--text-muted); font-size:8px; text-transform:uppercase; letter-spacing:0.2px;">AUDITORÍA DE CALIDAD</span>
+                            </div>
+                        </div>
+                        <div class="header-title-area">
+                            <h1 style="font-size: 17px; font-weight: 800; color: var(--primary); letter-spacing: 0.5px; text-transform: uppercase;">REPORTE DE ${rep.tipo_visita ? rep.tipo_visita : 'AUDITORIA DE CALIDAD'}</h1>
+                            <p style="font-size: 11.5px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; margin-top: 4px; letter-spacing: 0.3px;">${productoraNombre}</p>
+                        </div>
+                        <div class="header-meta-area">
+                            <p class="report-id">${rep.id_reporte || 'S/N'}</p>
+                            <p class="report-date">${formatearFecha(rep.fecha || new Date())}</p>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta de Decisión -->
+                    <div class="conclusion-card" style="background-color: ${bgHeaderConclusion}; border: 1px solid ${conclusionAprobado ? '#bbf7d0' : '#fecaca'}; padding: 12px 18px; border-radius: 6px; margin-bottom: 15px; display: flex; align-items: center; gap: 20px;">
+                        <div class="conclusion-badge ${conclusionClass}">
+                            <i class="fas ${conclusionIcon}"></i> ${rep.conclusion || 'SIN CONCLUSIÓN'}
+                        </div>
+                        <div class="conclusion-audited-info" style="flex: 1; display: grid; grid-template-columns: 2.2fr 1.2fr 0.6fr; gap: 15px; border-left: 2px solid rgba(0,0,0,0.1); padding-left: 20px;">
+                            <div class="info-block">
+                                <div style="font-size: 7.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; letter-spacing: 0.2px;">PLANTA CONFECCIÓN</div>
+                                <div style="font-size: 12.5px; font-weight: 800; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.1px; line-height: 1.2;">
+                                    ${rep.planta || 'N/A'}
+                                </div>
+                            </div>
+                            <div class="info-block">
+                                <div style="font-size: 7.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; letter-spacing: 0.2px;">PROCESO AUDITADO</div>
+                                <div style="font-size: 12.5px; font-weight: 800; color: var(--text-dark); text-transform: uppercase; letter-spacing: 0.1px;">
+                                    ${rep.proceso || 'N/A'}
+                                </div>
+                            </div>
+                            <div class="info-block">
+                                <div style="font-size: 7.5px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 2px; letter-spacing: 0.2px;">OP / LOTE</div>
+                                <div style="font-size: 12.5px; font-weight: 800; color: var(--text-dark); letter-spacing: 0.1px;">
+                                    ${rep.id || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detalles del Lote -->
+                    <div class="section">
+                        <div class="section-header">
+                            <i class="fas fa-box-open"></i> Detalles de Operación
+                        </div>
+                        <div class="section-content" style="padding: 12px 15px;">
+                            <!-- Grilla de detalles simétrica (3 columnas) -->
+                            <div class="data-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                                <div class="data-item">
+                                    <span class="data-label">Referencia</span>
+                                    <span class="data-value" style="font-weight: 700; color: var(--text-dark);">${rep.referencia || 'N/A'}</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-label">Línea</span>
+                                    <span class="data-value" style="text-transform: uppercase;">${rep.linea || 'N/A'}</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-label">Tipo Visita</span>
+                                    <span class="data-value" style="text-transform: uppercase;">${rep.tipo_visita || 'N/A'}</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-label">Cantidad</span>
+                                    <span class="data-value" style="font-weight: 700; color: var(--text-dark);">${rep.cantidad || '0'}</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-label">Prenda</span>
+                                    <span class="data-value" style="text-transform: uppercase;">${rep.prenda || 'N/A'}</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-label">Género</span>
+                                    <span class="data-value" style="text-transform: uppercase;">${rep.genero || 'N/A'}</span>
+                                </div>
+                                ${rep.tejido && rep.tejido.trim() !== '' && rep.tejido.trim().toUpperCase() !== 'N/A' ? `
+                                <div class="data-item">
+                                    <span class="data-label">Tejido</span>
+                                    <span class="data-value" style="text-transform: uppercase;">${rep.tejido}</span>
+                                </div>` : ''}
+                                ${rep.destino_proceso && rep.destino_proceso.trim() !== '' && rep.destino_proceso.trim().toUpperCase() !== 'N/A' ? `
+                                <div class="data-item">
+                                    <span class="data-label">Destino</span>
+                                    <span class="data-value" style="font-weight: 700; color: var(--primary); text-transform: uppercase;">${rep.destino_proceso}</span>
+                                </div>` : ''}
+                                ${rep.destino_planta && rep.destino_planta.trim() !== '' && rep.destino_planta.trim().toUpperCase() !== 'N/A' ? `
+                                <div class="data-item">
+                                    <span class="data-label">Lugar</span>
+                                    <span class="data-value" style="font-weight: 700; color: var(--text-dark); text-transform: uppercase;">
+                                        ${String(rep.destino_planta || '').toUpperCase() === 'CDI' ? 'CDI (CENTRO DE DISTRIBUCION)' : rep.destino_planta}
+                                    </span>
+                                </div>` : ''}
+                                ${rep.avance && !isNaN(parseInt(rep.avance)) && parseInt(rep.avance) > 0 ? `
+                                <div class="data-item" style="grid-column: span 3; margin-top: 5px;">
+                                    <span class="data-label">Avance del Lote</span>
+                                    <div style="display:flex; align-items:center; gap:10px; margin-top:4px;">
+                                        <div style="flex:1; height:8px; background:#e2e8f0; border-radius:4px; overflow:hidden;">
+                                            <div style="width:${parseInt(rep.avance)}%; height:100%; background:var(--primary); border-radius:4px;"></div>
+                                        </div>
+                                        <span style="font-weight:800; font-size:11px; color:var(--text-dark);">${parseInt(rep.avance)}%</span>
+                                    </div>
+                                </div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    ${geolocYEvidenciaHtml}
+
+                    ${(() => {
+                        const content = renderNovedadesAuditoria(rep.novedades_auditoria);
+                        if (content.includes('No se registraron novedades cuantitativas')) return '';
+                        return `
+                        <!-- Novedades de Calidad (Grid o Lista) -->
+                        <div class="section avoid-break">
+                            <div class="section-header">
+                                <i class="fas fa-search"></i> Hallazgos Cuantitativos
+                            </div>
+                            <div class="section-content" style="padding-bottom:2px;">
+                                ${content}
+                            </div>
+                        </div>
+                        `;
+                    })()}
+
+                    <!-- Observaciones (si las hay o mostrar un placeholder) -->
+                    <div class="section avoid-break">
+                        <div class="section-header">
+                            <i class="fas fa-comment-alt"></i> Observaciones Generales
+                        </div>
+                        <div class="section-content" style="background: #f8fafc; padding: 20px 25px; border: 1px dashed #cbd5e1; border-radius: 0 0 6px 6px; font-size: 13.5px; font-weight: 500; line-height: 1.6; color: var(--text-dark); white-space: pre-wrap; margin-top: -1px; box-sizing: border-box;">${rep.observaciones ? rep.observaciones.trim() : 'Sin observaciones adicionales.'}</div>
+                    </div>
+
+                    <!-- Firmas de Conformidad -->
+                    <div class="section avoid-break">
+                        <div class="section-header"><i class="fas fa-file-signature"></i> Firmas de Conformidad</div>
+                        <div class="section-content" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 25px; height: 200px; box-sizing: border-box; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 0 0 6px 6px; margin-top:-1px;">
+                            <!-- Firma Auditor -->
+                            <div style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center; text-align: center; border-right: 1px dashed #cbd5e1; padding-right: 15px;">
+                                <div style="height: 100px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                    ${auditorFirmaSvg ? auditorFirmaSvg.replace(/<svg/g, '<svg class="firma-svg" style="max-height: 80px; width: auto;"') : `
+                                        <!-- Sello de Certificación Digital -->
+                                        <div style="border: 2px dashed #22c55e; border-radius: 6px; padding: 6px 12px; background: #f0fdf4; color: #15803d; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            <i class="fas fa-certificate" style="margin-right: 4px;"></i> Certificado Digital
+                                            <div style="font-family: monospace; font-size: 8px; color: #166534; margin-top: 3px; font-weight: 400;">
+                                                AUDITOR: ${auditorNombre}<br>
+                                                REGISTRO: OK-AUTH
+                                            </div>
+                                        </div>
+                                    `}
+                                </div>
+                                <div style="width: 80%; height: 1px; background: #94a3b8; margin: 8px 0 4px;"></div>
+                                <span style="font-size: 11px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">${auditorNombre}</span>
+                                <span style="font-size: 9px; font-weight: 600; color: var(--text-muted);">C.C. / CÉDULA: ${auditorCedula}</span>
+                            </div>
+
+                            <!-- Firma Recibido Taller -->
+                            <div style="display: flex; flex-direction: column; justify-content: flex-end; align-items: center; text-align: center; padding-left: 15px;">
+                                <div style="height: 100px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                                    ${rep.firma_svg ? rep.firma_svg.replace(/<svg/g, '<svg class="firma-svg" style="max-height: 80px; width: auto;"') : '<span style="color:#94a3b8; font-style:italic; font-size: 10px;">Sin firma registrada</span>'}
+                                </div>
+                                <div style="width: 80%; height: 1px; background: #94a3b8; margin: 8px 0 4px;"></div>
+                                <span style="font-size: 11px; font-weight: 700; color: var(--text-dark); text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 250px;">${plantaDatos.nombre}</span>
+                                <span style="font-size: 9px; font-weight: 600; color: var(--text-muted);">C.C. / NIT: ${plantaDatos.cedula}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                contenedor.innerHTML = html;
+
+                // Ocultar indicador de carga
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) {
+                    loadingIndicator.style.opacity = '0';
+                    setTimeout(() => loadingIndicator.remove(), 300);
+                }
+
+                // Auto-imprimir pasados unos ms si es necesario, o dejar que el usuario presione el botón.
+                // setTimeout(() => window.print(), 1000);
+
+            } catch (err) {
+                console.error(err);
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) loadingIndicator.remove();
+                document.body.innerHTML = `<h2 style="padding:20px; text-align:center; color:#ef4444;">Error al cargar datos del reporte: ${err.message}</h2>`;
+            }
+        }
+
+        async function descargarComoPDFCanvas() {
+            const btn = document.getElementById('btnDescargarPDFCanvas');
+            const originalContent = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
+            
+            // Guardar los estados de geolocalización originales para restaurarlos luego
+            const mapContainers = document.querySelectorAll('.map-container-dynamic');
+            const savedMapStates = [];
+            
+            try {
+                const element = document.getElementById('reporteContenedor');
+                if (!element) {
+                    alert('Error: No se pudo encontrar el contenedor del reporte.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                    return;
+                }
+                
+                // 1. Intercambiar temporalmente iframes de Google Maps por imágenes estáticas de Yandex Maps para que html2canvas las dibuje
+                for (const container of mapContainers) {
+                    const iframe = container.querySelector('iframe');
+                    if (iframe) {
+                        const coords = String(window.printData?.localizacion || '').split(',');
+                        const lat = coords[0]?.trim();
+                        const lon = coords[1]?.trim();
+                        if (lat && lon) {
+                            const staticMapUrl = `https://static-maps.yandex.ru/1.x/?ll=${lon},${lat}&z=16&l=map&size=650,300&pt=${lon},${lat},pm2rdl`;
+                            
+                            // Guardar estado original
+                            savedMapStates.push({
+                                container: container,
+                                originalHTML: container.innerHTML
+                            });
+                            
+                            // Reemplazar con imagen estática temporal
+                            container.innerHTML = `<img src="${staticMapUrl}" style="width:100%; height:100%; object-fit:cover; border:none;" alt="Mapa de geolocalización">`;
+                        }
+                    }
+                }
+                
+                // Esperar 200ms para asegurar que las imágenes estáticas del mapa se carguen en memoria antes del canvas
+                await new Promise(resolve => setTimeout(resolve, 200));
+
+                // Limpiar sombras y ajustar fondo para el corte perfecto
+                const originalBoxShadow = element.style.boxShadow;
+                const originalMargin = element.style.margin;
+                const originalPadding = element.style.padding;
+                
+                element.style.boxShadow = 'none';
+                element.style.margin = '0';
+                element.style.padding = '4px';
+                element.style.background = '#ffffff';
+                
+                const canvas = await html2canvas(element, {
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: false,
+                    backgroundColor: '#ffffff',
+                    logging: false
+                });
+                
+                // Restaurar estilos de visualización
+                element.style.boxShadow = originalBoxShadow;
+                element.style.margin = originalMargin;
+                element.style.padding = originalPadding;
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = imgWidth / imgHeight;
+                
+                const pdfWidth = 215.9; // Carta estándar en mm (8.5 pulgadas)
+                const margin = 5; // Margen mínimo estético de 5mm
+                
+                const printableWidth = pdfWidth - (margin * 2);
+                const printableHeight = printableWidth / ratio;
+                const pdfHeight = printableHeight + (margin * 2);
+                
+                const { jsPDF } = window.jspdf || window;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'mm',
+                    format: [pdfWidth, pdfHeight] // Alto proporcional perfecto
+                });
+                
+                pdf.addImage(imgData, 'JPEG', margin, margin, printableWidth, printableHeight, undefined, 'FAST');
+                
+                const op = window.printData?.op || window.printData?.id_reporte || 'Novedad';
+                pdf.save(`Reporte_Calidad_OP_${op}.pdf`);
+                
+            } catch (err) {
+                console.error(err);
+                alert('No se pudo generar el PDF: ' + err.message);
+            } finally {
+                // 2. Restaurar de inmediato los iframes originales e interactivos de Google Maps en la pantalla
+                for (const state of savedMapStates) {
+                    state.container.innerHTML = state.originalHTML;
+                }
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        }
+
+        window.onload = () => {
+            init().then(() => {
+                if (window.printData && window.printData._autoPrint) {
+                    setTimeout(() => window.print(), 800);
+                }
+            });
+        };
+    </script>
+</body>
+</html>

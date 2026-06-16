@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+  <title>Aprobación de Planta - Grupo TDM</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+  <meta name="theme-color" content="#3b82f6">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  
+  <script>
+    (function(){
+      let hasSession = false;
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes('-auth-token')) {
+          try {
+            const raw = localStorage.getItem(key);
+            if (raw && raw !== 'undefined' && raw !== 'null') {
+              const session = JSON.parse(raw);
+              if (session && session.access_token) {
+                hasSession = true;
+                break;
+              }
+            }
+          } catch(e) {}
+        }
+      }
+      if(!hasSession) window.location.replace('login.html');
+    })();
+  </script>
+  
+  <style>
+    body {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      user-select: auto !important;
+      padding-top: 0;
+      background-attachment: fixed;
+      color: #1e293b;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .wrapper-dashboard {
+      width: 96%;
+      max-width: 1200px;
+      margin: 80px auto 2rem;
+      padding: 2rem;
+      background: transparent;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      z-index: 10;
+    }
+
+    @media (max-width: 767px) {
+      .wrapper-dashboard {
+        width: 100%;
+        margin: 60px 0 1rem;
+        padding: 2rem;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        box-shadow: none;
+      }
+    }
+
+    .form-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    .form-section h5 {
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .form-section h5 i {
+      color: #3f51b5;
+    }
+
+    .btn-primary {
+      background: #3f51b5;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+
+    .btn-primary:hover {
+      background: #303f9f;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper-dashboard">
+
+    <form id="aprobacionForm">
+      <!-- Información Básica -->
+      <div class="form-section">
+        <h5><i class="fas fa-info-circle"></i> Información Básica</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="idPlantaAnexo" class="form-label">Nit o Cédula *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-id-card input-icon"></i>
+              <input type="number" class="form-control" id="idPlantaAnexo" placeholder="Ingrese NIT o cédula" required oninput="this.value = this.value.replace(/[eE.]/g, '')">
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="plantaAnexo" class="form-label">Nombre de Planta *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-industry input-icon"></i>
+              <input type="text" class="form-control" id="plantaAnexo" placeholder="Ingrese nombre de la planta" required>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="productoraAprobacion" class="form-label">Productora *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-building input-icon"></i>
+              <select class="form-control" id="productoraAprobacion" required>
+                <option value="" disabled selected>Seleccione productora</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="correoAprobacion" class="form-label">Correo Electrónico</label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" class="form-control" id="correoAprobacion" placeholder="ejemplo@correo.com">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="telefonoAprobacion" class="form-label">Teléfono *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-phone input-icon"></i>
+              <input type="tel" class="form-control" id="telefonoAprobacion" placeholder="3XXXXXXXXX" maxlength="10" required oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="operariosAprobacion" class="form-label">Número de Operarios</label>
+            <div class="input-with-icon">
+              <i class="fas fa-users input-icon"></i>
+              <input type="number" class="form-control" id="operariosAprobacion" min="0" placeholder="0" oninput="this.value = this.value.replace(/[eE.]/g, '')">
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="tipoVisita" class="form-label">Tipo de Visita</label>
+            <div class="input-with-icon">
+              <i class="fas fa-clipboard-check input-icon"></i>
+              <input type="text" class="form-control" id="tipoVisita" value="APROBACION" readonly>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="emailUsuarioAprobacion" class="form-label">Email Usuario</label>
+            <div class="input-with-icon">
+              <i class="fas fa-envelope input-icon"></i>
+              <input type="email" class="form-control" id="emailUsuarioAprobacion" readonly>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label">Tipo de Tejido</label>
+            <div class="d-flex gap-3">
+              <div class="flex-fill text-center">
+                <div style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">PLANO</div>
+                <input class="form-check-input" type="checkbox" id="tejidoPLANO" value="PLANO" style="width: 1.5em; height: 1.5em; margin: 0 auto;">
+              </div>
+              <div class="flex-fill text-center">
+                <div style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">PUNTO</div>
+                <input class="form-check-input" type="checkbox" id="tejidoPUNTO" value="PUNTO" style="width: 1.5em; height: 1.5em; margin: 0 auto;">
+              </div>
+              <div class="flex-fill text-center">
+                <div style="font-size: 0.95rem; font-weight: 500; margin-bottom: 4px;">INDIGO</div>
+                <input class="form-check-input" type="checkbox" id="tejidoINDIGO" value="INDIGO" style="width: 1.5em; height: 1.5em; margin: 0 auto;">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label class="form-label"><i class="fas fa-camera me-1"></i>Soporte Fotográfico</label>
+            <div class="file-dropzone" id="soporteDropzone" role="button" tabindex="0">
+              <i class="fas fa-camera file-dropzone__icon"></i>
+              <div class="file-dropzone__text">
+                <span class="file-dropzone__action">Haz clic para subir soporte fotográfico</span>
+                <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
+              </div>
+              <span class="file-dropzone__name" id="soporteName"></span>
+            </div>
+            <input type="file" id="soporte" class="file-dropzone__input" accept="image/*" capture="environment">
+          </div>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="form-section">
+        <h5><i class="fas fa-map-marker-alt"></i> Ubicación</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="departamentoAprobacion" class="form-label">Departamento</label>
+            <div class="input-with-icon">
+              <i class="fas fa-map input-icon"></i>
+              <select class="form-control" id="departamentoAprobacion">
+                <option value="" disabled selected>Seleccione departamento</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3" id="ciudadContainer" style="display: none;">
+            <label for="ciudadAprobacion" class="form-label">Ciudad</label>
+            <div class="input-with-icon">
+              <i class="fas fa-city input-icon"></i>
+              <select class="form-control" id="ciudadAprobacion">
+                <option value="" disabled selected>Seleccione ciudad</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3" id="comunaContainer" style="display: none;">
+            <label for="comunaAprobacion" class="form-label" id="comunaLabel">Comuna</label>
+            <div class="input-with-icon">
+              <i class="fas fa-map-marked-alt input-icon"></i>
+              <select class="form-control" id="comunaAprobacion">
+                <option value="" disabled selected>Seleccione</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3" id="barrioContainer" style="display: none;">
+            <label for="barrioAprobacion" class="form-label">Barrio</label>
+            <div class="input-with-icon">
+              <i class="fas fa-home input-icon"></i>
+              <input type="text" class="form-control" id="barrioAprobacion" list="barrioOptions" placeholder="Ingrese barrio">
+              <datalist id="barrioOptions"></datalist>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="localizacionAprobacion" class="form-label">Localización *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-crosshairs input-icon"></i>
+              <input type="text" class="form-control" id="localizacionAprobacion" placeholder="Obteniendo ubicación..." required readonly style="padding-right: 40px;">
+              <button type="button" id="btnGeolocalizar" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #3b82f6; cursor: pointer; padding: 5px;">
+                <i class="fas fa-map-marker-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="direccionAprobacion" class="form-label">Dirección Completa *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-road input-icon"></i>
+              <input type="text" class="form-control" id="direccionAprobacion" placeholder="Ingrese dirección completa" required>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Maquinaria -->
+      <div class="form-section">
+        <h5><i class="fas fa-cogs"></i> Maquinaria</h5>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="maquinariaSelect" class="form-label">Tipo de Maquinaria</label>
+            <div class="input-with-icon">
+              <i class="fas fa-cog input-icon"></i>
+              <select class="form-control" id="maquinariaSelect">
+                <option value="" disabled selected>Seleccione tipo</option>
+                <option value="OTRO">Otro (especificar abajo)</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label for="maquinariaCantidad" class="form-label">Cantidad</label>
+            <div class="input-with-icon">
+              <i class="fas fa-hashtag input-icon"></i>
+              <input type="number" class="form-control" id="maquinariaCantidad" min="1" value="1" placeholder="1">
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <button type="button" class="btn btn-primary w-100" id="agregarMaquinariaBtn">
+              <i class="fas fa-plus"></i> Agregar Maquinaria
+            </button>
+          </div>
+        </div>
+        <div class="row mb-3" id="maquinariaCustomContainer" style="display: none;">
+          <div class="col-md-12">
+            <label for="maquinariaCustom" class="form-label">Especificar Tipo de Maquinaria</label>
+            <div class="input-with-icon">
+              <i class="fas fa-edit input-icon"></i>
+              <input type="text" class="form-control" id="maquinariaCustom" placeholder="Ingrese tipo de maquinaria">
+            </div>
+          </div>
+        </div>
+        <div id="maquinariaLista"></div>
+      </div>
+
+      <!-- Horarios -->
+      <div class="form-section">
+        <h5><i class="fas fa-clock"></i> Horarios</h5>
+        <div class="mb-3">
+          <label class="form-label">Días de Operación</label>
+          <div class="btn-group w-100" role="group" id="diasContainer">
+            <button type="button" class="btn btn-outline-primary dia-btn" data-dia="0">Lunes-Viernes</button>
+            <button type="button" class="btn btn-outline-primary dia-btn" data-dia="6">Sábado</button>
+            <button type="button" class="btn btn-outline-primary dia-btn" data-dia="7">Domingo</button>
+          </div>
+          <input type="hidden" id="diasSeleccionados" name="dias">
+        </div>
+        
+        <!-- Bloque de horario -->
+        <div class="row mb-3">
+          <div class="col-md-3 mb-2">
+            <label class="form-label">Inicio</label>
+            <div class="input-with-icon">
+              <i class="fas fa-clock input-icon"></i>
+              <input type="time" class="form-control hora-inicio-input">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <label class="form-label">Fin</label>
+            <div class="input-with-icon">
+              <i class="fas fa-clock input-icon"></i>
+              <input type="time" class="form-control hora-fin-input">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <label class="form-label">Desayuno (min)</label>
+            <div class="input-with-icon">
+              <i class="fas fa-utensils input-icon"></i>
+              <input type="number" class="form-control desayuno-input" min="0" placeholder="0">
+            </div>
+          </div>
+          <div class="col-md-3 mb-2">
+            <label class="form-label">Almuerzo (min)</label>
+            <div class="input-with-icon">
+              <i class="fas fa-utensils input-icon"></i>
+              <input type="number" class="form-control almuerzo-input" min="0" placeholder="0">
+            </div>
+          </div>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <button type="button" class="btn btn-primary w-100" id="calcularHorarioBtn">
+              <i class="fas fa-calculator"></i> Calcular Horario
+            </button>
+          </div>
+        </div>
+        <div id="horarioResultado"></div>
+      </div>
+
+      <!-- Fuerte (Tipos de Prendas) -->
+      <div class="form-section">
+        <h5><i class="fas fa-tshirt"></i> Tipos de Prendas (Fuerte)</h5>
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <label for="fuerteSelect" class="form-label">Tipo de Prenda</label>
+            <div class="input-with-icon">
+              <i class="fas fa-tag input-icon"></i>
+              <select class="form-control" id="fuerteSelect">
+                <option value="" disabled selected>Seleccione tipo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <button type="button" class="btn btn-primary w-100" id="agregarFuerteBtn">
+              <i class="fas fa-plus"></i> Agregar Tipo de Prenda
+            </button>
+          </div>
+        </div>
+        <div id="fuerteLista"></div>
+      </div>
+
+      <!-- Estado y Comentarios -->
+      <div class="form-section">
+        <h5><i class="fas fa-check-double"></i> Estado de Aprobación</h5>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="estadoAprobacion" class="form-label">Estado *</label>
+            <div class="input-with-icon">
+              <i class="fas fa-clipboard-check input-icon"></i>
+              <select class="form-control" id="estadoAprobacion" required>
+                <option value="" disabled selected>Seleccione estado</option>
+                <option value="APROBADO">APROBADO</option>
+                <option value="RECHAZADO">RECHAZADO</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="fechaAprobacion" class="form-label">fecha</label>
+            <div class="input-with-icon">
+              <i class="fas fa-calendar-alt input-icon"></i>
+              <input type="datetime-local" class="form-control" id="fechaAprobacion" required readonly>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label for="comentariosAprobacion" class="form-label">Comentarios</label>
+            <textarea class="form-control" id="comentariosAprobacion" rows="3" placeholder="Ingrese comentarios sobre la aprobación o rechazo"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Firma -->
+      <div class="form-section">
+        <h5><i class="fas fa-signature"></i> Firma Digital</h5>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <div id="firmaContainer"></div>
+            <input type="hidden" id="firmaData">
+          </div>
+        </div>
+      </div>
+
+      <!-- Botones -->
+      <div class="d-flex gap-2 justify-content-end">
+        <a href="index.html" class="btn btn-outline-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-save"></i> Guardar Aprobación
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/data/colombia-locations.js"></script>
+  <script src="js/forms/dropzone.js"></script>
+  <script src="js/firma.js"></script>
+  <script src="js/forms/aprobacion.js"></script>
+
+  <script>
+    // Cargar productoras
+    async function cargarProductoras() {
+      try {
+        const response = await fetch(`${CONFIG.FUNCTIONS_URL}/operations`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_KEY },
+          body: JSON.stringify({ accion: 'LISTAR_PRODUCTORAS' })
+        });
+        const result = await response.json();
+        const select = document.getElementById('productoraAprobacion');
+        if (select && result.productoras) {
+          result.productoras.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id_productora;
+            option.textContent = p.productora;
+            select.appendChild(option);
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar productoras:', error);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', cargarProductoras);
+
+    // Capturar fecha y hora automáticamente
+    function capturarFechaHora() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const fechaInput = document.getElementById('fechaAprobacion');
+      if (fechaInput) {
+        fechaInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+    }
+
+    // Capturar fecha/hora al cargar
+    capturarFechaHora();
+
+    // Llenar email del usuario logueado
+    if (window.currentUser) {
+      const emailUsuario = window.currentUser.EMAIL || window.currentUser.email || window.currentUser.CORREO || window.currentUser.correo || '';
+      const emailInput = document.getElementById('emailUsuarioAprobacion');
+      if (emailInput) {
+        emailInput.value = emailUsuario;
+      }
+    }
+
+    // Inicializar dropzone de soporte
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.initDropzones) {
+        window.initDropzones();
+      }
+    });
+
+    // Inicializar FirmaTaller
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.FirmaTaller) {
+        window.FirmaTaller.init('firmaContainer');
+      }
+    });
+  </script>
+</body>
+
+</html>
