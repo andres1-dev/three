@@ -228,44 +228,13 @@ function _buildCurrentUser(user) {
 })();
 
 // 6. Escudo de Seguridad
-(async function _shield() {
+(function _shield() {
     const active = hasValidSession();
     if (!active && !IS_LOGIN_PAGE) {
         sessionStorage.setItem('auth_redirect', window.location.href);
         window.location.replace('login.html');
     } else if (active && IS_LOGIN_PAGE) {
         window.location.replace('index.html');
-    }
-
-    // Verificar bandera de logout global si hay sesión activa
-    if (active && !IS_LOGIN_PAGE) {
-        try {
-            const sb = getSB();
-            if (!sb) return;
-
-            // Verificar si hay una bandera de logout global
-            const { data: configData, error: configErr } = await sb
-                .from('configuracion')
-                .select('valor')
-                .eq('clave', 'force_logout_timestamp')
-                .single();
-
-            if (!configErr && configData) {
-                const logoutTimestamp = parseInt(configData.valor);
-                const lastCheck = parseInt(localStorage.getItem('last_logout_check') || '0');
-
-                // Si la bandera es más reciente que la última verificación, forzar logout
-                if (logoutTimestamp > lastCheck) {
-                    console.log('[AUTH] Bandera de logout global detectada. Forzando reautenticación...');
-                    localStorage.setItem('last_logout_check', Date.now().toString());
-                    if (typeof window.logout === 'function') {
-                        window.logout();
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('[AUTH] Error verificando bandera de logout global:', e);
-        }
     }
 })();
 
