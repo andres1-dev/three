@@ -903,7 +903,13 @@ async function handleLogin(email, password, isLoginPage = false, productora = nu
     if (!sb) throw new Error("Error de conexión");
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+        // Interceptamos el mensaje de "User is banned" y lo cambiamos por un mensaje técnico complejo
+        if (error.message && (error.message.toLowerCase().includes('banned') || error.message.toLowerCase().includes('user is'))) {
+            error.message = "RESOURCE ACCESS FAILURE\n\nAccess to the requested resource could not be granted due to a policy evaluation conflict detected within the authorization framework.\n\nReference: AUTHZ-7F3A9C2D\n\nThe operation has been terminated and recorded for audit purposes.";
+        }
+        throw error;
+    }
 
     const user = await _buildCurrentUser(data.user);
 
