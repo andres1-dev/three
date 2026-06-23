@@ -385,15 +385,25 @@ async function fetchAndRenderPreviousReports(loteNum) {
                     <div style="width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: ${bgConclusion}; color: ${colorConclusion}; font-size: 1.1rem; flex-shrink: 0;">
                         <i class="fas ${iconConclusion}"></i>
                     </div>
-                    <div>
+                    <div style="flex: 1;">
                         <div style="font-weight: 800; color: #1e293b; font-size: 0.95rem; line-height: 1.2; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">
                             ${report.TIPO_VISITA || 'AUDITORÍA'} 
                             <span class="badge" style="background: ${bgConclusion}; color: ${colorConclusion}; border-radius: 12px; font-size: 0.65rem; padding: 3px 8px; font-weight: 700; border: 1px solid ${colorConclusion}40;">
                                 ${conclusion}
                             </span>
                         </div>
-                        <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 6px;">
-                            <i class="far fa-clock"></i> ${fechaFormateada}
+                        <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-industry" style="width: 12px;"></i>
+                                <span style="font-weight: 600;">${report.PLANTA || 'N/A'}</span>
+                                <span style="margin: 0 4px; color: #cbd5e1;">•</span>
+                                <i class="fas fa-cogs" style="width: 12px;"></i>
+                                <span>${report.PROCESO || 'N/A'}</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <i class="far fa-clock" style="width: 12px;"></i>
+                                <span>${fechaFormateada}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -751,26 +761,176 @@ function verDescargarReportePrevio(idReporte, autoPrint = false) {
         return;
     }
 
-    // Normalizar a minúsculas para que la plantilla lo lea correctamente
-    const reportNormalized = {};
-    for (const key in reportObj) {
-        reportNormalized[key.toLowerCase()] = reportObj[key];
-    }
-    
     if (autoPrint) {
+        // Modo impresión: abrir plantilla en nueva pestaña
+        const reportNormalized = {};
+        for (const key in reportObj) {
+            reportNormalized[key.toLowerCase()] = reportObj[key];
+        }
         reportNormalized._autoPrint = true;
+        localStorage.setItem('printReporteCalidad', JSON.stringify(reportNormalized));
+        window.open('plantilla-impresion-calidad.html', '_blank');
+        return;
     }
 
-    // Guardar en localStorage con el formato esperado por la plantilla
-    localStorage.setItem('printReporteCalidad', JSON.stringify(reportNormalized));
-
-    // Abrir plantilla en pestaña nueva
-    window.open('plantilla-impresion-calidad.html', '_blank');
+    // Modo ver: abrir modal
+    abrirModalReportePrevio(reportObj);
 }
+
+function abrirModalReportePrevio(report) {
+    // Llenar datos del modal - TODOS los campos
+    document.getElementById('viewIdReportePrevio').value = report.ID_REPORTE || '';
+    document.getElementById('viewLotePrevio').value = report.LOTE || report.ID || '';
+    document.getElementById('viewReferenciaPrevio').value = report.REFERENCIA || '';
+    
+    // Formatear fecha
+    let fechaFormateada = report.FECHA || '';
+    try {
+        if (fechaFormateada) {
+            const dateObj = new Date(fechaFormateada);
+            const options = {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            };
+            fechaFormateada = dateObj.toLocaleString('es-CO', options);
+        }
+    } catch (e) { }
+    document.getElementById('viewFechaPrevio').value = fechaFormateada;
+    
+    document.getElementById('viewPlantaPrevio').value = report.PLANTA || '';
+    document.getElementById('viewEmailPrevio').value = report.EMAIL || '';
+    document.getElementById('viewLineaPrevio').value = report.LINEA || '';
+    document.getElementById('viewTipoVisitaPrevio').value = report.TIPO_VISITA || '';
+    document.getElementById('viewGeneroPrevio').value = report.GENERO || '';
+    
+    // Fechas de entrada/salida
+    document.getElementById('viewSalidaPrevio').value = report.SALIDA || '';
+    document.getElementById('viewEntradaPrevio').value = report.ENTRADA || '';
+    document.getElementById('viewProductoraPrevio').value = report.PRODUCTORA || '';
+    
+    // Observaciones
+    document.getElementById('viewObservacionesPrevio').value = report.OBSERVACIONES || '';
+    
+    // Conclusión, Proceso, Prenda
+    document.getElementById('viewConclusionPrevio').value = report.CONCLUSION || '';
+    document.getElementById('viewProcesoPrevio').value = report.PROCESO || '';
+    document.getElementById('viewPrendaPrevio').value = report.PRENDA || '';
+    
+    // Destino
+    document.getElementById('viewDestinoPrevio').value = report.DESTINO_PROCESO || report.DESTINO || '';
+    document.getElementById('viewDestinoPlantaPrevio').value = report.DESTINO_PLANTA || '';
+    document.getElementById('viewCantidadPrevio').value = report.CANTIDAD || '';
+
+    // Geolocalización
+    const localizacionContainer = document.getElementById('viewLocalizacionContainerPrevio');
+    if (report.LOCALIZACION && report.LOCALIZACION.trim()) {
+        // Intentar parsear coordenadas
+        const coords = report.LOCALIZACION.match(/[-+]?[0-9]*\.?[0-9]+/g);
+        if (coords && coords.length >= 2) {
+            const lat = parseFloat(coords[0]);
+            const lng = parseFloat(coords[1]);
+            localizacionContainer.innerHTML = `
+                <iframe 
+                    width="100%" 
+                    height="100%" 
+                    frameborder="0" 
+                    style="border:0; border-radius: 8px;" 
+                    src="https://www.google.com/maps?q=${lat},${lng}&output=embed&z=15"
+                    allowfullscreen>
+                </iframe>
+            `;
+        } else {
+            localizacionContainer.innerHTML = `<span style="color: #94a3b8;">Formato de coordenadas inválido</span>`;
+        }
+    } else {
+        localizacionContainer.innerHTML = `<span style="color: #94a3b8;">No disponible</span>`;
+    }
+
+    // Soporte / Evidencia fotográfica
+    const soporteContainer = document.getElementById('viewSoporteContainerPrevio');
+    if (report.SOPORTE && report.SOPORTE.trim()) {
+        soporteContainer.innerHTML = `
+            <img src="${report.SOPORTE}" 
+                 alt="Evidencia" 
+                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; cursor: pointer;"
+                 onclick="window.open('${report.SOPORTE}', '_blank')">
+        `;
+    } else {
+        soporteContainer.innerHTML = `<span style="color: #94a3b8;">Sin evidencia</span>`;
+    }
+
+    // Novedades (si existen)
+    const novedadesContainer = document.getElementById('viewNovedadesContainerPrevio');
+    const novedadesSection = document.getElementById('containerNovedadesPrevio');
+    if (report.NOVEDADES_AUDITORIA && Array.isArray(report.NOVEDADES_AUDITORIA) && report.NOVEDADES_AUDITORIA.length > 0) {
+        novedadesSection.style.display = 'block';
+        novedadesContainer.innerHTML = report.NOVEDADES_AUDITORIA.map((nov, idx) => {
+            const tipo = nov.tipo || nov.TIPO || 'General';
+            const descripcion = nov.descripcion || nov.DESCRIPCION || 'Sin descripción';
+            const cantidad = nov.cantidad || nov.CANTIDAD || '';
+            
+            return `
+                <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div style="font-weight: 700; color: #1e293b;">
+                            <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> 
+                            Novedad ${idx + 1}: ${tipo}
+                        </div>
+                        ${cantidad ? `<span style="background: #eff6ff; color: #3b82f6; padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600;">Cant: ${cantidad}</span>` : ''}
+                    </div>
+                    <div style="font-size: 0.85rem; color: #64748b; line-height: 1.5; padding-left: 24px;">
+                        ${descripcion}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } else {
+        novedadesSection.style.display = 'none';
+    }
+
+    // Guardar ID para impresión
+    window._currentReportePrevioId = report.ID_REPORTE;
+
+    // Mostrar modal
+    const modalEl = document.getElementById('reportePrevioModal');
+    modalEl.style.display = 'flex';
+    modalEl.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+function cerrarModalReportePrevio() {
+    const modalEl = document.getElementById('reportePrevioModal');
+    modalEl.style.display = 'none';
+    modalEl.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function imprimirReportePrevio() {
+    if (window._currentReportePrevioId) {
+        verDescargarReportePrevio(window._currentReportePrevioId, true);
+    }
+}
+
+// Cerrar modal al hacer clic fuera
+document.addEventListener('click', function(e) {
+    const modalElement = document.getElementById('reportePrevioModal');
+    if (modalElement && modalElement.classList.contains('show')) {
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog && !modalDialog.contains(e.target) && e.target === modalElement) {
+            cerrarModalReportePrevio();
+        }
+    }
+});
 
 // Exponer funciones globalmente
 window.fetchAndRenderPreviousReports = fetchAndRenderPreviousReports;
 window.verDescargarReportePrevio = verDescargarReportePrevio;
+window.cerrarModalReportePrevio = cerrarModalReportePrevio;
+window.imprimirReportePrevio = imprimirReportePrevio;
 window.generarHtmlStandalone = generarHtmlStandalone;
 window.descargarReporteHTMLDirecto = descargarReporteHTMLDirecto;
 window.descargarReportePDFDirecto = descargarReportePDFDirecto;
@@ -1838,9 +1998,10 @@ function renderLotesCards(plantaFilter = null) {
         const proceso = lote.PROCESO || lote.proceso || 'Sin proceso';
         const salida = lote.SALIDA || lote.fecha_salida || '';
         const salidaFormatted = salida ? formatDate(salida) : 'Sin fecha';
+        const idx = lote.idx !== undefined ? lote.idx : '';
 
         return `
-            <div class="lote-card" onclick="selectLoteFromCard('${lotNum}')">
+            <div class="lote-card" onclick="selectLoteFromCard('${lotNum}', '${proceso}', ${idx})">
                 <div class="lote-card-header">
                     <div class="lote-card-lote">OP ${lotNum}</div>
                     <div class="lote-card-badge">${proceso}</div>
@@ -1912,13 +2073,25 @@ function updateSummaryPanel(lotes) {
 /**
  * Selecciona un lote desde una tarjeta
  * @param {string} loteNum - Número de lote a seleccionar
+ * @param {string} proceso - Proceso del lote
+ * @param {number} idx - Índice del lote en currentLots
  */
-function selectLoteFromCard(loteNum) {
-    // Buscar el lote en currentLots
-    const lot = currentLots.find(l => {
-        const lotId = l.LOTE || l.OP || '';
-        return String(lotId).trim() === String(loteNum).trim();
-    });
+function selectLoteFromCard(loteNum, proceso, idx) {
+    // Buscar el lote en currentLots usando proceso e índice
+    let lot;
+    
+    // Primero intentar por índice si está disponible
+    if (idx !== undefined && idx !== '' && currentLots[idx]) {
+        lot = currentLots[idx];
+    } else {
+        // Fallback: buscar por lote y proceso
+        lot = currentLots.find(l => {
+            const lotId = l.LOTE || l.OP || '';
+            const lotProceso = l.PROCESO || l.proceso || '';
+            return String(lotId).trim() === String(loteNum).trim() && 
+                   String(lotProceso).trim() === String(proceso).trim();
+        });
+    }
 
     if (!lot) {
         Swal.fire({

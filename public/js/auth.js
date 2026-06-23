@@ -227,56 +227,42 @@ function _buildCurrentUser(user) {
     } catch (e) { }
 })();
 
-// 6. Escudo de Seguridad
-(async function _shield() {
+// 6. Escudo de Seguridad (con protección anti-loop)
+(function _shield() {
+    // Prevenir ejecución múltiple que causa loops
+    if (window._shieldExecuted) return;
+    window._shieldExecuted = true;
+
     const active = hasValidSession();
-    if (!active && !IS_LOGIN_PAGE) {
-        sessionStorage.setItem('auth_redirect', window.location.href);
-        window.location.replace('login.html');
-    } else if (active && IS_LOGIN_PAGE) {
-        window.location.replace('index.html');
+    
+    // Prevenir loops verificando si ya estamos en medio de una redirección
+    const isRedirecting = sessionStorage.getItem('_auth_redirecting');
+    if (isRedirecting === 'true') {
+        console.log('[AUTH SHIELD] Redirección en progreso, saltando shield');
+        sessionStorage.removeItem('_auth_redirecting');
+        return;
     }
 
-    // Verificar bandera de logout global si hay sesión activa
-    if (active && !IS_LOGIN_PAGE) {
-        try {
-            const sb = getSB();
-            if (!sb) return;
-
-            // Verificar si hay una bandera de logout global
-            const { data: configData, error: configErr } = await sb
-                .from('configuracion')
-                .select('valor')
-                .eq('clave', 'force_logout_timestamp')
-                .single();
-
-            if (!configErr && configData) {
-                const logoutTimestamp = parseInt(configData.valor);
-                const lastCheck = parseInt(localStorage.getItem('last_logout_check') || '0');
-
-                // Si la bandera es más reciente que la última verificación, forzar logout
-                if (logoutTimestamp > lastCheck) {
-                    console.log('[AUTH] Bandera de logout global detectada. Forzando reautenticación...');
-                    localStorage.setItem('last_logout_check', Date.now().toString());
-                    if (typeof window.logout === 'function') {
-                        window.logout();
-                    }
-                }
-            }
-        } catch (e) {
-            console.warn('[AUTH] Error verificando bandera de logout global:', e);
-        }
+    if (!active && !IS_LOGIN_PAGE) {
+        console.log('[AUTH SHIELD] Sin sesión, redirigiendo a login');
+        sessionStorage.setItem('auth_redirect', window.location.href);
+        sessionStorage.setItem('_auth_redirecting', 'true');
+        window.location.replace('login.html');
+    } else if (active && IS_LOGIN_PAGE) {
+        console.log('[AUTH SHIELD] Con sesión en login, redirigiendo a index');
+        sessionStorage.setItem('_auth_redirecting', 'true');
+        window.location.replace('index.html');
     }
 })();
 
-// 6.2 Escucha Activa de Sesión (Supabase Auth State)
+// 6.2 Escucha Activa de Sesión (Supabase Auth State) - Optimizado para Cloudflare
 (function _authObserver() {
     // Retrasar ligeramente para asegurar que getSB() esté disponible
     setTimeout(() => {
         const sb = getSB();
         if (!sb) return;
 
-        // 1. Escuchar eventos de sesión en segundo plano
+        // 1. Escuchar SOLO eventos de sesión (no validar proactivamente)
         sb.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') {
                 if (!IS_LOGIN_PAGE && typeof window.logout === 'function') {
@@ -286,18 +272,21 @@ function _buildCurrentUser(user) {
             }
         });
 
-        // 2. Validación proactiva de la sesión al cargar o retomar la pestaña
+        // 2. VALIDACIÓN PROACTIVA DESHABILITADA EN PRODUCCIÓN
+        // Esta validación causa loops en Cloudflare debido a latencia de red
+        // Si necesitas reactivarla, solo hazlo en desarrollo local
+        /*
         if (!IS_LOGIN_PAGE) {
             sb.auth.getSession().then(({ data, error }) => {
-                // Si hay error (ej. 400 invalid_grant) o la sesión ya no existe en el servidor
                 if (error || !data.session) {
-                    console.warn("[AUTH] Sesión expirada o inválida detectada. Forzando logout limpio...", error);
+                    console.warn("[AUTH] Sesión expirada o inválida detectada...", error);
                     if (typeof window.logout === 'function') {
                         window.logout();
                     }
                 }
             });
         }
+        */
     }, 1000);
 })();
 
@@ -903,13 +892,7 @@ async function handleLogin(email, password, isLoginPage = false, productora = nu
     if (!sb) throw new Error("Error de conexión");
 
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) {
-        // Interceptamos el mensaje de "User is banned" y lo cambiamos por un mensaje técnico complejo
-        if (error.message && (error.message.toLowerCase().includes('banned') || error.message.toLowerCase().includes('user is'))) {
-            error.message = "RESOURCE ACCESS FAILURE\n\nAccess to the requested resource could not be granted due to a policy evaluation conflict detected within the authorization framework.\n\nReference: AUTHZ-7F3A9C2D\n\nThe operation has been terminated and recorded for audit purposes.";
-        }
-        throw error;
-    }
+    if (error) throw error;
 
     const user = await _buildCurrentUser(data.user);
 

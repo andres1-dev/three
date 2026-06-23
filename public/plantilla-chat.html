@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Transcripción de Chat - Novedad</title>
+    <title>TranscripciÃ“n de Chat - Novedad</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -340,13 +340,13 @@
 </head>
 <body>
     <div class="no-print">
-        <button class="btn-print" onclick="window.print()" title="Imprimir Transcripción">
+        <button class="btn-print" onclick="window.print()" title="Imprimir Transcripciï¿½n">
             <i class="fas fa-print"></i>
         </button>
     </div>
 
     <div class="container" id="chatContent">
-        <!-- Renderizado dinámico -->
+        <!-- Renderizado dinï¿½mico -->
     </div>
 
     <script>
@@ -383,12 +383,12 @@
                         <i class="fas fa-comments"></i>
                     </div>
                     <div class="doc-header-info">
-                        <h1>TRANSCRIPCIÓN DE CONVERSACIÓN</h1>
+                        <h1>TRANSCRIPCIï¿½N DE CONVERSACIï¿½N</h1>
                         <p class="folio">${nov.ID_NOVEDAD || 'SIN REGISTRO'}</p>
                         <p class="meta">
-                            Impreso el ${printDate} &nbsp;·&nbsp;
+                            Impreso el ${printDate} &nbsp;ï¿½&nbsp;
                             ${totalMsgs} mensaje${totalMsgs !== 1 ? 's' : ''}
-                            &nbsp;·&nbsp;
+                            &nbsp;ï¿½&nbsp;
                             <span class="status-badge" style="background:${getColor(nov.ESTADO)};">${nov.ESTADO || 'PENDIENTE'}</span>
                         </p>
                     </div>
@@ -423,7 +423,7 @@
 
                 <div class="transcript-header">
                     <i class="fas fa-comments"></i>
-                    Historial de Conversación
+                    Historial de Conversaciï¿½n
                 </div>
             `;
 
@@ -432,7 +432,7 @@
                     <div class="empty-chat">
                         <i class="fas fa-comments"></i>
                         <div style="font-weight:700;font-size:0.9rem;margin-bottom:4px;">Sin mensajes registrados</div>
-                        <div style="font-size:0.8rem;">Esta novedad no tiene conversación archivada.</div>
+                        <div style="font-size:0.8rem;">Esta novedad no tiene conversaciï¿½n archivada.</div>
                     </div>`;
             } else {
                 html += '<div class="messages-container">';
@@ -484,7 +484,7 @@
 
             html += `
                 <div class="doc-footer">
-                    <span><i class="fas fa-shield-alt" style="margin-right:4px;"></i> Documento confidencial — Sistema SISPRO</span>
+                    <span><i class="fas fa-shield-alt" style="margin-right:4px;"></i> Documento confidencial ï¿½ Sistema SISPRO</span>
                     <span>Novedad ${nov.ID_NOVEDAD}</span>
                 </div>`;
 

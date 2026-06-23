@@ -87,7 +87,11 @@ async function cargarDatos() {
     try {
         // Cargar reportes
         if (typeof fetchReportesData === 'function') {
-            liqReportes = await fetchReportesData();
+            const raw = await fetchReportesData();
+            liqReportes = (raw || []).filter(r => {
+                const estado = r.estado !== undefined ? r.estado : (r.ESTADO !== undefined ? r.ESTADO : true);
+                return estado !== false && estado !== 'false';
+            });
         }
 
         // Cargar aprobaciones

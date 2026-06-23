@@ -1,0 +1,14 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# CLOUDFLARE PAGES REDIRECTS - Sin Loops, Sin Caché Problemático
+# ═══════════════════════════════════════════════════════════════════════════
+
+# Servir archivos HTML directamente (sin redirects innecesarios)
+/login.html  /login.html  200
+/index.html  /index.html  200
+/reset.html  /reset.html  200
+
+# Portal público de seguimiento
+/novedad-publica/*  /novedad-publica/:splat  200
+
+# Fallback para rutas no encontradas (404 limpio, sin loops)
+/*  /login.html  404

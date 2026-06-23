@@ -31,12 +31,16 @@ const CONFIG = {
     /\.ttf$/,
     /\.eot$/
   ],
-  // URLs que nunca se cachearán (API, datos dinámicos)
+  // URLs que nunca se cachearán (API, datos dinámicos, páginas de auth)
   NEVER_CACHE: [
     /supabase\.co/,
     /functions\.supabase\.co/,
     /api\//,
-    /operations/
+    /operations/,
+    /login\.html/,      // No cachear login para evitar loops
+    /index\.html/,      // No cachear index para evitar loops
+    /auth\.js/,         // No cachear lógica de autenticación
+    /reset\.html/       // No cachear página de reset
   ],
   // Nombre de IndexedDB
   DB_NAME: 'BusintOfflineDB',

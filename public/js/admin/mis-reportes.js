@@ -25,7 +25,8 @@ let globalReportesPromise = null;
 window.onload = async function () {
     await loadUsers();
     const user = window.currentUser;
-    if (!user || user.ROL !== 'USER-C') {
+    const isAllowed = user && ['USER-C', 'ADMIN', 'MODERATOR'].includes(user.ROL);
+    if (!isAllowed) {
         window.location.replace('index.html');
         return;
     }
@@ -79,14 +80,20 @@ async function cargarMisReportesLocal(reportesPromise) {
 
         const user = window.currentUser || {};
         const userEmail = (user.EMAIL || user.CORREO || '').toLowerCase().trim();
+        const userRole = user.ROL || '';
+        const isAdminOrMod = ['ADMIN', 'MODERATOR'].includes(userRole);
         
-        // Filtrar reportes por email
+        // Filtrar reportes por email, a menos que sea ADMIN o MODERATOR, y excluir anulados (estado === false)
         gsReportes = (rawReportes || []).filter(r => {
+            const estado = r.estado !== undefined ? r.estado : (r.ESTADO !== undefined ? r.ESTADO : true);
+            if (estado === false || estado === 'false') return false;
+            if (isAdminOrMod) return true;
             return (r.EMAIL || '').toLowerCase().trim() === userEmail;
         });
 
         // Filtrar aprobaciones por email_usuario y normalizar estructura
         const aprobacionesNormalizadas = (rawAprobaciones || []).filter(r => {
+            if (isAdminOrMod) return true;
             const emailApr = (r.email_usuario || r.EMAIL_USUARIO || '').toLowerCase().trim();
             return emailApr === userEmail;
         }).map(apr => ({
@@ -127,6 +134,22 @@ async function cargarMisReportesLocal(reportesPromise) {
         });
 
         applyFilters();
+
+        // Check for edit parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const editId = urlParams.get('edit');
+        if (editId) {
+            const idx = gsFilteredReportes.findIndex(r => {
+                const rid = r.ID_REPORTE || r.id_reporte || r.ID || r.id || '';
+                return rid.toString() === editId.toString();
+            });
+            if (idx !== -1) {
+                expandReport(idx);
+                setTimeout(() => {
+                    entrarModoEdicion();
+                }, 300);
+            }
+        }
 
         if (loader) loader.style.display = 'none';
         if (dataSection) dataSection.style.display = 'flex';
@@ -1478,6 +1501,11 @@ function cerrarModalReporte() {
     modalEl.style.display = 'none';
     modalEl.classList.remove('show');
     document.body.style.overflow = '';
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('edit') && !window._isSavingAndRedirecting) {
+        window.location.replace('reportes-analizados.html');
+    }
 }
 
 function abrirLightbox(imageUrl) {
@@ -2246,10 +2274,12 @@ async function guardarCambiosReporte() {
         return;
     }
 
-    let avance = '';
+    let avance = (rep.avance !== undefined && rep.avance !== null) ? rep.avance : ((rep.AVANCE !== undefined && rep.AVANCE !== null) ? rep.AVANCE : null);
     const esPausado = conclusion === 'PAUSADO';
-    if ((tipoVisita === 'RONDA' || tipoVisita === 'CONTRAMUESTRA') && !esPausado) {
-        avance = document.getElementById('editAvancePorcentaje').value || '0';
+    const avanceSection = document.getElementById('containerAvanceEdit');
+    if (avanceSection && avanceSection.style.display !== 'none') {
+        const valAvance = document.getElementById('editAvancePorcentaje').value;
+        avance = (valAvance !== '' && valAvance !== null && valAvance !== undefined) ? Number(valAvance) : 0;
         if (tipoVisita === 'RONDA' && Number(avance) === 0) {
             Swal.fire({ icon: 'warning', title: 'Avance requerido', text: 'Para una Ronda debes registrar el porcentaje de avance de producción.', confirmButtonColor: '#3F51B5' });
             return;
@@ -2261,16 +2291,20 @@ async function guardarCambiosReporte() {
     const destinoOtroVal = document.getElementById('editDestinoOtro')?.value || '';
     const destinoPlantaVal = document.getElementById('editDestinoPlantaInput')?.value || '';
 
-    let destino_proceso = "";
-    let destino_planta = "";
+    let destino_proceso = rep.destino_proceso || rep.DESTINO_PROCESO || "";
+    let destino_planta = rep.destino_planta || rep.DESTINO_PLANTA || "";
 
-    if (tipoVisita === 'AUDITORIA' && conclusion === 'APROBADO') {
+    const destinoSection = document.getElementById('editDestinoSection');
+    if (destinoSection && destinoSection.style.display !== 'none') {
         if (destinoTipoVal === 'CDI') {
             destino_proceso = 'CDI';
             destino_planta = 'CDI';
         } else if (destinoTipoVal === 'PROCESO' && destinoProcesoVal) {
             destino_proceso = (destinoProcesoVal === 'OTROS') ? destinoOtroVal.trim() : destinoProcesoVal;
             destino_planta = destinoPlantaVal.trim() || "CDI";
+        } else {
+            destino_proceso = "";
+            destino_planta = "";
         }
     }
 
@@ -2302,10 +2336,10 @@ async function guardarCambiosReporte() {
             tipo_visita: tipoVisita,
             conclusion: conclusion,
             observaciones: observaciones,
-            avance: avance ? Number(avance) : null,
+            avance: (avance !== null && avance !== undefined && avance !== '') ? Number(avance) : null,
             destino_proceso: destino_proceso,
             destino_planta: destino_planta,
-            novedades_auditoria: (tipoVisita === 'AUDITORIA' && window._novedadesCalidadState && window._novedadesCalidadState.length > 0) ? JSON.stringify(window._novedadesCalidadState) : null,
+            novedades_auditoria: (window._novedadesCalidadState && window._novedadesCalidadState.length > 0) ? JSON.stringify(window._novedadesCalidadState) : null,
             soporte: finalSoporteUrl
         };
 
@@ -2333,10 +2367,10 @@ async function guardarCambiosReporte() {
                 tipoVisita: tipoVisita,
                 conclusion: conclusion,
                 observaciones: observaciones,
-                avance: avance ? Number(avance) : null,
+                avance: (avance !== null && avance !== undefined && avance !== '') ? Number(avance) : null,
                 destinoProceso: destino_proceso,
                 destinoPlanta: destino_planta,
-                novedadesAuditoria: (tipoVisita === 'AUDITORIA' && window._novedadesCalidadState && window._novedadesCalidadState.length > 0) ? window._novedadesCalidadState : null,
+                novedadesAuditoria: (window._novedadesCalidadState && window._novedadesCalidadState.length > 0) ? window._novedadesCalidadState : null,
                 soporte: finalSoporteUrl
             })
         });
@@ -2351,6 +2385,7 @@ async function guardarCambiosReporte() {
             throw new Error(resData.message || 'No se pudieron guardar los cambios');
         }
 
+        window._isSavingAndRedirecting = true;
         cerrarModalReporte();
         salirModoEdicion();
 
@@ -2362,6 +2397,15 @@ async function guardarCambiosReporte() {
             text: 'El reporte se ha actualizado correctamente',
             confirmButtonColor: '#3F51B5'
         });
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('edit')) {
+            setTimeout(() => {
+                window.location.replace('reportes-analizados.html');
+            }, 1500);
+        } else {
+            window._isSavingAndRedirecting = false;
+        }
 
     } catch (error) {
         console.error('Error al guardar cambios:', error);
