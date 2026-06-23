@@ -1504,7 +1504,7 @@ function cerrarModalReporte() {
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('edit') && !window._isSavingAndRedirecting) {
-        window.location.replace('reportes-analizados.html');
+        window.location.replace('auditorias.html');
     }
 }
 
@@ -2401,7 +2401,7 @@ async function guardarCambiosReporte() {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('edit')) {
             setTimeout(() => {
-                window.location.replace('reportes-analizados.html');
+                window.location.replace('auditorias.html');
             }, 1500);
         } else {
             window._isSavingAndRedirecting = false;

@@ -1,5 +1,5 @@
 /**
- * liquidacion-admin.js - Módulo de administración de liquidaciones
+ * liquidaciones.js - Módulo de liquidaciones
  * Permite a admin/moderator ver y editar liquidaciones guardadas en Supabase
  */
 

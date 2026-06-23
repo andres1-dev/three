@@ -1,5 +1,5 @@
 /**
- * reportes-analizados.js — Módulo para ver reportes analizados con modal
+ * auditorias.js — Módulo para ver auditorías con modal
  * Solo disponible para roles: ADMIN, MODERATOR, USER-I
  */
 

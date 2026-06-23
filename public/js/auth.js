@@ -726,8 +726,8 @@ function createSidebar() {
                 </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR' || user.ROL === 'USER-I') ? `
-                <a href="reportes-analizados.html" class="sidebar-link ${path.includes('reportes-analizados.html') ? 'active' : ''}">
-                    <i class="fas fa-clipboard-check"></i> Reportes Analizados
+                <a href="auditorias.html" class="sidebar-link ${path.includes('auditorias.html') ? 'active' : ''}">
+                    <i class="fas fa-clipboard-check"></i> Auditorías
                 </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'USER-C' || user.ROL === 'MODERATOR') ? `
@@ -747,8 +747,8 @@ function createSidebar() {
                 </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'MODERATOR') ? `
-                <a href="liquidacion-admin.html" class="sidebar-link ${path.includes('liquidacion-admin.html') ? 'active' : ''}">
-                    <i class="fas fa-cogs"></i> Admin Liquidaciones
+                <a href="liquidaciones.html" class="sidebar-link ${path.includes('liquidaciones.html') ? 'active' : ''}">
+                    <i class="fas fa-cogs"></i> Liquidaciones
                 </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'USER-P') ? `
@@ -863,17 +863,17 @@ function applyAccessControl() {
     // Protección de rutas por rol
     const path = window.location.pathname;
     
-    // USER-I solo puede acceder a reportes-analizados.html
+    // USER-I solo puede acceder a auditorias.html
     if (user.ROL === 'USER-I') {
         if (path.includes('index.html') || path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html')) {
-            console.warn('[AUTH] USER-I intentando acceder a página restringida, redirigiendo a reportes-analizados.html');
-            window.location.replace('reportes-analizados.html');
+            console.warn('[AUTH] USER-I intentando acceder a página restringida, redirigiendo a auditorias.html');
+            window.location.replace('auditorias.html');
         }
     }
     
     // GUEST no puede acceder a páginas de administración
     if (user.ROL === 'GUEST') {
-        if (path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html') || path.includes('reportes-analizados.html')) {
+        if (path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html') || path.includes('auditorias.html')) {
             console.warn('[AUTH] GUEST intentando acceder a página restringida, redirigiendo a index.html');
             window.location.replace('index.html');
         }
