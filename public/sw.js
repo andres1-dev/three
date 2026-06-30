@@ -163,7 +163,7 @@ function saveToSmartCache(url, response, latency) {
     
     const record = {
       url,
-      response: response,
+      status: response.status,
       timestamp: Date.now(),
       latency
     };

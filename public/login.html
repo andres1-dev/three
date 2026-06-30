@@ -39,7 +39,7 @@
             </div>
 
             <!-- ── SECCIÓN: INICIO DE SESIÓN ── -->
-            <div id="login-section" class="auth-section">
+            <form id="login-section" class="auth-section" onsubmit="event.preventDefault(); processMultiLogin();">
 
                 <!-- ── Botón Biometría (se muestra solo si hay credencial guardada) ── -->
                 <button class="btn-biometric hidden" id="biometricBtn" onclick="loginWithBiometric()" type="button">
@@ -75,7 +75,7 @@
                     <input type="text" id="login-universal-cedula" placeholder="Cédula o NIT de la Planta">
                 </div>
 
-                <button class="btn-auth-primary" id="loginBtn" onclick="processMultiLogin()">
+                <button type="submit" class="btn-auth-primary" id="loginBtn">
                     <span class="btn-text">INGRESAR</span>
                     <i class="fas fa-right-to-bracket"></i>
                 </button>
@@ -86,19 +86,20 @@
                     <a href="javascript:void(0)" onclick="resetCredentials()">Limpiar credenciales</a>
                 </div>
                 </div>
-            </div>
+            </form>
 
             <!-- ── SECCIÓN: REGISTRO ── -->
-            <div id="register-section" class="auth-section hidden">
+            <form id="register-section" class="auth-section hidden" onsubmit="event.preventDefault(); requestRegister();">
                 <div class="section-title">Solicitud de Acceso</div>
                 <p class="section-hint">Complete todos los campos para solicitar su ingreso.</p>
 
                 <div class="form-floating-group">
                     <i class="fas fa-id-badge input-icon"></i>
-                    <input type="text" id="reg-id" placeholder="NIT o Cédula de Ciudadanía" required>
+                    <input type="text" id="reg-id" placeholder="NIT o Cédula de Ciudadanía" required
+                        autocomplete="username">
                 </div>
 
-                <button class="btn-auth-primary" id="btnCheckId" onclick="validateRegistrationId()">
+                <button type="button" class="btn-auth-primary" id="btnCheckId" onclick="validateRegistrationId()">
                     <span class="btn-text">CONTINUAR</span>
                     <i class="fas fa-arrow-right"></i>
                 </button>
@@ -107,26 +108,30 @@
                 <div id="registration-details" class="hidden">
                     <div class="form-floating-group">
                         <i class="fas fa-user-edit input-icon"></i>
-                        <input type="text" id="reg-name" placeholder="Nombre completo" required>
+                        <input type="text" id="reg-name" placeholder="Nombre completo" required
+                            autocomplete="name">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="reg-email" placeholder="Correo electrónico" required>
+                        <input type="email" id="reg-email" placeholder="Correo electrónico" required
+                            autocomplete="email">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-phone input-icon"></i>
-                        <input type="tel" id="reg-tel" placeholder="Número Celular" required>
+                        <input type="tel" id="reg-tel" placeholder="Número Celular" required
+                            autocomplete="tel">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="reg-pass" placeholder="Defina su Contraseña" required>
+                        <input type="password" id="reg-pass" placeholder="Defina su Contraseña" required
+                            autocomplete="new-password">
                         <i class="fas fa-eye toggle-pass" onclick="togglePassword('reg-pass')"></i>
                     </div>
 
-                    <button class="btn-auth-primary" id="regBtn" onclick="requestRegister()">
+                    <button type="submit" class="btn-auth-primary" id="regBtn">
                         <span class="btn-text">ENVIAR SOLICITUD</span>
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -135,10 +140,10 @@
                 <div class="auth-footer-links">
                     <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
                 </div>
-            </div>
+            </form>
 
             <!-- ── SECCIÓN: REGISTRO PLANTA/TALLER ── -->
-            <div id="register-planta-section" class="auth-section hidden">
+            <form id="register-planta-section" class="auth-section hidden" onsubmit="event.preventDefault(); requestRegisterPlanta();">
                 <div class="section-title">Actualización de Taller</div>
                 <p class="section-hint">Ingrese una Orden Activa para buscar su planta.</p>
 
@@ -147,7 +152,7 @@
                     <input type="text" id="reg-planta-op" placeholder="Número de OP o Lote" required>
                 </div>
 
-                <button class="btn-auth-primary" id="btnCheckOP" onclick="validateOpForRegister()">
+                <button type="button" class="btn-auth-primary" id="btnCheckOP" onclick="validateOpForRegister()">
                     <span class="btn-text">BUSCAR TALLER</span>
                     <i class="fas fa-search"></i>
                 </button>
@@ -170,31 +175,35 @@
                     <div class="form-floating-group">
                         <i class="fas fa-id-card input-icon"></i>
                         <input type="text" id="reg-planta-documento" placeholder="NIT o Cédula (Su ID de acceso)"
-                            required>
+                            required autocomplete="username">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-map-marker-alt input-icon"></i>
-                        <input type="text" id="reg-planta-direccion" placeholder="Dirección Completa" required>
+                        <input type="text" id="reg-planta-direccion" placeholder="Dirección Completa" required
+                            autocomplete="street-address">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-phone input-icon"></i>
-                        <input type="tel" id="reg-planta-tel" placeholder="Número Celular" required>
+                        <input type="tel" id="reg-planta-tel" placeholder="Número Celular" required
+                            autocomplete="tel">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="reg-planta-email" placeholder="Correo electrónico" required>
+                        <input type="email" id="reg-planta-email" placeholder="Correo electrónico" required
+                            autocomplete="email">
                     </div>
 
                     <div class="form-floating-group">
                         <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="reg-planta-pass" placeholder="Defina su Contraseña" required>
+                        <input type="password" id="reg-planta-pass" placeholder="Defina su Contraseña" required
+                            autocomplete="new-password">
                         <i class="fas fa-eye toggle-pass" onclick="togglePassword('reg-planta-pass')"></i>
                     </div>
 
-                    <button class="btn-auth-primary" id="regPlantaBtn" onclick="requestRegisterPlanta()">
+                    <button type="submit" class="btn-auth-primary" id="regPlantaBtn">
                         <span class="btn-text">ACTUALIZAR Y ACCEDER</span>
                         <i class="fas fa-check"></i>
                     </button>
@@ -203,10 +212,10 @@
                 <div class="auth-footer-links">
                     <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
                 </div>
-            </div>
+            </form>
 
             <!-- ── SECCIÓN: RECUPERACIÓN ── -->
-            <div id="reset-section" class="auth-section hidden">
+            <form id="reset-section" class="auth-section hidden" onsubmit="event.preventDefault(); requestReset();">
                 <div class="section-title">Recuperar Acceso</div>
                 <p class="section-hint">Ingrese su identificación para enviarle un token de recuperación a su correo.
                 </p>
@@ -214,14 +223,14 @@
                     <i class="fas fa-id-card input-icon"></i>
                     <input type="text" id="reset-id" placeholder="Número de Identificación">
                 </div>
-                <button class="btn-auth-primary" id="resetBtn" onclick="requestReset()">
+                <button type="submit" class="btn-auth-primary" id="resetBtn">
                     <span class="btn-text">ENVIAR TOKEN</span>
                     <i class="fas fa-paper-plane"></i>
                 </button>
                 <div class="auth-footer-links">
                     <a href="javascript:void(0)" onclick="switchAuth('login')">Volver al inicio</a>
                 </div>
-            </div>
+            </form>
 
 
         </div>
@@ -312,11 +321,9 @@
                 }
 
                 // 2. Inicializar Biometría
-                console.log("[BIOMETRY] Verificando soporte...");
                 if (typeof BIOMETRY !== 'undefined' && await BIOMETRY.isSupported()) {
                     const map = JSON.parse(localStorage.getItem('busint_biometric_ids') || '{}');
                     const keys = Object.keys(map);
-                    console.log("[BIOMETRY] Llaves encontradas:", keys);
                     
                     if (keys.length > 0) {
                         const btn = document.getElementById('biometricBtn');
@@ -326,7 +333,6 @@
                         const manualLink = document.getElementById('biometricManualLink');
 
                         if (btn && iconEl && labelEl) {
-                            console.log("[BIOMETRY] Mostrando botón de acceso biométrico...");
                             iconEl.innerHTML = BIOMETRY.getSVGForType();
                             labelEl.textContent = `Ingresar con ${BIOMETRY.getLabelForType()}`;
                             btn.classList.remove('hidden');
@@ -336,12 +342,8 @@
                             window._biometricUserId = keys[0];
                             // Auto-trigger biometría
                             setTimeout(() => loginWithBiometric(), 600);
-                        } else {
-                            console.warn("[BIOMETRY] Elementos de UI no encontrados:", { btn:!!btn, iconEl:!!iconEl, labelEl:!!labelEl });
                         }
                     }
-                } else {
-                    console.warn("[BIOMETRY] No soportada o BIOMETRY undefined");
                 }
 
                 // 3. Cargar datos necesarios en background
