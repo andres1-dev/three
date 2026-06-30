@@ -36,8 +36,6 @@ window.onload = async function() {
         filteredData = [...rawData];
         gsPlantas = plantas || [];
         
-        console.log("[METRICAS] Datos cargados:", rawData.length);
-        
         // 3. Ocultar loader y mostrar dashboard
         document.getElementById('loaderOverlay').style.display = 'none';
         document.getElementById('mainDashboard').style.display = 'block';
@@ -519,8 +517,6 @@ function updateCharts() {
             }
         });
 
-        console.log('Registro:', n.id_novedad, 'Fecha:', n.FECHA, 'Transiciones:', fechasTransicion);
-
         // Calcular tiempo Reporte → Elaboración
         // Fecha de reporte es la fecha del registro (campo FECHA)
         // Fecha de elaboración es la fecha de transición PENDIENTE->ELABORACION
@@ -528,7 +524,6 @@ function updateCharts() {
             const fechaReporte = new Date(n.FECHA);
             const fechaElaboracion = fechasTransicion['PENDIENTE->ELABORACION'];
             const tiempoHoras = (fechaElaboracion - fechaReporte) / (1000 * 60 * 60);
-            console.log('Reporte→Elaboración:', fechaReporte, '→', fechaElaboracion, '=', tiempoHoras, 'horas');
             if (tiempoHoras > 0) {
                 tiempos['Reporte → Elaboración'].total += tiempoHoras;
                 tiempos['Reporte → Elaboración'].count += 1;
@@ -542,15 +537,12 @@ function updateCharts() {
             const fechaElaboracion = fechasTransicion['PENDIENTE->ELABORACION'];
             const fechaFinalizacion = fechasTransicion['ELABORACION->FINALIZADO'];
             const tiempoHoras = (fechaFinalizacion - fechaElaboracion) / (1000 * 60 * 60);
-            console.log('Elaboración→Finalización:', fechaElaboracion, '→', fechaFinalizacion, '=', tiempoHoras, 'horas');
             if (tiempoHoras > 0) {
                 tiempos['Elaboración → Finalización'].total += tiempoHoras;
                 tiempos['Elaboración → Finalización'].count += 1;
             }
         }
     });
-
-    console.log('Tiempos finales:', tiempos);
 
     // Generar tabla HTML
     const tablaTiempo = document.getElementById('tablaTiempoRespuesta');

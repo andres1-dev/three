@@ -35,7 +35,7 @@
             window.currentUser = undefined;
         }
     } catch(e) {
-        console.warn('[FAST-LOAD] Prefetch falló silenciosamente:', e);
+        // Prefetch falló silenciosamente
     }
 })();
 

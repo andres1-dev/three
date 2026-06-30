@@ -43,12 +43,9 @@ async function cargarAuditoras() {
             return;
         }
         
-        console.log('Estructura de reportes:', reportes);
-        
         // Si hay datos, ver qué columnas existen
         if (reportes && reportes.length > 0) {
             const columnas = Object.keys(reportes[0]);
-            console.log('Columnas disponibles:', columnas);
             
             // Buscar columna que pueda identificar al auditor
             const columnaAuditora = columnas.find(col => 
@@ -56,8 +53,6 @@ async function cargarAuditoras() {
                 col.toLowerCase() === 'correo' ||
                 col.toLowerCase().includes('auditor')
             );
-            
-            console.log('Columna de auditora encontrada:', columnaAuditora);
             
             if (columnaAuditora) {
                 // Cargar todos los reportes con esa columna
@@ -111,9 +106,6 @@ async function buscarLiquidaciones() {
     const anio = parseInt(document.getElementById('anioFilter').value);
     const container = document.getElementById('liquidacionesList');
     
-    console.log('Buscando liquidaciones con filtros:', { correo, mes, anio });
-    console.log('Usuario actual:', window.currentUser);
-    
     // Mostrar loading
     container.innerHTML = `
         <div class="loading">
@@ -139,10 +131,7 @@ async function buscarLiquidaciones() {
             throw new Error(`Error de permisos o RLS: ${errorTodos.message} (Código: ${errorTodos.code})`);
         }
         
-        console.log('Todos los datos en liquidaciones_rodamiento:', todosDatos);
-        
         if (!todosDatos || todosDatos.length === 0) {
-            console.log('No hay datos en liquidaciones_rodamiento');
             container.innerHTML = `
                 <div class="no-data">
                     <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 1rem;"></i>
@@ -157,15 +146,12 @@ async function buscarLiquidaciones() {
         
         // Obtener estructura de la tabla
         const columnas = Object.keys(todosDatos[0]);
-        console.log('Columnas disponibles en liquidaciones_rodamiento:', columnas);
         
         // Determinar qué columna usar para filtrar (correo o auditora)
         const columnaFiltro = columnas.find(col => 
             col.toLowerCase() === 'correo' || 
             col.toLowerCase() === 'email'
         ) || columnas.find(col => col.toLowerCase() === 'auditora');
-        
-        console.log('Columna de filtro encontrada:', columnaFiltro);
         
         // Filtrar datos client-side
         let liquidacionesFiltradas = todosDatos;
@@ -175,8 +161,6 @@ async function buscarLiquidaciones() {
                 liq[columnaFiltro] === correo
             );
         }
-        
-        console.log('Liquidaciones filtradas:', liquidacionesFiltradas);
         
         // Renderizar resultados
         renderizarLiquidaciones(liquidacionesFiltradas, columnaFiltro || 'correo');

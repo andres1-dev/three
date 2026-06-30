@@ -349,8 +349,6 @@ function cargarDatosLocales() {
         gsUserList = window.allUsers || (typeof allUsers !== 'undefined' ? allUsers : []);
         gsPlantList = window.allPlantas || (typeof allPlantas !== 'undefined' ? allPlantas : []);
 
-        console.log(`[USUARIOS-UI] Cargando en tabla: ${gsUserList.length} usuarios, ${gsPlantasCount = gsPlantList.length} plantas`);
-
         updateStats();
         handleFilter();
 

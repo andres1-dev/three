@@ -548,7 +548,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" integrity="sha384-JWEyvHh+lRf0sN/WWY+QTQwX+CyWqmNg4tkc8GQzAMEtR2wGNrCJlvnu1lHD1kDm" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" integrity="sha384-d+UOwmNNIC7V4izkTAKSXzWhjC2GxiS9PTykO1XdOPC3nc2z65UOS7SP6QdKPA70" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10" integrity="sha384-v5sCAl8qZOHabzoh1+noJcE2yaDE9V/9+mBHgmxFdpiY5chhD/Qf1rQ7igh8ew0q" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr" integrity="sha384-5JqMv4L/Xa0hfvtF06qboNdhvuYXUku9ZrhZh3bSk8VXF0A/RuSLHpLsSV9Zqhl6" crossorigin="anonymous"></script>
@@ -590,7 +590,7 @@
             window._filtersBarNextSibling = filtersBar.nextSibling;
 
             function moveToFab() {
-                if (!actionsMenu.contains(filtersBar)) {
+                if (!actionsMenu.contains(filtersBar) && !filtersBar.contains(actionsMenu)) {
                     // Ajustes visuales para que se vea bien dentro del menú
                     filtersBar.style.width = '100%';
                     filtersBar.style.boxShadow = 'none';

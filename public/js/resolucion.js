@@ -122,7 +122,6 @@ async function cargarDatos(soloFinalizados = false) {
         gsNovedades = novedades;
         gsPlantas = plantas;
         window.gsMasterLots = masterLots || [];
-        console.log("[RESOLUCION] Datos cargados:", { totalNovedades: gsNovedades.length, totalPlantas: gsPlantas.length, totalMaster: window.gsMasterLots.length });
 
         // Verificar si hay datos
         if (!gsNovedades || gsNovedades.length === 0) {
@@ -233,8 +232,6 @@ function formatearTipoDetalle(tipoDetalle, area) {
 
     try {
         const detalle = typeof tipoDetalle === 'string' ? JSON.parse(tipoDetalle) : tipoDetalle;
-
-        console.log('[formatearTipoDetalle] Procesando:', { tipoDetalle, detalle, area });
 
         if (!detalle || typeof detalle !== 'object') return null;
 
