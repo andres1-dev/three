@@ -19,6 +19,7 @@ const LOCAL_TEMPLATES = [
     { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Delantero izquierdo de la prenda puesta, ubicada entre costuras a 5 cm del costado.' },
     { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Sisa izquierda de la prenda puesta, ubicada entre costuras.' },
     { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: En la tira libre izquierda de la prenda puesta.' },
+    { tipo: 'UBICACION', contenido: 'UBICACIÓN DE ETIQUETA: Ensamblar las prendas del DUO (posterior con posterior). Ubicar la etiqueta principal del dúo a la altura del cuello y asegurarla con dos plastiflechas, una a cada lado del cuello, garantizando que la etiqueta quede centrada y uniendo ambas prendas para su correcta presentación.' },
 
     // PAQUETEO
     { tipo: 'PAQUETEO', contenido: 'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.' },
