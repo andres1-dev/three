@@ -482,15 +482,7 @@ function renderNovedadesForPrint(novedades) {
         else if (tipo === 'LAVADO') { bgColor = '#6366f1'; iconName = 'fa-water'; }
         else if (tipo === 'SIN CONFECCIONAR') { bgColor = '#ef4444'; iconName = 'fa-cut'; }
         else if (tipo === 'PROMOCIONES') { bgColor = '#f59e0b'; iconName = 'fa-percentage'; }
-        else if (tipo === 'COBROS' || tipo.startsWith('COBRO -')) {
-            if (novedad.proceso) {
-                bgColor = '#8b5cf6'; // Purple for Cobros con proceso
-                iconName = 'fa-money-bill-wave';
-            } else {
-                bgColor = '#10b981'; // Green for Cobros normal
-                iconName = 'fa-file-invoice-dollar';
-            }
-        }
+        else if (tipo === 'COBROS') { bgColor = '#10b981'; iconName = 'fa-file-invoice-dollar'; }
         
         // Manejar estructura con codigos (como en el ejemplo del usuario)
         const codigos = novedad.codigos || novedad.CODIGOS || [];
@@ -1884,16 +1876,7 @@ window.verReporteAnalizado = function (index) {
                                     iconName = 'fa-percentage'; 
                                 }
                             }
-                            if (novedad.tipo_base === 'COBROS' || novedad.tipo.startsWith('COBRO -')) {
-                                if (novedad.proceso) {
-                                    bgColor = '#8b5cf6'; // Purple for Cobros con proceso
-                                    iconName = 'fa-money-bill-wave';
-                                    displayTipo = novedad.tipo; // Ya viene formateado como "COBRO - PROCESO"
-                                } else {
-                                    bgColor = '#10b981'; // Green for Cobros normal
-                                    iconName = 'fa-file-invoice-dollar';
-                                }
-                            }
+                            if (novedad.tipo === 'COBROS') { bgColor = '#10b981'; iconName = 'fa-file-invoice-dollar'; }
                             if (novedad.tipo === 'LAVADO') { bgColor = '#6366f1'; iconName = 'fa-water'; }
 
                             html += `

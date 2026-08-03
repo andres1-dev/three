@@ -1971,18 +1971,11 @@ function agregarBloqueNovedadCalidadModal(editIndex = null, subEditIndex = null)
 
     if (editIndex !== null) {
         const data = window._novedadesCalidadState[editIndex];
-        selectTipo.value = data.tipo_base || data.tipo; // Usar tipo_base si existe
+        selectTipo.value = data.tipo;
 
         handleModalCalidadNovedadTipoChange();
-        if (data.tipo === 'PROMOCIONES' || (data.tipo_base === 'PROMOCIONES')) {
+        if (data.tipo === 'PROMOCIONES') {
             sinProcesoCheck.checked = data.sin_proceso;
-        }
-        if ((data.tipo === 'COBROS' || data.tipo_base === 'COBROS') && data.proceso) {
-            const procesoCheck = document.getElementById('novedadModalProcesoCheck');
-            const procesoSelect = document.getElementById('novedadModalProcesoSelect');
-            if (procesoCheck) procesoCheck.checked = true;
-            if (procesoSelect) procesoSelect.value = data.proceso;
-            handleProcesoCobrosCheck(); // Mostrar select
         }
 
         if (subEditIndex !== null) {
@@ -2008,9 +2001,6 @@ function cerrarModalNovedadCalidad() {
 function handleModalCalidadNovedadTipoChange() {
     const tipo = document.getElementById('novedadModalTipo').value;
     const sinProcesoDiv = document.getElementById('novedadModalSinProceso');
-    const procesoCobrosDiv = document.getElementById('novedadModalProcesoCobros');
-    
-    // Manejo de PROMOCIONES (checkbox sin proceso)
     if (sinProcesoDiv) {
         if (tipo === 'PROMOCIONES') {
             sinProcesoDiv.style.display = 'block';
@@ -2018,35 +2008,6 @@ function handleModalCalidadNovedadTipoChange() {
             sinProcesoDiv.style.display = 'none';
             const chk = document.getElementById('novedadModalSinProcesoCheck');
             if (chk) chk.checked = false;
-        }
-    }
-    
-    // Manejo de COBROS (checkbox proceso anterior)
-    if (procesoCobrosDiv) {
-        if (tipo === 'COBROS') {
-            procesoCobrosDiv.style.display = 'block';
-        } else {
-            procesoCobrosDiv.style.display = 'none';
-            const procesoCheck = document.getElementById('novedadModalProcesoCheck');
-            const procesoSelect = document.getElementById('novedadModalProcesoSelect');
-            if (procesoCheck) procesoCheck.checked = false;
-            if (procesoSelect) procesoSelect.value = '';
-            handleProcesoCobrosCheck(); // Ocultar select
-        }
-    }
-}
-
-function handleProcesoCobrosCheck() {
-    const procesoCheck = document.getElementById('novedadModalProcesoCheck');
-    const procesoSelectContainer = document.getElementById('novedadModalProcesoSelectContainer');
-    
-    if (procesoCheck && procesoSelectContainer) {
-        if (procesoCheck.checked) {
-            procesoSelectContainer.style.display = 'block';
-        } else {
-            procesoSelectContainer.style.display = 'none';
-            const procesoSelect = document.getElementById('novedadModalProcesoSelect');
-            if (procesoSelect) procesoSelect.value = '';
         }
     }
 }
@@ -2154,19 +2115,6 @@ function guardarNovedadCalidad() {
         return;
     }
 
-    // Validación específica para COBROS: si marca proceso anterior, debe seleccionar proceso
-    if (tipo === 'COBROS') {
-        const procesoCheck = document.getElementById('novedadModalProcesoCheck');
-        if (procesoCheck && procesoCheck.checked) {
-            const procesoSelect = document.getElementById('novedadModalProcesoSelect');
-            const proceso = procesoSelect?.value?.trim();
-            if (!proceso) {
-                Swal.fire({ icon: 'warning', title: 'Falta Proceso', text: 'Si marca proceso anterior, debe seleccionar el proceso correspondiente.', confirmButtonColor: '#3F51B5' });
-                return;
-            }
-        }
-    }
-
     const sinProceso = document.getElementById('novedadModalSinProcesoCheck').checked;
     const filas = document.querySelectorAll('#novedadModalCodigosList .insumo-fila');
     const codigos = [];
@@ -2186,28 +2134,7 @@ function guardarNovedadCalidad() {
     }
 
     const codigosCompactados = _compactarCodigosNovedad(codigos);
-    
-    // Para COBROS con proceso anterior, guardar como "COBRO - NOMBRE PROCESO"
-    let displayTipo = tipo;
-    let proceso = null;
-    if (tipo === 'COBROS') {
-        const procesoCheck = document.getElementById('novedadModalProcesoCheck');
-        if (procesoCheck && procesoCheck.checked) {
-            const procesoSelect = document.getElementById('novedadModalProcesoSelect');
-            proceso = procesoSelect?.value?.trim() || null;
-            if (proceso) {
-                displayTipo = `COBRO - ${proceso}`;
-            }
-        }
-    }
-    
-    const nuevaNovedad = { 
-        tipo: displayTipo, 
-        tipo_base: tipo, // Guardar el tipo base para agrupación
-        sin_proceso: (tipo === 'PROMOCIONES' && sinProceso), 
-        proceso: proceso,
-        codigos: codigosCompactados 
-    };
+    const nuevaNovedad = { tipo, sin_proceso: (tipo === 'PROMOCIONES' && sinProceso), codigos: codigosCompactados };
 
     if (window._novedadEditIndex !== null && window._novedadEditIndex !== undefined) {
         const grupoOriginal = window._novedadesCalidadState[window._novedadEditIndex];
@@ -2219,18 +2146,7 @@ function guardarNovedadCalidad() {
     }
 
     const isSinProceso = (tipo === 'PROMOCIONES' && sinProceso);
-    let destinoIndex;
-    
-    if (tipo === 'COBROS' && proceso) {
-        // Para COBROS con proceso, agrupar por mismo tipo (displayTipo) que incluye el proceso
-        destinoIndex = window._novedadesCalidadState.findIndex(n => n.tipo === displayTipo);
-    } else if (tipo === 'COBROS' && !proceso) {
-        // Para COBROS sin proceso, agrupar por tipo_base (COBROS) y sin proceso (false)
-        destinoIndex = window._novedadesCalidadState.findIndex(n => (n.tipo_base === 'COBROS' || n.tipo === 'COBROS') && !n.proceso);
-    } else {
-        // Para otros casos, agrupar por tipo y sin_proceso
-        destinoIndex = window._novedadesCalidadState.findIndex(n => n.tipo === tipo && !!n.sin_proceso === !!isSinProceso);
-    }
+    const destinoIndex = window._novedadesCalidadState.findIndex(n => n.tipo === tipo && !!n.sin_proceso === !!isSinProceso);
 
     if (destinoIndex >= 0) {
         const destino = window._novedadesCalidadState[destinoIndex];
@@ -2276,18 +2192,6 @@ function renderTarjetasNovedadesCalidadModal() {
                 colorTheme = '#f59e0b';
                 bgTheme = '#fffbeb';
                 iconName = 'fa-percentage';
-            }
-        }
-        if (novedad.tipo_base === 'COBROS' || novedad.tipo.startsWith('COBRO -')) {
-            if (novedad.proceso) {
-                colorTheme = '#8b5cf6'; // Purple for Cobros con proceso
-                bgTheme = '#f5f3ff';
-                iconName = 'fa-money-bill-wave';
-                displayTipo = novedad.tipo; // Ya viene formateado como "COBRO - PROCESO"
-            } else {
-                colorTheme = '#10b981'; // Green for Cobros normal
-                bgTheme = '#ecfdf5';
-                iconName = 'fa-dollar-sign';
             }
         }
         if (novedad.tipo === 'COBROS') { colorTheme = '#10b981'; bgTheme = '#ecfdf5'; iconName = 'fa-file-invoice-dollar'; }
