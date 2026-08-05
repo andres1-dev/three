@@ -729,9 +729,6 @@ function createSidebar() {
                 <a href="auditorias.html" class="sidebar-link ${path.includes('auditorias.html') ? 'active' : ''}">
                     <i class="fas fa-clipboard-check"></i> Auditorías
                 </a>
-                <a href="retenidos.html" class="sidebar-link ${path.includes('retenidos.html') ? 'active' : ''}">
-                    <i class="fas fa-lock"></i> Retenidos
-                </a>
             ` : ''}
             ${(user.ROL === 'ADMIN' || user.ROL === 'USER-C' || user.ROL === 'MODERATOR') ? `
                 <a href="rutero.html" class="sidebar-link ${path.includes('rutero.html') ? 'active' : ''}">
@@ -866,7 +863,7 @@ function applyAccessControl() {
     // Protección de rutas por rol
     const path = window.location.pathname;
     
-    // USER-I solo puede acceder a auditorias.html y retenidos.html
+    // USER-I solo puede acceder a auditorias.html
     if (user.ROL === 'USER-I') {
         if (path.includes('index.html') || path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html')) {
             console.warn('[AUTH] USER-I intentando acceder a página restringida, redirigiendo a auditorias.html');
@@ -876,7 +873,7 @@ function applyAccessControl() {
     
     // GUEST no puede acceder a páginas de administración
     if (user.ROL === 'GUEST') {
-        if (path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html') || path.includes('auditorias.html') || path.includes('retenidos.html')) {
+        if (path.includes('resolucion.html') || path.includes('metricas.html') || path.includes('calidad.html') || path.includes('rutero.html') || path.includes('aprobacion.html') || path.includes('auditorias.html')) {
             console.warn('[AUTH] GUEST intentando acceder a página restringida, redirigiendo a index.html');
             window.location.replace('index.html');
         }
