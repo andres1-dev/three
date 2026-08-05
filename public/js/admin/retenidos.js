@@ -20,12 +20,12 @@ const RetModule = {
 
 // ── Colores por motivo ─────────────────────────────────────────────────────
 const MOTIVO_COLORS = {
-    'PROMOCIONES': { bg: 'rgba(99,102,241,0.12)',  color: '#6366f1', label: 'Promociones', icon: 'fa-tag' },
-    'CORREO':      { bg: 'rgba(59,130,246,0.12)',   color: '#3b82f6', label: 'Correo',      icon: 'fa-envelope' },
-    'LAVADO':      { bg: 'rgba(20,184,166,0.12)',   color: '#14b8a6', label: 'Lavado',      icon: 'fa-tint' },
-    'ARREGLO':     { bg: 'rgba(245,158,11,0.12)',   color: '#f59e0b', label: 'Arreglo',     icon: 'fa-tools' },
-    'PENDIENTES':  { bg: 'rgba(239,68,68,0.12)',    color: '#ef4444', label: 'Pendientes',  icon: 'fa-clock' },
-    'CONTEO':      { bg: 'rgba(168,85,247,0.12)',   color: '#a855f7', label: 'Conteo',      icon: 'fa-hashtag' },
+    'PROMOCIONES': { bg: 'rgba(99,102,241,0.12)',  color: '#6366f1', label: 'PROMOCIONES', icon: 'fa-tag' },
+    'CORREO':      { bg: 'rgba(59,130,246,0.12)',   color: '#3b82f6', label: 'CORREO',      icon: 'fa-envelope' },
+    'LAVADO':      { bg: 'rgba(20,184,166,0.12)',   color: '#14b8a6', label: 'LAVADO',      icon: 'fa-tint' },
+    'ARREGLO':     { bg: 'rgba(245,158,11,0.12)',   color: '#f59e0b', label: 'ARREGLO',     icon: 'fa-tools' },
+    'PENDIENTES':  { bg: 'rgba(239,68,68,0.12)',    color: '#ef4444', label: 'PENDIENTES',  icon: 'fa-clock' },
+    'CONTEO':      { bg: 'rgba(168,85,247,0.12)',   color: '#a855f7', label: 'CONTEO',      icon: 'fa-hashtag' },
 };
 
 // ── Mapeo de usuarios por correo ───────────────────────────────────────────
@@ -328,11 +328,10 @@ function _renderAnalyticsCharts() {
         }, 0);
         avgMs = totalMs / liberados.length;
     }
-    const avgHrs = (avgMs / (1000 * 60 * 60)).toFixed(1);
     const avgTimeEl = document.getElementById('ret-kpi-avg-time');
     if (avgTimeEl) {
         if (avgMs > 0) {
-            avgTimeEl.textContent = avgHrs < 24 ? `${avgHrs} hrs` : `${(avgHrs / 24).toFixed(1)} días`;
+            avgTimeEl.textContent = _formatDuration(avgMs);
         } else {
             avgTimeEl.textContent = '—';
         }
@@ -356,12 +355,12 @@ function _renderAnalyticsCharts() {
         topMotivoEl.textContent = topCount > 0 ? `${labelMotivo} (${pctMotivo}%)` : '—';
     }
 
-    // 3. KPI: Tasa de Eficiencia (% Liberado)
+    // 3. KPI: Tasa de Eficacia (% Liberado)
     const liberadosCount = data.filter(r => !r.retenido).length;
-    const pctEficiencia = data.length ? Math.round((liberadosCount / data.length) * 100) : 0;
+    const pctEficacia = data.length ? Math.round((liberadosCount / data.length) * 100) : 0;
     const tasaEl = document.getElementById('ret-kpi-tasa-liberacion');
     if (tasaEl) {
-        tasaEl.textContent = data.length ? `${pctEficiencia}%` : '—';
+        tasaEl.textContent = data.length ? `${pctEficacia}%` : '—';
     }
 
     // ── CHART 1: SPIDER / RADAR CHART DE MOTIVOS ──────────────────────────────
@@ -467,21 +466,21 @@ function _renderAnalyticsCharts() {
         });
     }
 
-    // ── CHART 3: TIEMPO DE RESOLUCIÓN POR MOTIVO (HORAS) ─────────────────────
+    // ── CHART 3: TIEMPO DE RESOLUCIÓN POR MOTIVO ─────────────────────
     const resCanvas = document.getElementById('chart-tiempo-resolucion');
     if (resCanvas) {
         const resCtx = resCanvas.getContext('2d');
-        const motivoTotals = {};
+        const motivoTotalsMs = {};
         const motivoCountsLib = {};
 
         data.forEach(r => {
             if (!r.retenido && r.fecha_reporte && r.fecha_liberacion) {
                 const start = new Date(r.fecha_reporte).getTime();
                 const end = new Date(r.fecha_liberacion).getTime();
-                const diffHrs = Math.max(0, end - start) / (1000 * 60 * 60);
+                const diffMs = Math.max(0, end - start);
                 const m = r.motivo || 'OTROS';
 
-                motivoTotals[m] = (motivoTotals[m] || 0) + diffHrs;
+                motivoTotalsMs[m] = (motivoTotalsMs[m] || 0) + diffMs;
                 motivoCountsLib[m] = (motivoCountsLib[m] || 0) + 1;
             }
         });
@@ -489,16 +488,19 @@ function _renderAnalyticsCharts() {
         const allMotivos = ['PROMOCIONES', 'CORREO', 'LAVADO', 'ARREGLO', 'PENDIENTES', 'CONTEO'];
         const motivoAvgs = allMotivos.map(m => {
             const count = motivoCountsLib[m] || 0;
-            const avg = count > 0 ? (motivoTotals[m] / count) : 0;
+            const avgMs = count > 0 ? (motivoTotalsMs[m] / count) : 0;
+            const mInfo = MOTIVO_COLORS[m] || { bg: 'rgba(99,102,241,0.12)', color: '#6366f1', label: m };
             return {
                 key: m,
-                label: MOTIVO_COLORS[m]?.label || m,
-                avgHrs: parseFloat(avg.toFixed(1))
+                label: mInfo.label || m,
+                avgMs: avgMs,
+                avgHrs: parseFloat((avgMs / (1000 * 3600)).toFixed(2)),
+                color: mInfo.color
             };
         });
 
         // Ordenar por mayor tiempo de resolución
-        motivoAvgs.sort((a, b) => b.avgHrs - a.avgHrs);
+        motivoAvgs.sort((a, b) => b.avgMs - a.avgMs);
 
         if (retCharts.barTiempoResolucion) retCharts.barTiempoResolucion.destroy();
         retCharts.barTiempoResolucion = new Chart(resCtx, {
@@ -506,11 +508,11 @@ function _renderAnalyticsCharts() {
             data: {
                 labels: motivoAvgs.map(m => m.label),
                 datasets: [{
-                    label: 'Horas Promedio',
+                    label: 'Tiempo Promedio',
                     data: motivoAvgs.map(m => m.avgHrs),
-                    backgroundColor: 'rgba(245, 158, 11, 0.65)',
-                    borderColor: '#f59e0b',
-                    borderWidth: 1,
+                    backgroundColor: motivoAvgs.map(m => m.color + 'aa'),
+                    borderColor: motivoAvgs.map(m => m.color),
+                    borderWidth: 1.5,
                     borderRadius: 6
                 }]
             },
@@ -518,11 +520,26 @@ function _renderAnalyticsCharts() {
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const item = motivoAvgs[context.dataIndex];
+                                const ms = item ? item.avgMs : (context.raw || 0) * 3600 * 1000;
+                                return ` Tiempo Promedio: ${_formatDuration(ms)}`;
+                            }
+                        }
+                    }
+                },
                 scales: {
                     x: {
                         grid: { color: 'rgba(226, 232, 240, 0.4)' },
-                        ticks: { color: '#94a3b8', precision: 0, callback: (v) => `${v} h` }
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 10, weight: '600' },
+                            callback: (v) => `${v} h`
+                        }
                     },
                     y: { grid: { display: false }, ticks: { color: '#475569', font: { size: 10, weight: '700' } } }
                 }
@@ -568,8 +585,8 @@ function _renderTable(rows) {
 function _buildRow(r) {
     const mInfo = MOTIVO_COLORS[r.motivo] || { bg: 'rgba(100,116,139,0.1)', color: '#64748b', label: r.motivo, icon: 'fa-info-circle' };
     const estadoBadge = r.retenido
-        ? `<span class="ret-badge ret-badge--retenido"><i class="fas fa-lock" style="margin-right:4px;font-size:0.65rem;"></i>Retenido</span>`
-        : `<span class="ret-badge ret-badge--liberado"><i class="fas fa-lock-open" style="margin-right:4px;font-size:0.65rem;"></i>Liberado</span>`;
+        ? `<span class="ret-badge ret-badge--retenido"><i class="fas fa-lock" style="margin-right:4px;font-size:0.65rem;"></i>RETENIDO</span>`
+        : `<span class="ret-badge ret-badge--liberado"><i class="fas fa-lock-open" style="margin-right:4px;font-size:0.65rem;"></i>LIBERADO</span>`;
 
     const fechaRep = r.fecha_reporte    ? _fmtDate(r.fecha_reporte)    : '—';
     const fechaLib = r.fecha_liberacion ? _fmtDate(r.fecha_liberacion) : '—';
