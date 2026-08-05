@@ -16,6 +16,7 @@ const RetModule = {
     refreshInterval: null,
     realtimeChannel: null,
     loading: false,
+    dateRange: { desde: null, hasta: null },  // Rango de fechas activo
 };
 
 // ── Colores por motivo ─────────────────────────────────────────────────────
@@ -74,11 +75,91 @@ window.addEventListener('DOMContentLoaded', () => {
 async function _initRetenidos() {
     _bindTabEvents();
     _bindSearchEvent();
+    _initDatePicker();   // Inicializa Flatpickr con semana actual
     await _loadData();
     _startLiveTimers();
     _startAutoRefresh();
     _subscribeRealtime();
 }
+
+// ── Rango semana actual ────────────────────────────────────────────────────
+function _getWeekRange() {
+    const now = new Date();
+    const day = now.getDay(); // 0=dom 1=lun ... 6=sab
+    const diffToMonday = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+    return { desde: monday, hasta: sunday };
+}
+
+function _toISODate(d) {
+    // Retorna 'YYYY-MM-DD' en hora local
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+}
+
+// ── Flatpickr ─────────────────────────────────────────────────────────────
+function _initDatePicker() {
+    if (typeof flatpickr === 'undefined') {
+        // Flatpickr no cargó todavía — reintentar en 500ms
+        setTimeout(_initDatePicker, 500);
+        return;
+    }
+    const { desde, hasta } = _getWeekRange();
+    RetModule.dateRange = { desde: _toISODate(desde), hasta: _toISODate(hasta) + 'T23:59:59' };
+
+    const input = document.getElementById('ret-daterange');
+    if (!input) return;
+
+    const picker = flatpickr(input, {
+        mode: 'range',
+        dateFormat: 'd/m/Y',
+        locale: 'es',
+        defaultDate: [desde, hasta],
+        showMonths: 1,
+        onChange: (selectedDates) => {
+            if (selectedDates.length === 2) {
+                const [d1, d2] = selectedDates;
+                RetModule.dateRange = {
+                    desde: _toISODate(d1),
+                    hasta: _toISODate(d2) + 'T23:59:59'
+                };
+                _loadData();
+            }
+        }
+    });
+
+    RetModule._picker = picker;
+    _updateDateLabel();
+}
+
+function _updateDateLabel() {
+    const input = document.getElementById('ret-daterange');
+    const { desde, hasta } = RetModule.dateRange;
+    if (input && desde && hasta) {
+        const d1 = new Date(desde + 'T00:00:00');
+        const d2 = new Date(hasta);
+        const fmt = (d) => d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+        input.value = `${fmt(d1)} — ${fmt(d2)}`;
+    }
+}
+
+function retResetDateRange() {
+    const { desde, hasta } = _getWeekRange();
+    RetModule.dateRange = { desde: _toISODate(desde), hasta: _toISODate(hasta) + 'T23:59:59' };
+    if (RetModule._picker) {
+        RetModule._picker.setDate([desde, hasta], false);
+    }
+    _updateDateLabel();
+    _loadData();
+}
+window.retResetDateRange = retResetDateRange;
 
 // ── Token de sesión ────────────────────────────────────────────────────────
 function _getToken() {
@@ -116,6 +197,12 @@ async function _loadData() {
             accion: 'LISTAR_RETENIDOS',
         };
         if (prodId) body.productora = parseInt(prodId);
+
+        // Enviar rango de fechas si está definido
+        if (RetModule.dateRange.desde && RetModule.dateRange.hasta) {
+            body.fecha_desde = RetModule.dateRange.desde;
+            body.fecha_hasta = RetModule.dateRange.hasta;
+        }
 
         const resp = await fetch(`${_getFunctionsUrl()}/retenidos`, {
             method: 'POST',
@@ -378,13 +465,13 @@ function _renderAnalyticsCharts() {
                 datasets: [{
                     label: 'Retenciones',
                     data: values,
-                    backgroundColor: 'rgba(99, 102, 241, 0.25)',
-                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.22)',
+                    borderColor: 'rgba(99, 102, 241, 0.55)',
                     borderWidth: 2,
-                    pointBackgroundColor: '#818cf8',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: '#6366f1'
+                    pointBackgroundColor: 'rgba(99, 102, 241, 0.6)',
+                    pointBorderColor: 'rgba(99, 102, 241, 0.3)',
+                    pointHoverBackgroundColor: 'rgba(99, 102, 241, 0.85)',
+                    pointHoverBorderColor: 'rgba(99, 102, 241, 0.4)'
                 }]
             },
             options: {
@@ -433,16 +520,16 @@ function _renderAnalyticsCharts() {
                     {
                         label: 'Retenidas',
                         data: retCounts,
-                        backgroundColor: 'rgba(239, 68, 68, 0.65)',
-                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.26)',
+                        borderColor: 'rgba(239, 68, 68, 0.50)',
                         borderWidth: 1,
                         borderRadius: 4
                     },
                     {
                         label: 'Solucionadas',
                         data: solCounts,
-                        backgroundColor: 'rgba(16, 185, 129, 0.65)',
-                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.26)',
+                        borderColor: 'rgba(16, 185, 129, 0.50)',
                         borderWidth: 1,
                         borderRadius: 4
                     }
@@ -489,13 +576,16 @@ function _renderAnalyticsCharts() {
         const motivoAvgs = allMotivos.map(m => {
             const count = motivoCountsLib[m] || 0;
             const avgMs = count > 0 ? (motivoTotalsMs[m] / count) : 0;
-            const mInfo = MOTIVO_COLORS[m] || { bg: 'rgba(99,102,241,0.12)', color: '#6366f1', label: m };
+            const mInfo = MOTIVO_COLORS[m] || { bg: 'rgba(99,102,241,0.28)', color: '#6366f1', label: m };
+            // Extraer los componentes rgb del color para crear un rgba con opacidad 0.28 (como metricas)
+            const bgFill = mInfo.bg.replace(/[\d.]+\)$/, '0.28)');
             return {
                 key: m,
                 label: mInfo.label || m,
                 avgMs: avgMs,
                 avgHrs: parseFloat((avgMs / (1000 * 3600)).toFixed(2)),
-                color: mInfo.color
+                color: mInfo.color,
+                bgFill: bgFill
             };
         });
 
@@ -510,8 +600,8 @@ function _renderAnalyticsCharts() {
                 datasets: [{
                     label: 'Tiempo Promedio',
                     data: motivoAvgs.map(m => m.avgHrs),
-                    backgroundColor: motivoAvgs.map(m => m.color + 'aa'),
-                    borderColor: motivoAvgs.map(m => m.color),
+                    backgroundColor: motivoAvgs.map(m => m.bgFill),
+                    borderColor: motivoAvgs.map(m => m.color + '99'),
                     borderWidth: 1.5,
                     borderRadius: 6
                 }]
