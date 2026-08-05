@@ -199,11 +199,17 @@
       background: #fff; border-color: #94a3b8; transform: translateY(-1px);
     }
     .ret-btn--primary {
-      background: linear-gradient(135deg, #6366f1, #818cf8); color: #fff;
-      box-shadow: 0 4px 14px rgba(99,102,241,0.3);
+      background: rgba(99, 102, 241, 0.12);
+      color: #6366f1;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      backdrop-filter: blur(8px);
+      box-shadow: none;
     }
     .ret-btn--primary:hover:not(:disabled) {
-      transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.4);
+      background: rgba(99, 102, 241, 0.22);
+      border-color: rgba(99, 102, 241, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.15);
     }
     .ret-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
@@ -248,10 +254,7 @@
     }
     .ret-kpi-card:hover .ret-kpi-card__bg-icon { opacity: 0.13; transform: scale(1.1) rotate(-10deg); }
 
-    .kpi--danger   { border-top: 3px solid #ef4444; }
-    .kpi--warning  { border-top: 3px solid #f59e0b; }
-    .kpi--success  { border-top: 3px solid #10b981; }
-    .kpi--primary  { border-top: 3px solid #6366f1; }
+    /* Sin borde de color superior en KPI cards */
 
     .kpi--danger  .ret-kpi-value { color: #ef4444; }
     .kpi--warning .ret-kpi-value { color: #f59e0b; }
@@ -263,13 +266,23 @@
     .kpi--success .ret-kpi-accent { background: rgba(16,185,129,0.12); color: #10b981; }
     .kpi--primary .ret-kpi-accent { background: rgba(99,102,241,0.12); color: #6366f1; }
 
+    .kpi--danger  .ret-kpi-card__bg-icon { color: #ef4444; opacity: 0.18; }
+    .kpi--warning .ret-kpi-card__bg-icon { color: #f59e0b; opacity: 0.18; }
+    .kpi--success .ret-kpi-card__bg-icon { color: #10b981; opacity: 0.18; }
+    .kpi--primary .ret-kpi-card__bg-icon { color: #6366f1; opacity: 0.18; }
+
+    .ret-kpi-card.kpi--danger:hover  .ret-kpi-card__bg-icon { opacity: 0.28; }
+    .ret-kpi-card.kpi--warning:hover .ret-kpi-card__bg-icon { opacity: 0.28; }
+    .ret-kpi-card.kpi--success:hover .ret-kpi-card__bg-icon { opacity: 0.28; }
+    .ret-kpi-card.kpi--primary:hover .ret-kpi-card__bg-icon { opacity: 0.28; }
+
     /* ══ Panel principal ════════════════════════════════════════════════════ */
     .ret-panel {
-      background: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.12);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(226, 232, 240, 0.6); border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.03); overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.02); overflow: hidden;
     }
 
     /* ══ Skeleton Loading ═══════════════════════════════════════════════════ */
@@ -311,7 +324,8 @@
     /* Pestañas */
     .ret-tabs {
       display: flex; gap: 4px;
-      background: rgba(241,245,249,0.8); border-radius: 10px; padding: 3px;
+      background: rgba(255,255,255,0.12); border-radius: 10px; padding: 3px;
+      border: 1px solid rgba(255,255,255,0.15);
     }
     .ret-tab-btn {
       padding: 6px 16px; border-radius: 8px; border: none;
@@ -320,7 +334,7 @@
       white-space: nowrap;
     }
     .ret-tab-btn.active {
-      background: #fff; color: #1e293b;
+      background: rgba(255,255,255,0.85); color: #1e293b;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .ret-tab-btn:hover:not(.active) { color: #1e293b; }
@@ -335,16 +349,16 @@
     }
     .ret-search {
       width: 100%; padding: 8px 12px 8px 36px;
-      border: 1px solid var(--ret-border); border-radius: 10px;
-      background: rgba(255,255,255,0.6); backdrop-filter: blur(4px);
-      font-family: 'Inter', sans-serif; font-size: 0.82rem; color: #475569;
+      border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px;
+      background: rgba(255,255,255,0.15); backdrop-filter: blur(4px);
+      font-family: 'Inter', sans-serif; font-size: 0.82rem; color: #1e293b;
       transition: all 0.18s;
     }
     .ret-search::placeholder { color: #94a3b8; }
     .ret-search:focus {
       outline: none; border-color: #6366f1;
       box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
-      background: rgba(255,255,255,0.9);
+      background: rgba(255,255,255,0.85);
     }
 
     .ret-toolbar-spacer { flex: 1; }
@@ -365,8 +379,8 @@
     .ret-thead { position: sticky; top: 0; z-index: 5; }
     .ret-th {
       padding: 11px 14px; text-align: left;
-      background: rgba(248,250,252,0.95); backdrop-filter: blur(8px);
-      border-bottom: 2px solid var(--ret-border);
+      background: rgba(255,255,255,0.18); backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(255,255,255,0.18);
       font-size: 0.7rem; font-weight: 700;
       text-transform: uppercase; letter-spacing: 0.06em; color: #64748b;
       white-space: nowrap; user-select: none;
@@ -453,35 +467,126 @@
       50% { opacity: 0.2; }
     }
 
+    .ret-select-inline {
+      padding: 3px 6px;
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #1e293b;
+      background: rgba(255, 255, 255, 0.9);
+      cursor: pointer;
+      outline: none;
+      transition: all 0.15s ease;
+    }
+    .ret-select-inline:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    }
+    .ret-user-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .ret-user-click {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+      transition: all 0.15s ease;
+    }
+    .ret-user-click:hover {
+      background: rgba(99, 102, 241, 0.12);
+      color: #6366f1;
+    }
+    .ret-user-edit-icon {
+      font-size: 0.65rem;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .ret-user-click:hover .ret-user-edit-icon {
+      opacity: 0.7;
+    }
+
+    /* ══ Analytics Grid CSS ════════════════════════════════════════════════ */
+    .ret-analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1100px) {
+      .ret-analytics-grid { grid-template-columns: 1fr; }
+    }
+    .ret-chart-card {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--ret-radius);
+      padding: 18px 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.02);
+    }
+    .ret-chart-header {
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ret-chart-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+    }
+
     /* ══ Responsive mobile ══════════════════════════════════════════════════ */
     @media (max-width: 767px) {
-      .ret-wrapper { width: 100%; margin-top: 64px; }
-      .ret-header { padding: 0 12px; }
+      .ret-wrapper { width: 100%; margin-top: 64px; padding: 0 8px; }
       .ret-panel { border-radius: 12px; }
-      .ret-toolbar { padding: 10px 12px; }
-      .ret-kpi-grid { gap: 10px; }
-      .ret-kpi-card { padding: 14px 16px; }
-      .ret-kpi-value { font-size: 1.65rem; }
-
-      /* Ocultar columnas no esenciales en móvil */
-      .ret-th.col-linea, .ret-td.col-linea,
-      .ret-th.col-genero, .ret-td.col-genero,
-      .ret-th.col-liberado, .ret-td.col-liberado { display: none; }
+      .ret-toolbar { padding: 10px 12px; flex-direction: column; align-items: stretch; gap: 10px; }
+      .ret-tabs { width: 100%; justify-content: space-between; }
+      .ret-tab-btn { flex: 1; text-align: center; padding: 8px 6px; font-size: 0.75rem; justify-content: center; }
+      .ret-kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+      .ret-kpi-card { padding: 14px 14px; }
+      .ret-kpi-value { font-size: 1.55rem; }
+      .ret-kpi-accent { font-size: 0.58rem; padding: 2px 8px; margin-bottom: 6px; }
+      .ret-kpi-label { font-size: 0.65rem; }
 
       .ret-search-wrap { max-width: 100%; width: 100%; }
-      .ret-header-actions .ret-btn span { display: none; }
-      .ret-header-actions .ret-btn { padding: 9px 12px; }
+      .ret-header-actions { width: 100%; display: flex; gap: 8px; justify-content: space-between; }
+      .ret-header-actions .ret-btn { flex: 1; justify-content: center; padding: 10px 12px; font-size: 0.8rem; }
+      .ret-header-actions .ret-btn span { display: inline !important; }
+
+      .ret-panel { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .ret-table { font-size: 0.78rem; white-space: nowrap; }
+      .ret-td, .ret-th { padding: 8px 10px; }
+
+      .ret-th.col-linea, .ret-td.col-linea,
+      .ret-th.col-genero, .ret-td.col-genero { display: none; }
     }
 
     /* ══ Botón Nueva Retención ══════════════════════════════════════════════ */
     .ret-btn--danger {
-      background: linear-gradient(135deg, #ef4444, #f97316);
-      color: #fff;
-      box-shadow: 0 4px 14px rgba(239,68,68,0.3);
+      background: rgba(239, 68, 68, 0.12);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      backdrop-filter: blur(8px);
+      box-shadow: none;
     }
     .ret-btn--danger:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(239,68,68,0.45);
+      background: rgba(239, 68, 68, 0.22);
+      border-color: rgba(239, 68, 68, 0.5);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.15);
     }
 
     /* ══ Modal Retención ════════════════════════════════════════════════════ */
@@ -837,6 +942,7 @@
               <th class="ret-th" data-sort="cantidad" onclick="retSortBy('cantidad')" style="text-align:right;">Cant.</th>
               <th class="ret-th" data-sort="motivo" onclick="retSortBy('motivo')">Motivo</th>
               <th class="ret-th" data-sort="retenido" onclick="retSortBy('retenido')">Estado</th>
+              <th class="ret-th" data-sort="reportado_por" onclick="retSortBy('reportado_por')">Reportado Por</th>
               <th class="ret-th" data-sort="fecha_reporte" onclick="retSortBy('fecha_reporte')">Reportado</th>
               <th class="ret-th">Atraso / Resolución</th>
               <th class="ret-th col-liberado">Liberado</th>
@@ -844,7 +950,7 @@
           </thead>
           <tbody id="ret-tbody">
             <tr>
-              <td colspan="12" style="text-align:center;padding:3rem;color:#94a3b8;">
+              <td colspan="13" style="text-align:center;padding:3rem;color:#94a3b8;">
                 <div style="width:28px;height:28px;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;border-radius:50%;animation:ret-spin 0.7s linear infinite;margin:0 auto 0.5rem;"></div>
                 Cargando datos…
               </td>
@@ -861,6 +967,84 @@
         </div>
         <div id="ret-row-count" style="font-weight:600;color:#475569;"></div>
       </div>
+    </div>
+
+    <!-- ══ ANALYTICS & METRICAS AVANZADAS (debajo de la tabla) ═════════════ -->
+    <div style="margin-top:32px;">
+
+      <!-- Header de Analytics -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+        <h3 style="font-size:1.15rem;font-weight:800;color:#1e293b;margin:0;display:flex;align-items:center;gap:8px;">
+          <i class="fas fa-chart-pie" style="color:#6366f1;"></i> Métricas & Análisis de Retenciones
+        </h3>
+        <span style="font-size:0.75rem;color:#94a3b8;font-weight:500;">Análisis dinámico de datos</span>
+      </div>
+
+      <!-- KPIs Secundarios de Métricas (Grid de 3 para simetría perfecta con los 3 gráficos) -->
+      <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:16px;margin-bottom:20px;">
+        <div class="ret-kpi-card" style="background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.12);">
+          <i class="ret-kpi-card__bg-icon fas fa-stopwatch" style="color:#6366f1;opacity:0.18;"></i>
+          <div style="position:relative;z-index:1;">
+            <span class="ret-kpi-accent" style="background:rgba(99,102,241,0.12);color:#6366f1;">Tiempo Prom. Liberación</span>
+            <div class="ret-kpi-value" id="ret-kpi-avg-time" style="color:#6366f1;">—</div>
+            <div class="ret-kpi-label">Tiempo promedio en resolver retención</div>
+          </div>
+        </div>
+
+        <div class="ret-kpi-card" style="background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.12);">
+          <i class="ret-kpi-card__bg-icon fas fa-bullseye" style="color:#ef4444;opacity:0.18;"></i>
+          <div style="position:relative;z-index:1;">
+            <span class="ret-kpi-accent" style="background:rgba(239,68,68,0.12);color:#ef4444;">Motivo Más Frecuente</span>
+            <div class="ret-kpi-value" id="ret-kpi-top-motivo" style="color:#ef4444;font-size:1.4rem;">—</div>
+            <div class="ret-kpi-label">Causa principal de las retenciones</div>
+          </div>
+        </div>
+
+        <div class="ret-kpi-card" style="background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.12);">
+          <i class="ret-kpi-card__bg-icon fas fa-check-double" style="color:#10b981;opacity:0.18;"></i>
+          <div style="position:relative;z-index:1;">
+            <span class="ret-kpi-accent" style="background:rgba(16,185,129,0.12);color:#10b981;">Tasa de Eficiencia</span>
+            <div class="ret-kpi-value" id="ret-kpi-tasa-liberacion" style="color:#10b981;">—</div>
+            <div class="ret-kpi-label">Porcentaje de OPs liberadas exitosamente</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid de Gráficos (Spider Chart + Retenciones/Soluciones por Hora + Tiempo de Resolución) -->
+      <div class="ret-analytics-grid">
+        
+        <!-- Spider / Radar Chart -->
+        <div class="ret-chart-card">
+          <div class="ret-chart-header">
+            <span class="ret-chart-title"><i class="fas fa-spider" style="color:#6366f1;margin-right:6px;"></i>Motivos de Retención (Spider Chart)</span>
+          </div>
+          <div class="ret-chart-body" style="height:250px;position:relative;">
+            <canvas id="chart-motivos-radar"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart Horarios: Retenciones vs Soluciones -->
+        <div class="ret-chart-card">
+          <div class="ret-chart-header">
+            <span class="ret-chart-title"><i class="fas fa-clock" style="color:#3b82f6;margin-right:6px;"></i>Retenciones vs Soluciones por Hora</span>
+          </div>
+          <div class="ret-chart-body" style="height:250px;position:relative;">
+            <canvas id="chart-horarios"></canvas>
+          </div>
+        </div>
+
+        <!-- Bar Chart Tiempo de Resolución por Motivo -->
+        <div class="ret-chart-card">
+          <div class="ret-chart-header">
+            <span class="ret-chart-title"><i class="fas fa-hourglass-half" style="color:#f59e0b;margin-right:6px;"></i>Tiempo Resolución por Motivo (Horas)</span>
+          </div>
+          <div class="ret-chart-body" style="height:250px;position:relative;">
+            <canvas id="chart-tiempo-resolucion"></canvas>
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
     </div><!-- /#ret-data-container -->
@@ -954,6 +1138,7 @@
 
   <!-- ══ Vendor Scripts ══════════════════════════════════════════════════ -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- ══ App Core ════════════════════════════════════════════════════════ -->
   <script src="js/config.js"></script>

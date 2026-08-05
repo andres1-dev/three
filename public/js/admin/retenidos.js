@@ -28,6 +28,33 @@ const MOTIVO_COLORS = {
     'CONTEO':      { bg: 'rgba(168,85,247,0.12)',   color: '#a855f7', label: 'Conteo',      icon: 'fa-hashtag' },
 };
 
+// ── Mapeo de usuarios por correo ───────────────────────────────────────────
+const USER_NAME_MAP = {
+    'escaner1cdi@gmail.com': 'PAULA',
+    'escaner2cdi@gmail.com': 'KELLY',
+    'escaner3cdi@gmail.com': 'NICOL',
+    'escaner4cdi@gmail.com': 'TATIANA',
+    'coordinadorlogisticocdi@gmail.com': 'ANDRES'
+};
+
+const USER_EMAIL_MAP = {
+    'PAULA': 'escaner1cdi@gmail.com',
+    'KELLY': 'escaner2cdi@gmail.com',
+    'NICOL': 'escaner3cdi@gmail.com',
+    'TATIANA': 'escaner4cdi@gmail.com',
+    'ANDRES': 'coordinadorlogisticocdi@gmail.com'
+};
+
+function _getNombreReportado(val) {
+    if (!val) return '—';
+    const lower = String(val).toLowerCase().trim();
+    if (USER_NAME_MAP[lower]) return USER_NAME_MAP[lower];
+    const upper = String(val).toUpperCase().trim();
+    if (['PAULA', 'KELLY', 'NICOL', 'TATIANA', 'ANDRES'].includes(upper)) return upper;
+    if (lower.includes('@')) return lower.split('@')[0].toUpperCase();
+    return upper;
+}
+
 // ── Inicialización ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
     // Esperar a que auth.js resuelva la sesión
@@ -242,6 +269,7 @@ function _renderAll() {
     _renderKPIs();
     _renderTable(pool);
     _updateRowCount(pool.length);
+    _renderAnalyticsCharts();
 }
 
 // ── KPIs ───────────────────────────────────────────────────────────────────
@@ -255,6 +283,232 @@ function _renderKPIs() {
     _animateCounter('kpi-unids-retenidas', retUnits);
     _animateCounter('kpi-ops-liberadas',   lib.length);
     _animateCounter('kpi-total-ops',       all.length);
+}
+
+// ── Gráficos & Analytics Avanzados ─────────────────────────────────────────
+let retCharts = {
+    radarMotivos: null,
+    barHorarios: null,
+    barTiempoResolucion: null
+};
+
+function _renderAnalyticsCharts() {
+    if (typeof Chart === 'undefined') return;
+    const data = RetModule.data;
+    if (!data || !data.length) return;
+
+    // 1. KPI: Tiempo promedio de liberación
+    const liberados = data.filter(r => !r.retenido && r.fecha_reporte && r.fecha_liberacion);
+    let avgMs = 0;
+    if (liberados.length) {
+        const totalMs = liberados.reduce((acc, r) => {
+            const start = new Date(r.fecha_reporte).getTime();
+            const end = new Date(r.fecha_liberacion).getTime();
+            return acc + Math.max(0, end - start);
+        }, 0);
+        avgMs = totalMs / liberados.length;
+    }
+    const avgHrs = (avgMs / (1000 * 60 * 60)).toFixed(1);
+    const avgTimeEl = document.getElementById('ret-kpi-avg-time');
+    if (avgTimeEl) {
+        if (avgMs > 0) {
+            avgTimeEl.textContent = avgHrs < 24 ? `${avgHrs} hrs` : `${(avgHrs / 24).toFixed(1)} días`;
+        } else {
+            avgTimeEl.textContent = '—';
+        }
+    }
+
+    // 2. KPI: Motivo más frecuente
+    const motivoCounts = {};
+    data.forEach(r => {
+        const m = r.motivo || 'OTROS';
+        motivoCounts[m] = (motivoCounts[m] || 0) + 1;
+    });
+    let topMotivo = '—';
+    let topCount = 0;
+    Object.entries(motivoCounts).forEach(([m, c]) => {
+        if (c > topCount) { topCount = c; topMotivo = m; }
+    });
+    const pctMotivo = data.length ? Math.round((topCount / data.length) * 100) : 0;
+    const topMotivoEl = document.getElementById('ret-kpi-top-motivo');
+    if (topMotivoEl) {
+        const labelMotivo = MOTIVO_COLORS[topMotivo]?.label || topMotivo;
+        topMotivoEl.textContent = topCount > 0 ? `${labelMotivo} (${pctMotivo}%)` : '—';
+    }
+
+    // 3. KPI: Tasa de Eficiencia (% Liberado)
+    const liberadosCount = data.filter(r => !r.retenido).length;
+    const pctEficiencia = data.length ? Math.round((liberadosCount / data.length) * 100) : 0;
+    const tasaEl = document.getElementById('ret-kpi-tasa-liberacion');
+    if (tasaEl) {
+        tasaEl.textContent = data.length ? `${pctEficiencia}%` : '—';
+    }
+
+    // ── CHART 1: SPIDER / RADAR CHART DE MOTIVOS ──────────────────────────────
+    const radarCanvas = document.getElementById('chart-motivos-radar');
+    if (radarCanvas) {
+        const radarCtx = radarCanvas.getContext('2d');
+        const labelsKeys = ['PROMOCIONES', 'CORREO', 'LAVADO', 'ARREGLO', 'PENDIENTES', 'CONTEO'];
+        const values = labelsKeys.map(l => motivoCounts[l] || 0);
+
+        if (retCharts.radarMotivos) retCharts.radarMotivos.destroy();
+        retCharts.radarMotivos = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+                labels: labelsKeys.map(l => (MOTIVO_COLORS[l]?.label || l)),
+                datasets: [{
+                    label: 'Retenciones',
+                    data: values,
+                    backgroundColor: 'rgba(99, 102, 241, 0.25)',
+                    borderColor: '#6366f1',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#818cf8',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: '#6366f1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    r: {
+                        angleLines: { color: 'rgba(148, 163, 184, 0.25)' },
+                        grid: { color: 'rgba(148, 163, 184, 0.25)' },
+                        pointLabels: { color: '#475569', font: { weight: '700', size: 10 } },
+                        ticks: { backdropColor: 'transparent', color: '#94a3b8', precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── CHART 2: RETENCIONES VS SOLUCIONES POR HORA ───────────────────────────
+    const horCanvas = document.getElementById('chart-horarios');
+    if (horCanvas) {
+        const horCtx = horCanvas.getContext('2d');
+        const hourLabels = ['6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM'];
+        const retCounts = new Array(14).fill(0);
+        const solCounts = new Array(14).fill(0);
+
+        data.forEach(r => {
+            if (r.fecha_reporte) {
+                const h = new Date(r.fecha_reporte).getHours();
+                if (h >= 6 && h <= 19) retCounts[h - 6]++;
+            }
+            if (r.fecha_liberacion) {
+                const h = new Date(r.fecha_liberacion).getHours();
+                if (h >= 6 && h <= 19) solCounts[h - 6]++;
+            }
+        });
+
+        if (retCharts.barHorarios) retCharts.barHorarios.destroy();
+        retCharts.barHorarios = new Chart(horCtx, {
+            type: 'bar',
+            data: {
+                labels: hourLabels,
+                datasets: [
+                    {
+                        label: 'Retenidas',
+                        data: retCounts,
+                        backgroundColor: 'rgba(239, 68, 68, 0.65)',
+                        borderColor: '#ef4444',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'Solucionadas',
+                        data: solCounts,
+                        backgroundColor: 'rgba(16, 185, 129, 0.65)',
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: { boxWidth: 12, font: { size: 10, weight: '700' }, color: '#475569' }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9, weight: '600' } } },
+                    y: { grid: { color: 'rgba(226, 232, 240, 0.4)' }, ticks: { color: '#94a3b8', precision: 0 } }
+                }
+            }
+        });
+    }
+
+    // ── CHART 3: TIEMPO DE RESOLUCIÓN POR MOTIVO (HORAS) ─────────────────────
+    const resCanvas = document.getElementById('chart-tiempo-resolucion');
+    if (resCanvas) {
+        const resCtx = resCanvas.getContext('2d');
+        const motivoTotals = {};
+        const motivoCountsLib = {};
+
+        data.forEach(r => {
+            if (!r.retenido && r.fecha_reporte && r.fecha_liberacion) {
+                const start = new Date(r.fecha_reporte).getTime();
+                const end = new Date(r.fecha_liberacion).getTime();
+                const diffHrs = Math.max(0, end - start) / (1000 * 60 * 60);
+                const m = r.motivo || 'OTROS';
+
+                motivoTotals[m] = (motivoTotals[m] || 0) + diffHrs;
+                motivoCountsLib[m] = (motivoCountsLib[m] || 0) + 1;
+            }
+        });
+
+        const allMotivos = ['PROMOCIONES', 'CORREO', 'LAVADO', 'ARREGLO', 'PENDIENTES', 'CONTEO'];
+        const motivoAvgs = allMotivos.map(m => {
+            const count = motivoCountsLib[m] || 0;
+            const avg = count > 0 ? (motivoTotals[m] / count) : 0;
+            return {
+                key: m,
+                label: MOTIVO_COLORS[m]?.label || m,
+                avgHrs: parseFloat(avg.toFixed(1))
+            };
+        });
+
+        // Ordenar por mayor tiempo de resolución
+        motivoAvgs.sort((a, b) => b.avgHrs - a.avgHrs);
+
+        if (retCharts.barTiempoResolucion) retCharts.barTiempoResolucion.destroy();
+        retCharts.barTiempoResolucion = new Chart(resCtx, {
+            type: 'bar',
+            data: {
+                labels: motivoAvgs.map(m => m.label),
+                datasets: [{
+                    label: 'Horas Promedio',
+                    data: motivoAvgs.map(m => m.avgHrs),
+                    backgroundColor: 'rgba(245, 158, 11, 0.65)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: {
+                        grid: { color: 'rgba(226, 232, 240, 0.4)' },
+                        ticks: { color: '#94a3b8', precision: 0, callback: (v) => `${v} h` }
+                    },
+                    y: { grid: { display: false }, ticks: { color: '#475569', font: { size: 10, weight: '700' } } }
+                }
+            }
+        });
+    }
 }
 
 function _animateCounter(id, target) {
@@ -310,10 +564,14 @@ function _buildRow(r) {
            </button>`
         : '';
 
-    // Edición de cantidad inline on-demand al hacer click (mantiene diseño limpio)
     const cantDisplay = (canEdit && r.retenido)
         ? `<span class="ret-cant-click" onclick="retEditarCantidadInline(this.parentElement, ${r.id}, ${r.cantidad})" title="Toca para editar cantidad">${r.cantidad.toLocaleString('es-CO')} <i class="fas fa-pencil-alt ret-cant-edit-icon"></i></span>`
         : r.cantidad.toLocaleString('es-CO');
+
+    const reportadorNombre = _getNombreReportado(r.reportado_por);
+    const reportadorHtml = (canEdit && r.retenido)
+        ? `<span class="ret-user-click" onclick="retEditarReportadorInline(this.parentElement, ${r.id}, '${reportadorNombre}')" title="Toca para cambiar usuario"><i class="fas fa-user" style="font-size:0.65rem;"></i>${reportadorNombre} <i class="fas fa-pencil-alt ret-user-edit-icon"></i></span>`
+        : `<span class="ret-user-tag"><i class="fas fa-user" style="margin-right:4px;font-size:0.65rem;"></i>${reportadorNombre}</span>`;
 
     return `
         <tr class="ret-row" data-id="${r.id}">
@@ -328,6 +586,7 @@ function _buildRow(r) {
                 <span class="ret-motivo" style="background:${mInfo.bg};color:${mInfo.color};"><i class="fas ${mInfo.icon || 'fa-tag'}" style="margin-right:4px;font-size:0.65rem;"></i>${mInfo.label || r.motivo}</span>
             </td>
             <td class="ret-td">${estadoBadge}</td>
+            <td class="ret-td">${reportadorHtml}</td>
             <td class="ret-td ret-td--fecha">${fechaRep}</td>
             <td class="ret-td ret-td--timer" ${timerAttrs}>
                 <span class="ret-timer${r.retenido ? ' ret-timer--live' : ''}">${_calcElapsed(r)}</span>
@@ -372,6 +631,38 @@ function retEditarCantidadInline(cell, id, currentVal) {
 }
 window.retEditarCantidadInline = retEditarCantidadInline;
 
+// ── Edición On-Demand de Reportador en Tabla (Click-to-edit) ────────────────
+function retEditarReportadorInline(cell, id, currentNombre) {
+    if (cell.querySelector('select')) return;
+
+    const nombres = ['PAULA', 'KELLY', 'NICOL', 'TATIANA', 'ANDRES'];
+    const optionsHtml = nombres.map(n => 
+        `<option value="${n}" ${n === currentNombre ? 'selected' : ''}>${n}</option>`
+    ).join('');
+
+    cell.innerHTML = `<select class="ret-select-inline" autofocus style="padding: 2px 6px; border: 1.5px solid #6366f1; border-radius: 6px; font-weight: 700; font-size: 0.75rem; background: #fff; color: #1e293b; outline: none; box-shadow: 0 0 0 2px rgba(99,102,241,0.2);">${optionsHtml}</select>`;
+
+    const select = cell.querySelector('select');
+    select.focus();
+
+    let saved = false;
+    const guardar = () => {
+        if (saved) return;
+        saved = true;
+        const newNombre = select.value;
+        if (newNombre && newNombre !== currentNombre) {
+            retCambiarReportador(id, newNombre);
+            cell.innerHTML = `<span class="ret-user-click" onclick="retEditarReportadorInline(this.parentElement, ${id}, '${newNombre}')" title="Toca para cambiar usuario"><i class="fas fa-user" style="font-size:0.65rem;"></i>${newNombre} <i class="fas fa-pencil-alt ret-user-edit-icon"></i></span>`;
+        } else {
+            cell.innerHTML = `<span class="ret-user-click" onclick="retEditarReportadorInline(this.parentElement, ${id}, '${currentNombre}')" title="Toca para cambiar usuario"><i class="fas fa-user" style="font-size:0.65rem;"></i>${currentNombre} <i class="fas fa-pencil-alt ret-user-edit-icon"></i></span>`;
+        }
+    };
+
+    select.addEventListener('change', guardar);
+    select.addEventListener('blur', guardar);
+}
+window.retEditarReportadorInline = retEditarReportadorInline;
+
 // ── Actualización de cantidad directa en tabla ────────────────────────────
 async function retActualizarCantidadTabla(id, novaCant) {
     const val = parseInt(novaCant, 10);
@@ -399,6 +690,32 @@ async function retActualizarCantidadTabla(id, novaCant) {
     }
 }
 window.retActualizarCantidadTabla = retActualizarCantidadTabla;
+
+// ── Actualización de usuario reportador directa en tabla ──────────────────
+async function retCambiarReportador(id, nuevoNombre) {
+    const email = USER_EMAIL_MAP[nuevoNombre] || nuevoNombre;
+
+    // Actualización optimista
+    const idx = RetModule.data.findIndex(r => r.id === id);
+    if (idx !== -1) {
+        RetModule.data[idx].reportado_por = email;
+    }
+
+    try {
+        await fetch(`${_getFunctionsUrl()}/retenidos`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': (typeof SUPABASE_KEY !== 'undefined') ? SUPABASE_KEY : '',
+                'Authorization': `Bearer ${_getToken()}`,
+            },
+            body: JSON.stringify({ accion: 'ACTUALIZAR_REPORTADO', id, reportado_por: email }),
+        });
+    } catch (err) {
+        console.error('[RETENIDOS] Error al actualizar reportador:', err);
+    }
+}
+window.retCambiarReportador = retCambiarReportador;
 
 // ── Liberar OP (Directo sin SweetAlert) ───────────────────────────────────
 async function retLiberarOP(id, lote) {
@@ -531,19 +848,25 @@ function retExportCSV() {
     const rows = RetModule.filtered;
     if (!rows.length) return;
     const headers = ['OP','Referencia','Taller','Línea','Prenda','Género','Cantidad','Motivo','Estado','Reportado por','Fecha Reporte','Liberado por','Fecha Liberación'];
-    const csvRows = [headers.join(',')];
+    const csvRows = [headers.join(';')];
     rows.forEach(r => {
         csvRows.push([
-            r.lote, r.referencia, `"${r.taller}"`, r.linea, r.prenda, r.genero,
-            r.cantidad, r.motivo,
+            r.lote || '',
+            `"${(r.referencia || '').replace(/"/g, '""')}"`,
+            `"${(r.taller || '').replace(/"/g, '""')}"`,
+            `"${(r.linea || '').replace(/"/g, '""')}"`,
+            `"${(r.prenda || '').replace(/"/g, '""')}"`,
+            `"${(r.genero || '').replace(/"/g, '""')}"`,
+            r.cantidad || 0,
+            `"${(r.motivo || '').replace(/"/g, '""')}"`,
             r.retenido ? 'Retenido' : 'Liberado',
-            r.reportado_por,
+            `"${_getNombreReportado(r.reportado_por)}"`,
             r.fecha_reporte    ? new Date(r.fecha_reporte).toLocaleString('es-CO')    : '',
-            r.liberado_por,
+            `"${(r.liberado_por || '').replace(/"/g, '""')}"`,
             r.fecha_liberacion ? new Date(r.fecha_liberacion).toLocaleString('es-CO') : '',
-        ].join(','));
+        ].join(';'));
     });
-    const blob = new Blob(['\uFEFF' + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\uFEFF' + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
