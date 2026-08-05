@@ -426,11 +426,13 @@
       font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
     }
 
-    /* Timer live */
-    .ret-timer--live { color: #ef4444; animation: ret-pulse 2s ease-in-out infinite; }
-    @keyframes ret-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.65; }
+    /* Text-only timer counter */
+    .ret-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      transition: color 0.3s ease;
     }
 
     /* ══ Loading overlay ════════════════════════════════════════════════════ */
@@ -944,7 +946,7 @@
               <th class="ret-th" data-sort="retenido" onclick="retSortBy('retenido')">Estado</th>
               <th class="ret-th" data-sort="reportado_por" onclick="retSortBy('reportado_por')">Reportado Por</th>
               <th class="ret-th" data-sort="fecha_reporte" onclick="retSortBy('fecha_reporte')">Reportado</th>
-              <th class="ret-th">Atraso / Resolución</th>
+              <th class="ret-th" data-sort="fecha_reporte" onclick="retSortBy('fecha_reporte')">Tiempo</th>
               <th class="ret-th col-liberado">Liberado</th>
             </tr>
           </thead>

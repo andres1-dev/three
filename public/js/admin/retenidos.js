@@ -255,13 +255,25 @@ function _renderAll() {
         );
     }
 
-    if (RetModule.sortCol) {
+    if (!RetModule.sortCol) {
+        // Orden por defecto: los más antiguos primero (mayor tiempo arriba)
+        pool = [...pool].sort((a, b) => {
+            const da = a.fecha_reporte ? new Date(a.fecha_reporte).getTime() : 0;
+            const db = b.fecha_reporte ? new Date(b.fecha_reporte).getTime() : 0;
+            return da - db;
+        });
+    } else {
         const dir = RetModule.sortDir === 'asc' ? 1 : -1;
         pool = [...pool].sort((a, b) => {
             let av = a[RetModule.sortCol];
             let bv = b[RetModule.sortCol];
+            if (RetModule.sortCol === 'fecha_reporte') {
+                const da = av ? new Date(av).getTime() : 0;
+                const db = bv ? new Date(bv).getTime() : 0;
+                return (da - db) * dir;
+            }
             if (typeof av === 'number') return (av - bv) * dir;
-            return String(av).localeCompare(String(bv)) * dir;
+            return String(av || '').localeCompare(String(bv || '')) * dir;
         });
     }
 
@@ -269,7 +281,15 @@ function _renderAll() {
     _renderKPIs();
     _renderTable(pool);
     _updateRowCount(pool.length);
+    _updateColumnVisibility();
     _renderAnalyticsCharts();
+}
+
+function _updateColumnVisibility() {
+    const isRetenidos = (RetModule.tab === 'retenidos');
+    document.querySelectorAll('.col-liberado').forEach(el => {
+        el.style.display = isRetenidos ? 'none' : '';
+    });
 }
 
 // ── KPIs ───────────────────────────────────────────────────────────────────
@@ -542,6 +562,7 @@ function _renderTable(rows) {
     }
 
     tbody.innerHTML = rows.map(r => _buildRow(r)).join('');
+    _applyTimerColors();
 }
 
 function _buildRow(r) {
@@ -552,6 +573,7 @@ function _buildRow(r) {
 
     const fechaRep = r.fecha_reporte    ? _fmtDate(r.fecha_reporte)    : '—';
     const fechaLib = r.fecha_liberacion ? _fmtDate(r.fecha_liberacion) : '—';
+    const timerLabel = r.retenido ? 'Atraso' : 'Resolución';
     const timerMode = r.retenido ? 'atraso' : 'resolucion';
     const timerAttrs = `data-ret-start="${r.fecha_reporte || ''}" data-ret-end="${r.fecha_liberacion || ''}" data-ret-mode="${timerMode}"`;
 
@@ -589,7 +611,7 @@ function _buildRow(r) {
             <td class="ret-td">${reportadorHtml}</td>
             <td class="ret-td ret-td--fecha">${fechaRep}</td>
             <td class="ret-td ret-td--timer" ${timerAttrs}>
-                <span class="ret-timer${r.retenido ? ' ret-timer--live' : ''}">${_calcElapsed(r)}</span>
+                <span class="ret-timer">${_calcElapsed(r)}</span>
             </td>
             <td class="ret-td col-liberado">${fechaLib}</td>
         </tr>`;
@@ -763,6 +785,7 @@ function _tickTimers() {
             ? _elapsedSince(start)
             : _elapsedBetween(start, end);
     });
+    _applyTimerColors();
 }
 
 function _calcElapsed(r) {
@@ -787,13 +810,62 @@ function _elapsedBetween(startStr, endStr) {
 }
 
 function _formatDuration(ms) {
-    if (ms < 0) return '0:00';
+    if (ms < 0) return '0s';
     const totalSec = Math.floor(ms / 1000);
-    const h = Math.floor(totalSec / 3600);
+    const d = Math.floor(totalSec / 86400);
+    const h = Math.floor((totalSec % 86400) / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    if (h > 0) return `${h}:${_pad(m)}:${_pad(s)}`;
-    return `${m}:${_pad(s)}`;
+    if (d > 0) return `${d}d ${h}h ${_pad(m)}m ${_pad(s)}s`;
+    if (h > 0) return `${h}h ${_pad(m)}m ${_pad(s)}s`;
+    return `${m}m ${_pad(s)}s`;
+}
+
+// ── Colorear dinámico del texto del contador (Verde, Naranja, Rojo) ─────────
+function _applyTimerColors() {
+    const tds = document.querySelectorAll('#ret-tbody td[data-ret-mode]');
+    if (!tds.length) return;
+
+    const HOUR_MS = 3600 * 1000;
+
+    tds.forEach(td => {
+        const mode  = td.getAttribute('data-ret-mode');
+        const start = td.getAttribute('data-ret-start');
+        const end   = td.getAttribute('data-ret-end');
+        const span  = td.querySelector('.ret-timer');
+        const row   = td.closest('tr');
+        if (!span || !start) return;
+
+        if (row) {
+            row.style.backgroundColor = '';
+            row.classList.remove('ret-row--overdue');
+        }
+
+        // Sin fondos ni bordes (solo texto)
+        span.style.backgroundColor = 'transparent';
+        span.style.border = 'none';
+
+        const isLive = (mode === 'atraso' || !end);
+        const ms = isLive
+            ? (Date.now() - new Date(start).getTime())
+            : (new Date(end).getTime() - new Date(start).getTime());
+
+        const hours = (isNaN(ms) || ms < 0) ? 0 : ms / HOUR_MS;
+
+        if (!isLive) {
+            // Liberado: texto gris suave
+            span.style.color = '#64748b';
+        } else if (hours <= 4) {
+            // ≤ 4h: Verde aesthetic
+            span.style.color = '#10b981';
+        } else if (hours <= 8) {
+            // 4h a 8h: Naranja
+            span.style.color = '#f97316';
+        } else {
+            // > 8h: Rojo
+            span.style.color = '#ef4444';
+        }
+    });
 }
 
 // ── Auto-refresh cada 4 minutos ────────────────────────────────────────────
