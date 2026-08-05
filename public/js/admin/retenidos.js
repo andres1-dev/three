@@ -611,7 +611,7 @@ function _buildRow(r) {
             <td class="ret-td">${reportadorHtml}</td>
             <td class="ret-td ret-td--fecha">${fechaRep}</td>
             <td class="ret-td ret-td--timer" ${timerAttrs}>
-                <span class="ret-timer">${_calcElapsed(r)}</span>
+                <span class="ret-timer"><i class="fas fa-stopwatch" style="margin-right: 5px; font-size: 0.75rem;"></i>${_calcElapsed(r)}</span>
             </td>
             <td class="ret-td col-liberado">${fechaLib}</td>
         </tr>`;
@@ -781,9 +781,10 @@ function _tickTimers() {
         const end   = td.getAttribute('data-ret-end');
         const span  = td.querySelector('.ret-timer');
         if (!span || !start) return;
-        span.textContent = (mode === 'atraso' || !end)
+        const timeText = (mode === 'atraso' || !end)
             ? _elapsedSince(start)
             : _elapsedBetween(start, end);
+        span.innerHTML = `<i class="fas fa-stopwatch" style="margin-right: 5px; font-size: 0.75rem;"></i>${timeText}`;
     });
     _applyTimerColors();
 }
