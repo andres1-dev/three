@@ -370,12 +370,30 @@ function _renderAll() {
     _updateRowCount(pool.length);
     _updateColumnVisibility();
     _renderAnalyticsCharts();
+    _applyRoleVisibility();
 }
 
 function _updateColumnVisibility() {
     const isRetenidos = (RetModule.tab === 'retenidos');
     document.querySelectorAll('.col-liberado').forEach(el => {
         el.style.display = isRetenidos ? 'none' : '';
+    });
+}
+
+// ── Visibilidad por rol (USER-I no ve gráficas ni columna Tiempo) ────────────────
+function _applyRoleVisibility() {
+    const rol = window.currentUser?.ROL || '';
+    const isUserI = (rol === 'USER-I');
+
+    // — Sección de gráficas / analytics
+    const analyticsSection = document.getElementById('ret-analytics-section');
+    if (analyticsSection) {
+        analyticsSection.style.display = isUserI ? 'none' : '';
+    }
+
+    // — Columna Tiempo: cabecera + todas las celdas
+    document.querySelectorAll('.col-tiempo').forEach(el => {
+        el.style.display = isUserI ? 'none' : '';
     });
 }
 
@@ -717,7 +735,7 @@ function _buildRow(r) {
             <td class="ret-td">${estadoBadge}</td>
             <td class="ret-td">${reportadorHtml}</td>
             <td class="ret-td ret-td--fecha">${fechaRep}</td>
-            <td class="ret-td ret-td--timer" ${timerAttrs}>
+            <td class="ret-td ret-td--timer col-tiempo" ${timerAttrs}>
                 <span class="ret-timer"><i class="fas fa-stopwatch" style="margin-right: 5px; font-size: 0.75rem;"></i>${_calcElapsed(r)}</span>
             </td>
             <td class="ret-td col-liberado">${fechaLib}</td>

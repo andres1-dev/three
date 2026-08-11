@@ -1724,7 +1724,7 @@
                 <th class="ret-th" data-sort="retenido" onclick="retSortBy('retenido')">Estado</th>
                 <th class="ret-th" data-sort="reportado_por" onclick="retSortBy('reportado_por')">Reportado Por</th>
                 <th class="ret-th" data-sort="fecha_reporte" onclick="retSortBy('fecha_reporte')">Reportado</th>
-                <th class="ret-th" data-sort="fecha_reporte" onclick="retSortBy('fecha_reporte')">Tiempo</th>
+                <th class="ret-th col-tiempo" id="ret-th-tiempo" data-sort="fecha_reporte" onclick="retSortBy('fecha_reporte')">Tiempo</th>
                 <th class="ret-th col-liberado">Liberado</th>
               </tr>
             </thead>
@@ -1752,7 +1752,7 @@
       </div>
 
       <!-- ══ ANALYTICS & METRICAS AVANZADAS (debajo de la tabla) ═════════════ -->
-      <div style="margin-top:32px;">
+      <div id="ret-analytics-section" style="margin-top:32px;">
 
         <!-- Header de Analytics -->
         <div
