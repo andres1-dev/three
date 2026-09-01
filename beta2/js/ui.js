@@ -850,17 +850,10 @@ function abrirModalReportePrevio(report) {
         localizacionContainer.innerHTML = `<span style="color: #94a3b8;">No disponible</span>`;
     }
 
-    // Soporte / Evidencia fotográfica
+    // Soporte / Evidencia fotográfica (Carrusel interactivo para 1 o múltiples fotos)
     const soporteContainer = document.getElementById('viewSoporteContainerPrevio');
-    if (report.SOPORTE && report.SOPORTE.trim()) {
-        soporteContainer.innerHTML = `
-            <img src="${report.SOPORTE}" 
-                 alt="Evidencia" 
-                 style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px; cursor: pointer;"
-                 onclick="window.open('${report.SOPORTE}', '_blank')">
-        `;
-    } else {
-        soporteContainer.innerHTML = `<span style="color: #94a3b8;">Sin evidencia</span>`;
+    if (soporteContainer) {
+        renderImageCarousel(report.SOPORTE, soporteContainer, { customClick: 'openImageModal' });
     }
 
     // Novedades (si existen)
@@ -2137,3 +2130,306 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Exponer función globalmente
 window.toggleWelcomeCollapse = () => { };
+
+// ── Helper Carrusel interactivo para 1 o múltiples imágenes (Global) ──
+function renderImageCarousel(soporteStringOrArray, container, options = {}) {
+    if (!container) return;
+
+    let urls = [];
+    if (Array.isArray(soporteStringOrArray)) {
+        urls = soporteStringOrArray.filter(Boolean);
+    } else if (typeof soporteStringOrArray === 'string' && soporteStringOrArray.trim()) {
+        urls = soporteStringOrArray.split(',').map(u => u.trim()).filter(Boolean);
+    }
+
+    if (urls.length === 0) {
+        container.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; min-height: 120px; color: #94a3b8; font-size: 0.85rem; font-style: italic;">No hay evidencia fotográfica</div>';
+        return;
+    }
+
+    const clickFnName = options.customClick || 'openImageModal';
+
+    // 1 sola imagen: mostrar directamente ocupando el espacio completo
+    if (urls.length === 1) {
+        const url = urls[0];
+        const urlsJson = JSON.stringify(urls).replace(/"/g, '&quot;');
+        container.innerHTML = `
+            <div style="position: relative; width: 100%; height: 200px; cursor: pointer; border-radius: 8px; overflow: hidden; background: #f1f5f9;" onclick="${clickFnName}(${urlsJson}, 0)">
+                <img src="${url}" alt="Evidencia fotográfica" style="width: 100%; height: 100%; object-fit: cover; border: none; display: block;">
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.35); opacity: 0; transition: opacity 0.2s ease;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                    <i class="fas fa-search-plus" style="color: white; font-size: 24px; background: rgba(15, 23, 42, 0.75); padding: 12px; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.15);"></i>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    // 2 o más imágenes: Carrusel interactivo ocupando el espacio completo
+    const carouselId = 'carousel_' + Math.random().toString(36).substring(2, 9);
+    const urlsJson = JSON.stringify(urls).replace(/"/g, '&quot;');
+
+    const slidesHtml = urls.map((url, idx) => `
+        <div class="carousel-slide-item" data-index="${idx}" style="display: ${idx === 0 ? 'block' : 'none'}; position: relative; width: 100%; height: 200px; cursor: pointer; background: #f1f5f9;" onclick="${clickFnName}(${urlsJson}, ${idx})">
+            <img src="${url}" alt="Evidencia ${idx + 1}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.35); opacity: 0; transition: opacity 0.2s ease;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">
+                <i class="fas fa-search-plus" style="color: white; font-size: 24px; background: rgba(15, 23, 42, 0.75); padding: 12px; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.15);"></i>
+            </div>
+        </div>
+    `).join('');
+
+    container.innerHTML = `
+        <div id="${carouselId}" style="position: relative; width: 100%; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid #cbd5e1; background: #f1f5f9;">
+            ${slidesHtml}
+
+            <!-- Botón Anterior -->
+            <button type="button" onclick="event.stopPropagation(); window.navigateCarousel('${carouselId}', -1)" style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); background: rgba(15,23,42,0.8); color: #fff; border: 1px solid rgba(255,255,255,0.2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; font-size: 13px; transition: all 0.2s;" onmouseover="this.style.background='#3f51b5'" onmouseout="this.style.background='rgba(15,23,42,0.8)'" title="Foto anterior">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+
+            <!-- Botón Siguiente -->
+            <button type="button" onclick="event.stopPropagation(); window.navigateCarousel('${carouselId}', 1)" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: rgba(15,23,42,0.8); color: #fff; border: 1px solid rgba(255,255,255,0.2); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5; font-size: 13px; transition: all 0.2s;" onmouseover="this.style.background='#3f51b5'" onmouseout="this.style.background='rgba(15,23,42,0.8)'" title="Siguiente foto">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+
+            <!-- Indicador Contador -->
+            <div style="position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); background: rgba(15,23,42,0.85); color: white; font-size: 0.72rem; font-weight: 700; padding: 3px 10px; border-radius: 12px; pointer-events: none; z-index: 5; box-shadow: 0 2px 6px rgba(0,0,0,0.3); letter-spacing: 0.5px;">
+                <i class="fas fa-images me-1" style="color: #60a5fa;"></i> <span class="carousel-cur-idx">1</span> / ${urls.length}
+            </div>
+        </div>
+    `;
+}
+
+window.renderImageCarousel = renderImageCarousel;
+
+window.navigateCarousel = function(carouselId, direction) {
+    const root = document.getElementById(carouselId);
+    if (!root) return;
+    const slides = root.querySelectorAll('.carousel-slide-item');
+    if (!slides.length) return;
+
+    let currentIndex = 0;
+    slides.forEach((s, idx) => {
+        if (s.style.display === 'block') currentIndex = idx;
+    });
+
+    slides[currentIndex].style.display = 'none';
+
+    let nextIndex = currentIndex + direction;
+    if (nextIndex < 0) nextIndex = slides.length - 1;
+    if (nextIndex >= slides.length) nextIndex = 0;
+
+    slides[nextIndex].style.display = 'block';
+
+    const counter = root.querySelector('.carousel-cur-idx');
+    if (counter) counter.textContent = nextIndex + 1;
+};
+
+// Modal de imagen pantalla completa con rotación y navegación multi-imagen
+window.openImageModal = function (imageUrlsOrString, initialIndex = 0) {
+    let urls = [];
+    if (Array.isArray(imageUrlsOrString)) {
+        urls = imageUrlsOrString.filter(Boolean);
+    } else if (typeof imageUrlsOrString === 'string' && imageUrlsOrString.trim()) {
+        urls = imageUrlsOrString.split(',').map(u => u.trim()).filter(Boolean);
+    }
+    if (!urls.length) return;
+
+    let currentIndex = Math.max(0, Math.min(initialIndex, urls.length - 1));
+    let rotation = 0;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'imageModalOverlay';
+    overlay.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.92);
+        backdrop-filter: blur(6px);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+    `;
+
+    const container = document.createElement('div');
+    container.style.cssText = `
+        position: relative;
+        max-width: 92%;
+        max-height: 92%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    const img = document.createElement('img');
+    img.src = urls[currentIndex];
+    img.id = 'modalImage';
+    img.style.cssText = `
+        max-width: 100%;
+        max-height: 85vh;
+        border-radius: 8px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+        transition: transform 0.25s ease;
+        object-fit: contain;
+    `;
+
+    const updateImage = (newIdx) => {
+        currentIndex = newIdx;
+        rotation = 0;
+        img.style.transform = `rotate(0deg)`;
+        img.src = urls[currentIndex];
+        const indicator = overlay.querySelector('#modalCounterIndicator');
+        if (indicator) indicator.textContent = `${currentIndex + 1} / ${urls.length}`;
+    };
+
+    // Botón Cerrar (X)
+    const closeBtn = document.createElement('button');
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    closeBtn.title = 'Cerrar';
+    closeBtn.style.cssText = `
+        position: absolute; top: 16px; right: 16px;
+        background: rgba(255, 255, 255, 0.2);
+        color: white; border: none; border-radius: 50%;
+        width: 40px; height: 40px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; z-index: 100002; transition: background 0.2s;
+    `;
+    closeBtn.onmouseover = () => { closeBtn.style.background = 'rgba(239, 68, 68, 0.9)'; };
+    closeBtn.onmouseout = () => { closeBtn.style.background = 'rgba(255, 255, 255, 0.2)'; };
+    closeBtn.onclick = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+
+    // Barra de Controles (Rotación + Indicador)
+    const controls = document.createElement('div');
+    controls.style.cssText = `
+        position: absolute;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        z-index: 100001;
+        background: rgba(15, 23, 42, 0.85);
+        padding: 6px 16px;
+        border-radius: 30px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    `;
+
+    const rotateLeftBtn = document.createElement('button');
+    rotateLeftBtn.innerHTML = '<i class="fas fa-undo"></i>';
+    rotateLeftBtn.title = 'Girar izquierda';
+    rotateLeftBtn.style.cssText = `
+        background: rgba(255, 255, 255, 0.15); color: white; border: none;
+        border-radius: 50%; width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-size: 14px;
+        transition: background 0.2s;
+    `;
+    rotateLeftBtn.onmouseover = () => { rotateLeftBtn.style.background = 'rgba(63, 81, 181, 1)'; };
+    rotateLeftBtn.onmouseout = () => { rotateLeftBtn.style.background = 'rgba(255, 255, 255, 0.15)'; };
+    rotateLeftBtn.onclick = (e) => {
+        e.stopPropagation();
+        rotation -= 90;
+        img.style.transform = `rotate(${rotation}deg)`;
+    };
+
+    const rotateRightBtn = document.createElement('button');
+    rotateRightBtn.innerHTML = '<i class="fas fa-redo"></i>';
+    rotateRightBtn.title = 'Girar derecha';
+    rotateRightBtn.style.cssText = `
+        background: rgba(255, 255, 255, 0.15); color: white; border: none;
+        border-radius: 50%; width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-size: 14px;
+        transition: background 0.2s;
+    `;
+    rotateRightBtn.onmouseover = () => { rotateRightBtn.style.background = 'rgba(63, 81, 181, 1)'; };
+    rotateRightBtn.onmouseout = () => { rotateRightBtn.style.background = 'rgba(255, 255, 255, 0.15)'; };
+    rotateRightBtn.onclick = (e) => {
+        e.stopPropagation();
+        rotation += 90;
+        img.style.transform = `rotate(${rotation}deg)`;
+    };
+
+    controls.appendChild(rotateLeftBtn);
+    controls.appendChild(rotateRightBtn);
+
+    if (urls.length > 1) {
+        const counter = document.createElement('span');
+        counter.id = 'modalCounterIndicator';
+        counter.textContent = `${currentIndex + 1} / ${urls.length}`;
+        counter.style.cssText = 'color: white; font-weight: 700; font-size: 0.85rem; padding: 0 6px;';
+        controls.appendChild(counter);
+
+        // Flechas de navegación en modal
+        const prevModalBtn = document.createElement('button');
+        prevModalBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevModalBtn.title = 'Anterior';
+        prevModalBtn.style.cssText = `
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+            background: rgba(15, 23, 42, 0.85); color: white; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%; width: 48px; height: 48px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 100001;
+            transition: all 0.2s;
+        `;
+        prevModalBtn.onmouseover = () => { prevModalBtn.style.background = '#3f51b5'; };
+        prevModalBtn.onmouseout = () => { prevModalBtn.style.background = 'rgba(15, 23, 42, 0.85)'; };
+        prevModalBtn.onclick = (e) => {
+            e.stopPropagation();
+            let next = currentIndex - 1;
+            if (next < 0) next = urls.length - 1;
+            updateImage(next);
+        };
+
+        const nextModalBtn = document.createElement('button');
+        nextModalBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextModalBtn.title = 'Siguiente';
+        nextModalBtn.style.cssText = `
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+            background: rgba(15, 23, 42, 0.85); color: white; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%; width: 48px; height: 48px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px; z-index: 100001;
+            transition: all 0.2s;
+        `;
+        nextModalBtn.onmouseover = () => { nextModalBtn.style.background = '#3f51b5'; };
+        nextModalBtn.onmouseout = () => { nextModalBtn.style.background = 'rgba(15, 23, 42, 0.85)'; };
+        nextModalBtn.onclick = (e) => {
+            e.stopPropagation();
+            let next = currentIndex + 1;
+            if (next >= urls.length) next = 0;
+            updateImage(next);
+        };
+
+        overlay.appendChild(prevModalBtn);
+        overlay.appendChild(nextModalBtn);
+    }
+
+    container.appendChild(img);
+    overlay.appendChild(container);
+    overlay.appendChild(controls);
+    overlay.appendChild(closeBtn);
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay || e.target === container) {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        }
+    };
+
+    // Navegación con teclado
+    const keyHandler = (e) => {
+        if (e.key === 'Escape') {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            document.removeEventListener('keydown', keyHandler);
+        } else if (e.key === 'ArrowLeft' && urls.length > 1) {
+            let next = currentIndex - 1;
+            if (next < 0) next = urls.length - 1;
+            updateImage(next);
+        } else if (e.key === 'ArrowRight' && urls.length > 1) {
+            let next = currentIndex + 1;
+            if (next >= urls.length) next = 0;
+            updateImage(next);
+        }
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    document.body.appendChild(overlay);
+};

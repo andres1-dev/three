@@ -790,12 +790,7 @@ function expandAprobacion(index) {
                         <div class="row mb-3">
                             <div class="col-md-12">
                                 <label class="form-label small fw-bold" style="color: #64748b;"><i class="fas fa-camera me-1"></i>Soporte Fotográfico</label>
-                                <div class="zoom-container" onclick="abrirLightbox('${rep.SOPORTE}')" style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer;">
-                                    <img src="${rep.SOPORTE}" style="width: 100%; height: 100%; object-fit: cover;" alt="Soporte visual">
-                                    <div class="zoom-overlay">
-                                        <i class="fas fa-search-plus"></i>
-                                    </div>
-                                </div>
+                                <div id="aprobacionSoporteContainer"></div>
                             </div>
                         </div>
                         ` : ''}
@@ -831,6 +826,12 @@ function expandAprobacion(index) {
 
     // Agregar nuevo modal
     document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Renderizar soporte como carrusel o foto individual
+    const apSoporteContainer = document.getElementById('aprobacionSoporteContainer');
+    if (apSoporteContainer && rep.SOPORTE) {
+        renderImageCarousel(rep.SOPORTE, apSoporteContainer, { customClick: 'openImageModal' });
+    }
     
     // Mostrar modal - misma lógica que expandReport
     const modalEl = document.getElementById('aprobacionModal');
@@ -1375,18 +1376,11 @@ function expandReport(index) {
     document.getElementById('editTejido').value = tejido || 'N/A';
     toggleContainer('containerTejido', !isEmpty(tejido) && tejido !== 'N/A');
 
-    // Soporte (imagen) - expandida con lightbox como en plantilla de impresión
+    // Soporte (imagen) - Carousel interactivo para 1 o múltiples fotos
     const soporteUrl = reportNormalized.soporte || reportNormalized.SOPORTE;
     const soporteContainer = document.getElementById('editSoporteContainer');
     if (soporteUrl && !isEmpty(soporteUrl)) {
-        soporteContainer.innerHTML = `
-            <div class="zoom-container" onclick="abrirLightbox('${soporteUrl}')" style="width: 100%; height: 200px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer;">
-                <img src="${soporteUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Soporte visual">
-                <div class="zoom-overlay">
-                    <i class="fas fa-search-plus"></i>
-                </div>
-            </div>
-        `;
+        renderImageCarousel(soporteUrl, soporteContainer, { customClick: 'openImageModal' });
         toggleContainer('containerSoporte', true);
     } else {
         soporteContainer.innerHTML = '';
@@ -1508,7 +1502,11 @@ function cerrarModalReporte() {
     }
 }
 
-function abrirLightbox(imageUrl) {
+function abrirLightbox(imageUrl, initialIndex = 0) {
+    if (typeof window.openImageModal === 'function') {
+        window.openImageModal(imageUrl, initialIndex);
+        return;
+    }
     const lightboxModal = document.getElementById('lightboxModal');
     const lightboxImage = document.getElementById('lightboxImage');
     lightboxImage.src = imageUrl;
@@ -1518,7 +1516,7 @@ function abrirLightbox(imageUrl) {
 
 function cerrarLightbox() {
     const lightboxModal = document.getElementById('lightboxModal');
-    lightboxModal.classList.remove('show');
+    if (lightboxModal) lightboxModal.classList.remove('show');
     document.body.style.overflow = '';
 }
 
