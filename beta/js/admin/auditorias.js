@@ -141,14 +141,15 @@ window.buscarPorOP = async function () {
 
         // Poblar filtros secundarios con los datos obtenidos
         populateSecondaryFilters();
-        window.applyFilters();
 
         ocultarLoadingBusqueda();
 
         if (gsReportes.length === 0) {
             mostrarEstadoSinResultados(lote);
         } else {
+            mostrarContenedoresConsulta();
             actualizarHeaderResultados(lote, gsReportes.length);
+            window.applyFilters();
         }
 
     } catch (error) {
@@ -175,6 +176,7 @@ window.limpiarBusqueda = function () {
     tableSearchTerm = '';
     tableCurrentPage = 1;
     populateSecondaryFilters();
+    ocultarContenedoresConsulta();
     mostrarEstadoBusqueda();
     const tbody = document.getElementById('tableBody');
     if (tbody) tbody.innerHTML = '';
@@ -186,13 +188,28 @@ window.limpiarBusqueda = function () {
     if (meta) meta.textContent = '';
     const resultsHeader = document.getElementById('resultsHeader');
     if (resultsHeader) resultsHeader.style.display = 'none';
-    const tableWrap = document.querySelector('.reports-table-wrap table');
-    if (tableWrap) tableWrap.style.display = 'none';
 };
 
 // ─── UI helpers de búsqueda ───────────────────────────────────────────────────
 
+function mostrarContenedoresConsulta() {
+    const secFilters = document.getElementById('secondaryFiltersContainer');
+    if (secFilters) secFilters.style.display = 'flex';
+    const reportsCard = document.getElementById('reportsCard');
+    if (reportsCard) reportsCard.style.display = 'block';
+}
+
+function ocultarContenedoresConsulta() {
+    const secFilters = document.getElementById('secondaryFiltersContainer');
+    if (secFilters) secFilters.style.display = 'none';
+    const reportsCard = document.getElementById('reportsCard');
+    if (reportsCard) reportsCard.style.display = 'none';
+    const resultsHeader = document.getElementById('resultsHeader');
+    if (resultsHeader) resultsHeader.style.display = 'none';
+}
+
 function mostrarLoadingBusqueda(lote) {
+    ocultarContenedoresConsulta();
     const searchStateBox = document.getElementById('searchStateBox');
     if (searchStateBox) {
         searchStateBox.innerHTML = `
@@ -204,8 +221,6 @@ function mostrarLoadingBusqueda(lote) {
         `;
         searchStateBox.style.display = 'block';
     }
-    const tableWrap = document.querySelector('.reports-table-wrap table');
-    if (tableWrap) tableWrap.style.display = 'none';
     const tbody = document.getElementById('tableBody');
     if (tbody) tbody.innerHTML = '';
     const emptyState = document.getElementById('tableEmpty');
@@ -225,6 +240,7 @@ function ocultarLoadingBusqueda() {
 }
 
 function mostrarEstadoBusqueda() {
+    ocultarContenedoresConsulta();
     const searchStateBox = document.getElementById('searchStateBox');
     if (searchStateBox) {
         searchStateBox.innerHTML = `
@@ -236,11 +252,10 @@ function mostrarEstadoBusqueda() {
         `;
         searchStateBox.style.display = 'block';
     }
-    const resultsHeader = document.getElementById('resultsHeader');
-    if (resultsHeader) resultsHeader.style.display = 'none';
 }
 
 function mostrarEstadoSinResultados(lote) {
+    ocultarContenedoresConsulta();
     const searchStateBox = document.getElementById('searchStateBox');
     if (searchStateBox) {
         searchStateBox.innerHTML = `
@@ -252,8 +267,6 @@ function mostrarEstadoSinResultados(lote) {
         `;
         searchStateBox.style.display = 'block';
     }
-    const resultsHeader = document.getElementById('resultsHeader');
-    if (resultsHeader) resultsHeader.style.display = 'none';
 }
 
 function actualizarHeaderResultados(lote, total) {
@@ -309,7 +322,7 @@ function getProductoraName(prodId) {
 }
 
 /**
- * Inicializa los selects de filtros secundarios (UI fija, opciones dinámicas).
+ * Inicializa los selects de filtros secundarios.
  * Se llama una vez al cargar la página.
  */
 function initFiltersUI() {
@@ -319,21 +332,15 @@ function initFiltersUI() {
     const isAdminOrMod = user && ['ADMIN', 'MODERATOR'].includes(user.ROL);
     if (containerProd) containerProd.style.display = isAdminOrMod ? 'block' : 'none';
 
-    // Poblar estado (siempre estático)
-    const selectEstado = document.getElementById('filterEstado');
-    if (selectEstado) {
-        selectEstado.innerHTML =
-            '<option value="">Todos los estados</option>' +
-            '<option value="APROBADO">Aprobado</option>' +
-            '<option value="RECHAZADO">Rechazado</option>';
-    }
+    ocultarContenedoresConsulta();
 }
 
 /**
- * Actualiza los selects de Auditor y Productora con los datos de la OP consultada.
+ * Actualiza los selects de Auditor, Productora, Tipo de Visita y Estado
+ * estrictamente con los datos de la OP consultada.
  */
 function populateSecondaryFilters() {
-    // Auditor
+    // 1. Auditor
     const selectAuditor = document.getElementById('filterAuditor');
     if (selectAuditor) {
         const auditores = [...new Set(gsReportes.map(r => r._auditorName))].filter(Boolean).sort();
@@ -345,12 +352,12 @@ function populateSecondaryFilters() {
         });
     }
 
-    // Productora (solo ADMIN/MODERATOR)
+    // 2. Productora (solo ADMIN/MODERATOR)
     const user = window.currentUser;
     const isAdminOrMod = user && ['ADMIN', 'MODERATOR'].includes(user.ROL);
     const selectProd = document.getElementById('filterProductora');
     if (selectProd && isAdminOrMod) {
-        const productoras = [...new Set(gsReportes.map(r => r._productora))].filter(Boolean);
+        const productoras = [...new Set(gsReportes.map(r => r._productora))].filter(Boolean).sort();
         selectProd.innerHTML = '<option value="">Todas las productoras</option>';
         productoras.forEach(p => {
             const opt = document.createElement('option');
@@ -358,7 +365,40 @@ function populateSecondaryFilters() {
             selectProd.appendChild(opt);
         });
     }
+
+    // 3. Tipo de Visita (dinámico según la consulta)
+    const selectTipo = document.getElementById('filterTipo');
+    if (selectTipo) {
+        const tipos = [...new Set(gsReportes.map(r => r._tipo))].filter(Boolean).sort();
+        selectTipo.innerHTML = '<option value="">Todos los tipos</option>';
+        tipos.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t;
+            opt.textContent = t.charAt(0) + t.slice(1).toLowerCase();
+            selectTipo.appendChild(opt);
+        });
+    }
+
+    // 4. Estado / Conclusión (dinámico según la consulta)
+    const selectEstado = document.getElementById('filterEstado');
+    if (selectEstado) {
+        const estados = [...new Set(gsReportes.map(r => r._conclusion))].filter(Boolean).sort();
+        selectEstado.innerHTML = '<option value="">Todos los estados</option>';
+        estados.forEach(e => {
+            const opt = document.createElement('option');
+            opt.value = e;
+            opt.textContent = e.charAt(0) + e.slice(1).toLowerCase();
+            selectEstado.appendChild(opt);
+        });
+    }
 }
+
+async function recargarDatos() {
+    if (currentSearchOP) {
+        await window.buscarPorOP();
+    }
+}
+window.recargarDatos = recargarDatos;
 
 // initDateRangePicker eliminado — el módulo ahora es búsqueda por OP bajo demanda
 

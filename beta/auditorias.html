@@ -476,8 +476,8 @@
                 </button>
             </div>
 
-            <!-- Filtros secundarios -->
-            <div class="op-secondary-filters">
+            <!-- Filtros secundarios (ocultos inicialmente) -->
+            <div class="op-secondary-filters" id="secondaryFiltersContainer" style="display:none;">
                 <div class="filter-group" id="filterProductoraContainer" style="display:none;">
                     <label class="filter-label">Productora</label>
                     <select id="filterProductora" class="filter-input" onchange="window.applyFilters()">
@@ -493,19 +493,13 @@
                 <div class="filter-group">
                     <label class="filter-label">Tipo de Visita</label>
                     <select id="filterTipo" class="filter-input" onchange="window.applyFilters()">
-                        <option value="">Todos</option>
-                        <option value="AUDITORIA">Auditoría</option>
-                        <option value="RONDA">Ronda</option>
-                        <option value="CONTRAMUESTRA">Contramuestra</option>
-                        <option value="SEGUIMIENTO">Seguimiento</option>
+                        <option value="">Todos los tipos</option>
                     </select>
                 </div>
                 <div class="filter-group">
                     <label class="filter-label">Estado</label>
                     <select id="filterEstado" class="filter-input" onchange="window.applyFilters()">
                         <option value="">Todos los estados</option>
-                        <option value="APROBADO">Aprobado</option>
-                        <option value="RECHAZADO">Rechazado</option>
                     </select>
                 </div>
             </div>
@@ -517,7 +511,7 @@
         <!-- Header de resultados -->
         <div id="resultsHeader" class="results-header"></div>
 
-        <div class="card mt-0 reports-card">
+        <div class="card mt-0 reports-card" id="reportsCard" style="display: none;">
             <input type="hidden" id="tableSearch">
             <input type="hidden" id="tableResultsMeta">
             <div class="reports-table-wrap">
