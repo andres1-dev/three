@@ -207,6 +207,7 @@ function initCalidadForm() {
         conclusion.addEventListener('change', () => {
             _actualizarCamposCalidad();
             actualizarPlantillaCalidadTextarea(true);
+            _actualizarConfiguracionSoporte();
         });
     }
 
@@ -273,6 +274,7 @@ function initCalidadForm() {
     _actualizarCamposCalidad();
     actualizarPlantillaCalidadTextarea();
     calcularAQL();
+    _actualizarConfiguracionSoporte();
 
     // Recalcular AQL cada vez que cambia la cantidad del lote
     const cantidad = document.getElementById('cantidad');
@@ -407,61 +409,46 @@ function _actualizarCamposCalidad() {
             renderTarjetasNovedadesCalidad();
         }
     }
-
-    // ── Modo de soporte fotográfico: RECHAZADO → múltiple fotos / resto → una foto ──
-    _actualizarModoSoporteFotos();
 }
 
 /**
- * Ajusta la UI del bloque de soporte fotográfico según si la conclusión es RECHAZADO.
- * - RECHAZADO: botón galería abre el input múltiple, hint indica "varias fotos", label plural.
- * - Cualquier otro estado: botón galería abre el input single, hint indica una foto, label singular.
- * También limpia las fotos acumuladas cuando se sale del modo RECHAZADO.
+ * Actualiza dinámicamente la configuración del input de soporte (fotos)
+ * basado en el estado de la conclusión (RECHAZADO permite múltiples fotos)
  */
-function _actualizarModoSoporteFotos() {
-    const conclusionEl = document.getElementById('conclusion');
-    const esRechazado = conclusionEl && conclusionEl.value === 'RECHAZADO';
-
-    const label        = document.getElementById('soporteLabel');
-    const actionText   = document.getElementById('soporteActionText');
-    const hintText     = document.getElementById('soporteHintText');
-    const galeriaText  = document.getElementById('soporteGaleriaText');
-
+function _actualizarConfiguracionSoporte() {
+    const conclusion = document.getElementById('conclusion');
+    const soporteInput = document.getElementById('soporte');
+    const soporteHint = document.getElementById('soporteHint');
+    
+    if (!conclusion || !soporteInput) return;
+    
+    const estadoConclusion = (conclusion.value || '').toUpperCase();
+    const esRechazado = estadoConclusion === 'RECHAZADO';
+    
+    // Configurar el input según el estado
     if (esRechazado) {
-        // Modo multi-foto
-        if (label)       label.textContent = 'Soporte / Evidencias Fotográficas:';
-        if (actionText)  actionText.textContent = 'Toca para agregar fotos';
-        if (hintText)    hintText.textContent = 'JPG, PNG o WEBP — Puedes agregar varias fotos';
-        if (galeriaText) galeriaText.textContent = 'Galería (múltiple)';
+        // RECHAZADO: múltiples fotos permitidas
+        soporteInput.setAttribute('multiple', '');
+        if (soporteHint) {
+            soporteHint.textContent = 'JPG, PNG o WEBP — Puedes agregar varias fotos';
+        }
     } else {
-        // Modo single-foto: limpiar acumuladas si las hay
-        if (window._calidadSoporteFiles && window._calidadSoporteFiles.length > 0) {
-            window._calidadSoporteFiles = [];
+        // OTROS ESTADOS: solo 1 foto
+        soporteInput.removeAttribute('multiple');
+        if (soporteHint) {
+            soporteHint.textContent = 'JPG, PNG o WEBP — Máx 1 foto';
+        }
+        
+        // Si hay múltiples fotos cargadas y se cambia a estado no-rechazado,
+        // mantener solo la primera
+        if (window._calidadSoporteFiles && window._calidadSoporteFiles.length > 1) {
+            window._calidadSoporteFiles = [window._calidadSoporteFiles[0]];
             if (typeof renderCalidadSoporteMultiPreviews === 'function') {
                 renderCalidadSoporteMultiPreviews();
             }
         }
-        if (label)       label.textContent = 'Soporte / Evidencia Fotográfica:';
-        if (actionText)  actionText.textContent = 'Seleccionar foto';
-        if (hintText)    hintText.textContent = 'JPG, PNG o WEBP (Máx 10MB)';
-        if (galeriaText) galeriaText.textContent = 'Galería';
     }
 }
-
-/**
- * Abre el selector de galería correcto según el modo actual:
- * - RECHAZADO → input múltiple (permite seleccionar varias fotos)
- * - Otro estado → input single (una sola foto)
- * Llamado desde el botón "Galería" del HTML.
- */
-function abrirSoporteGaleria() {
-    const conclusionEl = document.getElementById('conclusion');
-    const esRechazado  = conclusionEl && conclusionEl.value === 'RECHAZADO';
-    const inputId      = esRechazado ? 'soporteMultiple' : 'soporte';
-    const input        = document.getElementById(inputId);
-    if (input) input.click();
-}
-window.abrirSoporteGaleria = abrirSoporteGaleria;
 
 /* ── Novedades de Auditoría: Modal Constructor y Tarjetas Resumen ───────────────────────────── */
 
