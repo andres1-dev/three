@@ -1805,20 +1805,22 @@ function actualizarCamposEdicionCalidad() {
             select.required = mostrarConclusion;
             
             // Pausado sólo disponible para ronda
-            Array.from(select.options).forEach(opt => {
-                if (opt.value === 'PAUSADO') {
-                    if (esRonda) {
-                        opt.hidden = false;
-                        opt.disabled = false;
-                    } else {
-                        opt.hidden = true;
-                        opt.disabled = true;
-                        if (select.value === 'PAUSADO') {
-                            select.value = '';
-                        }
-                    }
+            const optPausado = select.querySelector('option[value="PAUSADO"]');
+            if (esRonda) {
+                if (!optPausado) {
+                    const opt = document.createElement('option');
+                    opt.value = 'PAUSADO';
+                    opt.textContent = 'PAUSADO';
+                    select.appendChild(opt);
                 }
-            });
+            } else {
+                if (select.value === 'PAUSADO') {
+                    select.value = '';
+                }
+                if (optPausado) {
+                    optPausado.remove();
+                }
+            }
         }
     }
 

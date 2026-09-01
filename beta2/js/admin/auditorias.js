@@ -3111,7 +3111,26 @@ function actualizarCamposEdicionAnalizado(modalContent) {
     const esAuditoria = tipo === 'AUDITORIA';
     const esRonda = tipo === 'RONDA';
     const esContramuestra = tipo === 'CONTRAMUESTRA';
-    const esPausado = conclusion === 'PAUSADO';
+
+    // Conclusión PAUSADO solo disponible para RONDA
+    const optPausado = conclusionSelect.querySelector('option[value="PAUSADO"]');
+    if (esRonda) {
+        if (!optPausado) {
+            const opt = document.createElement('option');
+            opt.value = 'PAUSADO';
+            opt.textContent = 'PAUSADO';
+            conclusionSelect.appendChild(opt);
+        }
+    } else {
+        if (conclusionSelect.value === 'PAUSADO') {
+            conclusionSelect.value = '';
+        }
+        if (optPausado) {
+            optPausado.remove();
+        }
+    }
+
+    const esPausado = conclusionSelect.value === 'PAUSADO';
 
     // Avance
     const avanceContainer = modalContent.querySelector('#containerAvanceEdit');

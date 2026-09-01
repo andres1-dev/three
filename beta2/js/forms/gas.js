@@ -182,83 +182,64 @@ window.sendToSupabase = sendToSupabase;
 window.sendToGAS = sendToGAS;
 
 /**
- * Sube una imagen en background a Supabase Storage via Edge Function.
- * Mejorado con mejor manejo de errores y compatibilidad móvil
+ * Sube una o varias imágenes en background a Supabase Storage via Edge Function.
+ * Admite un File individual o un Array de Files.
+ * Genera URLs separadas por coma en la base de datos si son múltiples fotos.
  */
-async function uploadArchivoAsync(file, id, hoja) {
+async function uploadArchivoAsync(fileOrFiles, id, hoja) {
     const STORAGE_KEY = `pending_upload_${id}`;
 
-    console.log(`[upload] Iniciando subida para ${id}:`, {
-        nombre: file.name,
-        tipo: file.type,
-        tamaño: `${(file.size / 1024).toFixed(2)}KB`,
-        hoja
-    });
-
-    // Validar archivo
-    if (!file || !file.size) {
-        console.error('[upload] Archivo inválido o vacío');
+    const filesArray = Array.isArray(fileOrFiles) ? fileOrFiles : (fileOrFiles ? [fileOrFiles] : []);
+    if (!filesArray.length) {
+        console.error('[upload] No hay archivos válidos para subir');
         return;
     }
 
-    // Validar tamaño (10MB máximo)
-    if (file.size > 10 * 1024 * 1024) {
-        console.error('[upload] Archivo muy grande:', file.size);
-        Swal.fire({
-            icon: 'error',
-            title: 'Archivo muy grande',
-            text: 'El archivo no debe superar los 10MB',
-            confirmButtonColor: '#3F51B5'
-        });
+    console.log(`[upload] Iniciando subida de ${filesArray.length} archivo(s) para ID: ${id} | Hoja: ${hoja}`);
+
+    const fileDataArray = [];
+    for (const file of filesArray) {
+        if (file && file.size && file.size <= 10 * 1024 * 1024) {
+            try {
+                const b64 = await fileToBase64(file);
+                fileDataArray.push(b64);
+            } catch (e) {
+                console.warn('[upload] Error al convertir archivo a base64:', e);
+            }
+        }
+    }
+
+    if (!fileDataArray.length) {
+        console.error('[upload] No se pudo procesar ningún archivo');
         return;
     }
 
-    let fileData;
-    try {
-        fileData = await fileToBase64(file);
-    } catch(e) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Error al procesar archivo',
-            text: 'No se pudo procesar el archivo. Intente con otro.',
-            confirmButtonColor: '#3F51B5'
-        });
-        return;
-    }
-
-    // Guardar en localStorage para reintentos
+    // Guardar en localStorage para reintentos en caso de desconexión
     try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({ 
-            fileData, 
+            fileDataArray, 
             id, 
             hoja, 
-            ts: Date.now(),
-            fileName: file.name,
-            fileSize: file.size
+            ts: Date.now()
         }));
-        console.log(`[upload] Guardado en localStorage: ${STORAGE_KEY}`);
+        console.log(`[upload] Guardado en localStorage: ${STORAGE_KEY} (${fileDataArray.length} items)`);
     } catch(e) {
         console.warn('[upload] No se pudo guardar en localStorage (puede estar lleno):', e);
     }
 
     _showUploadIndicator(id);
-    await _uploadConReintentos(fileData, id, hoja, STORAGE_KEY);
+    await _uploadConReintentos(fileDataArray, id, hoja, STORAGE_KEY);
 }
 
-async function _uploadConReintentos(fileData, id, hoja, storageKey, intento = 1) {
+async function _uploadConReintentos(fileDataOrArray, id, hoja, storageKey, intento = 1) {
     const MAX_INTENTOS = 5;
     
     try {
-        const storageUrl = await _subirArchivoDrive(fileData, id, hoja);
+        const storageUrl = await _subirArchivoDrive(fileDataOrArray, id, hoja);
 
         if (storageUrl) {
             localStorage.removeItem(storageKey);
             _hideUploadIndicator(id);
-            
-            // Notificación de éxito (opcional, solo en desarrollo)
-            if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                // Desarrollo
-            }
         }
     } catch(e) {
         if (intento < MAX_INTENTOS) {
@@ -267,17 +248,17 @@ async function _uploadConReintentos(fileData, id, hoja, storageKey, intento = 1)
             console.warn(`[upload] Reintentando en ${delay/1000}s...`);
             
             setTimeout(() => {
-                _uploadConReintentos(fileData, id, hoja, storageKey, intento + 1);
+                _uploadConReintentos(fileDataOrArray, id, hoja, storageKey, intento + 1);
             }, delay);
         } else {
             console.error(`[upload] ❌ Falló tras ${MAX_INTENTOS} intentos para ${id}`);
             _showUploadError(id);
             
-            // Mostrar error al usuario
+            // Mostrar aviso al usuario
             Swal.fire({
                 icon: 'warning',
-                title: 'Imagen pendiente',
-                text: 'La imagen se guardará cuando haya mejor conexión. El reporte ya fue enviado.',
+                title: 'Imágenes pendientes',
+                text: 'Las imágenes se guardarán automáticamente cuando haya mejor conexión.',
                 confirmButtonColor: '#3F51B5',
                 timer: 5000
             });
@@ -285,39 +266,51 @@ async function _uploadConReintentos(fileData, id, hoja, storageKey, intento = 1)
     }
 }
 
-async function _subirArchivoDrive(fileData, id, hoja) {
+async function _subirArchivoDrive(fileDataOrArray, id, hoja) {
     console.log(`[UPLOAD] Iniciando subida a Supabase (Bucket: novedades-imagenes) | Hoja: ${hoja}`);
     
     try {
-        // 1. Convertir base64 a File para usar la compresión de api.js
-        const byteCharacters = atob(fileData.base64);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: fileData.mimeType });
-        const file = new File([blob], fileData.fileName || 'upload.jpg', { type: fileData.mimeType });
-
-        // 2. Subir a Supabase Storage via Edge Function (Centralizado en api.js)
+        const items = Array.isArray(fileDataOrArray) ? fileDataOrArray : [fileDataOrArray];
         const pId = (typeof currentUser !== 'undefined') ? (currentUser?.ID_PRODUCTORA || currentUser?.id_productora || currentUser?.productora) : null;
-        const publicUrl = await window.uploadToSupabase(file, pId, hoja);
 
-        // 3. Si es una Novedad o Reporte de Calidad, actualizar la URL en la DB inmediatamente
+        const uploadPromises = items.map(async (fileData) => {
+            if (!fileData || !fileData.base64) return null;
+            // 1. Convertir base64 a File para usar la compresión de api.js
+            const byteCharacters = atob(fileData.base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: fileData.mimeType || 'image/jpeg' });
+            const file = new File([blob], fileData.fileName || 'upload.jpg', { type: fileData.mimeType || 'image/jpeg' });
+
+            // 2. Subir a Supabase Storage via Edge Function (Centralizado en api.js)
+            return await window.uploadToSupabase(file, pId, hoja);
+        });
+
+        const uploadedUrls = (await Promise.all(uploadPromises)).filter(Boolean);
+        const finalUrlString = uploadedUrls.join(',');
+
+        if (!finalUrlString) {
+            throw new Error('No se generó ninguna URL de archivo');
+        }
+
+        // 3. Si es Novedad o Reporte de Calidad, actualizar la(s) URL(s) en la DB inmediatamente
         const hojaUpper = hoja.toUpperCase();
-        if (hojaUpper === 'NOVEDADES' || hojaUpper === 'REPORTES') {
-            console.log(`[UPLOAD] Actualizando URL en tabla ${hojaUpper} para ID: ${id}`);
+        if (hojaUpper === 'NOVEDADES' || hojaUpper === 'REPORTES' || hojaUpper === 'CALIDAD') {
+            console.log(`[UPLOAD] Actualizando URL(s) en tabla ${hojaUpper} para ID: ${id}`);
             const updatePayload = {
                 accion: 'UPDATE_ARCHIVO_URL',
                 id: id,
-                hoja: hojaUpper,
-                url: publicUrl
+                hoja: (hojaUpper === 'CALIDAD') ? 'REPORTES' : hojaUpper,
+                url: finalUrlString
             };
 
             await sendToSupabase(updatePayload);
         }
 
-        return publicUrl;
+        return finalUrlString;
 
     } catch (error) {
         console.error('[UPLOAD] Error crítico en subida a Supabase:', error);
@@ -338,14 +331,14 @@ function _showUploadIndicator(id) {
         display:flex; align-items:center; gap:8px;
         box-shadow:0 4px 20px rgba(0,0,0,0.3);
     `;
-    el.innerHTML = `<i class="fas fa-cloud-arrow-up" style="color:#60a5fa;"></i> Subiendo imagen...`;
+    el.innerHTML = `<i class="fas fa-cloud-arrow-up" style="color:#60a5fa;"></i> Subiendo imagen(es)...`;
     document.body.appendChild(el);
 }
 
 function _hideUploadIndicator(id) {
     const el = document.getElementById(`upload-ind-${id}`);
     if (!el) return;
-    el.innerHTML = `<i class="fas fa-check-circle" style="color:#4ade80;"></i> Imagen guardada`;
+    el.innerHTML = `<i class="fas fa-check-circle" style="color:#4ade80;"></i> Imagen(es) guardada(s)`;
     setTimeout(() => el.remove(), 2500);
 }
 
@@ -363,9 +356,10 @@ function retryPendingUploads() {
     if (!keys.length) return;
     keys.forEach(key => {
         try {
-            const { fileData, id, hoja } = JSON.parse(localStorage.getItem(key));
-            _showUploadIndicator(id);
-            _uploadConReintentos(fileData, id, hoja, key);
+            const saved = JSON.parse(localStorage.getItem(key));
+            const data = saved.fileDataArray || saved.fileData;
+            _showUploadIndicator(saved.id);
+            _uploadConReintentos(data, saved.id, saved.hoja, key);
         } catch(e) {
             localStorage.removeItem(key);
         }

@@ -90,6 +90,29 @@ function _bindDropzone(zoneId, inputId, nameId, validateVideo = false) {
 
     // Cuando el usuario elige un archivo
     input.addEventListener('change', () => {
+        // Manejo especial multi-archivo para Soporte de Calidad
+        if (inputId === 'soporte') {
+            const files = Array.from(input.files || []);
+            if (files.length > 0) {
+                window._calidadSoporteFiles = window._calidadSoporteFiles || [];
+                files.forEach(f => {
+                    if (f.size > 10 * 1024 * 1024) {
+                        Swal.fire({
+                            title: 'Archivo muy grande',
+                            text: `"${f.name}" supera los 10MB.`,
+                            icon: 'warning',
+                            confirmButtonColor: '#3F51B5'
+                        });
+                        return;
+                    }
+                    window._calidadSoporteFiles.push(f);
+                });
+                renderCalidadSoporteMultiPreviews();
+                input.value = ''; // Permite agregar más fotos en selecciones consecutivas
+            }
+            return;
+        }
+
         const file = input.files && input.files[0];
         if (file) {
             // Validar tamaño (10MB máximo)
@@ -194,3 +217,80 @@ function _assignFileToInput(file, input, zone, nameEl) {
         // Fallback: algunos navegadores no permiten asignar input.files
     }
 }
+
+// ── Multi-preview helper para Soporte de Calidad ──
+window._calidadSoporteFiles = [];
+
+function renderCalidadSoporteMultiPreviews() {
+    const container = document.getElementById('soporteMultiPreview');
+    const legacyPreview = document.getElementById('soportePreview');
+    const nameEl = document.getElementById('soporteName');
+    const icon = document.getElementById('soporteIcon');
+    const text = document.getElementById('soporteText');
+    const zone = document.getElementById('soporteDropzone');
+
+    if (!container) return;
+
+    if (!window._calidadSoporteFiles || window._calidadSoporteFiles.length === 0) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        if (legacyPreview) legacyPreview.style.display = 'none';
+        if (icon) icon.style.display = 'block';
+        if (text) text.style.display = 'block';
+        if (nameEl) nameEl.textContent = '';
+        if (zone) zone.classList.remove('has-file');
+        return;
+    }
+
+    if (icon) icon.style.display = 'none';
+    if (text) text.style.display = 'none';
+    if (legacyPreview) legacyPreview.style.display = 'none';
+    if (zone) zone.classList.add('has-file');
+    
+    if (nameEl) {
+        nameEl.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fas fa-check-circle me-1"></i> ${window._calidadSoporteFiles.length} foto(s) adjunta(s)</span> <small style="color:#64748b; margin-left:6px; font-weight:500;">(Toca para agregar más)</small>`;
+    }
+
+    container.style.display = 'grid';
+    container.innerHTML = '';
+
+    window._calidadSoporteFiles.forEach((file, index) => {
+        const thumbDiv = document.createElement('div');
+        thumbDiv.style.cssText = 'position:relative; width:100%; height:75px; border-radius:8px; overflow:hidden; border:1.5px solid #cbd5e1; background:#f8fafc;';
+
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(file);
+        img.style.cssText = 'width:100%; height:100%; object-fit:cover; display:block;';
+
+        const btnRemove = document.createElement('button');
+        btnRemove.type = 'button';
+        btnRemove.innerHTML = '<i class="fas fa-times"></i>';
+        btnRemove.title = 'Eliminar foto';
+        btnRemove.style.cssText = 'position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(220,38,38,0.9); color:white; border:none; display:flex; align-items:center; justify-content:center; font-size:10px; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.3); z-index:2;';
+        
+        btnRemove.onclick = (e) => {
+            e.stopPropagation(); // Evitar abrir selector de archivos al hacer click en eliminar
+            removeSoporteFileByIndex(index);
+        };
+
+        const badge = document.createElement('span');
+        badge.textContent = `${index + 1}`;
+        badge.style.cssText = 'position:absolute; bottom:3px; left:3px; background:rgba(15,23,42,0.75); color:white; font-size:9px; font-weight:700; padding:1px 5px; border-radius:10px; z-index:2;';
+
+        thumbDiv.appendChild(img);
+        thumbDiv.appendChild(btnRemove);
+        thumbDiv.appendChild(badge);
+        container.appendChild(thumbDiv);
+    });
+}
+
+function removeSoporteFileByIndex(index) {
+    if (window._calidadSoporteFiles && window._calidadSoporteFiles[index]) {
+        window._calidadSoporteFiles.splice(index, 1);
+        renderCalidadSoporteMultiPreviews();
+    }
+}
+
+window.renderCalidadSoporteMultiPreviews = renderCalidadSoporteMultiPreviews;
+window.removeSoporteFileByIndex = removeSoporteFileByIndex;
+

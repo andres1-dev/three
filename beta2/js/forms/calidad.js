@@ -311,20 +311,22 @@ function _actualizarCamposCalidad() {
         if (!mostrarConclusion) conclusion.value = '';
 
         // La conclusión PAUSADO solo está disponible para RONDA
-        Array.from(conclusion.options).forEach(opt => {
-            if (opt.value === 'PAUSADO') {
-                if (esRonda) {
-                    opt.hidden = false;
-                    opt.disabled = false;
-                } else {
-                    opt.hidden = true;
-                    opt.disabled = true;
-                    if (conclusion.value === 'PAUSADO') {
-                        conclusion.value = '';
-                    }
-                }
+        const optPausado = conclusion.querySelector('option[value="PAUSADO"]');
+        if (esRonda) {
+            if (!optPausado) {
+                const opt = document.createElement('option');
+                opt.value = 'PAUSADO';
+                opt.textContent = 'PAUSADO';
+                conclusion.appendChild(opt);
             }
-        });
+        } else {
+            if (conclusion.value === 'PAUSADO') {
+                conclusion.value = '';
+            }
+            if (optPausado) {
+                optPausado.remove();
+            }
+        }
     }
     if (conclusionLabel) {
         if (mostrarConclusion) {
@@ -883,12 +885,14 @@ async function handleCalidadSubmit(e) {
         const conclusion = document.getElementById('conclusion').value;
         const observaciones = document.getElementById('observacionesCalidad').value;
         const avance = document.getElementById('avancePorcentaje')?.value || '';
-        const soporteFile = document.getElementById('soporte').files?.[0] || null;
+        const soporteFiles = (window._calidadSoporteFiles && window._calidadSoporteFiles.length > 0)
+            ? [...window._calidadSoporteFiles]
+            : (document.getElementById('soporte')?.files?.length ? Array.from(document.getElementById('soporte').files) : []);
 
         console.log('[calidad] Datos recopilados:', {
             lote: lotData.lote,
             tipoVisita,
-            tieneSoporte: !!soporteFile
+            totalFotosSoporte: soporteFiles.length
         });
 
         let finalObservaciones = observaciones;
@@ -968,6 +972,12 @@ async function handleCalidadSubmit(e) {
 
         e.target.reset();
 
+        // Limpiar fotos de soporte acumuladas y restaurar UI de dropzone
+        window._calidadSoporteFiles = [];
+        if (typeof renderCalidadSoporteMultiPreviews === 'function') {
+            renderCalidadSoporteMultiPreviews();
+        }
+
         // Limpiar campo de localización y tarjeta de mapa para obligar captura fresca en el siguiente reporte
         const locInput = document.getElementById('localizacion');
         if (locInput) locInput.value = '';
@@ -1000,9 +1010,9 @@ async function handleCalidadSubmit(e) {
         _actualizarCamposCalidad();
         hideSections();
 
-        // 3. Subir soporte en background
-        if (soporteFile && idReporte) {
-            uploadArchivoAsync(soporteFile, idReporte, SHEETS_DESTINO.CALIDAD);
+        // 3. Subir soporte(s) en background
+        if (soporteFiles.length > 0 && idReporte) {
+            uploadArchivoAsync(soporteFiles, idReporte, SHEETS_DESTINO.CALIDAD);
         }
 
     } catch (error) {
@@ -1025,6 +1035,35 @@ function initFormSignaturePad() {
         window.FirmaTaller.init('signature-container');
     }
 }
+
+// ── Limpiar formulario de Calidad manualmente ──
+function limpiarFormularioCalidad() {
+    const form = document.getElementById('calidadForm');
+    if (form) form.reset();
+
+    // Limpiar soporte multi-foto
+    window._calidadSoporteFiles = [];
+    if (typeof renderCalidadSoporteMultiPreviews === 'function') {
+        renderCalidadSoporteMultiPreviews();
+    }
+
+    // Limpiar persistencia local
+    if (typeof PersistenciaFormularios !== 'undefined') {
+        PersistenciaFormularios.limpiarFormulario('calidadForm');
+    }
+
+    // Limpiar canvas de firma
+    if (window.FirmaTaller) window.FirmaTaller.clear();
+
+    // Limpiar novedades de auditoría
+    window._novedadesCalidadState = [];
+    if (typeof renderTarjetasNovedadesCalidad === 'function') {
+        renderTarjetasNovedadesCalidad();
+    }
+
+    _actualizarCamposCalidad();
+}
+window.limpiarFormularioCalidad = limpiarFormularioCalidad;
 
 // Auto-inicializar al cargar el script
 if (document.readyState === 'loading') {
