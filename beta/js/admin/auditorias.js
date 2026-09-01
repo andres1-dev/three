@@ -64,7 +64,7 @@ function enrichReporteRecord(r) {
     r._tipo = String(r.tipo_visita || r.TIPO_VISITA || 'OTRO').toUpperCase();
     r._planta = String(r.planta || r.PLANTA || 'NO DEFINIDA').toUpperCase();
     r._cantidad = parseInt(r.cantidad || r.CANTIDAD || 0, 10) || 0;
-    
+
     // Normalizar estado: api.js convierte todo a string, manejar "false" string y false boolean
     const estadoRaw = r.estado || r.ESTADO;
     if (estadoRaw === false || estadoRaw === 'false' || estadoRaw === 'FALSE') {
@@ -76,7 +76,7 @@ function enrichReporteRecord(r) {
 
 window.onload = async function () {
     await loadUsers();
-    
+
     // Role-based access control: Solo ADMIN, MODERATOR, USER-I
     const user = window.currentUser;
     if (!user || !['ADMIN', 'MODERATOR', 'USER-I'].includes(user.ROL)) {
@@ -90,21 +90,21 @@ window.onload = async function () {
         });
         return;
     }
-    
+
     buildAuditorLookup();
     initFiltersUI();
     mostrarEstadoBusqueda();
-    
+
     // Ocultar loader, mostrar contenido vacío listo para buscar
     const loader = document.getElementById('loaderOverlay');
     const dataSection = document.getElementById('dashboardContent');
     if (loader) loader.style.display = 'none';
     if (dataSection) dataSection.style.display = 'block';
-    
+
     // Soportar entrada con Enter en el input de OP
     const inputOP = document.getElementById('searchOP');
     if (inputOP) {
-        inputOP.addEventListener('keydown', function(e) {
+        inputOP.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') window.buscarPorOP();
         });
     }
@@ -123,7 +123,7 @@ window.buscarPorOP = async function () {
         Swal.fire({
             icon: 'warning',
             title: 'Ingresa una OP',
-            text: 'Escribe el número de OP/Lote que deseas consultar.',
+            text: 'Escribe el número de OP ó Lote que deseas consultar.',
             confirmButtonColor: '#3f51b5'
         });
         return;
@@ -247,7 +247,7 @@ function mostrarEstadoBusqueda() {
             <div style="text-align:center; padding: 50px 20px; color:#94a3b8;">
                 <i class="fas fa-search" style="font-size:3rem; margin-bottom:16px; opacity:0.35; display:block;"></i>
                 <div style="font-weight:700; color:#64748b; font-size:1rem; margin-bottom:6px;">Consulta por OP</div>
-                <div style="font-size:0.85rem;">Ingresa un número de OP/Lote y presiona <strong>Buscar</strong> para ver todos sus reportes.</div>
+                <div style="font-size:0.85rem;">Ingresa un número de OP ó Lote y presiona <strong>Buscar</strong> para ver todos sus reportes.</div>
             </div>
         `;
         searchStateBox.style.display = 'block';
@@ -453,40 +453,40 @@ window.clearTableSearch = function () {
 };
 
 // Función de impresión desde la tabla - usa el índice directo
-window.imprimirReporteDesdeTabla = async function(index) {
+window.imprimirReporteDesdeTabla = async function (index) {
     const rep = gsTableReportes[index];
     if (!rep) {
         return;
     }
-    
+
     // Función para formatear fecha en español con día y hora
     const formatearFechaCompleta = (fechaStr) => {
         if (!fechaStr) return '';
         try {
             const fecha = new Date(fechaStr);
             if (isNaN(fecha.getTime())) return fechaStr;
-            
+
             const dias = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
             const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
-            
+
             const diaSemana = dias[fecha.getDay()];
             const dia = fecha.getDate();
             const mes = meses[fecha.getMonth()];
             const año = fecha.getFullYear();
-            
+
             let horas = fecha.getHours();
             const minutos = fecha.getMinutes().toString().padStart(2, '0');
             const segundos = fecha.getSeconds().toString().padStart(2, '0');
             const ampm = horas >= 12 ? 'p.m.' : 'a.m.';
             horas = horas % 12;
             horas = horas ? horas : 12;
-            
+
             return `${diaSemana}, ${dia} de ${mes} del ${año} ${horas}:${minutos}:${segundos} ${ampm}`;
         } catch (e) {
             return fechaStr;
         }
     };
-    
+
     // Extraer datos del reporte
     const reporteData = {
         id_reporte: rep.id_reporte || rep.ID_REPORTE || '',
@@ -511,7 +511,7 @@ window.imprimirReporteDesdeTabla = async function(index) {
         prenda: rep.prenda || rep.PRENDA || '',
         firma_planta: rep.firma_svg || rep.FIRMA_SVG || ''
     };
-    
+
     // Obtener firma del auditor usando la API de Supabase (igual que la plantilla de calidad)
     let firma_auditor = '';
     try {
@@ -539,12 +539,12 @@ window.imprimirReporteDesdeTabla = async function(index) {
     } catch (e) {
         console.error('Error al obtener firma del auditor via API:', e);
     }
-    
+
     // Obtener novedades
     let novedadesHTML = '';
     if (rep.novedades_auditoria || rep.novedades || rep.NOVEDADES || rep.NOVEDADES_AUDITORIA) {
         const novedades = rep.novedades_auditoria || rep.novedades || rep.NOVEDADES || rep.NOVEDADES_AUDITORIA;
-        
+
         // Render novedades similar a modal logic
         if (Array.isArray(novedades) && novedades.length > 0) {
             novedadesHTML = renderNovedadesForPrint(novedades);
@@ -560,7 +560,7 @@ window.imprimirReporteDesdeTabla = async function(index) {
             }
         }
     }
-    
+
     // Llamar a la función de impresión con el tipo de visita
     imprimirReporteConTipoVisita(reporteData, novedadesHTML, firma_auditor);
 };
@@ -568,14 +568,14 @@ window.imprimirReporteDesdeTabla = async function(index) {
 // Función para renderizar novedades para impresión
 function renderNovedadesForPrint(novedades) {
     if (!novedades || novedades.length === 0) return '';
-    
+
     let html = '';
     novedades.forEach(novedad => {
         const tipo = novedad.tipo || novedad.TIPO || 'GENERAL';
         const displayTipo = tipo.charAt(0) + tipo.slice(1).toLowerCase();
         let bgColor = '#64748b';
         let iconName = 'fa-exclamation-triangle';
-        
+
         if (tipo === 'COSTURA') { bgColor = '#dc2626'; iconName = 'fa-cut'; }
         else if (tipo === 'ACABADOS') { bgColor = '#f59e0b'; iconName = 'fa-check-circle'; }
         else if (tipo === 'LAVADO') { bgColor = '#6366f1'; iconName = 'fa-water'; }
@@ -590,13 +590,13 @@ function renderNovedadesForPrint(novedades) {
                 iconName = 'fa-file-invoice-dollar';
             }
         }
-        
+
         // Manejar estructura con codigos (como en el ejemplo del usuario)
         const codigos = novedad.codigos || novedad.CODIGOS || [];
         const items = novedad.items || novedad.ITEMS || codigos;
-        
+
         const totalUnidades = items.reduce((sum, item) => sum + (item.cantidad || item.CANTIDAD || 0), 0);
-        
+
         html += `
             <div class="group-wrapper">
                 <div class="group-header" style="background-color: ${bgColor};">
@@ -613,44 +613,44 @@ function renderNovedadesForPrint(novedades) {
                     </thead>
                     <tbody>
                         ${items.map(item => {
-                            if (codigos.length > 0) {
-                                // Estructura con codigos (talla, color, cantidad)
-                                return `
+            if (codigos.length > 0) {
+                // Estructura con codigos (talla, color, cantidad)
+                return `
                                     <tr>
                                         <td>${item.talla || item.TALLA || ''}</td>
                                         <td>${item.color || item.COLOR || ''}</td>
                                         <td class="text-right">${item.cantidad || item.CANTIDAD || 0}</td>
                                     </tr>
                                 `;
-                            } else {
-                                // Estructura con items (defecto, descripcion, cantidad)
-                                return `
+            } else {
+                // Estructura con items (defecto, descripcion, cantidad)
+                return `
                                     <tr>
                                         <td>${item.defecto || item.DEFECTO || ''}</td>
                                         <td>${item.descripcion || item.DESCRIPCION || ''}</td>
                                         <td class="text-right">${item.cantidad || item.CANTIDAD || 0}</td>
                                     </tr>
                                 `;
-                            }
-                        }).join('')}
+            }
+        }).join('')}
                     </tbody>
                 </table>
             </div>
         `;
     });
-    
+
     return html;
 }
 
 // Función de impresión con tipo de visita dinámico
-window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firmaAuditor = '') {
+window.imprimirReporteConTipoVisita = function (reporteData, novedadesHTML, firmaAuditor = '') {
     // Función helper para verificar si un campo tiene datos
     const hasData = (value) => value && value.trim() !== '' && value !== 'No hay evidencia' && value !== 'Sin geolocalización';
-    
+
     // Generar título dinámico basado en tipo de visita
     const tipoVisita = reporteData.tipo_visita || '';
     let tituloImpresion = 'REPORTE DE CALIDAD';
-    
+
     if (tipoVisita) {
         const tipoUpper = tipoVisita.toUpperCase();
         if (tipoUpper.includes('RONDA')) {
@@ -667,10 +667,10 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             tituloImpresion = `${tipoVisita.toUpperCase()} DE CALIDAD`;
         }
     }
-    
+
     // Generar HTML basado en plantilla de calidad
     let sectionsHTML = '';
-    
+
     // Sección: Información General
     const generalFields = [
         { label: 'ID REPORTE', value: reporteData.id_reporte },
@@ -680,7 +680,7 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
         { label: 'PLANTA', value: reporteData.planta },
         { label: 'AUDITOR', value: reporteData.auditor }
     ];
-    
+
     const generalFieldsWithData = generalFields.filter(f => hasData(f.value));
     if (generalFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -701,14 +701,14 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Sección: Detalles de Visita
     const visitaFields = [
         { label: 'LÍNEA', value: reporteData.linea },
         { label: 'TIPO VISITA', value: reporteData.tipo_visita },
         { label: 'GÉNERO', value: reporteData.genero }
     ];
-    
+
     const visitaFieldsWithData = visitaFields.filter(f => hasData(f.value));
     if (visitaFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -729,14 +729,14 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Sección: Fechas y Productora
     const fechasFields = [
         { label: 'SALIDA', value: reporteData.salida },
         { label: 'ENTREGA', value: reporteData.entrada },
         { label: 'PRODUCTORA', value: reporteData.productora }
     ];
-    
+
     const fechasFieldsWithData = fechasFields.filter(f => hasData(f.value));
     if (fechasFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -757,7 +757,7 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Sección: Observaciones
     if (hasData(reporteData.observaciones)) {
         sectionsHTML += `
@@ -771,14 +771,14 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Sección: Conclusión y Proceso
     const procesoFields = [
         { label: 'CONCLUSIÓN', value: reporteData.conclusion },
         { label: 'PROCESO', value: reporteData.proceso },
         { label: 'PRENDA', value: reporteData.prenda }
     ];
-    
+
     const procesoFieldsWithData = procesoFields.filter(f => hasData(f.value));
     if (procesoFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -799,14 +799,14 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Sección: Destino y Cantidad
     const destinoFields = [
         { label: 'DESTINO PROCESO', value: reporteData.destino_proceso },
         { label: 'DESTINO PLANTA', value: reporteData.destino_planta },
         { label: 'CANTIDAD', value: reporteData.cantidad }
     ];
-    
+
     const destinoFieldsWithData = destinoFields.filter(f => hasData(f.value));
     if (destinoFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -827,7 +827,7 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Sección: Novedades
     if (novedadesHTML && novedadesHTML.trim() !== '' && !novedadesHTML.includes('No se registraron novedades')) {
         sectionsHTML += `
@@ -841,7 +841,7 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
             </div>
         `;
     }
-    
+
     // Generar HTML completo basado en plantilla de calidad - versión compacta
     const printHTML = `
 <!DOCTYPE html>
@@ -1169,33 +1169,33 @@ window.imprimirReporteConTipoVisita = function(reporteData, novedadesHTML, firma
 </body>
 </html>
     `;
-    
+
     // Crear ventana de impresión
     const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
-    
+
     // Esperar a que cargue y luego imprimir
-    printWindow.onload = function() {
+    printWindow.onload = function () {
         printWindow.print();
     };
 };
 
 // Función de impresión rápida - genera HTML simple para impresión basado en plantilla de calidad
-window.imprimirReporteRapido = function() {
+window.imprimirReporteRapido = function () {
     const overlay = document.getElementById('simpleModalOverlay');
     if (!overlay) return;
-    
+
     // Obtener el reporte actual del modal
     const contentClone = overlay.querySelector('.modal-content');
     if (!contentClone) return;
-    
+
     // Extraer datos del modal
     const getFieldValue = (id) => {
         const el = contentClone.querySelector('#' + id);
         return el ? el.value : '';
     };
-    
+
     const reporteData = {
         id_reporte: getFieldValue('viewIdReporte'),
         lote: getFieldValue('viewLote'),
@@ -1217,20 +1217,20 @@ window.imprimirReporteRapido = function() {
         cantidad: getFieldValue('viewCantidad'),
         prenda: getFieldValue('viewPrenda')
     };
-    
+
     // Obtener novedades
     const novedadesContainer = contentClone.querySelector('#viewNovedadesContainer');
     let novedadesHTML = '';
     if (novedadesContainer) {
         novedadesHTML = novedadesContainer.innerHTML;
     }
-    
+
     // Función helper para verificar si un campo tiene datos
     const hasData = (value) => value && value.trim() !== '' && value !== 'No hay evidencia' && value !== 'Sin geolocalización';
-    
+
     // Generar HTML basado en plantilla de calidad
     let sectionsHTML = '';
-    
+
     // Sección: Información General
     const generalFields = [
         { label: 'ID REPORTE', value: reporteData.id_reporte },
@@ -1240,7 +1240,7 @@ window.imprimirReporteRapido = function() {
         { label: 'PLANTA', value: reporteData.planta },
         { label: 'AUDITOR', value: reporteData.auditor }
     ];
-    
+
     const generalFieldsWithData = generalFields.filter(f => hasData(f.value));
     if (generalFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -1261,14 +1261,14 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Sección: Detalles de Visita
     const visitaFields = [
         { label: 'LÍNEA', value: reporteData.linea },
         { label: 'TIPO VISITA', value: reporteData.tipo_visita },
         { label: 'GÉNERO', value: reporteData.genero }
     ];
-    
+
     const visitaFieldsWithData = visitaFields.filter(f => hasData(f.value));
     if (visitaFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -1289,14 +1289,14 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Sección: Fechas y Productora
     const fechasFields = [
         { label: 'SALIDA', value: reporteData.salida },
         { label: 'ENTREGA', value: reporteData.entrada },
         { label: 'PRODUCTORA', value: reporteData.productora }
     ];
-    
+
     const fechasFieldsWithData = fechasFields.filter(f => hasData(f.value));
     if (fechasFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -1317,7 +1317,7 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Sección: Observaciones
     if (hasData(reporteData.observaciones)) {
         sectionsHTML += `
@@ -1331,14 +1331,14 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Sección: Conclusión y Proceso
     const procesoFields = [
         { label: 'CONCLUSIÓN', value: reporteData.conclusion },
         { label: 'PROCESO', value: reporteData.proceso },
         { label: 'PRENDA', value: reporteData.prenda }
     ];
-    
+
     const procesoFieldsWithData = procesoFields.filter(f => hasData(f.value));
     if (procesoFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -1359,14 +1359,14 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Sección: Destino y Cantidad
     const destinoFields = [
         { label: 'DESTINO PROCESO', value: reporteData.destino_proceso },
         { label: 'DESTINO PLANTA', value: reporteData.destino_planta },
         { label: 'CANTIDAD', value: reporteData.cantidad }
     ];
-    
+
     const destinoFieldsWithData = destinoFields.filter(f => hasData(f.value));
     if (destinoFieldsWithData.length > 0) {
         sectionsHTML += `
@@ -1387,7 +1387,7 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Sección: Novedades
     if (novedadesHTML && novedadesHTML.trim() !== '' && !novedadesHTML.includes('No se registraron novedades')) {
         sectionsHTML += `
@@ -1401,7 +1401,7 @@ window.imprimirReporteRapido = function() {
             </div>
         `;
     }
-    
+
     // Generar HTML completo basado en plantilla de calidad - versión compacta
     const printHTML = `
 <!DOCTYPE html>
@@ -1729,14 +1729,14 @@ window.imprimirReporteRapido = function() {
 </body>
 </html>
     `;
-    
+
     // Crear ventana de impresión
     const printWindow = window.open('', '_blank');
     printWindow.document.write(printHTML);
     printWindow.document.close();
-    
+
     // Esperar a que cargue y luego imprimir
-    printWindow.onload = function() {
+    printWindow.onload = function () {
         printWindow.print();
     };
 };
@@ -1780,7 +1780,7 @@ window.verReporteAnalizado = function (index) {
             overflow-y: auto;
             font-family: 'Inter', sans-serif;
         `;
-        
+
         // Clone the modal content
         const modalContent = modalElement.querySelector('.modal-content');
         if (modalContent) {
@@ -1794,7 +1794,7 @@ window.verReporteAnalizado = function (index) {
                 box-shadow: 0 25px 80px rgba(0, 0, 0, 0.25);
                 overflow: hidden;
             `;
-            
+
             // Style the header
             const header = contentClone.querySelector('.modal-header');
             if (header) {
@@ -1806,7 +1806,7 @@ window.verReporteAnalizado = function (index) {
                     border: none;
                 `;
             }
-            
+
             // Style the body
             const body = contentClone.querySelector('.modal-body');
             if (body) {
@@ -1815,7 +1815,7 @@ window.verReporteAnalizado = function (index) {
                     background: white;
                 `;
             }
-            
+
             // Style the footer
             const footer = contentClone.querySelector('.modal-footer');
             if (footer) {
@@ -1826,7 +1826,7 @@ window.verReporteAnalizado = function (index) {
                     border-radius: 0 0 16px 16px;
                 `;
             }
-            
+
             // Style form labels
             const labels = contentClone.querySelectorAll('.form-label');
             labels.forEach(label => {
@@ -1837,7 +1837,7 @@ window.verReporteAnalizado = function (index) {
                     margin-bottom: 0.5rem;
                 `;
             });
-            
+
             // Style form inputs
             const inputs = contentClone.querySelectorAll('.form-control');
             inputs.forEach(input => {
@@ -1848,70 +1848,70 @@ window.verReporteAnalizado = function (index) {
                     padding: 0.5rem 0.75rem;
                 `;
             });
-            
+
             overlay.appendChild(contentClone);
-            
+
             // NOW populate the fields in the cloned content
             const clonedIdReporte = contentClone.querySelector('#viewIdReporte');
             if (clonedIdReporte) clonedIdReporte.value = rep.id_reporte || rep.ID_REPORTE || rep.id || rep.ID || '';
-            
+
             const clonedLote = contentClone.querySelector('#viewLote');
             if (clonedLote) clonedLote.value = rep.id || rep.ID || rep.LOTE || rep.lote || '';
-            
+
             const clonedReferencia = contentClone.querySelector('#viewReferencia');
             if (clonedReferencia) clonedReferencia.value = rep.referencia || rep.REFERENCIA || '';
-            
+
             const clonedFecha = contentClone.querySelector('#viewFecha');
             if (clonedFecha) clonedFecha.value = formatFechaDisplay(rep._date);
-            
+
             const clonedPlanta = contentClone.querySelector('#viewPlanta');
             if (clonedPlanta) clonedPlanta.value = rep._planta || '';
-            
+
             const clonedEmail = contentClone.querySelector('#viewEmail');
             if (clonedEmail) clonedEmail.value = rep.email || rep.EMAIL || '';
-            
+
             const clonedLinea = contentClone.querySelector('#viewLinea');
             if (clonedLinea) clonedLinea.value = rep.linea || rep.LINEA || '';
-            
+
             const clonedTipoVisita = contentClone.querySelector('#viewTipoVisita');
             if (clonedTipoVisita) clonedTipoVisita.value = rep._tipo || '';
-            
+
             const clonedGenero = contentClone.querySelector('#viewGenero');
             if (clonedGenero) clonedGenero.value = rep.genero || rep.GENERO || '';
-            
+
             const clonedLocalizacion = contentClone.querySelector('#viewLocalizacion');
             if (clonedLocalizacion) clonedLocalizacion.value = rep.localizacion || rep.LOCALIZACION || '';
-            
+
             const clonedSalida = contentClone.querySelector('#viewSalida');
             if (clonedSalida) clonedSalida.value = rep.salida || rep.SALIDA || '';
-            
+
             const clonedEntrada = contentClone.querySelector('#viewEntrada');
             if (clonedEntrada) clonedEntrada.value = rep.entrada || rep.ENTRADA || '';
-            
+
             const clonedProductora = contentClone.querySelector('#viewProductora');
             if (clonedProductora) clonedProductora.value = rep.productora || rep.PRODUCTORA || '';
-            
+
             const clonedConclusion = contentClone.querySelector('#viewConclusion');
             if (clonedConclusion) clonedConclusion.value = rep._conclusion || '';
-            
+
             const clonedObservaciones = contentClone.querySelector('#viewObservaciones');
             if (clonedObservaciones) clonedObservaciones.value = rep.observaciones || rep.OBSERVACIONES || '';
-            
+
             const clonedProceso = contentClone.querySelector('#viewProceso');
             if (clonedProceso) clonedProceso.value = rep.proceso || rep.PROCESO || '';
-            
+
             const clonedDestino = contentClone.querySelector('#viewDestino');
             if (clonedDestino) clonedDestino.value = rep.destino_proceso || rep.DESTINO_PROCESO || '';
-            
+
             const clonedDestinoPlanta = contentClone.querySelector('#viewDestinoPlanta');
             if (clonedDestinoPlanta) clonedDestinoPlanta.value = rep.destino_planta || rep.DESTINO_PLANTA || '';
-            
+
             const clonedCantidad = contentClone.querySelector('#viewCantidad');
             if (clonedCantidad) clonedCantidad.value = rep._cantidad || '';
-            
+
             const clonedPrenda = contentClone.querySelector('#viewPrenda');
             if (clonedPrenda) clonedPrenda.value = rep.prenda || rep.PRENDA || '';
-            
+
             // Render image in cloned content - like printing template
             const clonedSoporteContainer = contentClone.querySelector('#viewSoporteContainer');
             const soporteUrl = rep.soporte || rep.SOPORTE || '';
@@ -1927,7 +1927,7 @@ window.verReporteAnalizado = function (index) {
             } else if (clonedSoporteContainer) {
                 clonedSoporteContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 0.85rem; font-style: italic;">No hay evidencia fotográfica</div>';
             }
-            
+
             // Render ubicacion in cloned content - like printing template with Google Maps iframe
             const clonedLocalizacionContainer = contentClone.querySelector('#viewLocalizacionContainer');
             const localizacion = rep.localizacion || rep.LOCALIZACION || '';
@@ -1948,11 +1948,11 @@ window.verReporteAnalizado = function (index) {
             } else if (clonedLocalizacionContainer) {
                 clonedLocalizacionContainer.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 0.85rem;">Sin geolocalización</div>';
             }
-            
+
             // Render novedades in cloned content
             const clonedNovedadesContainer = contentClone.querySelector('#viewNovedadesContainer');
             const novedadesData = rep.novedades_auditoria || rep.novedades || rep.NOVEDADES || rep.NOVEDADES_AUDITORIA || '';
-            
+
             if (clonedNovedadesContainer && !novedadesData) {
                 clonedNovedadesContainer.innerHTML = '<p style="color:#64748b; font-style:italic; margin:0; font-size:0.85rem;">No se registraron novedades cuantitativas.</p>';
             } else if (clonedNovedadesContainer) {
@@ -1966,21 +1966,21 @@ window.verReporteAnalizado = function (index) {
                     } else {
                         let html = '';
                         parsed.forEach(novedad => {
-                            const totalUnidades = novedad.codigos.reduce((sum, c) => sum + (Number(c.cantidad)||0), 0);
-                            
+                            const totalUnidades = novedad.codigos.reduce((sum, c) => sum + (Number(c.cantidad) || 0), 0);
+
                             let bgColor = '#3b82f6';
                             let iconName = 'fa-tag';
                             let displayTipo = novedad.tipo;
-                            
+
                             if (novedad.tipo === 'SIN CONFECCIONAR') { bgColor = '#ef4444'; iconName = 'fa-cut'; }
-                            if (novedad.tipo === 'PROMOCIONES') { 
+                            if (novedad.tipo === 'PROMOCIONES') {
                                 if (novedad.sin_proceso) {
-                                    bgColor = '#db2777'; 
+                                    bgColor = '#db2777';
                                     iconName = 'fa-exclamation-triangle';
                                     displayTipo = 'PROM. SIN PROCESO';
                                 } else {
-                                    bgColor = '#f59e0b'; 
-                                    iconName = 'fa-percentage'; 
+                                    bgColor = '#f59e0b';
+                                    iconName = 'fa-percentage';
                                 }
                             }
                             if (novedad.tipo_base === 'COBROS' || novedad.tipo.startsWith('COBRO -')) {
@@ -2039,18 +2039,18 @@ window.verReporteAnalizado = function (index) {
             // Add close button functionality
             const closeBtn = overlay.querySelector('.btn-close');
             if (closeBtn) {
-                closeBtn.onclick = function() {
+                closeBtn.onclick = function () {
                     document.body.removeChild(overlay);
                 };
             }
-            
+
             // Add click outside to close
-            overlay.onclick = function(e) {
+            overlay.onclick = function (e) {
                 if (e.target === overlay) {
                     document.body.removeChild(overlay);
                 }
             };
-            
+
             document.body.appendChild(overlay);
             console.log('Simple modal overlay created');
         } else {
@@ -2069,7 +2069,7 @@ window.cerrarModalReporte = function () {
 };
 
 // Add click outside to close modal functionality
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
     const modalElement = document.getElementById('reporteModal');
     if (modalElement && modalElement.classList.contains('show')) {
         const modalDialog = modalElement.querySelector('.modal-dialog');
@@ -2080,7 +2080,7 @@ document.addEventListener('click', function(e) {
 });
 
 // Function to open image modal with rotation option
-window.openImageModal = function(imageUrl) {
+window.openImageModal = function (imageUrl) {
     const overlay = document.createElement('div');
     overlay.id = 'imageModalOverlay';
     overlay.style.cssText = `
@@ -2096,7 +2096,7 @@ window.openImageModal = function(imageUrl) {
         justify-content: center;
         cursor: pointer;
     `;
-    
+
     const container = document.createElement('div');
     container.style.cssText = `
         position: relative;
@@ -2106,7 +2106,7 @@ window.openImageModal = function(imageUrl) {
         align-items: center;
         justify-content: center;
     `;
-    
+
     const img = document.createElement('img');
     img.src = imageUrl;
     img.id = 'modalImage';
@@ -2117,7 +2117,7 @@ window.openImageModal = function(imageUrl) {
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
         transition: transform 0.3s ease;
     `;
-    
+
     // Rotation controls
     const controls = document.createElement('div');
     controls.style.cssText = `
@@ -2129,7 +2129,7 @@ window.openImageModal = function(imageUrl) {
         gap: 10px;
         z-index: 100001;
     `;
-    
+
     const rotateLeftBtn = document.createElement('button');
     rotateLeftBtn.innerHTML = '<i class="fas fa-undo"></i>';
     rotateLeftBtn.style.cssText = `
@@ -2147,9 +2147,9 @@ window.openImageModal = function(imageUrl) {
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         transition: background 0.2s;
     `;
-    rotateLeftBtn.onmouseover = function() { this.style.background = 'rgba(63, 81, 181, 1)'; };
-    rotateLeftBtn.onmouseout = function() { this.style.background = 'rgba(63, 81, 181, 0.9)'; };
-    
+    rotateLeftBtn.onmouseover = function () { this.style.background = 'rgba(63, 81, 181, 1)'; };
+    rotateLeftBtn.onmouseout = function () { this.style.background = 'rgba(63, 81, 181, 0.9)'; };
+
     const rotateRightBtn = document.createElement('button');
     rotateRightBtn.innerHTML = '<i class="fas fa-redo"></i>';
     rotateRightBtn.style.cssText = `
@@ -2167,41 +2167,41 @@ window.openImageModal = function(imageUrl) {
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         transition: background 0.2s;
     `;
-    rotateRightBtn.onmouseover = function() { this.style.background = 'rgba(63, 81, 181, 1)'; };
-    rotateRightBtn.onmouseout = function() { this.style.background = 'rgba(63, 81, 181, 0.9)'; };
-    
+    rotateRightBtn.onmouseover = function () { this.style.background = 'rgba(63, 81, 181, 1)'; };
+    rotateRightBtn.onmouseout = function () { this.style.background = 'rgba(63, 81, 181, 0.9)'; };
+
     let rotation = 0;
-    
-    rotateLeftBtn.onclick = function(e) {
+
+    rotateLeftBtn.onclick = function (e) {
         e.stopPropagation();
         rotation -= 90;
         img.style.transform = `rotate(${rotation}deg)`;
     };
-    
-    rotateRightBtn.onclick = function(e) {
+
+    rotateRightBtn.onclick = function (e) {
         e.stopPropagation();
         rotation += 90;
         img.style.transform = `rotate(${rotation}deg)`;
     };
-    
+
     controls.appendChild(rotateLeftBtn);
     controls.appendChild(rotateRightBtn);
-    
+
     container.appendChild(img);
     container.appendChild(controls);
     overlay.appendChild(container);
-    
-    overlay.onclick = function(e) {
+
+    overlay.onclick = function (e) {
         if (e.target === overlay) {
             document.body.removeChild(overlay);
         }
     };
-    
+
     document.body.appendChild(overlay);
 };
 
 // Function to open map modal
-window.openMapModal = function(lat, lng) {
+window.openMapModal = function (lat, lng) {
     const mapUrl = `https://www.google.com/maps?q=${lat},${lng}`;
     window.open(mapUrl, '_blank');
 };
@@ -2233,13 +2233,13 @@ function formatFechaDisplay(date) {
 function renderEstadoCell(conclusion, esAnulado = false) {
     const label = String(conclusion || '—').toUpperCase();
     const c = label.replace(/—/g, '');
-    
+
     // Si está anulado, mostrar badge gris con opacidad
     if (esAnulado) {
         const badgeStyle = 'background: rgba(100, 116, 139, 0.15); color: #64748b; opacity: 0.7;';
         return `<span class="estado-badge" style="${badgeStyle}">${label}</span>`;
     }
-    
+
     if (c === 'APROBADO') {
         return `<span class="estado-badge aprobado">${label}</span>`;
     }
@@ -2252,9 +2252,9 @@ function renderEstadoCell(conclusion, esAnulado = false) {
 function renderBotonesEdicion(r, globalIndex) {
     const currentUserRole = window.currentUser?.ROL || '';
     const isAdminOrMod = ['ADMIN', 'MODERATOR'].includes(currentUserRole);
-    
+
     if (!isAdminOrMod) return '';
-    
+
     // Validar 24 horas para edición
     const fechaReporte = r.fecha || r.FECHA || '';
     let puedeEditar = false;
@@ -2264,7 +2264,7 @@ function renderBotonesEdicion(r, globalIndex) {
         const horasDiferencia = (ahora - fechaReporteDate) / (1000 * 60 * 60);
         puedeEditar = horasDiferencia <= 24;
     }
-    
+
     return `
         ${puedeEditar ? `
         <button type="button" class="btn-ver-reporte" onclick="window.editarReporteAnalizado(${globalIndex})" title="Editar reporte" style="margin-right: 4px; background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
@@ -2373,12 +2373,12 @@ function renderTable(resetPage = true) {
         const ref = r.referencia || r.REFERENCIA || r.id || r.ID || '—';
         const lote = r.lote || r.LOTE || r.id || r.ID || '—';
         const cantFmt = r._cantidad > 0 ? r._cantidad.toLocaleString('es-CO') : '—';
-        
+
         // Verificar si el reporte está anulado
         const esAnulado = !r._estado;
         const trStyle = esAnulado ? ' style="background-color: rgba(239, 68, 68, 0.08);"' : '';
         const tdStyle = esAnulado ? ' style="color: #dc2626; opacity: 0.7;"' : '';
-        
+
         return `
             <tr${trStyle}>
                 <td class="cell-date"${tdStyle}>${formatFechaTabla(r._date)}</td>
@@ -2441,7 +2441,7 @@ async function anularReporteAnalizado(index) {
     const lote = rep.lote || rep.LOTE || rep.id || rep.ID || 'N/A';
     const referencia = rep.referencia || rep.REFERENCIA || '';
     const planta = rep.planta || rep.PLANTA || rep._planta || 'N/A';
-    
+
     const result = await Swal.fire({
         title: 'Anular Reporte',
         html: `
@@ -2515,12 +2515,12 @@ async function anularReporteAnalizado(index) {
         width: '600px',
         didOpen: () => {
             const popup = Swal.getPopup();
-            
+
             popup.querySelector('#btnSoloAnular').addEventListener('click', async () => {
                 Swal.close();
                 await ejecutarSoloAnular(rep);
             });
-            
+
             popup.querySelector('#btnAnularYCopiar').addEventListener('click', async () => {
                 Swal.close();
                 await ejecutarAnularYCopiar(rep);
@@ -2565,7 +2565,7 @@ async function ejecutarSoloAnular(rep) {
                     if (s?.access_token) { sessionToken = s.access_token; break; }
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
 
         const idReporte = rep.id_reporte || rep.ID_REPORTE;
 
@@ -2644,7 +2644,7 @@ async function ejecutarAnularYCopiar(rep) {
                     if (s?.access_token) { sessionToken = s.access_token; break; }
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
 
         const idReporte = rep.id_reporte || rep.ID_REPORTE;
 
@@ -2804,7 +2804,7 @@ function entrarModoEdicionReporteAnalizado() {
 
     // Marcar modal como en modo edición
     modalContent.classList.add('is-editing');
-    
+
     // Cambiar título
     const modalTitle = modalContent.querySelector('.modal-title');
     if (modalTitle) {
@@ -2814,7 +2814,7 @@ function entrarModoEdicionReporteAnalizado() {
     // Obtener datos del reporte del modal
     const idReporteInput = modalContent.querySelector('#viewIdReporte');
     if (!idReporteInput) return;
-    
+
     const idReporte = idReporteInput.value;
     const rep = gsTableReportes.find(r => (r.id_reporte || r.ID_REPORTE) === idReporte);
     if (!rep) return;
@@ -2966,7 +2966,7 @@ function entrarModoEdicionReporteAnalizado() {
     // Cargar valores de destino si existen
     const destinoProceso = rep.destino_proceso || rep.DESTINO_PROCESO || '';
     const destinoPlanta = rep.destino_planta || rep.DESTINO_PLANTA || '';
-    
+
     if (destinoProceso) {
         const tipoDestinoSelect = modalContent.querySelector('#editDestinoTipo');
         if (tipoDestinoSelect) {
@@ -3023,7 +3023,7 @@ function initEditModeListenersAnalizado(modalContent) {
         // Tipo visita y conclusión reactivos
         const tipoSelect = modalContent.querySelector('#editTipoVisitaSelect');
         const conclusionSelect = modalContent.querySelector('#editConclusionSelect');
-        
+
         if (tipoSelect) {
             tipoSelect.onchange = () => actualizarCamposEdicionAnalizado(modalContent);
         }
@@ -3034,11 +3034,11 @@ function initEditModeListenersAnalizado(modalContent) {
         // Destino reactivo
         const destinoTipo = modalContent.querySelector('#editDestinoTipo');
         const destinoProcesoSelect = modalContent.querySelector('#editDestinoProcesoSelect');
-        
+
         if (destinoTipo) {
             destinoTipo.onchange = () => actualizarCamposEdicionAnalizado(modalContent);
         }
-        
+
         if (destinoProcesoSelect) {
             destinoProcesoSelect.onchange = () => {
                 const otroSection = modalContent.querySelector('#editDestinoOtroSection');
@@ -3102,7 +3102,7 @@ function initEditModeListenersAnalizado(modalContent) {
 function actualizarCamposEdicionAnalizado(modalContent) {
     const tipoSelect = modalContent.querySelector('#editTipoVisitaSelect');
     const conclusionSelect = modalContent.querySelector('#editConclusionSelect');
-    
+
     if (!tipoSelect || !conclusionSelect) return;
 
     const tipo = tipoSelect.value.toUpperCase();
@@ -3124,7 +3124,7 @@ function actualizarCamposEdicionAnalizado(modalContent) {
     const destinoSection = modalContent.querySelector('#editDestinoSection');
     const destinoProcesoContainer = modalContent.querySelector('#editDestinoProcesoContainer');
     const destinoTipo = modalContent.querySelector('#editDestinoTipo');
-    
+
     if (destinoSection) {
         if (esAuditoria && conclusion === 'APROBADO') {
             destinoSection.style.display = '';
@@ -3152,13 +3152,13 @@ window.guardarCambiosReporteAnalizado = guardarCambiosReporteAnalizado;
 async function guardarCambiosReporteAnalizado() {
     const overlay = document.getElementById('simpleModalOverlay');
     if (!overlay) return;
-    
+
     const modalContent = overlay.querySelector('.modal-content');
     if (!modalContent) return;
 
     const idReporteInput = modalContent.querySelector('#viewIdReporte');
     if (!idReporteInput) return;
-    
+
     const idReporte = idReporteInput.value;
     const rep = gsTableReportes.find(r => (r.id_reporte || r.ID_REPORTE) === idReporte);
     if (!rep) return;
@@ -3239,7 +3239,7 @@ async function guardarCambiosReporteAnalizado() {
                     if (s?.access_token) { sessionToken = s.access_token; break; }
                 }
             }
-        } catch(e) {}
+        } catch (e) { }
 
         const res = await fetch(`${getFunctionsUrl()}/operations`, {
             method: 'POST',
@@ -3415,7 +3415,7 @@ async function anularYEditarReporte(index) {
         });
 
         console.log('[ANULAR] Response status:', anularResponse.status);
-        
+
         if (!anularResponse.ok) {
             const errorText = await anularResponse.text();
             console.error('[ANULAR] Error response:', errorText);
@@ -3427,7 +3427,7 @@ async function anularYEditarReporte(index) {
 
         // 2. Crear nuevo reporte duplicado - enviar TODO el reporte original
         console.log('[DUPLICAR] Preparando reporte para duplicar...');
-        
+
         const crearResponse = await fetch('https://zpikjjcbievfpzegupmw.supabase.co/functions/v1/operations', {
             method: 'POST',
             headers: {
