@@ -25,20 +25,26 @@
   </noscript>
 
   <!-- ── Vendor CSS ── -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" media="print"
-    onload="this.media='all'">
-  <noscript>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-  </noscript>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous"
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"
     media="print" onload="this.media='all'">
   <noscript>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
   </noscript>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" integrity="sha384-rletO6VmZKncQ40DsuZoGaQ+b9dgf3afDQaUJQ6sf1dAjche8Sk9NyTnLMNPxl0R" crossorigin="anonymous" media="print"
-    onload="this.media='all'">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous"
+    media="print" onload="this.media='all'">
   <noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css" integrity="sha384-rletO6VmZKncQ40DsuZoGaQ+b9dgf3afDQaUJQ6sf1dAjche8Sk9NyTnLMNPxl0R" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
+  </noscript>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"
+    integrity="sha384-rletO6VmZKncQ40DsuZoGaQ+b9dgf3afDQaUJQ6sf1dAjche8Sk9NyTnLMNPxl0R" crossorigin="anonymous"
+    media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"
+      integrity="sha384-rletO6VmZKncQ40DsuZoGaQ+b9dgf3afDQaUJQ6sf1dAjche8Sk9NyTnLMNPxl0R" crossorigin="anonymous">
   </noscript>
 
   <!-- ── App CSS (orden importa) ── -->
@@ -112,7 +118,11 @@
         margin: 0 !important;
       }
 
-      #mainForm, #novedadesSection, #calidadSection, #ruteroSection, #actualizarDatosSection {
+      #mainForm,
+      #novedadesSection,
+      #calidadSection,
+      #ruteroSection,
+      #actualizarDatosSection {
         padding: 0.2rem !important;
         border-radius: 0 !important;
         border: none !important;
@@ -747,7 +757,8 @@
           <div class="d-flex justify-content-between align-items-center mb-1">
             <label class="form-label mb-0">Evidencia Fotográfica:</label>
             <div id="imagenRotationControls" style="display: none;">
-              <button type="button" onclick="rotarImagen('imagen', -90)" class="btn-action-muted" style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
+              <button type="button" onclick="rotarImagen('imagen', -90)" class="btn-action-muted"
+                style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
                 <i class="fas fa-undo"></i> Girar
               </button>
             </div>
@@ -755,19 +766,22 @@
           <div class="file-dropzone" id="imagenDropzone" role="button" tabindex="0">
             <i class="fas fa-camera file-dropzone__icon" id="imagenIcon"></i>
             <div class="file-dropzone__text" id="imagenText">
-              <span class="file-dropzone__action">Haz clic para subir imagen</span>
+              <span class="file-dropzone__action">Seleccionar foto</span>
               <span class="file-dropzone__hint">JPG, PNG o WEBP (Máx 10MB)</span>
             </div>
-            <span class="file-dropzone__name" id="imagenName"></span>
-            
+            <span class="file-dropzone__name" id="imagenName"></span>->>
             <!-- Preview de imagen dentro del dropzone -->
-            <img id="imagenPreview" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain;" />
+            <img id="imagenPreview"
+              style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain;" />
           </div>
-          <input type="file" id="imagen" class="file-dropzone__input" accept="image/*" capture="environment">
+          <!-- Inputs ocultos: galería y cámara directa -->
+          <input type="file" id="imagen" class="file-dropzone__input" accept="image/*">
+          <input type="file" id="imagenCamera" class="file-dropzone__input" accept="image/*" capture="environment">
         </div>
 
         <div class="text-center">
-          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioNovedades()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioNovedades()"
+            style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
             <i class="fas fa-eraser"></i> Limpiar
           </button>
           <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
@@ -1085,10 +1099,12 @@ RESULTADOS:
                     style="accent-color:#3F51B5; width:16px; height:16px;" onchange="handleProcesoCobrosCheck()">
                   PROCESO ANTERIOR
                 </label>
-                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px; margin-left:24px;">Marque si es cobro a un proceso anterior.</div>
-                
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px; margin-left:24px;">Marque si es cobro a un
+                  proceso anterior.</div>
+
                 <div id="novedadModalProcesoSelectContainer" class="mt-2" style="display:none;">
-                  <label class="form-label" style="font-size:0.75rem; font-weight:700; color:#475569;">Seleccione el proceso:</label>
+                  <label class="form-label" style="font-size:0.75rem; font-weight:700; color:#475569;">Seleccione el
+                    proceso:</label>
                   <div class="input-with-icon">
                     <i class="fas fa-cogs input-icon"></i>
                     <select id="novedadModalProcesoSelect" class="form-control">
@@ -1243,7 +1259,8 @@ RESULTADOS:
 
         <div class="mb-3">
           <div class="d-flex justify-content-between align-items-center mb-1">
-            <label for="observacionesCalidad" class="form-label mb-0">Observaciones: <span style="color:#ef4444;">*</span></label>
+            <label for="observacionesCalidad" class="form-label mb-0">Observaciones: <span
+                style="color:#ef4444;">*</span></label>
             <div>
               <button type="button" class="btn-action-muted" onclick="mejorarRedaccion('observacionesCalidad')"
                 title="Mejorar redacción y ortografía">
@@ -1263,9 +1280,10 @@ RESULTADOS:
 
         <div class="mb-4">
           <div class="d-flex justify-content-between align-items-center mb-1">
-            <label class="form-label mb-0">Soporte / Evidencias Fotográficas:</label>
+            <label class="form-label mb-0" id="soporteLabel">Soporte / Evidencia Fotográfica:</label>
             <div id="soporteRotationControls" style="display: none;">
-              <button type="button" onclick="rotarImagen('soporte', -90)" class="btn-action-muted" style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
+              <button type="button" onclick="rotarImagen('soporte', -90)" class="btn-action-muted"
+                style="font-size: 0.72rem; display: flex; align-items: center; gap: 4px;">
                 <i class="fas fa-undo"></i> Girar
               </button>
             </div>
@@ -1273,17 +1291,22 @@ RESULTADOS:
           <div class="file-dropzone" id="soporteDropzone" role="button" tabindex="0">
             <i class="fas fa-images file-dropzone__icon" id="soporteIcon"></i>
             <div class="file-dropzone__text" id="soporteText">
-              <span class="file-dropzone__action">Toca para agregar fotos (Cámara o Galería)</span>
-              <span class="file-dropzone__hint">JPG, PNG o WEBP — Puedes agregar varias fotos</span>
+              <span class="file-dropzone__action" id="soporteActionText">Seleccionar foto</span>
+              <span class="file-dropzone__hint" id="soporteHintText">JPG, PNG o WEBP (Máx 10MB)</span>
             </div>
             <span class="file-dropzone__name" id="soporteName"></span>
-            
-            <!-- Contenedor de miniaturas múltiples -->
-            <div id="soporteMultiPreview" style="display: none; width: 100%; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 10px;"></div>
-            <!-- Preview legacy compatible -->
-            <img id="soportePreview" style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain;" />
+            <!-- Contenedor de miniaturas múltiples (solo RECHAZADO) -->
+            <div id="soporteMultiPreview"
+              style="display: none; width: 100%; grid-template-columns: repeat(auto-fill, minmax(75px, 1fr)); gap: 8px; margin-top: 10px;">
+            </div>
+            <!-- Preview single -->
+            <img id="soportePreview"
+              style="display: none; max-width: 100%; max-height: 200px; border-radius: 8px; object-fit: contain;" />
           </div>
-          <input type="file" id="soporte" class="file-dropzone__input" accept="image/*" multiple>
+          <!-- Inputs ocultos: single, cámara directa y múltiple -->
+          <input type="file" id="soporte" class="file-dropzone__input" accept="image/*">
+          <input type="file" id="soporteCamera" class="file-dropzone__input" accept="image/*" capture="environment">
+          <input type="file" id="soporteMultiple" class="file-dropzone__input" accept="image/*" multiple>
         </div>
 
         <!-- Módulo de Firma Digital Integrado (Inicializado dinámicamente desde js/firma.js) -->
@@ -1291,7 +1314,8 @@ RESULTADOS:
         <input type="hidden" id="firmaValidada" name="firmaValidada" required>
 
         <div class="mb-3 text-center">
-          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioCalidad()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioCalidad()"
+            style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
             <i class="fas fa-eraser"></i> Limpiar
           </button>
           <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
@@ -1353,7 +1377,8 @@ RESULTADOS:
         </div>
 
         <div class="mb-3 text-center">
-          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioRutero()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioRutero()"
+            style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
             <i class="fas fa-eraser"></i> Limpiar
           </button>
           <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
@@ -1734,8 +1759,7 @@ RESULTADOS:
                 alt="Colombia">
               <span class="phone-prefix-text">+57</span>
             </div>
-            <input type="tel" id="telefonoPlanta" class="form-control" placeholder="(316) 800-7979"
-              maxlength="15">
+            <input type="tel" id="telefonoPlanta" class="form-control" placeholder="(316) 800-7979" maxlength="15">
           </div>
         </div>
 
@@ -1881,7 +1905,8 @@ RESULTADOS:
         </div>
 
         <div class="mb-3 text-center">
-          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioActualizarDatos()" style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
+          <button type="button" class="btn btn-primary mr-2" onclick="limpiarFormularioActualizarDatos()"
+            style="background-color: #64748b; font-size: 0.85rem; padding: 8px 16px;">
             <i class="fas fa-eraser"></i> Limpiar
           </button>
           <button type="submit" class="btn btn-primary" style="font-size: 0.85rem; padding: 8px 16px;">
@@ -1895,16 +1920,11 @@ RESULTADOS:
 
 
   <!-- ── Vendor JS con SRI ── -->
-  <script 
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"
+    integrity="sha384-d+UOwmNNIC7V4izkTAKSXzWhjC2GxiS9PTykO1XdOPC3nc2z65UOS7SP6QdKPA70" crossorigin="anonymous"
     defer></script>
-  <script 
-    src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" 
-    integrity="sha384-d+UOwmNNIC7V4izkTAKSXzWhjC2GxiS9PTykO1XdOPC3nc2z65UOS7SP6QdKPA70"
-    crossorigin="anonymous"
-    defer></script>
-  <script 
-    src="https://cdn.jsdelivr.net/npm/sweetalert2@10"
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"
     integrity="sha384-v5sCAl8qZOHabzoh1+noJcE2yaDE9V/9+mBHgmxFdpiY5chhD/Qf1rQ7igh8ew0q"
     crossorigin="anonymous"></script>
 
@@ -2200,20 +2220,20 @@ RESULTADOS:
       const icon = document.getElementById(inputId + 'Icon');
       const text = document.getElementById(inputId + 'Text');
       const rotationControls = document.getElementById(inputId + 'RotationControls');
-      
+
       if (input.files && input.files[0]) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           preview.src = e.target.result;
           preview.style.display = 'block';
-          
+
           // Ocultar icono y texto
           if (icon) icon.style.display = 'none';
           if (text) text.style.display = 'none';
-          
+
           // Mostrar controles de rotación (ahora están fuera del dropzone)
           if (rotationControls) rotationControls.style.display = 'flex';
-          
+
           window.imagenRotacion[inputId] = 0;
           preview.style.transform = 'rotate(0deg)';
         };
@@ -2225,10 +2245,10 @@ RESULTADOS:
     function rotarImagen(inputId, grados) {
       const preview = document.getElementById(inputId + 'Preview');
       if (!preview) return;
-      
+
       window.imagenRotacion[inputId] = (window.imagenRotacion[inputId] || 0) + grados;
       preview.style.transform = 'rotate(' + window.imagenRotacion[inputId] + 'deg)';
-      
+
       // Guardar la rotación en localStorage
       const formId = inputId === 'imagen' ? 'novedadesForm' : 'calidadForm';
       if (typeof PersistenciaFormularios !== 'undefined') {
@@ -2237,17 +2257,17 @@ RESULTADOS:
     }
 
     // Agregar listeners para mostrar preview cuando se selecciona imagen
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const imagenInput = document.getElementById('imagen');
       if (imagenInput) {
-        imagenInput.addEventListener('change', function() {
+        imagenInput.addEventListener('change', function () {
           mostrarImagenPreview('imagen');
         });
       }
-      
+
       const soporteInput = document.getElementById('soporte');
       if (soporteInput) {
-        soporteInput.addEventListener('change', function() {
+        soporteInput.addEventListener('change', function () {
           mostrarImagenPreview('soporte');
         });
       }
@@ -2318,60 +2338,80 @@ RESULTADOS:
   <div id="reportePrevioModal" class="modal fade" tabindex="-1" style="display: none;">
     <div class="modal-dialog modal-lg modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header" style="background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%); color: white; border-radius: 16px 16px 0 0;">
+        <div class="modal-header"
+          style="background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%); color: white; border-radius: 16px 16px 0 0;">
           <h5 class="modal-title fw-bold">
             <i class="fas fa-eye me-2"></i>Ver Reporte
           </h5>
-          <button type="button" class="btn-close" onclick="cerrarModalReportePrevio()" style="filter: brightness(0) invert(1);"></button>
+          <button type="button" class="btn-close" onclick="cerrarModalReportePrevio()"
+            style="filter: brightness(0) invert(1);"></button>
         </div>
         <div class="modal-body" style="padding: 2rem; padding-bottom: 1rem;">
           <form id="formVerReportePrevio">
             <!-- Información básica -->
             <div class="row mb-3">
               <div class="col-md-6">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-hashtag me-1"></i>ID Reporte</label>
-                <input type="text" id="viewIdReportePrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-hashtag me-1"></i>ID
+                  Reporte</label>
+                <input type="text" id="viewIdReportePrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-barcode me-1"></i>Lote / OP</label>
-                <input type="text" id="viewLotePrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-barcode me-1"></i>Lote
+                  / OP</label>
+                <input type="text" id="viewLotePrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-6">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-tag me-1"></i>Referencia</label>
-                <input type="text" id="viewReferenciaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-tag me-1"></i>Referencia</label>
+                <input type="text" id="viewReferenciaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-calendar-alt me-1"></i>Fecha</label>
-                <input type="text" id="viewFechaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-calendar-alt me-1"></i>Fecha</label>
+                <input type="text" id="viewFechaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-6">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-address-card me-1"></i>Planta</label>
-                <input type="text" id="viewPlantaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-address-card me-1"></i>Planta</label>
+                <input type="text" id="viewPlantaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-6">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-envelope me-1"></i>Email</label>
-                <input type="text" id="viewEmailPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-envelope me-1"></i>Email</label>
+                <input type="text" id="viewEmailPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-4">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-layer-group me-1"></i>Línea</label>
-                <input type="text" id="viewLineaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-layer-group me-1"></i>Línea</label>
+                <input type="text" id="viewLineaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-clipboard-check me-1"></i>Tipo Visita</label>
-                <input type="text" id="viewTipoVisitaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-clipboard-check me-1"></i>Tipo Visita</label>
+                <input type="text" id="viewTipoVisitaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-venus-mars me-1"></i>Género</label>
-                <input type="text" id="viewGeneroPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-venus-mars me-1"></i>Género</label>
+                <input type="text" id="viewGeneroPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
@@ -2380,14 +2420,18 @@ RESULTADOS:
             <!-- Geolocalización e Imagen en dos columnas -->
             <div class="row mb-3">
               <div class="col-md-8">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-map-marked-alt me-1"></i>Geolocalización</label>
-                <div id="viewLocalizacionContainerPrevio" style="height: 200px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-map-marked-alt me-1"></i>Geolocalización</label>
+                <div id="viewLocalizacionContainerPrevio"
+                  style="height: 200px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
                   <span>No disponible</span>
                 </div>
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-camera me-1"></i>Evidencia Fotográfica</label>
-                <div id="viewSoporteContainerPrevio" style="height: 200px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-camera me-1"></i>Evidencia
+                  Fotográfica</label>
+                <div id="viewSoporteContainerPrevio"
+                  style="height: 200px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #94a3b8;">
                   <span>Sin evidencia</span>
                 </div>
               </div>
@@ -2395,16 +2439,22 @@ RESULTADOS:
 
             <div class="row mb-3">
               <div class="col-md-4">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-sign-out-alt me-1"></i>Salida</label>
-                <input type="text" id="viewSalidaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-sign-out-alt me-1"></i>Salida</label>
+                <input type="text" id="viewSalidaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-sign-in-alt me-1"></i>Entrada</label>
-                <input type="text" id="viewEntradaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-sign-in-alt me-1"></i>Entrada</label>
+                <input type="text" id="viewEntradaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label small fw-bold" style="color: #3f51b5;"><i class="fas fa-industry me-1"></i>Productora</label>
-                <input type="text" id="viewProductoraPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label small fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-industry me-1"></i>Productora</label>
+                <input type="text" id="viewProductoraPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
@@ -2412,36 +2462,49 @@ RESULTADOS:
               <label class="form-label fw-bold" style="color: #3f51b5;">
                 <i class="fas fa-comment-alt me-1"></i>Observaciones Generales
               </label>
-              <textarea id="viewObservacionesPrevio" class="form-control" rows="6" readonly style="background-color: #f8fafc; color: #64748b;"></textarea>
+              <textarea id="viewObservacionesPrevio" class="form-control" rows="6" readonly
+                style="background-color: #f8fafc; color: #64748b;"></textarea>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-check-circle me-1"></i>Conclusión</label>
-                <input type="text" id="viewConclusionPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-check-circle me-1"></i>Conclusión</label>
+                <input type="text" id="viewConclusionPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-cogs me-1"></i>Proceso</label>
-                <input type="text" id="viewProcesoPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-cogs me-1"></i>Proceso</label>
+                <input type="text" id="viewProcesoPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-tshirt me-1"></i>Prenda</label>
-                <input type="text" id="viewPrendaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-tshirt me-1"></i>Prenda</label>
+                <input type="text" id="viewPrendaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
             <div class="row mb-3">
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-map-marker-alt me-1"></i>Destino Proceso</label>
-                <input type="text" id="viewDestinoPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-map-marker-alt me-1"></i>Destino Proceso</label>
+                <input type="text" id="viewDestinoPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-building me-1"></i>Destino Planta</label>
-                <input type="text" id="viewDestinoPlantaPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-building me-1"></i>Destino
+                  Planta</label>
+                <input type="text" id="viewDestinoPlantaPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-bold" style="color: #3f51b5;"><i class="fas fa-box me-1"></i>Cantidad</label>
-                <input type="text" id="viewCantidadPrevio" class="form-control" readonly style="background-color: #f8fafc; color: #64748b;">
+                <label class="form-label fw-bold" style="color: #3f51b5;"><i
+                    class="fas fa-box me-1"></i>Cantidad</label>
+                <input type="text" id="viewCantidadPrevio" class="form-control" readonly
+                  style="background-color: #f8fafc; color: #64748b;">
               </div>
             </div>
 
@@ -2526,13 +2589,13 @@ RESULTADOS:
 
 
   <!-- ── Vendor Scripts con SRI ── -->
-  <script 
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script 
-    src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
     integrity="sha384-nLoOnA/BDh8A/jxqtckg4DumuCGOBYUnNJLZdQz/zfYNp3wcjGSoWTAzgko06G/2"
     crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js" integrity="sha384-d+UOwmNNIC7V4izkTAKSXzWhjC2GxiS9PTykO1XdOPC3nc2z65UOS7SP6QdKPA70" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"
+    integrity="sha384-d+UOwmNNIC7V4izkTAKSXzWhjC2GxiS9PTykO1XdOPC3nc2z65UOS7SP6QdKPA70"
+    crossorigin="anonymous"></script>
 
   <!-- ── App JS (orden importa: dependencias primero) ── -->
   <script src="js/config.js"></script>
