@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calidad — Acceso</title>
+    <link rel="icon" href="icons/favicon.ico">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<style>
+/* ── Tokens (igual que styles.css) ── */
+:root {
+    --color-bg:         #ffffff;
+    --color-surface:    #ffffff;
+    --color-border:     #e2e8f0;
+    --color-text:       #1e293b;
+    --color-text-muted: #64748b;
+    --color-text-light: #94a3b8;
+    --color-primary:    #3b82f6;
+    --color-primary-dim:rgba(59,130,246,.1);
+    --color-primary-glow:rgba(59,130,246,.25);
+    --color-error:      #dc2626;
+    --color-error-dim:  rgba(220,38,38,.07);
+    --font: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+    --radius-sm:  8px;
+    --radius-md:  16px;
+    --radius-full:999px;
+    --shadow-md:  0 6px 18px rgba(0,0,0,.06), 0 2px 6px rgba(0,20,40,.04);
+    --shadow-lg:  0 16px 32px -8px rgba(0,0,0,.1), 0 6px 14px rgba(0,0,0,.04);
+    --transition: .15s ease;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box; margin: 0; padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+    height: 100%;
+    font-family: var(--font);
+    background: var(--color-bg);
+    color: var(--color-text);
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    background: #ffffff;
+}
+
+/* ── Card central ── */
+.login-card {
+    width: 100%;
+    max-width: 360px;
+    background: #ffffff;
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: none;
+    overflow: hidden;
+    animation: rise .4s cubic-bezier(.22,1,.36,1) both;
+}
+
+@keyframes rise {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header ── */
+.login-head {
+    padding: 28px 28px 8px;
+    text-align: center;
+}
+
+/* Logo SVG de Grupo TDM embebido */
+.login-logo {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 6px;
+    display: block;
+}
+
+.login-app-name {
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--color-primary);
+    margin-bottom: 0;
+}
+
+/* ── Formulario ── */
+.login-body {
+    padding: 24px 28px 28px;
+}
+
+.field { margin-bottom: 12px; }
+
+.field-wrap { position: relative; }
+
+.field-icon {
+    position: absolute;
+    left: 12px; top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    display: flex; align-items: center;
+}
+.field-icon svg {
+    width: 15px; height: 15px;
+    stroke: var(--color-text-light); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.field-input {
+    width: 100%;
+    padding: 11px 14px 11px 38px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: .875rem;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+.field-input::placeholder { color: var(--color-text-light); }
+.field-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-dim);
+}
+.field-input:focus + .field-icon svg,
+.field-input:focus ~ .field-icon svg {
+    stroke: var(--color-primary);
+}
+.field-input-pw { padding-right: 40px; }
+
+.pw-toggle {
+    position: absolute; right: 10px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--color-text-muted); padding: 2px;
+    display: flex; align-items: center;
+    transition: color var(--transition);
+}
+.pw-toggle:hover { color: var(--color-text); }
+.pw-toggle svg {
+    width: 16px; height: 16px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Error ── */
+.err-box {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 12px;
+    background: var(--color-error-dim);
+    border: 1px solid rgba(220,38,38,.2);
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+    animation: shake .3s ease;
+}
+.err-box.show { display: flex; }
+@keyframes shake {
+    0%,100%{ transform:translateX(0) }
+    25%    { transform:translateX(-5px) }
+    75%    { transform:translateX(5px) }
+}
+.err-box svg {
+    width: 14px; height: 14px;
+    stroke: var(--color-error); fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    flex-shrink: 0;
+}
+.err-txt { font-size: .78rem; color: var(--color-error); line-height: 1.3; }
+
+/* ── Botón principal — igual al btn-primary del index ── */
+.btn-login {
+    width: 100%;
+    padding: 11px;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: .875rem;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: opacity var(--transition), transform var(--transition);
+    box-shadow: 0 2px 8px var(--color-primary-glow);
+}
+.btn-login:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+.btn-login:active:not(:disabled){ transform: translateY(0); }
+.btn-login:disabled { opacity: .5; cursor: not-allowed; }
+.btn-login svg {
+    width: 15px; height: 15px;
+    stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.btn-login.ok { background: #22c55e; box-shadow: 0 2px 8px rgba(34,197,94,.25); }
+
+/* Spinner */
+.spin {
+    width: 15px; height: 15px; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: rot .5s linear infinite;
+}
+@keyframes rot { to { transform: rotate(360deg); } }
+
+/* ── Forgot ── */
+.forgot {
+    display: block;
+    text-align: center;
+    margin-top: 12px;
+    font-size: .73rem;
+    color: var(--color-text-muted);
+    background: none; border: none;
+    cursor: pointer; font-family: var(--font);
+    transition: color var(--transition);
+}
+.forgot:hover { color: var(--color-primary); }
+
+/* ── Footer ── */
+.login-foot {
+    padding: 12px 28px;
+    border-top: 1px solid var(--color-border);
+    text-align: center;
+    font-size: .65rem;
+    color: var(--color-text-light);
+}
+
+@media(max-width: 400px) {
+    .login-head, .login-body, .login-foot { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Marca de agua: logo gigante super transparente al fondo -->
+<div aria-hidden="true" style="
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" style="width:90vmin;height:90vmin;opacity:.02;">
+        <path fill="#3f51b5" d="M501.29 94.22C502.23 94.18 503.17 94.14 504.11 94.12C610.95 90.39 714.86 129.47 792.76 202.68C874.77 279.04 922.28 385.41 924.41 497.45C927.94 610.9 886.34 721.12 808.73 803.95C735.84 880.85 628.02 926.37 522.38 929.03C415.75 931.76 312.19 893.19 233.33 821.37C147.09 742.19 103.37 637.2 99.56 521.11C97.15 417.07 135.16 308.02 205.34 230.91C285.17 143.21 383.61 99.15 501.29 94.22Z"/>
+        <path fill="#3f51b5" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 755.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
+    </svg>
+</div>
+
+<div class="login-card" style="position:relative;z-index:1;">
+
+    <!-- Header -->
+    <div class="login-head">
+        <!-- Logo Grupo TDM embebido — sin dependencia de archivo externo -->
+        <svg class="login-logo" xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842">
+            <defs>
+                <linearGradient id="lg" gradientUnits="userSpaceOnUse" x1="433" y1="929" x2="500" y2="94">
+                    <stop offset="0" stop-color="#3f51b5"/>
+                    <stop offset="1" stop-color="#3f51b5"/>
+                </linearGradient>
+            </defs>
+            <path fill="url(#lg)" d="M501.29 94.22C502.23 94.18 503.17 94.14 504.11 94.12C610.95 90.39 714.86 129.47 792.76 202.68C874.77 279.04 922.28 385.41 924.41 497.45C927.94 610.9 886.34 721.12 808.73 803.95C735.84 880.85 628.02 926.37 522.38 929.03C415.75 931.76 312.19 893.19 233.33 821.37C147.09 742.19 103.37 637.2 99.56 521.11C97.15 417.07 135.16 308.02 205.34 230.91C285.17 143.21 383.61 99.15 501.29 94.22Z"/>
+            <path fill="#ffffff" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 755.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
+        </svg>
+
+
+    </div>
+
+    <!-- Formulario -->
+    <div class="login-body">
+        <form id="loginForm" novalidate>
+
+            <div class="field">
+                <div class="field-wrap">
+                    <div class="field-icon">
+                        <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </div>
+                    <input type="email" id="f-email" class="field-input"
+                           placeholder="Correo electrónico"
+                           autocomplete="email" required autofocus>
+                </div>
+            </div>
+
+            <div class="field">
+                <div class="field-wrap">
+                    <div class="field-icon">
+                        <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    </div>
+                    <input type="password" id="f-pass" class="field-input field-input-pw"
+                           placeholder="Contraseña"
+                           autocomplete="current-password" required>
+                    <button type="button" class="pw-toggle" id="pwToggle" tabindex="-1">
+                        <svg id="eyeIcon" viewBox="0 0 24 24">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="err-box" id="errBox" role="alert">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span class="err-txt" id="errTxt"></span>
+            </div>
+
+            <button type="submit" class="btn-login" id="loginBtn">
+                <svg viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                <span id="btnTxt">Ingresar</span>
+            </button>
+
+            <button type="button" class="forgot" id="forgotBtn">
+                ¿Olvidaste tu contraseña?
+            </button>
+
+        </form>
+    </div>
+
+    <!-- Footer -->
+    <div class="login-foot">
+        Developed by Andrés Mendoza © 2026
+    </div>
+
+</div>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+
+<script>
+/* ── Guard: sesión activa → index.html ── */
+(function () {
+    sessionStorage.removeItem('_auth_redirecting');
+    try {
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k || !k.includes('-auth-token')) continue;
+            const s = JSON.parse(localStorage.getItem(k) || 'null');
+            if (s && s.access_token) {
+                const dest = sessionStorage.getItem('auth_redirect') || 'index.html';
+                sessionStorage.removeItem('auth_redirect');
+                window.location.replace(/login/i.test(dest) ? 'index.html' : dest);
+                return;
+            }
+        }
+    } catch (_) {}
+})();
+
+/* ── Cliente Supabase ── */
+function getSB() {
+    if (window._sb) return window._sb;
+    if (typeof window.supabase === 'undefined') return null;
+    window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+    });
+    return window._sb;
+}
+
+/* ── DOM ── */
+const form      = document.getElementById('loginForm');
+const emailEl   = document.getElementById('f-email');
+const passEl    = document.getElementById('f-pass');
+const loginBtn  = document.getElementById('loginBtn');
+const errBox    = document.getElementById('errBox');
+const errTxt    = document.getElementById('errTxt');
+const pwToggle  = document.getElementById('pwToggle');
+const eyeIcon   = document.getElementById('eyeIcon');
+const forgotBtn = document.getElementById('forgotBtn');
+
+/* ── Toggle contraseña ── */
+let pwVisible = false;
+pwToggle.addEventListener('click', () => {
+    pwVisible = !pwVisible;
+    passEl.type = pwVisible ? 'text' : 'password';
+    eyeIcon.innerHTML = pwVisible
+        ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`
+        : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+});
+
+/* ── Recuperar contraseña ── */
+forgotBtn.addEventListener('click', async () => {
+    const email = emailEl.value.trim();
+    if (!email || !email.includes('@')) {
+        showErr('Ingresa tu correo primero.'); emailEl.focus(); return;
+    }
+    hideErr(); setLoading(true, 'Enviando...');
+    try {
+        const { error } = await getSB().auth.resetPasswordForEmail(email, {
+            redirectTo: window.location.origin + '/index.html'
+        });
+        if (error) throw error;
+        setOk('¡Enlace enviado! Revisa tu correo.');
+    } catch (_) {
+        showErr('No se pudo enviar. Verifica el correo.');
+        setLoading(false);
+    }
+});
+
+/* ── Submit ── */
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideErr();
+    const email = emailEl.value.trim();
+    const pass  = passEl.value;
+    if (!email || !pass)      return showErr('Completa todos los campos.');
+    if (!email.includes('@')) return showErr('Ingresa un correo válido.');
+
+    setLoading(true, 'Verificando...');
+    try {
+        const sb = getSB();
+        if (!sb) throw new Error('Sin conexión al servidor.');
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+        if (error) throw error;
+        if (!data.session) throw new Error('No se pudo establecer la sesión.');
+        passEl.value = '';
+        setOk('¡Bienvenido!');
+        setTimeout(() => {
+            const dest = sessionStorage.getItem('auth_redirect') || 'index.html';
+            sessionStorage.removeItem('auth_redirect');
+            window.location.replace(/login/i.test(dest) ? 'index.html' : dest);
+        }, 600);
+    } catch (err) {
+        setLoading(false);
+        passEl.value = ''; passEl.focus();
+        const m = err.message || '';
+        if (/invalid.login|invalid_credentials/i.test(m)) showErr('Correo o contraseña incorrectos.');
+        else if (/not confirmed/i.test(m))                 showErr('Confirma tu correo antes de ingresar.');
+        else if (/too many|rate.limit/i.test(m))           showErr('Demasiados intentos. Espera un momento.');
+        else if (/network|fetch|failed/i.test(m))          showErr('Sin conexión. Verifica tu red.');
+        else showErr(m || 'Error al ingresar. Inténtalo de nuevo.');
+    }
+});
+
+/* ── UI helpers ── */
+function showErr(msg) { errTxt.textContent = msg; errBox.className = 'err-box show'; }
+function hideErr()    { errBox.className = 'err-box'; }
+
+function setLoading(on, label) {
+    loginBtn.disabled = emailEl.disabled = passEl.disabled = on;
+    loginBtn.className = 'btn-login';
+    loginBtn.innerHTML = on
+        ? `<div class="spin"></div><span>${label}</span>`
+        : `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg><span>Ingresar</span>`;
+}
+
+function setOk(label) {
+    loginBtn.disabled = true;
+    loginBtn.className = 'btn-login ok';
+    loginBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>${label}</span>`;
+}
+</script>
+
+</body>
+</html>

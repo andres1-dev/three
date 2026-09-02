@@ -1,0 +1,11 @@
+﻿/* ── Módulo: Bienestar ── */
+.mod-bienestar {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.mod-bienestar .empty-state span {
+    font-size: var(--font-xs);
+    color: var(--color-text-light);
+}

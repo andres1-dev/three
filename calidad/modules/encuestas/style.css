@@ -1,0 +1,11 @@
+﻿/* ── Módulo: Encuestas ── */
+.mod-encuestas {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.mod-encuestas .empty-state span {
+    font-size: var(--font-xs);
+    color: var(--color-text-light);
+}

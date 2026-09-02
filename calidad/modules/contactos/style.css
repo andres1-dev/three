@@ -1,0 +1,11 @@
+﻿/* ── Módulo: Contactos ── */
+.mod-contactos {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.mod-contactos .empty-state span {
+    font-size: var(--font-xs);
+    color: var(--color-text-light);
+}
