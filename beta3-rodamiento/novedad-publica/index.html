@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reporte de Novedades | Grupo TDM</title>
+
+    <!-- Prevenir caché completamente -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?v=2">
+    <link rel="alternate icon" type="image/svg+xml" href="assets/icons/app.svg?v=2">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg?v=2">
+    <link rel="shortcut icon" href="assets/icons/favicon.svg?v=2">
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-logo">
+                <img src="assets/icons/app.svg" alt="Logo Grupo TDM">
+            </div>
+            <h1>Reporte de Novedades</h1>
+            <h2 id="headerSubtitle">GRUPO TDM</h2>
+        </div>
+
+        <!-- Form Content -->
+        <div class="form-content">
+            <!-- Progress Indicator -->
+            <div class="step-indicator">
+                <div class="step active" id="step1">
+                    <div class="step-circle">1</div>
+                    <div class="step-label">Buscar</div>
+                </div>
+                <div class="step" id="step2">
+                    <div class="step-circle">2</div>
+                    <div class="step-label">Confirmar</div>
+                </div>
+                <div class="step" id="step3">
+                    <div class="step-circle">3</div>
+                    <div class="step-label">Detalles</div>
+                </div>
+                <div class="step" id="step4">
+                    <div class="step-circle">4</div>
+                    <div class="step-label">Enviar</div>
+                </div>
+                <div class="step" id="step5">
+                    <div class="step-circle"><i class="fas fa-check"></i></div>
+                    <div class="step-label">Realizado</div>
+                </div>
+            </div>
+
+            <form id="novedadForm">
+                <!-- Sección 1: Búsqueda de OP -->
+                <div id="seccionBusqueda">
+                    <div class="section-title">Buscar Registro</div>
+                    <div class="section-description">
+                        Ingresa el número de tu Orden de Producción (OP) o número del LOTE para cargar los datos e
+                        iniciar tu reporte.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Orden de Producción (OP) o Número del LOTE <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-search input-icon"></i>
+                            <input type="number" id="opSearchInput" class="form-control"
+                                placeholder="Ingresa la orden de producción o lote..." required inputmode="numeric"
+                                pattern="[0-9]*">
+                        </div>
+                        <div class="error-message" id="opError">Este campo es obligatorio para continuar</div>
+                    </div>
+
+                    <button type="button" id="btnBuscarOP" class="btn-primary">
+                        <i class="fas fa-search"></i>
+                        <span>Buscar</span>
+                    </button>
+                </div>
+
+                <!-- Sección 1.5: Selección de Planta/Productora (Multi-productora) -->
+                <div id="seccionSeleccionOP" class="hidden">
+                    <div class="section-title">Selecciona tu Planta / Productora</div>
+                    <div class="section-description">
+                        Tu búsqueda #<strong id="opDisplay">0000</strong> está registrada en múltiples plantas o productoras.
+                        Selecciona a continuación la que te corresponde:
+                    </div>
+
+                    <div id="opCardsContainer" class="op-cards-grid">
+                        <!-- Las tarjetas se cargarán dinámicamente -->
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: center;">
+                        <button type="button" id="btnVolverIdentificacion" class="btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver a Buscar</span>
+                        </button>
+                    </div>
+                </div>
+
+
+                <!-- Sección 2: Información del Producto y Detalles -->
+                <div id="seccionDetalles" class="hidden">
+                    <div class="section-title">Información del Producto</div>
+                    <div class="section-description">
+                        Verifica que los datos coincidan con tu orden de producción o lote. Si algo no es correcto, puedes
+                        regresar y realizar una nueva búsqueda.
+                    </div>
+
+                    <div class="info-card">
+                        <div class="info-row">
+                            <span class="info-label">Planta:</span>
+                            <span class="info-value" id="infoPlanta">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Referencia:</span>
+                            <span class="info-value" id="infoReferencia">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Orden de Producción:</span>
+                            <span class="info-value" id="infoOP">-</span>
+                        </div>
+                        <div class="info-row" id="infoProcesoRow" style="display: none;">
+                            <span class="info-label">Proceso:</span>
+                            <span class="info-value" id="infoProceso">-</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Cantidad:</span>
+                            <span class="info-value" id="infoCantidad">-</span>
+                        </div>
+                        <div class="info-row" id="infoPrendaRow" style="display: none;">
+                            <span class="info-label">Tipo de Prenda:</span>
+                            <span class="info-value" id="infoPrenda">-</span>
+                        </div>
+                        <div class="info-row" id="infoGeneroRow" style="display: none;">
+                            <span class="info-label">Género:</span>
+                            <span class="info-value" id="infoGenero">-</span>
+                        </div>
+                        <div class="info-row" id="infoCuentoRow" style="display: none;">
+                            <span class="info-label">Cuento:</span>
+                            <span class="info-value" id="infoCuento">-</span>
+                        </div>
+                        <div class="info-row" id="infoSalidaRow" style="display: none;">
+                            <span class="info-label">Fecha de Salida:</span>
+                            <span class="info-value" id="infoSalida">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Datos Adicionales del Taller (si no existe o está incompleto) -->
+                    <div id="detallesTallerGroup" class="hidden"
+                        style="margin-top: 24px; background: #ffffff; padding: 20px; border-radius: 16px; border: 1px solid #dadce0;">
+                        <div style="font-weight: 600; color: #202124; margin-bottom: 12px; font-size: 0.95rem;">
+                            Completa tus datos
+                        </div>
+                        <p style="font-size: 0.8rem; color: #5f6368; margin-bottom: 16px; line-height: 1.4;">
+                            Para registrar tu reporte, necesitamos completar la información de tu taller en nuestro
+                            sistema (esta información solo se solicitará una vez).
+                        </p>
+
+                        <div id="nitTallerGroup" class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">
+                                Cédula o NIT <span class="required">*</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-fingerprint input-icon"></i>
+                                <input type="text" id="nitTallerInput" class="form-control" placeholder="Ej: 16536804"
+                                    maxlength="50">
+                            </div>
+                            <div class="error-message" id="nitTallerError">Por favor ingresa la identificación</div>
+                        </div>
+
+                        <div id="correoTallerGroup" class="form-group" style="margin-bottom: 16px;">
+                            <label class="form-label">
+                                Correo Electrónico <span class="required">*</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-envelope input-icon"></i>
+                                <input type="email" id="correoTallerInput" class="form-control"
+                                    placeholder="ejemplo@correo.com" maxlength="100">
+                            </div>
+                            <div class="error-message" id="correoTallerError">Por favor ingresa un correo válido</div>
+                        </div>
+
+                        <div id="telefonoTallerGroup" class="form-group">
+                            <label class="form-label">
+                                Teléfono de Contacto <span class="required">*</span>
+                            </label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-phone input-icon"></i>
+                                <input type="tel" id="telefonoTallerInput" class="form-control"
+                                    placeholder="Ej: 3122681132" maxlength="20">
+                            </div>
+                            <div class="error-message" id="telefonoTallerError">Por favor ingresa un teléfono de
+                                contacto</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button type="button" id="btnVolverBusqueda" class="btn-secondary" style="flex: 1;">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <button type="button" id="btnConfirmarProducto" class="btn-primary" style="flex: 2;">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Continuar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección 3: Detalles de la Novedad -->
+                <div id="seccionNovedadDetalles" class="hidden">
+                    <div class="section-title">Detalles de la Novedad</div>
+                    <div class="section-description">
+                        Completa la información sobre la incidencia que deseas reportar.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Área de Servicios <span class="required">*</span>
+                            <span class="helper-text">Selecciona el área relacionada con la novedad</span>
+                        </label>
+                        <div class="input-wrapper select-wrapper">
+                            <i class="fas fa-building input-icon"></i>
+                            <select id="area" class="form-control" required>
+                                <option value="">Seleccione un área...</option>
+                                <option value="INSUMOS">Insumos</option>
+                                <option value="CORTE">Corte</option>
+                                <option value="TELAS">Telas</option>
+                                <option value="CODIGOS">Códigos</option>
+                                <option value="DISEÑO">Diseño</option>
+                                <option value="OTROS">Otros</option>
+                            </select>
+                        </div>
+                        <div class="error-message" id="areaError">Por favor selecciona un área</div>
+                    </div>
+
+                    <div id="tipoNovedadGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Tipo de Novedad <span class="required">*</span>
+                            <span class="helper-text">Especifica el tipo de incidencia</span>
+                        </label>
+                        <div class="input-wrapper select-wrapper">
+                            <i class="fas fa-tag input-icon"></i>
+                            <select id="tipoNovedad" class="form-control">
+                                <option value="">Seleccione un tipo...</option>
+                                <option value="FALTANTE">Faltante</option>
+                                <option value="IMPERFECTO">Imperfecto</option>
+                                <option value="PERDIDA">Pérdida</option>
+                                <option value="CAMBIO">Cambio</option>
+                            </select>
+                        </div>
+                        <div class="error-message" id="tipoError">Por favor selecciona un tipo de novedad</div>
+                    </div>
+
+                    <!-- Campos dinámicos según área -->
+
+                    <!-- INSUMOS -->
+                    <div id="tipoInsumoGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Insumos Solicitados <span class="required">*</span>
+                            <span class="helper-text">Puedes escribir para filtrar o agregar un insumo
+                                personalizado</span>
+                        </label>
+                        <div id="insumosList"></div>
+                        <button type="button" class="btn-add-item" id="btnAddInsumo">
+                            <i class="fas fa-plus"></i>
+                            <span>Agregar Insumo</span>
+                        </button>
+                    </div>
+
+                    <!-- CORTE -->
+                    <div id="tipoCorteGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Piezas de Corte <span class="required">*</span>
+                            <span class="helper-text">Puedes escribir para filtrar o agregar una pieza
+                                personalizada</span>
+                        </label>
+                        <div id="corteList"></div>
+                        <button type="button" class="btn-add-item" id="btnAddCorte">
+                            <i class="fas fa-plus"></i>
+                            <span>Agregar Pieza</span>
+                        </button>
+                    </div>
+
+                    <!-- TELAS -->
+                    <div id="tipoTelasGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Imperfecciones en Telas <span class="required">*</span>
+                            <span class="helper-text">Puedes escribir para filtrar o agregar una imperfección
+                                personalizada</span>
+                        </label>
+                        <div id="telasList"></div>
+                        <button type="button" class="btn-add-item" id="btnAddTela">
+                            <i class="fas fa-plus"></i>
+                            <span>Agregar Imperfección</span>
+                        </button>
+                    </div>
+
+                    <!-- CÓDIGOS -->
+                    <div id="tipoCodigosGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Solicitud de Códigos <span class="required">*</span>
+                            <span class="helper-text">Selecciona el tipo de solicitud</span>
+                        </label>
+
+                        <div class="input-wrapper select-wrapper" style="margin-bottom: 20px;">
+                            <i class="fas fa-barcode input-icon"></i>
+                            <select id="codigosTipoSolicitud" class="form-control">
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="LOTE_COMPLETO">Lote Completo</option>
+                                <option value="UNIDADES">Unidades Específicas</option>
+                            </select>
+                        </div>
+
+                        <div id="codigosLoteCompletoGroup" class="hidden" style="margin-bottom: 20px;">
+                            <label class="form-label">Cantidad Total del Lote</label>
+                            <div class="input-wrapper">
+                                <i class="fas fa-hashtag input-icon"></i>
+                                <input type="number" id="codigosCantidadTotal" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div id="codigosUnidadesGroup" class="hidden">
+                            <div id="codigosList" style="margin-bottom: 12px;"></div>
+                            <button type="button" class="btn-add-item" id="btnAddCodigo">
+                                <i class="fas fa-plus"></i>
+                                <span>Agregar Unidad</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- CANTIDAD NORMAL (para áreas sin campos especiales) -->
+                    <div id="cantidadNormalGroup" class="form-group hidden field-locked">
+                        <label class="form-label">
+                            Cantidad Solicitada <span class="required">*</span>
+                            <span class="helper-text">Ingresa la cantidad de unidades</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <i class="fas fa-hashtag input-icon"></i>
+                            <input type="number" id="cantidadNormal" class="form-control" min="1"
+                                placeholder="Cantidad">
+                        </div>
+                        <div class="error-message" id="cantidadError">Por favor ingresa la cantidad</div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button type="button" id="btnVolverConfirmacion" class="btn-secondary" style="flex: 1;">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <button type="button" id="btnContinuar" class="btn-primary" style="flex: 2;">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Continuar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sección 4: Información Adicional -->
+                <div id="seccionAdicional" class="hidden">
+                    <div class="section-title">Información Adicional</div>
+                    <div class="section-description">
+                        Agrega detalles adicionales y evidencia fotográfica si es necesario.
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Descripción de la Novedad
+                            <span id="descripcionBadge" class="optional-badge">Opcional</span>
+                            <span class="helper-text">Cuéntanos qué pasó y cualquier detalle que consideres
+                                importante</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <textarea id="descripcion" class="form-control textarea-clean"
+                                placeholder="Escribe aquí los detalles de lo que ocurrió..."
+                                maxlength="1000"></textarea>
+                        </div>
+                        <div class="error-message" id="descripcionError">La descripción debe tener al menos 10
+                            caracteres</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Imagen de Soporte
+                            <span class="optional-badge">Opcional</span>
+                            <span class="helper-text">JPG, PNG o GIF • Máximo 5MB</span>
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="imagen" accept="image/jpeg,image/png,image/gif">
+                            <label for="imagen" class="file-upload-label">
+                                <div class="file-upload-icon">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                                <div class="file-upload-text">
+                                    <strong>Selecciona una imagen</strong>
+                                    <span>o arrástrala aquí</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div id="filePreview" class="hidden"></div>
+                        <div class="error-message" id="imagenError">El archivo debe ser una imagen válida (máx. 5MB)
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 32px;">
+                        <button type="button" id="btnVolverDetalles" class="btn-secondary" style="flex: 1;">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Volver</span>
+                        </button>
+                        <button type="submit" id="btnSubmit" class="btn-primary" style="flex: 2;">
+                            <i class="fas fa-paper-plane"></i>
+                            <span>Enviar Reporte</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Sección 5: Confirmación de Envío -->
+                <div id="seccionExito" class="hidden">
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <!-- Icono de éxito - Minimalista -->
+                        <div
+                            style="width: 80px; height: 80px; margin: 0 auto 24px; border: 3px solid #1e8e3e; border-radius: 50%; display: flex; align-items: center; justify-content: center; animation: successPulse 0.6s ease;">
+                            <i class="fas fa-check" style="font-size: 40px; color: #1e8e3e;"></i>
+                        </div>
+
+                        <!-- Título -->
+                        <h2 style="font-size: 1.5rem; font-weight: 600; color: #202124; margin-bottom: 12px;">
+                            Reporte Enviado
+                        </h2>
+
+                        <!-- Descripción -->
+                        <p style="font-size: 1rem; color: #5f6368; margin-bottom: 32px; line-height: 1.6;">
+                            Su novedad ha sido registrada exitosamente en el sistema
+                        </p>
+
+                        <!-- Card con ID de novedad -->
+                        <div
+                            style="background: #f8f9fa; padding: 16px; border-radius: 8px; margin-bottom: 32px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                            <div
+                                style="font-size: 0.75rem; color: #80868b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+                                Número de Reporte
+                            </div>
+                            <div id="novedadIdDisplay"
+                                style="font-size: 1.25rem; font-weight: 600; color: #202124; font-family: 'Courier New', monospace;">
+                                NOV-XXXXXXXX
+                            </div>
+                        </div>
+
+                        <!-- Botón centrado -->
+                        <div style="display: flex; justify-content: center;">
+                            <button type="button" id="btnNuevoReporte" class="btn-primary" style="max-width: 280px;">
+                                <i class="fas fa-plus"></i>
+                                <span>Nuevo Reporte</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts con timestamp para evitar caché -->
+    <script>
+        window.CACHE_BUSTER = Date.now();
+    </script>
+    <script src="src/config.js"></script>
+    <script src="src/novedad-publica.js"></script>
+
+    <script>
+        // Forzar recarga sin caché al volver con el botón atrás
+        window.addEventListener('pageshow', function (event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+
+</html>
