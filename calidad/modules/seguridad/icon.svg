@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <!-- Versión con color (para grid de apps) - escala 1x -->
+  <g class="icon-colored">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" class="fill-pink-subtle"/>
+    <polyline stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="9 12 11 14 15 10" class="stroke-pink"/>
+  </g>
+  
+  <!-- Versión para nav (sin color, solo stroke) - escala 2x (para viewBox 48x48 cuando se inyecte) -->
+  <g class="icon-nav">
+    <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <polyline stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="9 12 11 14 15 10"/>
+  </g>
+</svg>

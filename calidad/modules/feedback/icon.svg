@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Versión con color -->
+  <g class="icon-colored">
+    <path fill="#c8f5e0" d="M42 30a4 4 0 01-4 4H14l-8 8V10a4 4 0 014-4h28a4 4 0 014 4z"/>
+  </g>
+  
+  <!-- Versión para nav -->
+  <g class="icon-nav">
+    <path stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M42 30a4 4 0 01-4 4H14l-8 8V10a4 4 0 014-4h28a4 4 0 014 4z"/>
+  </g>
+</svg>

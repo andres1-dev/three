@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Versión con color -->
+  <g class="icon-colored">
+    <path fill="#fde0f2" d="M42 24v-4a10 10 0 0 0-10-10H16a10 10 0 0 0-10 10v4"/>
+    <circle cx="24" cy="32" r="10" fill="#fde0f2"/>
+    <path stroke="#f5b4d8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M24 22v10"/>
+    <path stroke="#f5b4d8" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M18 32l6 6 6-6"/>
+  </g>
+  
+  <!-- Versión para nav -->
+  <g class="icon-nav">
+    <path stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M42 24v-4a10 10 0 0 0-10-10H16a10 10 0 0 0-10 10v4"/>
+    <circle cx="24" cy="32" r="10" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M24 22v10"/>
+    <path stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M18 32l6 6 6-6"/>
+  </g>
+</svg>

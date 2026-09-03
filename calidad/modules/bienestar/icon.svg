@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Versión con color -->
+  <g class="icon-colored">
+    <path fill="#fde0f2" d="M41.68 9.22a11 11 0 0 0-15.56 0L24 11.34l-2.12-2.12a11 11 0 0 0-15.56 15.56l2.12 2.12L24 42.46l15.56-15.56 2.12-2.12a11 11 0 0 0 0-15.56z"/>
+  </g>
+  
+  <!-- Versión para nav -->
+  <g class="icon-nav">
+    <path stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" d="M41.68 9.22a11 11 0 0 0-15.56 0L24 11.34l-2.12-2.12a11 11 0 0 0-15.56 15.56l2.12 2.12L24 42.46l15.56-15.56 2.12-2.12a11 11 0 0 0 0-15.56z"/>
+  </g>
+</svg>

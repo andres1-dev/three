@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Versión con color -->
+  <g class="icon-colored">
+    <polygon fill="#fde0f2" points="24 4 30.18 16.52 44 18.54 34 28.28 36.36 42.04 24 35.54 11.64 42.04 14 28.28 4 18.54 17.82 16.52 24 4"/>
+  </g>
+  
+  <!-- Versión para nav -->
+  <g class="icon-nav">
+    <polygon stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" points="24 4 30.18 16.52 44 18.54 34 28.28 36.36 42.04 24 35.54 11.64 42.04 14 28.28 4 18.54 17.82 16.52 24 4"/>
+  </g>
+</svg>

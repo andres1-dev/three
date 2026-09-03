@@ -175,7 +175,7 @@ input, textarea, select {
 .apps-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem 0.9rem;
+    gap: 1rem 0.85rem;
     padding: 1rem 1rem 1.5rem;
 }
 
@@ -184,40 +184,65 @@ input, textarea, select {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.35rem;
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
+    /* Ancho fijo para garantizar simetría perfecta en iOS */
+    min-width: 0;
 }
 
 .app-card:active .icon-card-box {
     transform: scale(0.92);
 }
 
-/* Caja blanca estilo Streamline explorer */
+/* Caja cuadrada perfecta — compatible iOS Safari */
 .icon-card-box {
+    /* aspect-ratio en el wrapper + contenedor flex para centrar */
+    position: relative;
     width: 100%;
-    aspect-ratio: 1;
+    /* iOS Safari ≥ 15 soporta aspect-ratio, pero necesita height explícita
+       en algunos contextos de grid. Usamos un pseudo para forzar el cuadrado. */
+    aspect-ratio: 1 / 1;
     background: #ffffff;
-    border-radius: 16px;
-    padding: 20%;
+    border-radius: 14px;
+    box-shadow: 0 2px 8px rgba(30, 35, 50, 0.09);
+    border: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    overflow: hidden;
+    flex-shrink: 0;
+    /* Flexbox para centrar el SVG hijo */
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 3px 10px rgba(30, 35, 50, 0.09);
-    border: none;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    /* Fallback iOS: si aspect-ratio no aplica, el pseudo-elemento
+       fuerza la altura igual al ancho */
 }
 
-.icon-card-box svg {
-    width: 100%;
-    height: 100%;
+/* Pseudo-elemento que garantiza el cuadrado en iOS Safari antiguo */
+.icon-card-box::before {
+    content: '';
     display: block;
+    padding-top: 100%;
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: none;
+}
+
+/* SVG centrado con padding interno del 18% */
+.icon-card-box svg,
+.icon-card-box > * {
+    width: 52%;
+    height: 52%;
+    display: block;
+    flex-shrink: 0;
+    position: relative; /* sale del stacking context del pseudo */
+    z-index: 1;
 }
 
 .icon-card-box:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(30, 35, 50, 0.15);
+    box-shadow: 0 6px 16px rgba(30, 35, 50, 0.15);
     background: #ffffff;
 }
 
@@ -954,7 +979,7 @@ input, textarea, select {
     font-weight: 500;
     padding: 0 2px;
     min-width: 0;
-    transition: color var(--transition);
+    transition: none; /* color instantáneo — sin delay */
     letter-spacing: -0.1px;
     font-family: var(--font);
     -webkit-user-select: none;
@@ -963,7 +988,9 @@ input, textarea, select {
 
 /* Animación del icono cuando se activa el botón */
 .nav-btn:active svg,
-.nav-btn.active svg {
+.nav-btn.active svg,
+.nav-btn:active iconify-icon,
+.nav-btn.active iconify-icon {
     animation: navIconPulse 0.3s ease-out;
 }
 
@@ -980,17 +1007,52 @@ input, textarea, select {
 }
 
 .nav-btn svg {
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    min-height: 18px;
-    stroke: var(--color-text-light);
-    stroke-width: 1.75;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
     overflow: visible;
-    transition: stroke var(--transition);
+    transition: none; /* color instantáneo */
+    color: var(--color-text-light);
+}
+
+/* Estilos para iconify-icon en nav-btn (íconos lineales grises) */
+.nav-btn iconify-icon {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    min-height: 28px;
+    font-size: 28px;
+    display: block;
+    color: var(--color-text-light); /* Gris como los demás */
+    transition: none;
+}
+
+/* Clase especial para convertir íconos coloridos a monocromático */
+.nav-icon-mono {
+    filter: grayscale(1) brightness(0.8) opacity(0.7);
+}
+
+/* iconify-icon activo hereda el color del botón activo */
+.nav-btn.active iconify-icon {
+    color: var(--color-primary);
+}
+
+/* Cuando está activo, remover el filtro de grises y usar color azul */
+.nav-btn.active .nav-icon-mono {
+    filter: none;
+    /* Aplicar tinte azul sobre el ícono colorido */
+    filter: brightness(0.9) saturate(0.3) hue-rotate(200deg);
+}
+
+/* Sin relleno en ningún elemento — solo stroke */
+.nav-btn svg *[fill]:not([fill="none"]) {
+    fill: none !important;
+}
+
+/* Forzar stroke en todos los elementos con stroke explícito */
+.nav-btn svg *[stroke]:not([stroke="none"]) {
+    stroke: currentColor !important;
 }
 
 .nav-btn span {
@@ -1006,10 +1068,10 @@ input, textarea, select {
 }
 
 .nav-btn.active { color: var(--color-primary); }
-.nav-btn.active svg { stroke: var(--color-primary); }
+.nav-btn.active svg { color: var(--color-primary); }
 
 .nav-btn:active { color: var(--color-primary); }
-.nav-btn:active svg { stroke: var(--color-primary); }
+.nav-btn:active svg { color: var(--color-primary); }
 
 
 /* ============================================================
@@ -1116,13 +1178,13 @@ input, textarea, select {
    ============================================================ */
 @media (min-width: 600px) {
     .apps-grid {
-        grid-template-columns: repeat(5, 1fr);
-        gap: 1.2rem;
-        padding: 1.2rem;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.2rem 1rem;
+        padding: 1.5rem 1.2rem;
     }
 
     .app-label {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
     }
 
     .post-body p {
@@ -1146,6 +1208,17 @@ input, textarea, select {
 
 
 /* ============================================================
+   11.5. TABLET GRANDE (≥ 768px)
+   ============================================================ */
+@media (min-width: 768px) {
+    .apps-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.4rem 1.2rem;
+    }
+}
+
+
+/* ============================================================
    12. DESKTOP (≥ 1024px)
    ============================================================ */
 @media (min-width: 1024px) {
@@ -1153,6 +1226,7 @@ input, textarea, select {
         grid-template-columns: repeat(6, 1fr);
         max-width: 900px;
         margin: 0 auto;
+        gap: 1.5rem 1.3rem;
     }
 
     .page-header,
