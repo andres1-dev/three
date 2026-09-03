@@ -2,13 +2,14 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calidad</title>
     <link rel="icon" href="icons/favicon.ico">
     <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
     <link rel="stylesheet" href="css/icons.css">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
     <!-- Los CSS de módulos se inyectan dinámicamente por el router -->
     <!-- Ocultar el body hasta que el guard de auth confirme sesión válida -->
     <style id="auth-hide">body { visibility: hidden; }</style>
@@ -45,465 +46,200 @@
          ================================================ -->
     <main id="module-viewport" class="module-viewport">
 
+        <!-- Header fijo para la vista de apps -->
+        <div class="page-header">
+            <h1 class="page-title">Apps</h1>
+        </div>
+
         <!-- ============================================
              VISTA: APPS (siempre en el DOM, es la home)
              ============================================ -->
         <div id="view-apps" class="view active">
-            <div class="page-header" style="min-height:52px;height:52px;padding:0 1rem;">
-                <h1 class="page-title" style="font-size:1rem;font-weight:600;margin:0;">Apps</h1>
-            </div>
-
             <div class="apps-grid">
 
-                <div class="app-card" data-module="personas">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-blue">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4" class="fill-blue-subtle"/>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Personas</span>
-                    </div>
+                <div class="app-card" data-module="personas" data-icon="user-multiple-accounts-flat" data-palette="Azul">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Personas</span>
                 </div>
 
-                <div class="app-card" data-module="turnos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-purple">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" class="fill-purple-subtle"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                                <path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>
-                                <path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Turnos</span>
-                    </div>
+                <div class="app-card" data-module="turnos" data-icon="calendar-mark-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Turnos</span>
                 </div>
 
-                <div class="app-card" data-module="marcajes">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-pink">
-                                <path d="M12 2a10 10 0 0 0-3 19.5"/>
-                                <circle cx="12" cy="12" r="3" class="fill-pink-subtle"/>
-                                <path d="M12 2v4"/><path d="M12 18v4"/>
-                                <path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/>
-                                <path d="M2 12h4"/><path d="M18 12h4"/>
-                                <path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Marcajes</span>
-                    </div>
+                <div class="app-card" data-module="marcajes" data-icon="fingerprint-2-flat" data-palette="Rosa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Marcajes</span>
                 </div>
 
-                <div class="app-card" data-module="organigrama">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-amber">
-                                <rect x="3" y="3" width="7" height="7" rx="1" class="fill-amber-subtle"/>
-                                <rect x="14" y="3" width="7" height="7" rx="1" class="fill-amber-subtle"/>
-                                <rect x="3" y="14" width="7" height="7" rx="1" class="fill-amber-subtle"/>
-                                <rect x="14" y="14" width="7" height="7" rx="1" class="fill-amber-subtle"/>
-                                <line x1="6.5" y1="10" x2="6.5" y2="14"/>
-                                <line x1="17.5" y1="10" x2="17.5" y2="14"/>
-                                <line x1="10" y1="6.5" x2="14" y2="6.5"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Organigrama</span>
-                    </div>
+                <div class="app-card" data-module="organigrama" data-icon="hierarchy-1-flat" data-palette="Naranja">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Organigrama</span>
                 </div>
 
-                <div class="app-card" data-module="desempeno">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-green">
-                                <path d="M21 12v-2a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v2"/>
-                                <circle cx="12" cy="16" r="5" class="fill-green-subtle"/>
-                                <path d="M12 11v5"/><path d="M9 16l3 3 3-3"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Desempeño</span>
-                    </div>
+                <div class="app-card" data-module="desempeno" data-icon="graph-bar-increase-flat" data-palette="Verde">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Desempeño</span>
                 </div>
 
-                <div class="app-card" data-module="aprendizaje">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-red">
-                                <path d="M12 2L2 7l10 5 10-5-10-5z" class="fill-red-subtle"/>
-                                <path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Aprendizaje</span>
-                    </div>
+                <div class="app-card" data-module="aprendizaje" data-icon="global-learning-flat" data-palette="Rojo">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Aprendizaje</span>
                 </div>
 
-                <div class="app-card" data-module="people-experience">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-cyan">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" class="fill-cyan-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Experiencia</span>
-                    </div>
+                <div class="app-card" data-module="people-experience" data-icon="user-feedback-heart-flat" data-palette="Celeste">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Experiencia</span>
                 </div>
 
-                <div class="app-card" data-module="inicio">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-rose">
-                                <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" class="fill-rose-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Inicio</span>
-                    </div>
+                <div class="app-card" data-module="inicio" data-icon="home-1-flat" data-palette="Rosa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Inicio</span>
                 </div>
 
-                <div class="app-card" data-module="chats">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-gray">
-                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" class="fill-gray-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Chats</span>
-                    </div>
+                <div class="app-card" data-module="chats" data-icon="chat-bubble-text-square-flat" data-palette="Turquesa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Chats</span>
                 </div>
 
-                <div class="app-card" data-module="reconocimientos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-lime">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" class="fill-lime-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Reconocimientos</span>
-                    </div>
+                <div class="app-card" data-module="reconocimientos" data-icon="star-medal-flat" data-palette="Amarillo">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Reconocimientos</span>
                 </div>
 
-                <div class="app-card" data-module="perfil">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-orange">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4" class="fill-orange-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Perfil</span>
-                    </div>
+                <div class="app-card" data-module="perfil" data-icon="user-single-neutral-male-flat" data-palette="Naranja">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Perfil</span>
                 </div>
 
-                <div class="app-card" data-module="notificaciones">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-indigo">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                                <circle cx="12" cy="8" r="6" class="fill-indigo-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Notificaciones</span>
-                    </div>
+                <div class="app-card" data-module="notificaciones" data-icon="ringing-bell-notification-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Notificaciones</span>
                 </div>
 
-                <div class="app-card" data-module="tareas">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-teal">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="fill-teal-subtle"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Tareas</span>
-                    </div>
+                <div class="app-card" data-module="tareas" data-icon="task-list-edit-flat" data-palette="Turquesa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Tareas</span>
                 </div>
 
-                <div class="app-card" data-module="calendario">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-fuchsia">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" class="fill-fuchsia-subtle"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                                <path d="M9 14h.01"/><path d="M15 14h.01"/>
-                                <path d="M9 18h.01"/><path d="M15 18h.01"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Calendario</span>
-                    </div>
+                <div class="app-card" data-module="calendario" data-icon="calendar-check-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Calendario</span>
                 </div>
 
-                <div class="app-card" data-module="informes">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-yellow">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="fill-yellow-subtle"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Informes</span>
-                    </div>
+                <div class="app-card" data-module="informes" data-icon="file-report-flat" data-palette="Amarillo">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Informes</span>
                 </div>
 
-                <div class="app-card" data-module="ajustes">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-sky">
-                                <circle cx="12" cy="12" r="3" class="fill-sky-subtle"/>
-                                <path d="M12 1v3"/><path d="M12 20v3"/>
-                                <path d="M4.22 4.22l2.12 2.12"/><path d="M17.66 17.66l2.12 2.12"/>
-                                <path d="M1 12h3"/><path d="M20 12h3"/>
-                                <path d="M4.22 19.78l2.12-2.12"/><path d="M17.66 6.34l2.12-2.12"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Ajustes</span>
-                    </div>
+                <div class="app-card" data-module="ajustes" data-icon="cog-flat" data-palette="Celeste">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Ajustes</span>
                 </div>
 
-                <div class="app-card" data-module="favoritos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-rose-dark">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" class="fill-rose-dark-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Favoritos</span>
-                    </div>
+                <div class="app-card" data-module="favoritos" data-icon="bookmark-flat" data-palette="Rojo">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Favoritos</span>
                 </div>
 
-                <div class="app-card" data-module="equipo">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-emerald">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                <circle cx="9" cy="7" r="4" class="fill-emerald-subtle"/>
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Equipo</span>
-                    </div>
+                <div class="app-card" data-module="equipo" data-icon="hierarchy-15-flat" data-palette="Verde">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Equipo</span>
                 </div>
 
-                <div class="app-card" data-module="estadisticas">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-violet">
-                                <path d="M21 12v-2a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v2"/>
-                                <circle cx="12" cy="16" r="5" class="fill-violet-subtle"/>
-                                <path d="M12 11v5"/><path d="M9 16l3 3 3-3"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Estadísticas</span>
-                    </div>
+                <div class="app-card" data-module="estadisticas" data-icon="content-statistic-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Estadísticas</span>
                 </div>
 
-                <div class="app-card" data-module="mensajes">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-amber-dark">
-                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" class="fill-amber-dark-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Mensajes</span>
-                    </div>
+                <div class="app-card" data-module="mensajes" data-icon="mail-send-email-message-flat" data-palette="Naranja">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Mensajes</span>
                 </div>
 
-                <div class="app-card" data-module="archivos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-gray">
-                                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" class="fill-gray-subtle"/>
-                                <line x1="12" y1="11" x2="12" y2="17"/>
-                                <polyline points="9 14 12 11 15 14"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Archivos</span>
-                    </div>
+                <div class="app-card" data-module="archivos" data-icon="file-folder-flat" data-palette="Turquesa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Archivos</span>
                 </div>
 
-                <div class="app-card" data-module="nube">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-indigo">
-                                <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z" class="fill-indigo-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Nube</span>
-                    </div>
+                <div class="app-card" data-module="nube" data-icon="cloud-data-transfer-flat" data-palette="Celeste">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Nube</span>
                 </div>
 
-                <div class="app-card" data-module="seguridad">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-pink">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" class="fill-pink-subtle"/>
-                                <polyline points="9 12 11 14 15 10"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Seguridad</span>
-                    </div>
+                <div class="app-card" data-module="seguridad" data-icon="shield-1-flat" data-palette="Rosa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Seguridad</span>
                 </div>
 
-                <div class="app-card" data-module="guardados">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-cyan">
-                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" class="fill-cyan-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Guardados</span>
-                    </div>
+                <div class="app-card" data-module="guardados" data-icon="archive-box-flat" data-palette="Celeste">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Guardados</span>
                 </div>
 
-                <div class="app-card" data-module="reuniones">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-amber">
-                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" class="fill-amber-subtle"/>
-                                <circle cx="12" cy="13" r="4" class="fill-amber-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Reuniones</span>
-                    </div>
+                <div class="app-card" data-module="reuniones" data-icon="presentation-flat" data-palette="Naranja">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Reuniones</span>
                 </div>
 
-                <div class="app-card" data-module="formularios">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-green">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" class="fill-green-subtle"/>
-                                <polyline points="14 2 14 8 20 8"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Formularios</span>
-                    </div>
+                <div class="app-card" data-module="formularios" data-icon="description-flat" data-palette="Verde">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Formularios</span>
                 </div>
 
-                <div class="app-card" data-module="encuestas">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-rose">
-                                <path d="M21 12v-2a5 5 0 0 0-5-5H8a5 5 0 0 0-5 5v2"/>
-                                <circle cx="12" cy="16" r="5" class="fill-rose-subtle"/>
-                                <path d="M12 11v5"/><path d="M9 16l3 3 3-3"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Encuestas</span>
-                    </div>
+                <div class="app-card" data-module="encuestas" data-icon="notepad-text-flat" data-palette="Rosa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Encuestas</span>
                 </div>
 
-                <div class="app-card" data-module="feedback">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-lime">
-                                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" class="fill-lime-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Feedback</span>
-                    </div>
+                <div class="app-card" data-module="feedback" data-icon="help-chat-1-flat" data-palette="Verde">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Feedback</span>
                 </div>
 
-                <div class="app-card" data-module="objetivos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-teal">
-                                <circle cx="12" cy="12" r="10" class="fill-teal-subtle" style="fill-opacity:.08"/>
-                                <circle cx="12" cy="12" r="6" class="fill-teal-subtle"/>
-                                <circle cx="12" cy="12" r="2" class="fill-teal-subtle" style="fill-opacity:.3"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Objetivos</span>
-                    </div>
+                <div class="app-card" data-module="objetivos" data-icon="target-3-flat" data-palette="Turquesa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Objetivos</span>
                 </div>
 
-                <div class="app-card" data-module="capacitacion">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-blue">
-                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" class="fill-blue-subtle"/>
-                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" class="fill-blue-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Capacitación</span>
-                    </div>
+                <div class="app-card" data-module="capacitacion" data-icon="graduation-cap-flat" data-palette="Azul">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Capacitación</span>
                 </div>
 
-                <div class="app-card" data-module="bienestar">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-fuchsia">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" class="fill-fuchsia-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Bienestar</span>
-                    </div>
+                <div class="app-card" data-module="bienestar" data-icon="like-1-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Bienestar</span>
                 </div>
 
-                <div class="app-card" data-module="talento">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-pink">
-                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" class="fill-pink-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Talento</span>
-                    </div>
+                <div class="app-card" data-module="talento" data-icon="multiple-stars-flat" data-palette="Rosa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Talento</span>
                 </div>
 
-                <div class="app-card" data-module="contactos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-orange">
-                                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" class="fill-orange-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Contactos</span>
-                    </div>
+                <div class="app-card" data-module="contactos" data-icon="contact-phonebook-flat" data-palette="Naranja">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Contactos</span>
                 </div>
 
-                <div class="app-card" data-module="accesos">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-violet">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" class="fill-violet-subtle"/>
-                                <path d="M7 11V7a5 5 0 0110 0v4"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Accesos</span>
-                    </div>
+                <div class="app-card" data-module="accesos" data-icon="padlock-key-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Accesos</span>
                 </div>
 
-                <div class="app-card" data-module="camara">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-gray">
-                                <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z" class="fill-gray-subtle"/>
-                                <circle cx="12" cy="13" r="4" class="fill-gray-subtle"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Cámara</span>
-                    </div>
+                <div class="app-card" data-module="camara" data-icon="camera-1-flat" data-palette="Turquesa">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Cámara</span>
                 </div>
 
-                <div class="app-card" data-module="actividad">
-                    <div class="icon-card-box">
-                        <div class="icon-wrapper">
-                            <svg viewBox="0 0 24 24" class="icon stroke-emerald">
-                                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-                            </svg>
-                        </div>
-                        <span class="app-label">Actividad</span>
-                    </div>
+                <div class="app-card" data-module="actividad" data-icon="heart-rate-pulse-graph-flat" data-palette="Verde">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Actividad</span>
+                </div>
+
+                <div class="app-card" data-module="iconos" data-icon="magic-wand-1-flat" data-palette="Morado">
+                    <div class="icon-card-box"></div>
+                    <span class="app-label">Íconos</span>
                 </div>
 
             </div><!-- /.apps-grid -->
@@ -647,6 +383,155 @@
     </nav>
 
 </div><!-- /.app-container -->
+
+<script>
+/* ============================================================
+   APP-GRID ICONS — Recolorización dinámica (2 tonos)
+   Lee la configuración guardada por el módulo "iconos" desde
+   localStorage (key: app_icon_config) y la aplica al grid.
+   Si no hay config guardada usa los valores data-icon / data-palette
+   del HTML como defaults.
+   ============================================================ */
+(function () {
+    'use strict';
+
+    const API         = 'https://api.iconify.design';
+    const STORAGE_KEY = 'app_icon_config';
+
+    const PALETTES = {
+        'Morado':   { light: '#ddd8fe', dark: '#b8adfa' },
+        'Azul':     { light: '#d0e4ff', dark: '#9dbff8' },
+        'Celeste':  { light: '#d4f1ff', dark: '#96d6f5' },
+        'Verde':    { light: '#c8f5e0', dark: '#8adab4' },
+        'Turquesa': { light: '#c8f4f2', dark: '#88d8d4' },
+        'Naranja':  { light: '#ffe8cc', dark: '#f5bf88' },
+        'Rojo':     { light: '#ffd4dc', dark: '#f5a0b0' },
+        'Rosa':     { light: '#fde0f2', dark: '#f5b4d8' },
+        'Amarillo': { light: '#fff4cc', dark: '#f0d878' }
+    };
+
+    const svgCache = new Map();
+
+    /* Carga el SVG desde Iconify (con caché) */
+    async function fetchSVG(prefix, iconName) {
+        const key = `${prefix}:${iconName}`;
+        if (svgCache.has(key)) return svgCache.get(key);
+        const url = `${API}/${prefix}/${encodeURIComponent(iconName)}.svg`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('SVG no encontrado');
+        const svg = await res.text();
+        svgCache.set(key, svg);
+        return svg;
+    }
+
+    function extractColors(svg) {
+        const found = new Set();
+        (svg.match(/#[0-9a-fA-F]{3,8}/g) || []).forEach(c => {
+            if (c.length === 4 || c.length === 7) found.add(c.toUpperCase());
+        });
+        return [...found];
+    }
+
+    function lum(hex) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+        return parseInt(hex.slice(0,2),16)*0.299
+             + parseInt(hex.slice(2,4),16)*0.587
+             + parseInt(hex.slice(4,6),16)*0.114;
+    }
+
+    /* Recolorización de 2 tonos (igual que iconos2color.html) */
+    function recolor(svg, palette) {
+        const colors = extractColors(svg);
+        if (!colors.length) return svg;
+        if (colors.length === 1) return svg.replaceAll(colors[0], palette.light);
+        const sorted  = [...colors].sort((a, b) => lum(a) - lum(b));
+        const darkRef = sorted[0];
+        let result    = svg;
+        colors.forEach(color => {
+            const rep = color === darkRef ? palette.dark : palette.light;
+            result = result.replace(new RegExp(color, 'gi'), rep);
+        });
+        return result;
+    }
+
+    /* Para colección mono: aplica stroke/fill de la paleta */
+    function monoColor(svg, palette) {
+        return svg
+            .replace(/stroke="(?!none)[^"]*"/g, `stroke="${palette.dark}"`)
+            .replace(/fill="(?!none)[^"]*"/g,   `fill="${palette.light}"`);
+    }
+
+    function toElement(svgText, size) {
+        const parser = new DOMParser();
+        const el = parser.parseFromString(svgText, 'image/svg+xml').documentElement;
+        el.setAttribute('width',  size);
+        el.setAttribute('height', size);
+        el.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+        el.style.display = 'block';
+        return el;
+    }
+
+    const FALLBACK_SVG = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24"
+        fill="none" stroke="#94a3b8" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+    </svg>`;
+
+    /* Lee config guardada por el módulo iconos */
+    function loadStoredConfig() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+        catch (_) { return {}; }
+    }
+
+    /* Renderiza el ícono de UNA card */
+    async function renderCard(card, storedConfig) {
+        const appId   = card.dataset.module;
+        const box     = card.querySelector('.icon-card-box');
+        if (!box) return;
+
+        /* Config guardada tiene prioridad sobre los defaults del HTML */
+        const saved       = storedConfig[appId] || {};
+        const iconName    = saved.icon    || card.dataset.icon;
+        const paletteName = saved.palette || card.dataset.palette || 'Azul';
+        const prefix      = saved.prefix  || 'streamline-plump-color';
+
+        if (!iconName) return;
+
+        const palette = PALETTES[paletteName] || PALETTES['Azul'];
+
+        try {
+            const raw      = await fetchSVG(prefix, iconName);
+            const colored  = prefix === 'streamline'
+                ? monoColor(raw, palette)
+                : recolor(raw, palette);
+            const el = toElement(colored, '100%');
+            box.innerHTML = '';
+            box.appendChild(el);
+        } catch (_) {
+            box.innerHTML = FALLBACK_SVG('100%');
+        }
+    }
+
+    /* Procesa todo el grid */
+    async function initIcons() {
+        const storedConfig = loadStoredConfig();
+        const cards        = document.querySelectorAll('.app-card[data-module]');
+        await Promise.all([...cards].map(card => renderCard(card, storedConfig)));
+    }
+
+    /* API pública — el módulo iconos la llama tras guardar */
+    window.refreshAppGrid = initIcons;
+
+    /* Arrancar */
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initIcons);
+    } else {
+        initIcons();
+    }
+})();
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>

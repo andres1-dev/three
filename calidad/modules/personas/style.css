@@ -452,11 +452,12 @@
 
 /* Toast */
 .p-toast {
-    position: fixed; top: 16px; right: 16px; left: 16px;
+    position: fixed; top: 64px; right: 16px; left: 16px;
     background: #22c55e; color: #fff;
     padding: 10px 16px; border-radius: 10px;
     font-size: .82rem; font-weight: 700;
     box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    z-index: 150;
     display: flex; align-items: center; gap: 8px;
     z-index: 9999;
     animation: toastIn .3s ease;

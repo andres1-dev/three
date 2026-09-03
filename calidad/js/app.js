@@ -95,6 +95,7 @@ const MODULE_META = {
     accesos:           { label: 'Accesos',           svg: '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>' },
     camara:            { label: 'Cámara',            svg: '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>' },
     actividad:         { label: 'Actividad',         svg: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>' },
+    iconos:            { label: 'Íconos',            svg: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>' },
 };
 
 /* Módulos que van en botones de nav fija (no generan entrada en nav-dynamic) */
@@ -216,16 +217,20 @@ async function navigate(id) {
 
     scrollToTop();
 
+    const shellHeader = document.querySelector('#module-viewport > .page-header');
+
     if (id === 'apps') {
         /* Volver al grid de apps */
         viewModule.innerHTML = '';
         viewModule.classList.remove('active');
         viewApps.classList.add('active');
+        if (shellHeader) shellHeader.style.display = '';
         updateNavActive('apps');
         return;
     }
 
-    /* Ocultar grid de apps */
+    /* Ocultar header del shell y grid de apps */
+    if (shellHeader) shellHeader.style.display = 'none';
     viewApps.classList.remove('active');
 
     /* Mostrar viewport de módulo */

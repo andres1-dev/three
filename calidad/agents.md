@@ -3,6 +3,7 @@
 ## 1. CONTEXTO DE LA APP
 
 - App mobile-first tipo SPA que corre en un servidor local (Live Server, puerto 5501) o en Cloudflare Pages.
+- Para desarrollo local con HTTPS: usar archivos en carpeta `server/` (puerto 4443).
 - Shell principal: `index.html` + `js/app.js` (router).
 - Autenticación: Supabase Auth (`js/auth.js`).
 - Base de datos: Supabase (`js/api.js`).
@@ -149,7 +150,7 @@ El CSS en `styles.css` unifica `.page-header`, `.feed-header` y `.profile-header
 - `height: 52px` fijo
 - `padding: 0 1rem`
 - `border-bottom: 1px solid var(--color-border)`
-- `position: sticky; top: 0; z-index: 10`
+- `position: fixed; top: 0; left: 0; right: 0; z-index: 10` (header siempre fijo, no se mueve)
 
 ---
 

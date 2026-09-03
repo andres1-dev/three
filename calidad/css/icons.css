@@ -106,3 +106,32 @@
     width: 40px;
     height: 40px;
 }
+
+.icon-wrapper iconify-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+
+/* Colores para iconify-icon en app-cards */
+.icon-wrapper.c-blue     { color: #3b82f6; }
+.icon-wrapper.c-purple   { color: #8b5cf6; }
+.icon-wrapper.c-pink     { color: #ec4899; }
+.icon-wrapper.c-amber    { color: #f59e0b; }
+.icon-wrapper.c-green    { color: #10b981; }
+.icon-wrapper.c-red      { color: #ef4444; }
+.icon-wrapper.c-cyan     { color: #06b6d4; }
+.icon-wrapper.c-rose     { color: #f472b6; }
+.icon-wrapper.c-gray     { color: #6b7280; }
+.icon-wrapper.c-lime     { color: #84cc16; }
+.icon-wrapper.c-orange   { color: #f97316; }
+.icon-wrapper.c-indigo   { color: #6366f1; }
+.icon-wrapper.c-teal     { color: #14b8a6; }
+.icon-wrapper.c-fuchsia  { color: #a855f7; }
+.icon-wrapper.c-yellow   { color: #eab308; }
+.icon-wrapper.c-sky      { color: #0ea5e9; }
+.icon-wrapper.c-rose-dark{ color: #e11d48; }
+.icon-wrapper.c-emerald  { color: #059669; }
+.icon-wrapper.c-violet   { color: #8b5cf6; }
+.icon-wrapper.c-amber-dark{color: #d97706; }

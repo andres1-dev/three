@@ -77,6 +77,13 @@ body {
     color: var(--color-text);
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
+    touch-action: manipulation;
+}
+
+/* Prevenir zoom en inputs y textareas */
+input, textarea, select {
+    font-size: 16px !important;
+    touch-action: manipulation;
 }
 
 .app-container {
@@ -102,6 +109,8 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    /* espacio para el header fijo de 52px */
+    padding-top: 52px;
     /* espacio para la nav inferior fija + barra de gestos del sistema */
     padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
     -webkit-overflow-scrolling: touch;
@@ -111,7 +120,7 @@ body {
     display: flex;
 }
 
-/* Header genérico */
+/* Header genérico - FIJO siempre */
 .page-header,
 .feed-header,
 .profile-header {
@@ -124,9 +133,18 @@ body {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
-    position: sticky;
+    position: fixed;
     top: 0;
-    z-index: 10;
+    left: 0;
+    right: 0;
+    z-index: 50;
+}
+
+/* Cuando un módulo tiene header fijo, el contenido inmediatamente después debe tener espacio */
+.page-header + *,
+.feed-header + *,
+.profile-header + * {
+    margin-top: 52px;
 }
 
 .page-header.scrolled,
@@ -157,8 +175,8 @@ body {
 .apps-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem 1.2rem;
-    padding: 1.25rem 1.25rem 1.5rem;
+    gap: 1rem 0.9rem;
+    padding: 1rem 1rem 1.5rem;
 }
 
 /* Card de app */
@@ -166,7 +184,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.45rem;
     cursor: pointer;
     -webkit-user-select: none;
     user-select: none;
@@ -176,35 +194,38 @@ body {
     transform: scale(0.92);
 }
 
-/* Contenedor del icono — caja semitransparente con sombra sutil */
+/* Caja blanca estilo Streamline explorer */
 .icon-card-box {
     width: 100%;
     aspect-ratio: 1;
-    background: transparent;
-    border-radius: var(--radius-lg);
-    padding: 1.2rem 0.6rem;
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 20%;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    box-shadow: none;
-    border: 1px solid rgba(148, 163, 184, 0.25);
-    transition: all var(--transition);
-    text-align: center;
+    box-shadow: 0 3px 10px rgba(30, 35, 50, 0.09);
+    border: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.icon-card-box svg {
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .icon-card-box:hover {
-    transform: translateY(-3px);
-    box-shadow: none;
-    background: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(30, 35, 50, 0.15);
+    background: #ffffff;
 }
 
 .app-label {
-    font-size: var(--font-xs);
+    font-size: 0.68rem;
     font-weight: 500;
-    color: var(--color-text);
-    letter-spacing: -0.2px;
+    color: var(--color-text-muted);
+    letter-spacing: 0;
     line-height: 1.3;
     max-width: 90%;
     word-break: break-word;
@@ -223,9 +244,6 @@ body {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 .feed-logo {
@@ -244,16 +262,13 @@ body {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
-    position: sticky;
-    top: 57px;   /* justo debajo del feed-header */
-    z-index: 9;
 }
 
 .feed-content {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding: 0.75rem 0;
+    padding: 0;
 }
 
 /* Post */
@@ -603,8 +618,8 @@ body {
     display: flex;
     flex-shrink: 0;
     position: sticky;
-    top: 57px;
-    z-index: 9;
+    top: 52px;
+    z-index: 45;
 }
 
 .tab-btn {
@@ -713,9 +728,6 @@ body {
     background: var(--color-surface);
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
-    position: sticky;
-    top: 0;
-    z-index: 10;
 }
 
 /* profile-title unificado arriba con page-title */
@@ -903,8 +915,8 @@ body {
     display: flex;
     flex-shrink: 0;
     position: sticky;
-    top: 57px;
-    z-index: 9;
+    top: 52px;
+    z-index: 45;
 }
 
 
@@ -949,11 +961,29 @@ body {
     user-select: none;
 }
 
+/* Animación del icono cuando se activa el botón */
+.nav-btn:active svg,
+.nav-btn.active svg {
+    animation: navIconPulse 0.3s ease-out;
+}
+
+@keyframes navIconPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
 .nav-btn svg {
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-    min-height: 22px;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
     stroke: var(--color-text-light);
     stroke-width: 1.75;
     fill: none;
@@ -1086,13 +1116,13 @@ body {
    ============================================================ */
 @media (min-width: 600px) {
     .apps-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1.5rem;
-        padding: 1.5rem;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 1.2rem;
+        padding: 1.2rem;
     }
 
     .app-label {
-        font-size: var(--font-sm);
+        font-size: 0.75rem;
     }
 
     .post-body p {
@@ -1166,7 +1196,7 @@ body {
     -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
-    /* Sin padding-bottom aquí — cada .view lo maneja */
+    /* Sin padding aquí — cada .view maneja su propio espaciado */
 }
 
 /* Las vistas se muestran/ocultan con .active */
@@ -1178,10 +1208,33 @@ body {
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    /* Espacio para el nav inferior fija + barra de gestos del sistema */
     padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
 }
 
 .view.active {
+    display: flex;
+}
+
+/* La vista de apps no necesita padding-top porque el header está fuera */
+#view-apps {
+    padding-top: 0;
+}
+
+/* El contenedor de módulos */
+#view-module {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    /* Espacio para el nav inferior fija + barra de gestos del sistema */
+    padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+}
+
+#view-module.active {
     display: flex;
 }
 
