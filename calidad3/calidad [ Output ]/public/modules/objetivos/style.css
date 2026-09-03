@@ -1,0 +1,11 @@
+﻿/* ── Módulo: Objetivos ── */
+.mod-objetivos {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.mod-objetivos .empty-state span {
+    font-size: var(--font-xs);
+    color: var(--color-text-light);
+}

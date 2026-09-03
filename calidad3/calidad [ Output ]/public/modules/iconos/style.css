@@ -1,0 +1,456 @@
+/* ============================================================
+   MÓDULO: Íconos de Apps
+   ============================================================ */
+
+/* ── Layout ──────────────────────────────────────────────── */
+.mod-iconos {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.ico-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding-top: 52px; /* altura del page-header fijo */
+}
+
+/* ── Panel de lista de apps ──────────────────────────────── */
+.ico-apps-panel {
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-bg);
+}
+
+.ico-panel-title {
+    padding: 10px 16px 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--color-text-muted);
+}
+
+.ico-app-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 6px 12px 10px;
+    scrollbar-width: none;
+}
+
+.ico-app-list::-webkit-scrollbar { display: none; }
+
+.ico-app-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    border-radius: 14px;
+    padding: 6px 8px;
+    transition: background .15s;
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.ico-app-item:hover {
+    background: #f1f5f9;
+}
+
+.ico-app-item.active {
+    background: #eff6ff;
+    outline: 2px solid #3b82f6;
+}
+
+.ico-app-item .ico-app-thumb {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ico-app-item .ico-app-thumb svg {
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+
+.ico-app-item .ico-app-name {
+    font-size: 0.6rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 58px;
+}
+
+.ico-app-item.active .ico-app-name {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+/* ── Panel editor ────────────────────────────────────────── */
+.ico-editor {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+}
+
+/* Placeholder */
+.ico-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+/* Preview del ícono seleccionado */
+.ico-preview-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #f8fafc;
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+}
+
+.ico-preview-box {
+    width: 64px;
+    height: 64px;
+    background: white;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    flex-shrink: 0;
+}
+
+.ico-preview-box svg {
+    width: 44px;
+    height: 44px;
+    display: block;
+}
+
+.ico-preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ico-preview-app-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.ico-preview-icon-name {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ico-preview-palette {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 99px;
+    background: #e0e7ff;
+    color: #4338ca;
+    width: fit-content;
+}
+
+/* Secciones */
+.ico-section-title {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--color-text-muted);
+    margin-bottom: 10px;
+}
+
+.ico-section-icon-title {
+    margin-top: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ico-icon-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-light);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ── Paleta ──────────────────────────────────────────────── */
+.ico-palette-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.ico-palette-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .15s, border-color .15s;
+    overflow: hidden;
+    padding: 0;
+}
+
+.ico-palette-btn:hover {
+    transform: scale(1.12);
+}
+
+.ico-palette-btn.active {
+    border-color: #1e293b;
+    transform: scale(1.1);
+}
+
+.ico-palette-btn .ico-duo {
+    display: flex;
+    width: 100%;
+    height: 100%;
+}
+
+.ico-palette-btn .ico-duo span {
+    flex: 1;
+}
+
+/* ── Buscador ────────────────────────────────────────────── */
+.ico-search-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ico-search {
+    width: 100%;
+    height: 42px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 0 14px;
+    font-size: 0.875rem;
+    outline: none;
+    background: white;
+    color: var(--color-text);
+}
+
+.ico-search:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.12);
+}
+
+.ico-collection-tabs {
+    display: flex;
+    gap: 6px;
+}
+
+.ico-col-btn {
+    flex: 1;
+    height: 34px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    transition: background .15s, color .15s, border-color .15s;
+}
+
+.ico-col-btn.active {
+    background: #1e293b;
+    color: white;
+    border-color: #1e293b;
+}
+
+/* ── Loading ─────────────────────────────────────────────── */
+.ico-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 40px 20px;
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+}
+
+.ico-loading.hidden { display: none; }
+
+.ico-spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--color-border);
+    border-top-color: #6c63ff;
+    border-radius: 50%;
+    animation: ico-spin .7s linear infinite;
+}
+
+@keyframes ico-spin { to { transform: rotate(360deg); } }
+
+/* ── Grid de íconos ──────────────────────────────────────── */
+.ico-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+    gap: 8px;
+}
+
+.ico-icon-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px 6px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .12s;
+    background: #f8fafc;
+}
+
+.ico-icon-cell:hover {
+    background: #eff6ff;
+    transform: translateY(-2px);
+}
+
+.ico-icon-cell.active {
+    background: #eff6ff;
+    border-color: #3b82f6;
+}
+
+.ico-icon-cell .ico-cell-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ico-icon-cell .ico-cell-icon svg {
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+
+.ico-icon-cell .ico-cell-name {
+    font-size: 0.55rem;
+    color: var(--color-text-muted);
+    text-align: center;
+    line-height: 1.2;
+    word-break: break-all;
+    max-height: 2.4em;
+    overflow: hidden;
+}
+
+.ico-icon-cell.active .ico-cell-name {
+    color: #3b82f6;
+    font-weight: 700;
+}
+
+/* ── Botón guardar (toast) ───────────────────────────────── */
+.ico-toast {
+    position: fixed;
+    bottom: calc(var(--nav-height) + 16px);
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #1e293b;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 99px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s, transform .25s;
+    z-index: 200;
+    white-space: nowrap;
+}
+
+.ico-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* ── Responsive tablet ───────────────────────────────────── */
+@media (min-width: 600px) {
+    .ico-layout {
+        flex-direction: row;
+    }
+
+    .ico-apps-panel {
+        width: 180px;
+        min-width: 180px;
+        border-bottom: none;
+        border-right: 1px solid var(--color-border);
+        overflow-y: auto;
+    }
+
+    .ico-app-list {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        overflow-x: unset;
+        overflow-y: auto;
+        padding: 6px 8px 20px;
+    }
+
+    .ico-app-item {
+        flex-direction: row;
+        min-width: unset;
+        width: 100%;
+        padding: 8px 10px;
+        border-radius: 12px;
+    }
+
+    .ico-app-item .ico-app-name {
+        font-size: 0.8rem;
+        max-width: unset;
+        text-align: left;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ico-search-row {
+        flex-direction: row;
+        align-items: center;
+    }
+
+    .ico-search {
+        flex: 1;
+    }
+
+    .ico-collection-tabs {
+        flex-shrink: 0;
+    }
+
+    .ico-col-btn {
+        flex: unset;
+        padding: 0 12px;
+    }
+}

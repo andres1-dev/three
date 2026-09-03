@@ -1,0 +1,93 @@
+<div class="mod mod-iconos">
+
+    <div class="page-header">
+        <h1 class="page-title">Íconos de Apps</h1>
+        <div class="feed-actions">
+            <button class="icon-btn" id="ico-btn-save" title="Guardar cambios" aria-label="Guardar cambios">
+                <svg viewBox="0 0 24 24" class="icon icon-md stroke-slate">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- =====================================================
+         LAYOUT: dos columnas en tablet, una en móvil
+    ====================================================== -->
+    <div class="ico-layout">
+
+        <!-- ── Columna izq: lista de apps ─────────────── -->
+        <aside class="ico-apps-panel">
+            <div class="ico-panel-title">Apps</div>
+            <ul class="ico-app-list" id="ico-app-list"></ul>
+        </aside>
+
+        <!-- ── Columna der: editor ────────────────────── -->
+        <section class="ico-editor" id="ico-editor">
+
+            <!-- Placeholder cuando no hay app seleccionada -->
+            <div class="ico-placeholder" id="ico-placeholder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="48" height="48">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                    <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                </svg>
+                <p>Selecciona una app para editar su ícono y color</p>
+            </div>
+
+            <!-- Editor activo -->
+            <div class="ico-edit-panel" id="ico-edit-panel" style="display:none">
+
+                <!-- Preview del ícono actual -->
+                <div class="ico-preview-row">
+                    <div class="ico-preview-box" id="ico-preview-box">
+                        <!-- SVG inyectado por JS -->
+                    </div>
+                    <div class="ico-preview-info">
+                        <div class="ico-preview-app-name" id="ico-preview-app-name">App</div>
+                        <div class="ico-preview-icon-name" id="ico-preview-icon-name">—</div>
+                        <div class="ico-preview-palette" id="ico-preview-palette-label">—</div>
+                    </div>
+                </div>
+
+                <!-- Paleta de color -->
+                <div class="ico-section-title">Color</div>
+                <div class="ico-palette-grid" id="ico-palette-grid"></div>
+
+                <!-- Buscador de íconos -->
+                <div class="ico-section-title ico-section-icon-title">
+                    Ícono
+                    <span class="ico-icon-count" id="ico-icon-count"></span>
+                </div>
+                <div class="ico-search-row">
+                    <input
+                        id="ico-search"
+                        class="ico-search"
+                        type="search"
+                        placeholder="user, calendar, star, home..."
+                        autocomplete="off"
+                    >
+                    <div class="ico-collection-tabs" id="ico-collection-tabs">
+                        <button class="ico-col-btn active" data-col="streamline-plump-color">Plump</button>
+                        <button class="ico-col-btn" data-col="streamline-color">Color</button>
+                        <button class="ico-col-btn" data-col="streamline">Mono</button>
+                    </div>
+                </div>
+
+                <!-- Grid de íconos -->
+                <div class="ico-loading" id="ico-loading">
+                    <div class="ico-spinner"></div>
+                    Cargando colección...
+                </div>
+                <div class="ico-icon-grid" id="ico-icon-grid"></div>
+
+            </div><!-- /.ico-edit-panel -->
+
+        </section>
+
+    </div><!-- /.ico-layout -->
+
+</div>
