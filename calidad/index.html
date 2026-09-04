@@ -4,19 +4,95 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calidad</title>
-    <link rel="icon" href="icons/favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-    <link rel="stylesheet" href="css/icons.css">
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
-    <!-- Los CSS de módulos se inyectan dinámicamente por el router -->
-    <!-- Ocultar el body hasta que el guard de auth confirme sesión válida -->
-    <style id="auth-hide">body { visibility: hidden; }</style>
+
+    <meta name="description" content="Sistema de Gestión de Calidad">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+    <link rel="icon" type="image/png" href="assets/icons/favicon.png">
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg">
+    <link rel="manifest" href="manifest.json">
+
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Iconify (íconos vectoriales multisistema) -->
+    <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js" defer></script>
+
+    <!-- Supabase SDK (cargado de forma diferida sin bloquear el renderizado inicial) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+    <!-- Estilos base y originales -->
+    <link rel="stylesheet" href="assets/css/tokens.css">
+    <link rel="stylesheet" href="assets/css/icons.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/perfil.css">
+    <link rel="stylesheet" href="assets/css/personas.css">
+    <link rel="stylesheet" href="assets/css/base.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+
+    <!-- CSS crítico para pintar los esqueletos inmediatamente sin pantalla blanca -->
+    <style id="critical-skeleton-css">
+        @keyframes sk-shimmer {
+            0%   { background-position: -600px 0; }
+            100% { background-position:  600px 0; }
+        }
+        .sk-bar, .sk-cover, .sk-btn, .sk-accordion-row,
+        .sk-p-bar, .sk-p-badge, .sk-app-icon, .sk-app-label {
+            background: linear-gradient(90deg, #e8ecf0 25%, #f4f6f8 50%, #e8ecf0 75%);
+            background-size: 1000px 100%;
+            animation: sk-shimmer 1.6s infinite linear;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .sk-circle, .sk-p-circle {
+            background: linear-gradient(90deg, #e8ecf0 25%, #f4f6f8 50%, #e8ecf0 75%);
+            background-size: 1000px 100%;
+            animation: sk-shimmer 1.6s infinite linear;
+            border-radius: 50% !important;
+            aspect-ratio: 1 / 1;
+            clip-path: circle(50% at 50% 50%) !important;
+            -webkit-clip-path: circle(50% at 50% 50%) !important;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .sk-circle--avatar {
+            width: 80px !important;
+            height: 80px !important;
+            min-width: 80px !important;
+            min-height: 80px !important;
+            border-radius: 50% !important;
+        }
+        .sk-avatar-wrap {
+            margin-top: -36px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50% !important;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            aspect-ratio: 1 / 1;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .sk-avatar-wrap::after,
+        .sk-avatar-wrap::before {
+            display: none !important;
+            content: none !important;
+        }
+    </style>
+
+    <!-- Guard ultra-temprano sincrónico -->
     <script>
-        /* Guard ULTRA temprano — antes de parsear el body completo.
-           Si no hay token, redirige a login.html antes de mostrar nada. */
-        (function() {
+        (function () {
             var active = false;
             try {
                 for (var i = 0; i < localStorage.length; i++) {
@@ -25,320 +101,51 @@
                     var s = JSON.parse(localStorage.getItem(k) || 'null');
                     if (s && s.access_token) { active = true; break; }
                 }
-            } catch(_) {}
+            } catch (_) {}
+
             if (!active) {
                 sessionStorage.setItem('auth_redirect', window.location.href);
                 window.location.replace('login.html');
-            } else {
-                /* Hay sesión: quitar el hide lo antes posible */
-                var style = document.getElementById('auth-hide');
-                if (style) style.textContent = '';
             }
         })();
     </script>
 </head>
 <body>
 
-<div class="app-container">
+<div class="app-container app-shell">
 
-    <!-- ================================================
-         VIEWPORT: aquí se cargan todos los módulos
-         ================================================ -->
-    <main id="module-viewport" class="module-viewport">
+    <!-- ════════════════════════════════════════
+         VIEWPORT: todos los módulos se montan aquí
+         ════════════════════════════════════════ -->
+    <main class="module-viewport app-viewport" id="module-viewport" role="main">
+        <script>
+            (function() {
+                var hash = (window.location.hash || '').replace('#', '').toLowerCase() || 'apps';
+                var vp = document.getElementById('module-viewport');
+                if (!vp) return;
 
-        <!-- Header fijo para la vista de apps -->
-        <div class="page-header">
-            <h1 class="page-title">Apps</h1>
-        </div>
+                if (hash === 'perfil') {
+                    vp.innerHTML = '<div class="mod-perfil"><div class="perfil-skeleton" id="perfil-skeleton" aria-hidden="true"><div class="sk-header"><div class="sk-circle sk-sm"></div><div class="sk-bar sk-bar--title"></div><div class="sk-bar sk-bar--short"></div></div><div class="sk-cover"></div><div class="sk-info-block"><div class="sk-avatar-wrap"><div class="sk-circle sk-circle--avatar"></div></div><div class="sk-bar sk-bar--name"></div><div class="sk-meta"><div class="sk-bar sk-bar--meta"></div><div class="sk-bar sk-bar--meta"></div></div><div class="sk-actions"><div class="sk-btn"></div><div class="sk-btn sk-btn--primary"></div></div></div><div class="sk-tabs"><div class="sk-bar sk-bar--tab"></div><div class="sk-bar sk-bar--tab"></div><div class="sk-bar sk-bar--tab"></div></div><div class="sk-accordion-group"><div class="sk-accordion-row"></div><div class="sk-accordion-row"></div><div class="sk-accordion-row"></div><div class="sk-accordion-row"></div></div></div></div>';
+                } else if (hash === 'personas') {
+                    vp.innerHTML = '<div class="mod-personas"><div class="personas-skeleton" id="personas-skeleton" aria-hidden="true"><div class="sk-p-header"><div class="sk-p-circle sk-p-sm"></div><div class="sk-p-bar sk-p-bar--title"></div><div class="sk-p-circle sk-p-sm sk-p-ml-auto"></div></div><div class="sk-p-tabs"><div class="sk-p-tab-item"><div class="sk-p-bar sk-p-bar--tab"></div><div class="sk-p-badge"></div></div><div class="sk-p-tab-item"><div class="sk-p-bar sk-p-bar--tab"></div><div class="sk-p-badge"></div></div></div><div class="sk-p-search"><div class="sk-p-bar sk-p-bar--search"></div></div><div class="sk-p-list"><div class="sk-p-card"><div class="sk-p-circle sk-p-avatar"></div><div class="sk-p-card-info"><div class="sk-p-bar sk-p-bar--name"></div><div class="sk-p-bar sk-p-bar--sub"></div></div><div class="sk-p-card-actions"><div class="sk-p-badge sk-p-badge--role"></div><div class="sk-p-circle sk-p-action-btn"></div></div></div><div class="sk-p-card"><div class="sk-p-circle sk-p-avatar"></div><div class="sk-p-card-info"><div class="sk-p-bar sk-p-bar--name"></div><div class="sk-p-bar sk-p-bar--sub"></div></div><div class="sk-p-card-actions"><div class="sk-p-badge sk-p-badge--role"></div><div class="sk-p-circle sk-p-action-btn"></div></div></div><div class="sk-p-card"><div class="sk-p-circle sk-p-avatar"></div><div class="sk-p-card-info"><div class="sk-p-bar sk-p-bar--name"></div><div class="sk-p-bar sk-p-bar--sub"></div></div><div class="sk-p-card-actions"><div class="sk-p-badge sk-p-badge--role"></div><div class="sk-p-circle sk-p-action-btn"></div></div></div><div class="sk-p-card"><div class="sk-p-circle sk-p-avatar"></div><div class="sk-p-card-info"><div class="sk-p-bar sk-p-bar--name"></div><div class="sk-p-bar sk-p-bar--sub"></div></div><div class="sk-p-card-actions"><div class="sk-p-badge sk-p-badge--role"></div><div class="sk-p-circle sk-p-action-btn"></div></div></div></div></div></div>';
+                } else if (hash === 'apps' || !hash) {
+                    var cards = '';
+                    for (var c = 0; c < 12; c++) {
+                        cards += '<div class="app-card" style="pointer-events:none;"><div class="icon-card-box sk-app-icon" style="border-radius:18px;width:68px;height:68px;"></div><div class="sk-app-label" style="width:48px;height:11px;margin-top:6px;border-radius:4px;"></div></div>';
+                    }
+                    vp.innerHTML = '<div class="page-header"><h1 class="page-title">Apps</h1></div><div class="view active"><div class="apps-grid">' + cards + '</div></div>';
+                }
+            })();
+        </script>
+    </main>
 
-        <!-- ============================================
-             VISTA: APPS (siempre en el DOM, es la home)
-             ============================================ -->
-        <div id="view-apps" class="view active">
-            <div class="apps-grid">
+    <!-- ════════════════════════════════════════
+         BARRA DE NAVEGACIÓN INFERIOR FIJA
+         ════════════════════════════════════════ -->
+    <nav class="bottom-nav" role="navigation" aria-label="Navegación principal">
 
-                <div class="app-card" data-module="personas" data-icon="user-multiple-accounts-flat" data-palette="Azul">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Personas</span>
-                </div>
-
-                <div class="app-card" data-module="turnos" data-icon="calendar-mark-flat" data-palette="Morado">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Turnos</span>
-                </div>
-
-                <div class="app-card" data-module="marcajes" data-icon="fingerprint-2-flat" data-palette="Rosa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Marcajes</span>
-                </div>
-
-                <div class="app-card" data-module="organigrama" data-icon="hierarchy-1-flat" data-palette="Naranja">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Organigrama</span>
-                </div>
-
-                <div class="app-card" data-module="desempeno" data-icon="graph-bar-increase-flat" data-palette="Verde">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Desempeño</span>
-                </div>
-
-                <div class="app-card" data-module="aprendizaje" data-icon="global-learning-flat" data-palette="Rojo">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Aprendizaje</span>
-                </div>
-
-                <div class="app-card" data-module="people-experience" data-icon="user-feedback-heart-flat" data-palette="Celeste">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Experiencia</span>
-                </div>
-
-                <div class="app-card" data-module="inicio" data-icon="home-1-flat" data-palette="Rosa" style="display: none;">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Inicio</span>
-                </div>
-
-                <div class="app-card" data-module="chats" data-icon="chat-bubble-text-square-flat" data-palette="Turquesa" style="display: none;">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Chats</span>
-                </div>
-
-                <div class="app-card" data-module="reconocimientos" data-icon="star-medal-flat" data-palette="Amarillo">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Reconocimientos</span>
-                </div>
-
-                <div class="app-card" data-module="perfil" data-icon="user-sticker-square-flat" data-palette="Naranja" style="display: none;">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Perfil</span>
-                </div>
-
-                <div class="app-card" data-module="notificaciones" data-icon="ringing-bell-notification-flat" data-palette="Morado" style="display: none;">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Notificaciones</span>
-                </div>
-
-                <div class="app-card" data-module="tareas" data-icon="task-list-edit-flat" data-palette="Turquesa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Tareas</span>
-                </div>
-
-                <div class="app-card" data-module="calendario" data-icon="calendar-check-flat" data-palette="Morado">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Calendario</span>
-                </div>
-
-                <div class="app-card" data-module="informes" data-icon="file-report-flat" data-palette="Amarillo">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Informes</span>
-                </div>
-
-                <div class="app-card" data-module="ajustes" data-icon="cog-flat" data-palette="Celeste">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Ajustes</span>
-                </div>
-
-                <div class="app-card" data-module="favoritos" data-icon="bookmark-flat" data-palette="Rojo">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Favoritos</span>
-                </div>
-
-                <div class="app-card" data-module="equipo" data-icon="hierarchy-15-flat" data-palette="Verde">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Equipo</span>
-                </div>
-
-                <div class="app-card" data-module="estadisticas" data-icon="content-statistic-flat" data-palette="Morado">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Estadísticas</span>
-                </div>
-
-                <div class="app-card" data-module="mensajes" data-icon="mail-send-email-message-flat" data-palette="Naranja">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Mensajes</span>
-                </div>
-
-                <div class="app-card" data-module="archivos" data-icon="file-folder-flat" data-palette="Turquesa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Archivos</span>
-                </div>
-
-                <div class="app-card" data-module="nube" data-icon="cloud-data-transfer-flat" data-palette="Celeste">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Nube</span>
-                </div>
-
-                <div class="app-card" data-module="seguridad" data-icon="shield-1-flat" data-palette="Rosa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Seguridad</span>
-                </div>
-
-                <div class="app-card" data-module="guardados" data-icon="archive-box-flat" data-palette="Celeste">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Guardados</span>
-                </div>
-
-                <div class="app-card" data-module="reuniones" data-icon="presentation-flat" data-palette="Naranja">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Reuniones</span>
-                </div>
-
-                <div class="app-card" data-module="formularios" data-icon="description-flat" data-palette="Verde">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Formularios</span>
-                </div>
-
-                <div class="app-card" data-module="encuestas" data-icon="notepad-text-flat" data-palette="Rosa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Encuestas</span>
-                </div>
-
-                <div class="app-card" data-module="feedback" data-icon="help-chat-1-flat" data-palette="Verde">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Feedback</span>
-                </div>
-
-                <div class="app-card" data-module="objetivos" data-icon="target-3-flat" data-palette="Turquesa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Objetivos</span>
-                </div>
-
-                <div class="app-card" data-module="capacitacion" data-icon="graduation-cap-flat" data-palette="Azul">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Capacitación</span>
-                </div>
-
-                <div class="app-card" data-module="bienestar" data-icon="like-1-flat" data-palette="Morado">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Bienestar</span>
-                </div>
-
-                <div class="app-card" data-module="talento" data-icon="multiple-stars-flat" data-palette="Rosa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Talento</span>
-                </div>
-
-                <div class="app-card" data-module="contactos" data-icon="contact-phonebook-flat" data-palette="Naranja">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Contactos</span>
-                </div>
-
-                <div class="app-card" data-module="accesos" data-icon="padlock-key-flat" data-palette="Morado">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Accesos</span>
-                </div>
-
-                <div class="app-card" data-module="camara" data-icon="camera-1-flat" data-palette="Turquesa">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Cámara</span>
-                </div>
-
-                <div class="app-card" data-module="actividad" data-icon="heart-rate-pulse-graph-flat" data-palette="Verde">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Actividad</span>
-                </div>
-
-                <div class="app-card" data-module="iconos" data-icon="magic-wand-1-flat" data-palette="Morado">
-                    <div class="icon-card-box"></div>
-                    <span class="app-label">Íconos</span>
-                </div>
-
-            </div><!-- /.apps-grid -->
-        </div><!-- /#view-apps -->
-
-        <!-- Aquí se inyectan los módulos dinámicos -->
-        <div id="view-module" class="view"></div>
-
-        <!-- ================================================
-         TEMPLATES DE MÓDULOS (para funcionamiento sin servidor)
-         ================================================ -->
-        <template id="template-inicio">
-            <div class="mod-inicio">
-                <div class="feed-header">
-                    <img src="logo.png" alt="Logo" class="feed-logo" onerror="this.style.display='none'">
-                    <div class="feed-actions">
-                        <button class="icon-btn" aria-label="Historial">
-                            <svg viewBox="0 0 24 24" class="icon icon-md stroke-slate">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" aria-label="Calendario">
-                            <svg viewBox="0 0 24 24" class="icon icon-md stroke-slate">
-                                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" aria-label="Buscar">
-                            <svg viewBox="0 0 24 24" class="icon icon-md stroke-slate">
-                                <circle cx="11" cy="11" r="8"/>
-                                <path d="m21 21-4.35-4.35"/>
-                            </svg>
-                        </button>
-                        <button class="icon-btn" aria-label="Notificaciones">
-                            <svg viewBox="0 0 24 24" class="icon icon-md stroke-slate">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="feed-tabs">
-                    <button class="tab-btn active">Muro</button>
-                    <button class="tab-btn">Noticias</button>
-                </div>
-
-                <div class="feed-content">
-                    <article class="post-card">
-                        <div class="post-header">
-                            <img src="https://i.pravatar.cc/150?img=1" alt="Avatar" class="post-avatar">
-                            <div class="post-author">
-                                <h3>ANDRES FELIPE GAVIRIA ALVAREZ</h3>
-                                <span class="post-date">Sep 19, 2025</span>
-                            </div>
-                            <button class="post-menu" aria-label="Más opciones">⋯</button>
-                        </div>
-                        <div class="post-body">
-                            <p>Equipo Grupo TDM,</p>
-                            <p>En esta fecha tan especial de Amor y Amistad, queremos recordar que nuestros valores corporativos también son un reflejo de lo que somos cada día.</p>
-                            <button class="read-more">Ver más</button>
-                        </div>
-                        <div class="post-image">
-                            <img src="https://picsum.photos/seed/tdm/600/400" alt="Publicación">
-                        </div>
-                        <div class="post-reactions">
-                            <span class="reaction">❤️ 44</span>
-                            <span class="reaction">👍 16</span>
-                            <span class="reaction">😍 11</span>
-                            <span class="reaction">🥰 9</span>
-                            <span class="reaction">😀 8</span>
-                            <span class="reaction">🤗 2</span>
-                        </div>
-                        <button class="view-all-reactions">Ver todo</button>
-                    </article>
-                </div>
-
-                <button class="fab" aria-label="Nueva publicación">
-                    <svg viewBox="0 0 24 24" class="icon icon-md" style="stroke:white; stroke-width:2.5">
-                        <line x1="12" y1="5" x2="12" y2="19"/>
-                        <line x1="5" y1="12" x2="19" y2="12"/>
-                    </svg>
-                </button>
-            </div>
-        </template>
-
-
-
-    </main><!-- /#module-viewport -->
-
-    <!-- ================================================
-         NAVEGACIÓN INFERIOR FIJA
-         ================================================ -->
-    <nav class="bottom-nav">
-
-        <button class="nav-btn" data-nav="inicio">
+        <!-- Inicio -->
+        <button class="nav-btn" data-nav="inicio" data-route="inicio" id="nav-inicio" aria-label="Inicio">
             <!-- home-1 (streamline-plump-color, outline) -->
             <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="3">
                 <path fill="#8fbffa" d="M26.815 4.16c7.235 3.211 12.719 7.43 15.554 9.867c1.433 1.232 2.232 3.005 2.33 4.892C44.836 21.51 45 25.565 45 30c0 3.412-.097 6.706-.204 9.293a5.69 5.69 0 0 1-5.512 5.47c-3.46.12-8.595.237-15.284.237s-11.823-.118-15.284-.236a5.69 5.69 0 0 1-5.512-5.47A230 230 0 0 1 3 30c0-4.435.165-8.49.3-11.081c.1-1.887.898-3.66 2.331-4.892c2.835-2.438 8.32-6.656 15.554-9.867a6.94 6.94 0 0 1 5.63 0"/>
@@ -347,7 +154,8 @@
             <span>Inicio</span>
         </button>
 
-        <button class="nav-btn" data-nav="chats">
+        <!-- Chats -->
+        <button class="nav-btn" data-nav="chats" data-route="chats" id="nav-chats" aria-label="Chats">
             <!-- chat-bubble-text-square (streamline-plump-color, outline) -->
             <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="3">
                 <path fill="#8fbffa" d="M8.248 38.537c-2.55-.177-4.539-2.081-4.762-4.627C3.24 31.12 3 26.885 3 21s.24-10.121.486-12.91c.223-2.546 2.212-4.45 4.762-4.627C11.475 3.238 16.628 3 24 3s12.525.238 15.752.463c2.55.177 4.539 2.081 4.762 4.627C44.76 10.88 45 15.115 45 21s-.24 10.121-.486 12.91c-.223 2.546-2.212 4.45-4.762 4.627c-3.003.21-7.674.43-14.248.46l-7.202 6.173C17.004 46.282 15 45.36 15 43.652v-4.785a179 179 0 0 1-6.752-.33"/>
@@ -358,19 +166,20 @@
             <span>Chats</span>
         </button>
 
-        <button class="nav-btn active" data-nav="apps">
+        <!-- Apps (home del launcher) -->
+        <button class="nav-btn active" data-nav="apps" data-route="apps" id="nav-apps" aria-label="Apps">
             <!-- application-add (streamline-plump-color, outline) -->
             <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="3">
                 <path fill="#8fbffa" d="M3.135 6.597c.104-1.723 1.226-3.058 2.937-3.28C7.394 3.143 9.304 3 12 3s4.606.144 5.928.316c1.712.224 2.833 1.558 2.937 3.281C20.94 7.83 21 9.573 21 12s-.06 4.17-.135 5.403c-.104 1.723-1.225 3.058-2.937 3.28c-1.322.173-3.232.317-5.928.317s-4.606-.144-5.928-.316c-1.711-.224-2.833-1.558-2.937-3.281C3.06 16.17 3 14.427 3 12s.06-4.17.135-5.403m0 34.806c.104 1.723 1.226 3.058 2.937 3.28C7.394 44.857 9.304 45 12 45s4.606-.144 5.928-.316c1.712-.223 2.833-1.558 2.937-3.281C20.94 40.17 21 38.427 21 36s-.06-4.17-.135-5.403c-.104-1.723-1.225-3.058-2.937-3.28C16.606 27.143 14.696 27 12 27s-4.606.144-5.928.316c-1.711.224-2.833 1.558-2.937 3.281C3.06 31.83 3 33.573 3 36s.06 4.17.135 5.403M41.403 3.135c1.723.104 3.058 1.226 3.28 2.937C44.857 7.394 45 9.304 45 12s-.144 4.606-.316 5.928c-.223 1.712-1.558 2.833-3.281 2.937C40.17 20.94 38.427 21 36 21s-4.17-.06-5.403-.135c-1.723-.104-3.058-1.225-3.28-2.937C27.143 16.606 27 14.696 27 12s.144-4.606.316-5.928c.224-1.711 1.558-2.833 3.281-2.937C31.83 3.06 33.573 3 36 3s4.17.06 5.403.135"/>
                 <path fill="#fff" d="M34.786 44.943c-1.017-.102-1.647-.966-1.686-1.988c-.033-.874-.067-2.154-.086-3.97a145 145 0 0 1-3.969-.085c-1.022-.04-1.886-.669-1.988-1.686A12 12 0 0 1 27 36c0-.468.022-.871.057-1.214c.102-1.017.966-1.647 1.988-1.686c.874-.033 2.154-.067 3.97-.086c.018-1.815.052-3.095.085-3.969c.04-1.022.669-1.886 1.686-1.988c.343-.035.746-.057 1.214-.057s.871.022 1.214.057c1.017.102 1.647.966 1.686 1.988c.033.874.067 2.154.086 3.97c1.815.018 3.095.052 3.969.085c1.022.04 1.886.669 1.988 1.686c.035.343.057.746.057 1.214s-.022.871-.057 1.214c-.102 1.017-.966 1.647-1.988 1.686c-.874.033-2.154.067-3.97.086a145 145 0 0 1-.085 3.969c-.04 1.022-.669 1.886-1.686 1.988c-.343.035-.746.057-1.214.057s-.871-.022-1.214-.057"/>
-                <path stroke="#2859c5" stroke-linejoin="round" d="M3.135 6.597c.104-1.723 1.226-3.058 2.937-3.28C7.394 3.143 9.304 3 12 3s4.606.144 5.928.316c1.712.224 2.833 1.558 2.937 3.281C20.94 7.83 21 9.573 21 12s-.06 4.17-.135 5.403c-.104 1.723-1.225 3.058-2.937 3.28c-1.322.173-3.232.317-5.928.317s-4.606-.144-5.928-.316c-1.711-.224-2.833-1.558-2.937-3.281C3.06 16.17 3 14.427 3 12s.06-4.17.135-5.403Zm0 34.806c.104 1.723 1.226 3.058 2.937 3.28C7.394 44.857 9.304 45 12 45s4.606-.144 5.928-.316c1.712-.223 2.833-1.558 2.937-3.281C20.94 40.17 21 38.427 21 36s-.06-4.17-.135-5.403c-.104-1.723-1.225-3.058-2.937-3.28C16.606 27.143 14.696 27 12 27s-4.606.144-5.928.316c-1.711.224-2.833 1.558-2.937 3.281C3.06 31.83 3 33.573 3 36s.06 4.17.135 5.403ZM41.403 3.135c1.723.104 3.058 1.226 3.28 2.937C44.857 7.394 45 9.304 45 12s-.144 4.606-.316 5.928c-.223 1.712-1.558 2.833-3.281 2.937C40.17 20.94 38.427 21 36 21s-4.17-.06-5.403-.135c-1.723-.104-3.058-1.225-3.28-2.937C27.143 16.606 27 14.696 27 12s.144-4.606.316-5.928c.224-1.711 1.558-2.833 3.281-2.937C31.83 3.06 33.573 3 36 3s4.17.06 5.403.135Zm-6.617 41.808c-1.017-.102-1.647-.966-1.686-1.988c-.033-.874-.067-2.154-.086-3.97a145 145 0 0 1-3.969-.085c-1.022-.04-1.886-.669-1.988-1.686A12 12 0 0 1 27 36c0-.468.022-.871.057-1.214c.102-1.017.966-1.647 1.988-1.686c.874-.033 2.154-.067 3.97-.086c.018-1.815.052-3.095.085-3.969c.04-1.022.669-1.886 1.686-1.988c.343-.035.746-.057 1.214-.057s.871.022 1.214.057c1.017.102 1.647.966 1.686 1.988c.033.874.067 2.154.086 3.97c1.815.018 3.095.052 3.969.085c1.022.04 1.886.669 1.988 1.686c.035.343.057.746.057 1.214s-.022.871-.057 1.214c-.102 1.017-.966 1.647-1.988 1.686c-.874.033-2.154.067-3.97.086a145 145 0 0 1-.085 3.969c-.04 1.022-.669 1.886-1.686 1.988c-.343.035-.746.057-1.214.057s-.871-.022-1.214-.057Z"/>
+                <path stroke="#2859c5" stroke-linejoin="round" d="M3.135 6.597c.104-1.723 1.226-3.058 2.937-3.28C7.394 3.143 9.304 3 12 3s4.606.144 5.928.316c1.712.224 2.833 1.558 2.937 3.281C20.94 7.83 21 9.573 21 12s-.06 4.17-.135 5.403c-.104 1.723-1.225 3.058-2.937 3.28c-1.322.173-3.232.317-5.928.317s-4.606-.144-5.928-.316c-1.711-.224-2.833-1.558-2.937-3.281C3.06 16.17 3 14.427 3 12s.06-4.17.135-5.403Zm0 34.806c.104 1.723 1.226 3.058 2.937 3.28C7.394 44.857 9.304 45 12 45s4.606-.144 5.928-.316c1.712-.223 2.833-1.558 2.937-3.281C20.94 40.17 21 38.427 21 36s-.06-4.17-.135-5.403c-.104-1.723-1.225-3.058-2.937-3.28C16.606 27.143 14.696 27 12 27s-4.606.144-5.928.316c-1.711.224-2.833 1.558-2.937 3.281C3.06 31.83 3 33.573 3 36s.06 4.17.135 5.403M41.403 3.135c1.723.104 3.058 1.226 3.28 2.937C44.857 7.394 45 9.304 45 12s-.144 4.606-.316 5.928c-.223 1.712-1.558 2.833-3.281 2.937C40.17 20.94 38.427 21 36 21s-4.17-.06-5.403-.135c-1.723-.104-3.058-1.225-3.28-2.937C27.143 16.606 27 14.696 27 12s.144-4.606.316-5.928c.224-1.711 1.558-2.833 3.281-2.937C31.83 3.06 33.573 3 36 3s4.17.06 5.403.135Zm-6.617 41.808c-1.017-.102-1.647-.966-1.686-1.988c-.033-.874-.067-2.154-.086-3.97a145 145 0 0 1-3.969-.085c-1.022-.04-1.886-.669-1.988-1.686A12 12 0 0 1 27 36c0-.468.022-.871.057-1.214c.102-1.017.966-1.647 1.988-1.686c.874-.033 2.154-.067 3.97-.086c.018-1.815.052-3.095.085-3.969c.04-1.022.669-1.886 1.686-1.988c.343-.035.746-.057 1.214-.057s.871.022 1.214.057c1.017.102 1.647.966 1.686 1.988c.033.874.067 2.154.086 3.97c1.815.018 3.095.052 3.969.085c1.022.04 1.886.669 1.988 1.686c.035.343.057.746.057 1.214s-.022.871-.057 1.214c-.102 1.017-.966 1.647-1.988 1.686c-.874.033-2.154.067-3.97.086a145 145 0 0 1-.085 3.969c-.04 1.022-.669 1.886-1.686 1.988c-.343.035-.746.057-1.214.057s-.871-.022-1.214-.057Z"/>
             </svg>
             <span>Apps</span>
         </button>
 
-        <!-- Botón dinámico: muestra el ícono del módulo activo cuando hay uno abierto -->
-        <button class="nav-btn" id="nav-dynamic" data-nav="notificaciones">
-            <!-- ringing-bell-notification (streamline-plump-color, outline) — notificaciones -->
+        <!-- Botón dinámico / Notificaciones -->
+        <button class="nav-btn" data-nav="notificaciones" data-route="notificaciones" id="nav-dynamic" aria-label="Notificaciones">
+            <!-- ringing-bell-notification (streamline-plump-color, outline) -->
             <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="3">
                 <path fill="#8fbffa" d="M39.195 16.949C38.52 9.059 31.918 3 24 3C16.08 3 9.48 9.06 8.804 16.949l-.479 5.59a16 16 0 0 1-2.326 7.036l-1.47 2.384c-1.478 2.393-.672 4.866 2.116 5.237C9.833 37.62 15.157 38 24 38s14.166-.38 17.355-.804c2.788-.371 3.594-2.844 2.116-5.237l-1.47-2.384a16 16 0 0 1-2.327-7.037l-.479-5.59Z"/>
                 <path fill="#fff" d="M16.048 37.878A236 236 0 0 0 24 38c3.05 0 5.683-.045 7.953-.122a8.001 8.001 0 0 1-15.905 0"/>
@@ -380,7 +189,8 @@
             <span>Notificaciones</span>
         </button>
 
-        <button class="nav-btn" data-nav="perfil">
+        <!-- Perfil -->
+        <button class="nav-btn" data-nav="perfil" data-route="perfil" id="nav-perfil" aria-label="Perfil">
             <!-- user-sticker-square (streamline-plump-color, outline) -->
             <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" stroke-width="3">
                 <path fill="#8fbffa" d="M8.063 44.445c-2.439-.202-4.306-2.07-4.508-4.508C3.288 36.723 3 31.514 3 24s.288-12.723.555-15.937c.202-2.439 2.07-4.306 4.508-4.508C11.277 3.288 16.486 3 24 3s12.723.288 15.937.555c2.439.202 4.306 2.07 4.508 4.508C44.712 11.277 45 16.486 45 24c0 2.927.07 5.754 0 8L32 45c-2.246.07-5.073 0-8 0c-7.514 0-12.723-.288-15.937-.555"/>
@@ -396,187 +206,20 @@
 </div><!-- /.app-container -->
 
 <script>
-/* ============================================================
-   APP-GRID ICONS — Recolorización dinámica (2 tonos)
-   Lee la configuración guardada por el módulo "iconos" desde
-   localStorage (key: app_icon_config) y la aplica al grid.
-   Si no hay config guardada usa los valores data-icon / data-palette
-   del HTML como defaults.
-   ============================================================ */
-(function () {
-    'use strict';
-
-    const API         = 'https://api.iconify.design';
-    const STORAGE_KEY = 'app_icon_config';
-
-    const PALETTES = {
-        'Morado':   { light: '#ebe7fe', dark: '#a599f5' },
-        'Azul':     { light: '#e0edff', dark: '#8aacf0' },
-        'Celeste':  { light: '#e4f7ff', dark: '#7dc9f0' },
-        'Verde':    { light: '#ddf8ea', dark: '#75d0a5' },
-        'Turquesa': { light: '#dff9f7', dark: '#70ccc7' },
-        'Naranja':  { light: '#fff0dd', dark: '#f0b070' },
-        'Rojo':     { light: '#ffe0e7', dark: '#f08a9f' },
-        'Rosa':     { light: '#feeaf7', dark: '#f0a0ca' },
-        'Amarillo': { light: '#fff8dd', dark: '#e8ca60' }
-    };
-
-    const svgCache = new Map();
-
-    /* Carga el SVG desde Iconify (con caché) */
-    async function fetchSVG(prefix, iconName) {
-        const key = `${prefix}:${iconName}`;
-        if (svgCache.has(key)) return svgCache.get(key);
-        const url = `${API}/${prefix}/${encodeURIComponent(iconName)}.svg`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error('SVG no encontrado');
-        const svg = await res.text();
-        svgCache.set(key, svg);
-        return svg;
-    }
-
-    function extractColors(svg) {
-        const found = new Set();
-        (svg.match(/#[0-9a-fA-F]{3,8}/g) || []).forEach(c => {
-            if (c.length === 4 || c.length === 7) found.add(c.toUpperCase());
-        });
-        return [...found];
-    }
-
-    function lum(hex) {
-        hex = hex.replace('#', '');
-        if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
-        return parseInt(hex.slice(0,2),16)*0.299
-             + parseInt(hex.slice(2,4),16)*0.587
-             + parseInt(hex.slice(4,6),16)*0.114;
-    }
-
-    /* Recolorización de 2 tonos (igual que iconos2color.html) */
-    function recolor(svg, palette) {
-        const colors = extractColors(svg);
-        if (!colors.length) return svg;
-        if (colors.length === 1) return svg.replaceAll(colors[0], palette.light);
-        const sorted  = [...colors].sort((a, b) => lum(a) - lum(b));
-        const darkRef = sorted[0];
-        let result    = svg;
-        colors.forEach(color => {
-            const rep = color === darkRef ? palette.dark : palette.light;
-            result = result.replace(new RegExp(color, 'gi'), rep);
-        });
-        return result;
-    }
-
-    /* Para colección mono: aplica stroke/fill de la paleta */
-    function monoColor(svg, palette) {
-        return svg
-            .replace(/stroke="(?!none)[^"]*"/g, `stroke="${palette.dark}"`)
-            .replace(/fill="(?!none)[^"]*"/g,   `fill="${palette.light}"`);
-    }
-
-    function toElement(svgText, size) {
-        const parser = new DOMParser();
-        const el = parser.parseFromString(svgText, 'image/svg+xml').documentElement;
-        el.setAttribute('width',  size);
-        el.setAttribute('height', size);
-        el.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-        el.style.display = 'block';
-        return el;
-    }
-
-    const FALLBACK_SVG = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24"
-        fill="none" stroke="#94a3b8" stroke-width="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="3"/>
-        <line x1="9" y1="9" x2="15" y2="15"/>
-        <line x1="15" y1="9" x2="9" y2="15"/>
-    </svg>`;
-
-    /* Lee config guardada por el módulo iconos */
-    function loadStoredConfig() {
-        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
-        catch (_) { return {}; }
-    }
-
-    /* Renderiza el ícono de UNA card */
-    async function renderCard(card, storedConfig) {
-        const appId   = card.dataset.module;
-        const box     = card.querySelector('.icon-card-box');
-        if (!box) return;
-
-        /* Config guardada tiene prioridad sobre los defaults del HTML */
-        const saved       = storedConfig[appId] || {};
-        const iconName    = saved.icon    || card.dataset.icon;
-        const paletteName = saved.palette || card.dataset.palette || 'Azul';
-        const prefix      = saved.prefix  || 'streamline-plump-color';
-
-        if (!iconName) return;
-
-        const palette = PALETTES[paletteName] || PALETTES['Azul'];
-
-        try {
-            const raw      = await fetchSVG(prefix, iconName);
-            const colored  = prefix === 'streamline'
-                ? monoColor(raw, palette)
-                : recolor(raw, palette);
-            const el = toElement(colored, '100%');
-            box.innerHTML = '';
-            box.appendChild(el);
-        } catch (_) {
-            box.innerHTML = FALLBACK_SVG('100%');
-        }
-    }
-
-    /* Procesa todo el grid */
-    async function initIcons() {
-        const storedConfig = loadStoredConfig();
-        const cards        = document.querySelectorAll('.app-card[data-module]');
-        await Promise.all([...cards].map(card => renderCard(card, storedConfig)));
-    }
-
-    /* API pública — el módulo iconos la llama tras guardar */
-    window.refreshAppGrid = initIcons;
-
-    /* Arrancar */
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initIcons);
-    } else {
-        initIcons();
-    }
-})();
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/config.js"></script>
-<script src="js/api.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/app.js"></script>
-<script>
-    /* Arrancar la carga de perfil + UI tras confirmar sesión */
-    if (typeof loadUsers === 'function') loadUsers();
-</script>
-<script>
-    /* Script simple para el perfil (sin módulos externos) */
-    document.addEventListener('DOMContentLoaded', function() {
-        /* Acordeón del perfil */
-        const accordions = document.querySelectorAll('#view-perfil .accordion');
-        accordions.forEach(acc => {
-            const header = acc.querySelector('.accordion-header');
-            if (!header) return;
-            header.addEventListener('click', () => {
-                const isOpen = acc.classList.contains('open');
-                accordions.forEach(a => a.classList.remove('open'));
-                if (!isOpen) acc.classList.add('open');
-            });
-        });
-
-        /* Tabs del perfil */
-        const tabs = document.querySelectorAll('#view-perfil .profile-tabs .tab-btn');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-            });
+    /* Vincular botones de nav al router una vez que esté disponible */
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetRoute = btn.dataset.route || btn.dataset.nav;
+            if (window.AppRouter && targetRoute) {
+                window.AppRouter.navigate(targetRoute);
+            }
         });
     });
 </script>
+
+
+<!-- Módulo principal con type=module para ES Imports -->
+<script type="module" src="src/main.js"></script>
+
 </body>
 </html>
