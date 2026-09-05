@@ -198,14 +198,26 @@ export class PersonasModule {
                 <!-- Paginación -->
                 <div class="p-pagination" id="p-pagination"></div>
             </div>
-
-            <!-- Sheet detalle / edición -->
-            <div class="p-backdrop" id="p-backdrop"></div>
-            <div class="p-sheet" id="p-sheet">
-                <div class="p-sheet-handle"></div>
-                <div id="p-sheet-body"></div>
-            </div>
         `;
+
+        // Limpiar backdrops/sheets anteriores si existieran
+        document.getElementById('p-backdrop')?.remove();
+        document.getElementById('p-sheet')?.remove();
+
+        this.backdropEl = document.createElement('div');
+        this.backdropEl.className = 'p-backdrop';
+        this.backdropEl.id = 'p-backdrop';
+
+        this.sheetEl = document.createElement('div');
+        this.sheetEl.className = 'p-sheet';
+        this.sheetEl.id = 'p-sheet';
+        this.sheetEl.innerHTML = `
+            <div class="p-sheet-handle"></div>
+            <div id="p-sheet-body"></div>
+        `;
+
+        document.body.appendChild(this.backdropEl);
+        document.body.appendChild(this.sheetEl);
 
         viewport.innerHTML = '';
         viewport.appendChild(this.container);
@@ -257,7 +269,7 @@ export class PersonasModule {
             this._render();
         });
 
-        this.container.querySelector('#p-backdrop')?.addEventListener('click', () => this._closeSheet());
+        this.backdropEl?.addEventListener('click', () => this._closeSheet());
     }
 
     async _cargar(forceRefresh = false) {
@@ -501,7 +513,7 @@ export class PersonasModule {
         const curRole = (currentUser?.rol || currentUser?.role || '').toUpperCase();
         const canEdit = !curRole || ['ADMIN', 'MODERATOR'].includes(curRole) || true;
 
-        const body = this.container.querySelector('#p-sheet-body');
+        const body = this._getSheetBody();
         if (!body) return;
 
         const plantSheetInits = (item.nombre || 'P').trim().split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || 'P';
@@ -598,7 +610,7 @@ export class PersonasModule {
             ? ['GUEST', 'DESHABILITADO']
             : ['ADMIN', 'MODERATOR', 'USER-P', 'USER-C', 'USER-I', 'GUEST', 'PENDIENTE', 'DESHABILITADO'];
 
-        const body = this.container.querySelector('#p-sheet-body');
+        const body = this._getSheetBody();
         if (!body) return;
 
         const plantEditInits = (item.nombre || 'P').trim().split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase() || 'P';
@@ -732,7 +744,7 @@ export class PersonasModule {
     }
 
     async _saveEdit(item) {
-        const body = this.container.querySelector('#p-sheet-body');
+        const body = this._getSheetBody();
         const btn = body?.querySelector('#pe-save');
         if (btn) {
             btn.disabled = true;
@@ -801,7 +813,7 @@ export class PersonasModule {
             ? ['GUEST', 'DESHABILITADO']
             : ['USER-P', 'USER-C', 'USER-I', 'MODERATOR', 'ADMIN', 'GUEST'];
 
-        const body = this.container.querySelector('#p-sheet-body');
+        const body = this._getSheetBody();
         if (!body) return;
 
         body.innerHTML = `
@@ -885,7 +897,7 @@ export class PersonasModule {
     }
 
     async _saveCreate(isPlant) {
-        const body = this.container.querySelector('#p-sheet-body');
+        const body = this._getSheetBody();
         const btn = body?.querySelector('#pc-save');
         const id = (body?.querySelector('#pc-id')?.value || '').trim();
         const nombre = (body?.querySelector('#pc-nombre')?.value || '').trim();
@@ -953,14 +965,18 @@ export class PersonasModule {
         }
     }
 
+    _getSheetBody() {
+        return this.sheetEl?.querySelector('#p-sheet-body') || document.getElementById('p-sheet-body');
+    }
+
     _openSheet() {
-        this.container?.querySelector('#p-backdrop')?.classList.add('open');
-        this.container?.querySelector('#p-sheet')?.classList.add('open');
+        this.backdropEl?.classList.add('open');
+        this.sheetEl?.classList.add('open');
     }
 
     _closeSheet() {
-        this.container?.querySelector('#p-backdrop')?.classList.remove('open');
-        this.container?.querySelector('#p-sheet')?.classList.remove('open');
+        this.backdropEl?.classList.remove('open');
+        this.sheetEl?.classList.remove('open');
     }
 
     _showSkeleton(on) {
@@ -971,6 +987,11 @@ export class PersonasModule {
     }
 
     unmount() {
+        this._closeSheet();
+        this.backdropEl?.remove();
+        this.sheetEl?.remove();
+        this.backdropEl = null;
+        this.sheetEl = null;
         this.container = null;
     }
 }
