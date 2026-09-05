@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV · Tabla Pivotada con Colores desde Sheets</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body {
+            background: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem 1rem;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .card {
+            max-width: 1600px;
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            padding: 1.5rem 1.2rem;
+        }
+        h1 {
+            font-weight: 400;
+            font-size: 1.3rem;
+            margin: 0 0 0.3rem 0;
+            color: #222;
+            letter-spacing: -0.3px;
+        }
+        .sub {
+            color: #777;
+            font-size: 0.8rem;
+            margin-bottom: 1.2rem;
+            border-left: 2px solid #ccc;
+            padding-left: 0.8rem;
+        }
+        .upload-area {
+            border: 1px dashed #ccc;
+            border-radius: 6px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            background: #fafafa;
+            transition: 0.15s;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            background: #f5f5f5;
+            border-color: #999;
+        }
+        .upload-area label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #222;
+            color: white;
+            padding: 0.4rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 400;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.15s;
+            border: none;
+        }
+        .upload-area label:hover {
+            background: #000;
+        }
+        .upload-area label i {
+            font-size: 0.9rem;
+        }
+        .upload-area input[type="file"] {
+            display: none;
+        }
+        .file-name {
+            margin-top: 0.5rem;
+            color: #555;
+            font-size: 0.8rem;
+        }
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f5f5f5;
+            padding: 0.2rem 0.8rem;
+            border-radius: 4px;
+            border: 1px solid #e5e5e5;
+        }
+        .filter-group i {
+            color: #888;
+            font-size: 0.8rem;
+        }
+        .filter-group input {
+            border: none;
+            background: transparent;
+            padding: 0.3rem 0;
+            font-size: 0.8rem;
+            width: 150px;
+            outline: none;
+            color: #222;
+        }
+        .filter-group input::placeholder {
+            color: #aaa;
+        }
+        .filter-group .clear-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            padding: 0.2rem;
+            font-size: 0.7rem;
+        }
+        .filter-group .clear-btn:hover {
+            color: #c00;
+        }
+        .filter-info {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        .btn {
+            background: #f0f0f0;
+            color: #222;
+            border: 1px solid #ddd;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 400;
+            transition: 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            background: #e5e5e5;
+        }
+        .btn i {
+            font-size: 0.85rem;
+        }
+        .btn-primary {
+            background: #1a5bbf;
+            color: white;
+            border-color: #1a5bbf;
+        }
+        .btn-primary:hover {
+            background: #124a9e;
+            border-color: #124a9e;
+        }
+        .btn-success {
+            background: #1a7a3a;
+            color: white;
+            border-color: #1a7a3a;
+        }
+        .btn-success:hover {
+            background: #13602e;
+            border-color: #13602e;
+        }
+        .btn-success:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 4px;
+            border: 1px solid #e5e5e5;
+            background: white;
+            margin-top: 0.5rem;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            min-width: 600px;
+        }
+        th {
+            background: #f0f0f0;
+            color: #222;
+            font-weight: 500;
+            padding: 0.4rem 0.5rem;
+            text-align: center;
+            border: 1px solid #e5e5e5;
+            white-space: nowrap;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        td {
+            padding: 0.3rem 0.5rem;
+            border: 1px solid #e5e5e5;
+            vertical-align: middle;
+            text-align: center;
+            background-color: white;
+            color: #222;
+            font-size: 0.8rem;
+        }
+        td.color-name {
+            text-align: left;
+            padding-left: 0.6rem;
+            background: #fafafa;
+            white-space: nowrap;
+            font-weight: 400;
+            font-size: 0.75rem;
+        }
+        td.color-code {
+            font-size: 0.7rem;
+            color: #888;
+            padding-right: 0.3rem;
+        }
+        tr:nth-child(even) td {
+            background-color: #fcfcfc;
+        }
+        tr:nth-child(even) td.color-name {
+            background-color: #f7f7f7;
+        }
+        tr:hover td {
+            background-color: #f0f0f0 !important;
+        }
+        .group-header td {
+            background: #f5f5f5 !important;
+            padding: 0.4rem 0.6rem;
+            font-weight: 500;
+            border-top: 2px solid #ddd;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+        .group-header .group-info {
+            font-weight: 400;
+            color: #777;
+            font-size: 0.7rem;
+        }
+        .empty-message {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+        .stats {
+            margin: 0.5rem 0 0.3rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: #555;
+        }
+        .stats span {
+            background: #f5f5f5;
+            padding: 0.2rem 0.8rem;
+            border-radius: 3px;
+        }
+        .footer-note {
+            margin-top: 1rem;
+            font-size: 0.7rem;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 0.8rem;
+            text-align: center;
+        }
+        .error-message,
+        .success-message,
+        .warning-message,
+        .info-message {
+            padding: 0.4rem 0.8rem;
+            border-radius: 4px;
+            margin: 0.3rem 0;
+            font-size: 0.8rem;
+        }
+        .error-message { background: #fee; color: #c00; border-left: 2px solid #c00; }
+        .success-message { background: #efe; color: #060; border-left: 2px solid #060; }
+        .warning-message { background: #ffe; color: #880; border-left: 2px solid #880; }
+        .info-message { background: #e5f0ff; color: #0044aa; border-left: 2px solid #0044aa; }
+        .json-container {
+            background: #fafafa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+        }
+        .json-container pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #222;
+        }
+        .json-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .cantidad-cell { font-weight: 500; }
+        .cantidad-0 { color: #ccc; }
+        .badge-op {
+            background: #222;
+            color: white;
+            padding: 0.1rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            margin: 0 0.2rem;
+        }
+        .badge-proceso {
+            background: #eee;
+            padding: 0.1rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            color: #444;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .spinner {
+            display: inline-block;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .color-loading {
+            color: #888;
+            font-size: 0.7rem;
+        }
+        .color-loaded {
+            color: #1a7a3a;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>CSV · Tabla Pivotada</h1>
+    <div class="sub">OP + Proceso · Tallas columnas · Colores filas</div>
+
+    <div class="upload-area" id="dropZone">
+        <label for="fileInput">
+            <i class="fas fa-upload"></i>
+            Cargar CSV
+        </label>
+        <input type="file" id="fileInput" accept=".csv">
+        <div class="file-name" id="fileName">Ningún archivo</div>
+    </div>
+
+    <div id="messageContainer"></div>
+
+    <!-- Estado de colores -->
+    <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.5rem;font-size:0.75rem;color:#555;">
+        <span id="colorStatus">
+            <i class="fas fa-spinner spinner"></i> Cargando colores desde Sheets...
+        </span>
+        <button class="btn" id="reloadColorsBtn" style="font-size:0.65rem;padding:0.2rem 0.6rem;">
+            <i class="fas fa-sync-alt"></i> Recargar
+        </button>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters" id="filtersContainer">
+        <div class="filter-group">
+            <i class="fas fa-search"></i>
+            <input type="text" id="filterOpInput" placeholder="Filtrar por OP..." title="Escribe el número de OP para filtrar">
+            <button class="clear-btn" id="clearFilterBtn" title="Limpiar filtro"><i class="fas fa-times"></i></button>
+        </div>
+        <span class="filter-info" id="filterInfo">Mostrando todos los grupos</span>
+    </div>
+
+    <!-- Acciones -->
+    <div class="actions">
+        <button class="btn btn-success" id="sendToSheetsBtn" disabled>
+            <i class="fas fa-cloud-upload-alt"></i>
+            Enviar a Google Sheets
+        </button>
+        <span id="sendStatus" style="font-size:0.75rem;color:#888;display:flex;align-items:center;"></span>
+    </div>
+
+    <div class="stats" id="statsBar">
+        <span>Grupos: <strong id="groupCount">0</strong></span>
+        <span>Colores: <strong id="colorCount">0</strong></span>
+        <span>Tallas: <strong id="tallaCount">0</strong></span>
+        <span>Sin OS: <strong id="sinOsCount">0</strong></span>
+        <span><span id="updateTime">—</span></span>
+    </div>
+
+    <div class="json-header">
+        <button class="btn" id="toggleJsonBtn">
+            <i class="fas fa-file-code"></i>
+            JSON
+        </button>
+        <button class="btn" id="copyJsonBtn" style="display:none;">
+            <i class="fas fa-copy"></i>
+            Copiar
+        </button>
+    </div>
+    <div class="json-container" id="jsonContainer" style="display:none;">
+        <pre id="jsonContent">[]</pre>
+    </div>
+
+    <div class="table-wrapper" id="tableWrapper">
+        <div id="tableContainer"><div class="empty-message">Carga un archivo CSV</div></div>
+    </div>
+    <div class="footer-note">Solo registros con OS · CSV con separador ; · Colores desde hoja COLORES</div>
+</div>
+
+<script>
+    (function() {
+        // ============ CONFIGURACIÓN ============
+        const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbxvC3Gt4X9onQO0-e23RRE5SuBL0o8domPi-ewHHyRTtEhaMwBkJGC8gAerAy4Ema-E/exec';
+        const SPREADSHEET_ID = '1suFVbpNHcscqulQ_xRbT5G65HeztSWo77rnrRq1eR3Q';
+        const SHEET_NAME = 'EXT';
+        const COLOR_SHEET = 'COLORES';
+        const API_KEY = 'AIzaSyAmwOmIOoVkw5OK3MjdNnYGQDH7W2r6Dx8';
+        // ========================================
+
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const tableContainer = document.getElementById('tableContainer');
+        const groupCount = document.getElementById('groupCount');
+        const colorCount = document.getElementById('colorCount');
+        const tallaCount = document.getElementById('tallaCount');
+        const sinOsCount = document.getElementById('sinOsCount');
+        const updateTime = document.getElementById('updateTime');
+        const dropZone = document.getElementById('dropZone');
+        const messageContainer = document.getElementById('messageContainer');
+        const jsonContainer = document.getElementById('jsonContainer');
+        const jsonContent = document.getElementById('jsonContent');
+        const toggleJsonBtn = document.getElementById('toggleJsonBtn');
+        const copyJsonBtn = document.getElementById('copyJsonBtn');
+        const filterOpInput = document.getElementById('filterOpInput');
+        const clearFilterBtn = document.getElementById('clearFilterBtn');
+        const filterInfo = document.getElementById('filterInfo');
+        const sendToSheetsBtn = document.getElementById('sendToSheetsBtn');
+        const sendStatus = document.getElementById('sendStatus');
+        const colorStatus = document.getElementById('colorStatus');
+        const reloadColorsBtn = document.getElementById('reloadColorsBtn');
+
+        let colorMap = {};
+        let colorMapLoaded = false;
+        let currentData = [];
+        let currentJsonData = [];
+        let filteredData = [];
+        let filteredJsonData = [];
+        let allData = [];
+        let allJsonData = [];
+
+        // ============ CARGAR COLORES DESDE SHEETS ============
+        async function cargarColoresDesdeSheets() {
+            colorStatus.innerHTML = '<i class="fas fa-spinner spinner"></i> Cargando colores desde Sheets...';
+            colorMapLoaded = false;
+
+            try {
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${COLOR_SHEET}?key=${API_KEY}`;
+                const response = await fetch(url);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const rows = data.values || [];
+
+                if (rows.length < 2) {
+                    throw new Error('La hoja COLORES está vacía o no tiene datos');
+                }
+
+                // Buscar encabezados
+                const headers = rows[0];
+                let idxCodigo = -1;
+                let idxNombre = -1;
+
+                for (let i = 0; i < headers.length; i++) {
+                    const h = String(headers[i]).toLowerCase().trim();
+                    if (h.includes('id') || h.includes('codigo') || h.includes('code')) idxCodigo = i;
+                    if (h.includes('nombre') || h.includes('color') || h.includes('name')) idxNombre = i;
+                }
+
+                if (idxCodigo === -1) idxCodigo = 0;
+                if (idxNombre === -1) idxNombre = 1;
+
+                const nuevoMapa = {};
+                let coloresCargados = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    const codigo = String(row[idxCodigo] || '').trim().padStart(3, '0');
+                    const nombre = String(row[idxNombre] || '').trim();
+                    if (codigo && nombre) {
+                        nuevoMapa[codigo] = nombre;
+                        coloresCargados++;
+                    }
+                }
+
+                if (coloresCargados === 0) {
+                    throw new Error('No se encontraron colores válidos en la hoja');
+                }
+
+                colorMap = nuevoMapa;
+                colorMapLoaded = true;
+                colorStatus.innerHTML = `<i class="fas fa-check" style="color:#1a7a3a;"></i> ${coloresCargados} colores cargados desde Sheets`;
+
+                if (allData.length > 0) {
+                    reprocesarConNuevoMapa();
+                }
+
+                return true;
+
+            } catch (error) {
+                console.error('Error cargando colores:', error);
+                colorStatus.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#c00;"></i> Error: ${error.message}. Usando códigos como nombres.`;
+                colorMap = {};
+                colorMapLoaded = true;
+                return false;
+            }
+        }
+
+        function getColor(codigo) {
+            if (!codigo) return '';
+            const s = String(codigo).trim().padStart(3, '0');
+            return colorMap[s] || s;
+        }
+
+        // ============ REPROCESAR CON NUEVO MAPA ============
+        function reprocesarConNuevoMapa() {
+            if (allData.length === 0) return;
+
+            allJsonData = [];
+            for (let g of allData) {
+                const extensiones = [];
+                for (let [key, cantidad] of g.mat) {
+                    const [color, talla] = key.split('|');
+                    let codigo = '';
+                    for (let [k, v] of Object.entries(colorMap)) {
+                        if (v === color) { codigo = k; break; }
+                    }
+                    extensiones.push({
+                        codigo: codigo || '',
+                        color: color,
+                        talla: talla,
+                        cantidad: cantidad
+                    });
+                }
+                extensiones.sort((a, b) => {
+                    if (a.codigo !== b.codigo) return a.codigo.localeCompare(b.codigo);
+                    const ord = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+                    const ia = ord.indexOf(a.talla),
+                        ib = ord.indexOf(b.talla);
+                    if (ia !== -1 && ib !== -1) return ia - ib;
+                    if (ia !== -1) return -1;
+                    if (ib !== -1) return 1;
+                    return a.talla.localeCompare(b.talla);
+                });
+
+                allJsonData.push({
+                    op: g.op,
+                    proceso: g.proc,
+                    referencia: g.ref,
+                    fecha: g.fecha,
+                    orden_servicio: g.orden,
+                    os: g.os,
+                    extensiones: extensiones
+                });
+            }
+
+            aplicarFiltro();
+            actualizarJSON();
+            actualizarStats();
+        }
+
+        // ============ CONSTANTES ============
+        const COL_MAP = [
+            { i: 0, n: 'ref' }, { i: 2, n: 'op' }, { i: 4, n: 'fecha' },
+            { i: 7, n: 'orden' }, { i: 9, n: 'cant' },
+            { i: 11, n: 'talla' }, { i: 12, n: 'cod' }, { i: 13, n: 'os' }, { i: 20, n: 'proc' }
+        ];
+
+        function clean(v) { if (!v && v !== 0) return ''; let s = String(v).trim(); return s.replace(/^["']|["']$/g, ''); }
+
+        function cleanCant(v) { let s = clean(v); s = s.replace(/\.00$/, ''); const n = parseFloat(s); return isNaN(n) ? 0 : Math.round(n); }
+
+        function normFecha(v) {
+            if (!v && v !== 0) return '';
+            let s = clean(v);
+            let m = s.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            if (m) return m[1] + '/' + m[2] + '/' + m[3];
+            m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (m) return m[3] + '/' + m[2] + '/' + m[1];
+            let t = Date.parse(s);
+            if (!isNaN(t)) { let f = new Date(t); if (f.getFullYear() > 1900 && f.getFullYear() < 2100) { let d = String(f.getDate()).padStart(2, '0'); let m = String(f.getMonth() + 1).padStart(2, '0'); let y = f.getFullYear(); return d + '/' + m + '/' + y; } }
+            return s;
+        }
+
+        function msg(tipo, texto) {
+            const cls = tipo === 'error' ? 'error-message' : tipo === 'warning' ? 'warning-message' : tipo === 'info' ? 'info-message' : 'success-message';
+            messageContainer.innerHTML = `<div class="${cls}">${texto}</div>`;
+            setTimeout(() => { if (messageContainer.innerHTML.includes(texto)) messageContainer.innerHTML = ''; }, 8000);
+        }
+
+        function aplicarFiltro() {
+            const filtro = filterOpInput.value.trim();
+            if (!filtro) {
+                filteredData = allData;
+                filteredJsonData = allJsonData;
+                filterInfo.textContent = 'Mostrando todos los grupos';
+            } else {
+                const opNum = parseInt(filtro);
+                if (!isNaN(opNum)) {
+                    filteredData = allData.filter(g => g.op === opNum);
+                    filteredJsonData = allJsonData.filter(g => g.op === opNum);
+                    filterInfo.textContent = `Filtrando por OP: ${opNum} (${filteredData.length} grupos)`;
+                } else {
+                    filteredData = allData;
+                    filteredJsonData = allJsonData;
+                    filterInfo.textContent = 'Filtro inválido, mostrando todos';
+                }
+            }
+            renderizarTabla();
+            actualizarJSON();
+            actualizarStats();
+            sendToSheetsBtn.disabled = filteredJsonData.length === 0;
+        }
+
+        function renderizarTabla() {
+            if (filteredData.length === 0) {
+                tableContainer.innerHTML = '<div class="empty-message">No hay grupos para mostrar</div>';
+                return;
+            }
+
+            let html = '',
+                totalColores = 0,
+                totalTallas = 0;
+            for (let g of filteredData) {
+                const tallas = g.tallas,
+                    colores = g.colores;
+                totalColores = Math.max(totalColores, colores.length);
+                totalTallas = Math.max(totalTallas, tallas.length);
+
+                html += `<table><thead><tr class="group-header"><td colspan="${tallas.length + 2}" style="background:#f5f5f5;padding:0.4rem 0.6rem;font-weight:500;border-top:2px solid #ddd;border-bottom:1px solid #ddd;text-align:left;font-size:0.8rem;">
+                    <span class="badge-op">OP ${g.op}</span>
+                    <span class="badge-proceso">${g.proc}</span>
+                    <span class="group-info"> · OS: ${g.os} · ${g.fecha} · ${g.orden}</span>
+                </td></tr><tr><th style="min-width:120px;text-align:left;padding-left:0.6rem;">Color / Talla</th>`;
+                for (let t of tallas) html += `<th style="min-width:50px;">${t}</th>`;
+                html += `<th style="background:#e8e8e8;">Total</th></tr></thead><tbody>`;
+
+                let totalGral = 0;
+                for (let c of colores) {
+                    let cod = '';
+                    for (let [k, v] of Object.entries(colorMap)) { if (v === c) { cod = k; break; } }
+                    html += `<tr><td class="color-name"><span class="color-code">${cod}</span> ${c}</td>`;
+                    let totalC = 0;
+                    for (let t of tallas) {
+                        const cant = g.mat.get(c + '|' + t) || 0;
+                        totalC += cant;
+                        totalGral += cant;
+                        html += `<td class="${cant > 0 ? 'cantidad-cell' : 'cantidad-0'}">${cant > 0 ? cant : '-'}</td>`;
+                    }
+                    html += `<td style="font-weight:500;background:#f5f5f5;">${totalC}</td></tr>`;
+                }
+                html += `<tr style="background:#f5f5f5;font-weight:500;border-top:2px solid #ddd;"><td style="text-align:right;padding-right:0.8rem;">TOTAL</td>`;
+                for (let t of tallas) { let totalT = 0; for (let c of colores) totalT += g.mat.get(c + '|' + t) || 0;
+                    html += `<td style="background:#efefef;">${totalT}</td>`; }
+                html += `<td style="background:#e5e5e5;">${totalGral}</td></tr>`;
+                html += `</tbody></table><br>`;
+            }
+            tableContainer.innerHTML = html;
+        }
+
+        function actualizarStats() {
+            groupCount.textContent = filteredData.length;
+            let maxColores = 0,
+                maxTallas = 0;
+            for (let g of filteredData) {
+                maxColores = Math.max(maxColores, g.colores.length);
+                maxTallas = Math.max(maxTallas, g.tallas.length);
+            }
+            colorCount.textContent = maxColores;
+            tallaCount.textContent = maxTallas;
+        }
+
+        function actualizarJSON() {
+            if (filteredJsonData.length > 0) {
+                jsonContent.textContent = JSON.stringify(filteredJsonData, null, 2);
+                copyJsonBtn.style.display = 'inline-flex';
+            } else {
+                jsonContent.textContent = '[]';
+                copyJsonBtn.style.display = 'none';
+            }
+        }
+
+        // ============ ENVIAR A GOOGLE SHEETS ============
+        async function enviarASheets() {
+            if (filteredJsonData.length === 0) {
+                msg('warning', 'No hay datos para enviar');
+                return;
+            }
+
+            sendToSheetsBtn.disabled = true;
+            sendStatus.innerHTML = '<i class="fas fa-spinner spinner"></i> Enviando...';
+
+            try {
+                const payload = {
+                    spreadsheetId: SPREADSHEET_ID,
+                    sheetName: SHEET_NAME,
+                    data: filteredJsonData
+                };
+
+                await fetch(SHEETS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                sendStatus.innerHTML = '<i class="fas fa-check" style="color:#1a7a3a;"></i> Enviado (verifica en Sheets)';
+                msg('success', `✅ ${filteredJsonData.length} registros enviados a Google Sheets`);
+                console.log('Datos enviados:', JSON.stringify(payload, null, 2));
+
+            } catch (error) {
+                sendStatus.innerHTML = '<i class="fas fa-times" style="color:#c00;"></i> Error';
+                msg('error', '❌ Error al enviar: ' + error.message);
+                sendToSheetsBtn.disabled = false;
+            }
+        }
+
+        // ============ PROCESAR CSV ============
+        function procesar(texto) {
+            messageContainer.innerHTML = '';
+            const lineas = texto.split(/\r?\n/).filter(l => l.trim() !== '');
+            if (lineas.length === 0) {
+                tableContainer.innerHTML = '<div class="empty-message">Archivo vacío</div>';
+                groupCount.textContent = '0';
+                colorCount.textContent = '0';
+                tallaCount.textContent = '0';
+                sinOsCount.textContent = '0';
+                allData = [];
+                allJsonData = [];
+                filteredData = [];
+                filteredJsonData = [];
+                actualizarJSON();
+                msg('error', 'Archivo vacío');
+                return;
+            }
+
+            const grupos = new Map();
+            let sinOs = 0,
+                vacias = 0;
+
+            for (let i = 0; i < lineas.length; i++) {
+                const campos = lineas[i].split(';').map(c => clean(c));
+                if (campos.length < 21) { vacias++; continue; }
+                try {
+                    const d = {};
+                    let ok = false;
+                    for (const c of COL_MAP) {
+                        let v = c.i < campos.length ? campos[c.i] : '';
+                        if (c.n === 'fecha') d[c.n] = normFecha(v);
+                        else if (c.n === 'cant') d[c.n] = cleanCant(v);
+                        else if (c.n === 'op') { const n = parseFloat(v);
+                            d[c.n] = isNaN(n) ? 0 : Math.round(n); }
+                        else if (c.n === 'cod') { d[c.n] = v;
+                            d['color'] = getColor(v); }
+                        else d[c.n] = v;
+                        if (d[c.n] !== '' && d[c.n] !== 0) ok = true;
+                    }
+                    if (ok) {
+                        if (!d.os || d.os.trim() === '') { sinOs++; continue; }
+                        const key = d.op + '|' + d.proc;
+                        if (!grupos.has(key)) {
+                            grupos.set(key, { ref: d.ref, op: d.op, fecha: d.fecha, orden: d.orden, os: d.os, proc: d.proc, tallas: new Set(), colores: new Set(), mat: new Map() });
+                        }
+                        const g = grupos.get(key);
+                        g.tallas.add(d.talla);
+                        g.colores.add(d.color);
+                        const mk = d.color + '|' + d.talla;
+                        g.mat.set(mk, (g.mat.get(mk) || 0) + d.cant);
+                    }
+                } catch (e) { console.warn(e); }
+            }
+
+            allData = Array.from(grupos.values());
+            const ordenT = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+            for (let g of allData) {
+                g.tallas = Array.from(g.tallas).sort((a, b) => { const ia = ordenT.indexOf(a),
+                        ib = ordenT.indexOf(b); if (ia !== -1 && ib !== -1) return ia - ib; if (ia !== -1) return -1; if (ib !== -1) return 1; return a.localeCompare(b); });
+                g.colores = Array.from(g.colores).sort();
+            }
+            allData.sort((a, b) => a.op - b.op);
+
+            // Construir JSON
+            allJsonData = [];
+            for (let g of allData) {
+                const extensiones = [];
+                for (let [key, cantidad] of g.mat) {
+                    const [color, talla] = key.split('|');
+                    let codigo = '';
+                    for (let [k, v] of Object.entries(colorMap)) {
+                        if (v === color) { codigo = k; break; }
+                    }
+                    extensiones.push({
+                        codigo: codigo || '',
+                        color: color,
+                        talla: talla,
+                        cantidad: cantidad
+                    });
+                }
+                extensiones.sort((a, b) => {
+                    if (a.codigo !== b.codigo) return a.codigo.localeCompare(b.codigo);
+                    const ord = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+                    const ia = ord.indexOf(a.talla),
+                        ib = ord.indexOf(b.talla);
+                    if (ia !== -1 && ib !== -1) return ia - ib;
+                    if (ia !== -1) return -1;
+                    if (ib !== -1) return 1;
+                    return a.talla.localeCompare(b.talla);
+                });
+
+                allJsonData.push({
+                    op: g.op,
+                    proceso: g.proc,
+                    referencia: g.ref,
+                    fecha: g.fecha,
+                    orden_servicio: g.orden,
+                    os: g.os,
+                    extensiones: extensiones
+                });
+            }
+
+            if (allData.length === 0) {
+                tableContainer.innerHTML = '<div class="empty-message">No hay registros con OS</div>';
+                groupCount.textContent = '0';
+                colorCount.textContent = '0';
+                tallaCount.textContent = '0';
+                sinOsCount.textContent = sinOs;
+                allJsonData = [];
+                filteredData = [];
+                filteredJsonData = [];
+                actualizarJSON();
+                if (sinOs > 0) msg('warning', sinOs + ' ignorados sin OS');
+                else msg('error', 'No hay datos con OS');
+                return;
+            }
+
+            sinOsCount.textContent = sinOs;
+            aplicarFiltro();
+            msg('success', allData.length + ' grupos totales');
+            if (sinOs > 0) msg('warning', sinOs + ' ignorados sin OS');
+            updateTime.textContent = new Date().toLocaleTimeString();
+            sendToSheetsBtn.disabled = false;
+        }
+
+        function handleFile(file) {
+            if (!file) return;
+            fileName.textContent = file.name;
+            const r = new FileReader();
+            r.onload = function(e) { try { procesar(e.target.result); } catch (err) { msg('error', 'Error: ' + err.message); } };
+            r.onerror = function() { msg('error', 'Error al leer'); };
+            r.readAsText(file, 'UTF-8');
+        }
+
+        // ============ EVENTOS ============
+        filterOpInput.addEventListener('input', aplicarFiltro);
+        clearFilterBtn.addEventListener('click', function() {
+            filterOpInput.value = '';
+            aplicarFiltro();
+            filterOpInput.focus();
+        });
+
+        sendToSheetsBtn.addEventListener('click', enviarASheets);
+
+        reloadColorsBtn.addEventListener('click', function() {
+            cargarColoresDesdeSheets();
+        });
+
+        toggleJsonBtn.addEventListener('click', function() {
+            if (jsonContainer.style.display === 'none') {
+                jsonContainer.style.display = 'block';
+                this.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar';
+                copyJsonBtn.style.display = filteredJsonData.length > 0 ? 'inline-flex' : 'none';
+            } else {
+                jsonContainer.style.display = 'none';
+                this.innerHTML = '<i class="fas fa-file-code"></i> JSON';
+                copyJsonBtn.style.display = 'none';
+            }
+        });
+
+        copyJsonBtn.addEventListener('click', function() {
+            const t = jsonContent.textContent;
+            navigator.clipboard.writeText(t).then(() => {
+                this.innerHTML = '<i class="fas fa-check"></i> OK';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i> Copiar';
+                }, 1500);
+            }).catch(() => {
+                const r = document.createRange();
+                r.selectNode(jsonContent);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(r);
+                document.execCommand('copy');
+                this.innerHTML = '<i class="fas fa-check"></i> OK';
+                setTimeout(() => {
+                    this.innerHTML = '<i class="fas fa-copy"></i> Copiar';
+                }, 1500);
+            });
+        });
+
+        fileInput.addEventListener('change', function(e) { if (this.files && this.files.length > 0) handleFile(this.files[0]);
+            this.value = ''; });
+        dropZone.addEventListener('dragover', e => { e.preventDefault();
+            dropZone.style.background = '#f0f0f0'; });
+        dropZone.addEventListener('dragleave', e => { e.preventDefault();
+            dropZone.style.background = '#fafafa'; });
+        dropZone.addEventListener('drop', function(e) { e.preventDefault(); this.style.background = '#fafafa'; const f = e.dataTransfer.files; if (f && f.length > 0) { const file = f[0]; if (file.name.toLowerCase().endsWith('.csv')) handleFile(file); else msg('error', 'Solo archivos .csv'); } });
+
+        updateTime.textContent = new Date().toLocaleTimeString();
+        actualizarJSON();
+
+        // Cargar colores al iniciar
+        cargarColoresDesdeSheets();
+    })();
+</script>
+</body>
+</html>
