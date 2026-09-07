@@ -1,0 +1,77 @@
+/* ==========================================================================
+   TOKENS.CSS — Sistema de Diseño y Tokens Globales para CALIDAD 2.0
+   ========================================================================== */
+
+:root {
+    /* ── Paleta de Colores Primaria ── */
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-dim: rgba(37, 99, 235, 0.08);
+    --color-primary-glow: rgba(37, 99, 235, 0.22);
+    --color-primary-text: #ffffff;
+
+    /* ── Semántica & Estados ── */
+    --color-success: #10b981;
+    --color-success-dim: rgba(16, 185, 129, 0.1);
+    --color-warning: #f59e0b;
+    --color-warning-dim: rgba(245, 158, 11, 0.1);
+    --color-danger: #ef4444;
+    --color-danger-dim: rgba(239, 68, 68, 0.1);
+    --color-info: #06b6d4;
+    --color-info-dim: rgba(6, 182, 212, 0.1);
+
+    /* ── Superficies y Fondos ── */
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f1f5f9;
+    --color-surface-elevated: #ffffff;
+    --color-border: #e2e8f0;
+    --color-border-subtle: #f1f5f9;
+
+    /* ── Jerarquía Tipográfica ── */
+    --color-text: #0f172a;
+    --color-text-muted: #64748b;
+    --color-text-light: #94a3b8;
+    --color-text-inverse: #ffffff;
+
+    /* ── Tipografía ── */
+    --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-md: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+
+    /* ── Espaciados y Dimensiones ── */
+    --spacing-1: 0.25rem;
+    --spacing-2: 0.5rem;
+    --spacing-3: 0.75rem;
+    --spacing-4: 1rem;
+    --spacing-5: 1.25rem;
+    --spacing-6: 1.5rem;
+    --spacing-8: 2rem;
+
+    --header-height: 56px;
+    --nav-height: 64px;
+    --max-mobile-width: 480px;
+
+    /* ── Radios de Borde ── */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --radius-full: 9999px;
+
+    /* ── Sombras & Elevaciones ── */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* ── Transiciones ── */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}

@@ -1,0 +1,88 @@
+/* =========================================================
+   BASE RESETS, TYPOGRAPHY & LAYOUT
+   ========================================================= */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+body {
+    position: relative;
+    font-family: var(--font-sans);
+    background: radial-gradient(circle at 50% 0%, #ffffff 0%, #f1f5f9 55%, #e2e8f0 100%);
+    background-attachment: fixed;
+    color: var(--text);
+    line-height: 1.45;
+    font-size: 13px;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    width: 100%;
+    overflow-x: hidden;
+    transition: background-color var(--transition), color var(--transition);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    touch-action: manipulation;
+}
+
+/* Marca de agua de fondo (Tahoe Liquid Watermark — Visible a través del glass) */
+body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(85vw, 780px);
+    height: min(85vh, 780px);
+    background-image: url('../assets/app.svg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.11;
+    filter: drop-shadow(0 8px 30px rgba(0, 0, 0, 0.05));
+    pointer-events: none;
+    z-index: 0;
+}
+
+.layout {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: clamp(0.75rem, 2vw, 1.5rem);
+    padding-top: max(clamp(0.75rem, 2vw, 1.5rem), env(safe-area-inset-top));
+    padding-bottom: max(clamp(0.75rem, 2vw, 1.5rem), env(safe-area-inset-bottom));
+    padding-left: max(clamp(0.75rem, 2vw, 1.5rem), env(safe-area-inset-left));
+    padding-right: max(clamp(0.75rem, 2vw, 1.5rem), env(safe-area-inset-right));
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Custom Minimal Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}

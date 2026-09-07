@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Seguimiento de Novedad | Grupo TDM</title>
+
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?v=2">
+    <link rel="alternate icon" type="image/svg+xml" href="assets/icons/app.svg?v=2">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.svg?v=2">
+
+    <!-- External Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+
+    <style>
+        /* ── Stepper de seguimiento ── */
+        .seg-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            position: relative;
+        }
+        .seg-card:hover {
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.08);
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .seg-card.st-PENDIENTE   { border-left: 6px solid #94a3b8; }
+        .seg-card.st-ELABORACION { border-left: 6px solid #f59e0b; }
+        .seg-card.st-FINALIZADO,
+        .seg-card.st-RESUELTA    { border-left: 6px solid #10b981; }
+
+        .seg-card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.2s ease;
+        }
+        .seg-card-header:hover { background: #fafbfc; }
+
+        .seg-state-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        .st-PENDIENTE   .seg-state-dot {
+            background: #94a3b8;
+            box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.15);
+        }
+        .st-ELABORACION .seg-state-dot {
+            background: #f59e0b;
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+            animation: pulse-orange 2s infinite;
+        }
+        .st-FINALIZADO  .seg-state-dot,
+        .st-RESUELTA    .seg-state-dot {
+            background: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15);
+        }
+        
+        @keyframes pulse-orange {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        .seg-header-main { flex: 1; min-width: 0; }
+        
+        .seg-lote {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        
+        .seg-area-badge {
+            background: rgba(102, 126, 234, 0.08);
+            color: #667eea;
+            font-size: 0.65rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 6px;
+        }
+        
+        .seg-meta {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .seg-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            flex-shrink: 0;
+            letter-spacing: 0.3px;
+        }
+        .badge-PENDIENTE   { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .badge-ELABORACION { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+        .badge-FINALIZADO,
+        .badge-RESUELTA    { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+
+        .seg-chevron {
+            color: #64748b; font-size: 0.85rem; flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .seg-card.open .seg-chevron { transform: rotate(180deg); }
+
+        .seg-card-body {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border-top: 0px solid #f1f5f9;
+        }
+        .seg-card.open .seg-card-body { max-height: 1200px; border-top: 1px solid #f1f5f9; }
+        .seg-card-body-inner { padding: 24px; }
+
+        /* Stepper */
+        .seg-stepper { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; }
+        .seg-step { display: flex; gap: 20px; align-items: stretch; }
+        .seg-step-line-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+        
+        .seg-step-dot {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.8rem; flex-shrink: 0; line-height: 1;
+            border: 2px solid #e2e8f0; background: #f8fafc; color: #94a3b8;
+            transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .seg-step-dot.done        { background: #10b981; border-color: #10b981; color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
+        .seg-step-dot.active      {
+            background: #fffbeb; border-color: #f59e0b; color: #f59e0b;
+            box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.15);
+            animation: pulse-step-active 2s infinite;
+        }
+        @keyframes pulse-step-active {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.25); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        .seg-step-dot.done-final  { background: #10b981; border-color: #10b981; color: white; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2); }
+        
+        .seg-step-connector-wrap  { position: relative; width: 2px; flex: 1; min-height: 60px; }
+        .seg-step-connector       { position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; background: #e2e8f0; transition: background-color 0.4s ease; }
+        .seg-step-connector.done  { background: #10b981; }
+        
+        .seg-step-dur {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.625rem; font-weight: 600; color: #475569;
+            background: white; border: 1px solid #cbd5e1; border-radius: 20px;
+            padding: 3px 8px; white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex; align-items: center; gap: 4px; z-index: 1;
+        }
+        .seg-step-text { padding-top: 6px; padding-bottom: 24px; flex: 1; }
+        .seg-step-label { font-size: 0.85rem; font-weight: 600; color: #64748b; display: flex; align-items: center; gap: 6px; }
+        .seg-step-label.done   { color: #065f46; }
+        .seg-step-label.active { color: #92400e; }
+        .seg-step-desc { font-size: 0.75rem; color: #64748b; margin-top: 4px; margin-bottom: 4px; }
+
+        .seg-desc {
+            font-size: 0.82rem; color: #475569; line-height: 1.6;
+            background: #f8fafc; border-radius: 12px; padding: 14px 16px;
+            border-left: 4px solid #667eea; margin-bottom: 16px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .seg-card-footer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+        .seg-date-info { font-size: 0.7rem; color: #64748b; display: flex; align-items: center; gap: 4px; }
+
+        /* Estado vacío / error / carga */
+        .seg-state-box {
+            text-align: center; padding: 60px 24px; color: #64748b;
+            background: white; border-radius: 20px; border: 1.5px solid #e8eaed;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            animation: fadeIn 0.4s ease-out;
+        }
+        .seg-state-box i {
+            font-size: 2.5rem; margin-bottom: 16px; display: block;
+            color: #94a3b8;
+            opacity: 0.5;
+        }
+        .seg-state-box .title { font-weight: 700; font-size: 1.1rem; margin-bottom: 6px; color: #1e293b; }
+        .seg-state-box .sub { font-size: 0.85rem; color: #64748b; line-height: 1.5; }
+
+        /* Skeleton loader */
+        @keyframes skeleton-loading {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-card {
+            background: white; border: 1.5px solid #e8eaed;
+            border-radius: 20px; padding: 20px 24px; margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        }
+        .skeleton-line {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 6px;
+        }
+
+        .seg-count {
+            font-size: 0.72rem; font-weight: 600; color: #80868b;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem;
+        }
+
+        /* ── Responsive Móvil Premium ── */
+        @media (max-width: 576px) {
+            .action-bar {
+                padding: 10px 12px;
+                margin-bottom: 18px;
+                border-radius: 12px;
+            }
+            .action-bar .btn-secondary {
+                font-size: 0.75rem;
+                padding: 8px 16px;
+                border-radius: 16px;
+            }
+            .seg-card {
+                border-radius: 16px;
+                margin-bottom: 12px;
+            }
+            .seg-card-header {
+                padding: 16px 14px;
+                gap: 12px;
+            }
+            .seg-state-dot {
+                width: 10px;
+                height: 10px;
+            }
+            .seg-lote {
+                font-size: 0.85rem;
+                gap: 4px;
+            }
+            .seg-area-badge {
+                font-size: 0.6rem;
+                padding: 2px 6px;
+                border-radius: 6px;
+                margin-left: 2px;
+            }
+            .seg-meta {
+                font-size: 0.72rem;
+                margin-top: 2px;
+            }
+            .seg-badge {
+                font-size: 0.625rem;
+                padding: 3px 8px;
+                border-radius: 12px;
+            }
+            .seg-chevron {
+                font-size: 0.75rem;
+            }
+            .seg-card-body-inner {
+                padding: 16px 14px;
+            }
+            .seg-stepper {
+                margin-bottom: 12px;
+            }
+            .seg-step {
+                gap: 12px;
+            }
+            .seg-step-dot {
+                width: 30px;
+                height: 30px;
+                font-size: 0.7rem;
+            }
+            .seg-step-connector-wrap {
+                min-height: 48px;
+            }
+            .seg-step-text {
+                padding-top: 4px;
+                padding-bottom: 16px;
+            }
+            .seg-step-label {
+                font-size: 0.78rem;
+            }
+            .seg-step-desc {
+                font-size: 0.68rem;
+            }
+            .seg-desc {
+                font-size: 0.78rem;
+                padding: 12px;
+                border-radius: 10px;
+                margin-bottom: 12px;
+            }
+            .seg-date-info {
+                font-size: 0.65rem;
+            }
+            .skeleton-card {
+                border-radius: 16px;
+                padding: 16px 14px;
+            }
+        }
+    </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Header — idéntico al index -->
+        <div class="header">
+            <div class="header-logo">
+                <img src="assets/icons/app.svg" alt="Logo Grupo TDM">
+            </div>
+            <h1>Seguimiento de Novedad</h1>
+            <h2 id="headerSubtitle">Cargando...</h2>
+        </div>
+
+        <!-- Contenido -->
+        <div class="form-content">
+
+            <!-- Botón actualizar — discreto, alineado a la derecha -->
+            <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+                <button id="refresh-btn" onclick="refreshNovedad()"
+                    style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid #dadce0;border-radius:20px;font-size:0.75rem;font-weight:500;color:#5f6368;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;"
+                    onmouseover="this.style.borderColor='#667eea';this.style.color='#667eea'"
+                    onmouseout="this.style.borderColor='#dadce0';this.style.color='#5f6368'">
+                    <i class="fas fa-sync-alt" style="font-size:0.7rem;"></i>
+                    <span>Actualizar</span>
+                </button>
+            </div>
+
+            <div id="seg-count" class="seg-count" style="display:none;"></div>
+
+            <!-- Contenedor principal — skeleton mientras carga -->
+            <div id="tracking-container">
+                <div class="skeleton-card">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="skeleton-line" style="width:10px;height:10px;border-radius:50%;flex-shrink:0;"></div>
+                        <div style="flex:1;">
+                            <div class="skeleton-line" style="width:40%;height:16px;margin-bottom:6px;"></div>
+                            <div class="skeleton-line" style="width:60%;height:12px;"></div>
+                        </div>
+                        <div class="skeleton-line" style="width:80px;height:20px;border-radius:20px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botón Reportar Novedad — igual al btnNuevoReporte del index -->
+            <div style="text-align:center; margin-top:32px;">
+                <a href="index.html" class="btn-primary" style="display:inline-flex;align-items:center;justify-content:center;gap:8px;max-width:280px;width:100%;text-decoration:none;">
+                    <i class="fas fa-plus"></i>
+                    <span>Reportar Nueva Novedad</span>
+                </a>
+            </div>
+
+        </div><!-- /form-content -->
+    </div><!-- /container -->
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="src/seguimiento-publico.js"></script>
+</body>
+</html>

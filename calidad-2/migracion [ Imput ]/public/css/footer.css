@@ -1,0 +1,49 @@
+/* ==========================================================================
+   footer.css — Footer y enlaces sociales
+   ========================================================================== */
+
+footer {
+    padding: 3rem 1rem;
+    margin-top: 5rem;
+    text-align: center;
+    background-color: #ffffff;
+    border-top: 1px solid var(--color-border);
+}
+
+footer p {
+    margin-bottom: 0.3rem;
+    font-size: 0.8rem;
+    color: var(--color-text-label);
+    font-weight: 500;
+}
+
+footer a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.social-links {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.social-links a {
+    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    transition: color var(--transition-base);
+}
+
+.social-links a:hover {
+    color: var(--color-primary);
+}
+
+@media (max-width: 767px) {
+    footer {
+        padding: 2rem 1rem;
+        margin-top: 3rem;
+    }
+}
+
+

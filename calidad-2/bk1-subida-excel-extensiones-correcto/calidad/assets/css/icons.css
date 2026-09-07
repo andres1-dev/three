@@ -1,0 +1,137 @@
+/* ============================================================
+   ICONS.CSS — Librería de iconos SVG reutilizables
+   Uso: agrega la clase al <svg> directamente
+   Ejemplo: <svg class="icon stroke-blue"> ... </svg>
+
+   Secciones:
+   1. Base del icono
+   2. Colores de stroke
+   3. Colores de fill sutil (15% opacidad)
+   4. Tamaños
+   5. Wrapper / contenedor
+   ============================================================ */
+
+
+/* ============================================================
+   1. BASE
+   ============================================================ */
+.icon {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+
+/* ============================================================
+   2. STROKE — colores principales
+   ============================================================ */
+.stroke-blue       { stroke: #3b82f6; }
+.stroke-purple     { stroke: #8b5cf6; }
+.stroke-pink       { stroke: #ec4899; }
+.stroke-amber      { stroke: #f59e0b; }
+.stroke-green      { stroke: #10b981; }
+.stroke-red        { stroke: #ef4444; }
+.stroke-cyan       { stroke: #06b6d4; }
+.stroke-rose       { stroke: #f472b6; }
+.stroke-gray       { stroke: #6b7280; }
+.stroke-lime       { stroke: #84cc16; }
+.stroke-orange     { stroke: #f97316; }
+.stroke-indigo     { stroke: #6366f1; }
+.stroke-teal       { stroke: #14b8a6; }
+.stroke-fuchsia    { stroke: #a855f7; }
+.stroke-yellow     { stroke: #eab308; }
+.stroke-sky        { stroke: #0ea5e9; }
+.stroke-rose-dark  { stroke: #e11d48; }
+.stroke-emerald    { stroke: #059669; }
+.stroke-violet     { stroke: #8b5cf6; }
+.stroke-amber-dark { stroke: #d97706; }
+.stroke-slate      { stroke: #64748b; }
+
+
+/* ============================================================
+   3. FILL SUTIL — relleno suave para paths internos
+   Aplicar directamente al <path>, <circle>, <rect>, <polygon>
+   ============================================================ */
+.fill-blue-subtle       { fill: #3b82f6;  fill-opacity: 0.15; }
+.fill-purple-subtle     { fill: #8b5cf6;  fill-opacity: 0.15; }
+.fill-pink-subtle       { fill: #ec4899;  fill-opacity: 0.15; }
+.fill-amber-subtle      { fill: #f59e0b;  fill-opacity: 0.15; }
+.fill-green-subtle      { fill: #10b981;  fill-opacity: 0.15; }
+.fill-red-subtle        { fill: #ef4444;  fill-opacity: 0.15; }
+.fill-cyan-subtle       { fill: #06b6d4;  fill-opacity: 0.15; }
+.fill-rose-subtle       { fill: #f472b6;  fill-opacity: 0.15; }
+.fill-gray-subtle       { fill: #6b7280;  fill-opacity: 0.15; }
+.fill-lime-subtle       { fill: #84cc16;  fill-opacity: 0.15; }
+.fill-orange-subtle     { fill: #f97316;  fill-opacity: 0.15; }
+.fill-indigo-subtle     { fill: #6366f1;  fill-opacity: 0.15; }
+.fill-teal-subtle       { fill: #14b8a6;  fill-opacity: 0.15; }
+.fill-fuchsia-subtle    { fill: #a855f7;  fill-opacity: 0.15; }
+.fill-yellow-subtle     { fill: #eab308;  fill-opacity: 0.15; }
+.fill-sky-subtle        { fill: #0ea5e9;  fill-opacity: 0.15; }
+.fill-rose-dark-subtle  { fill: #e11d48;  fill-opacity: 0.15; }
+.fill-emerald-subtle    { fill: #059669;  fill-opacity: 0.15; }
+.fill-violet-subtle     { fill: #8b5cf6;  fill-opacity: 0.15; }
+.fill-amber-dark-subtle { fill: #d97706;  fill-opacity: 0.15; }
+.fill-slate-subtle      { fill: #64748b;  fill-opacity: 0.15; }
+
+
+/* ============================================================
+   4. TAMAÑOS
+   ============================================================ */
+.icon-xs  { width: 14px; height: 14px; }
+.icon-sm  { width: 18px; height: 18px; }
+.icon-md  { width: 24px; height: 24px; }   /* default */
+.icon-lg  { width: 32px; height: 32px; }
+.icon-xl  { width: 40px; height: 40px; }
+.icon-2xl { width: 48px; height: 48px; }
+
+
+/* ============================================================
+   5. ICON-WRAPPER — contenedor para centrar el icono en cards
+   ============================================================ */
+.icon-wrapper {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon-wrapper svg,
+.icon-wrapper .icon {
+    width: 40px;
+    height: 40px;
+}
+
+.icon-wrapper iconify-icon {
+    font-size: 36px;
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+
+/* Colores para iconify-icon en app-cards */
+.icon-wrapper.c-blue     { color: #3b82f6; }
+.icon-wrapper.c-purple   { color: #8b5cf6; }
+.icon-wrapper.c-pink     { color: #ec4899; }
+.icon-wrapper.c-amber    { color: #f59e0b; }
+.icon-wrapper.c-green    { color: #10b981; }
+.icon-wrapper.c-red      { color: #ef4444; }
+.icon-wrapper.c-cyan     { color: #06b6d4; }
+.icon-wrapper.c-rose     { color: #f472b6; }
+.icon-wrapper.c-gray     { color: #6b7280; }
+.icon-wrapper.c-lime     { color: #84cc16; }
+.icon-wrapper.c-orange   { color: #f97316; }
+.icon-wrapper.c-indigo   { color: #6366f1; }
+.icon-wrapper.c-teal     { color: #14b8a6; }
+.icon-wrapper.c-fuchsia  { color: #a855f7; }
+.icon-wrapper.c-yellow   { color: #eab308; }
+.icon-wrapper.c-sky      { color: #0ea5e9; }
+.icon-wrapper.c-rose-dark{ color: #e11d48; }
+.icon-wrapper.c-emerald  { color: #059669; }
+.icon-wrapper.c-violet   { color: #8b5cf6; }
+.icon-wrapper.c-amber-dark{color: #d97706; }
