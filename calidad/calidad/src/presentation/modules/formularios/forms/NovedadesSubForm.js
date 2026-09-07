@@ -106,6 +106,73 @@ export class NovedadesSubForm {
         this.activeLote = lote;
         if (this.loteSelector) this.loteSelector.setActiveLote(lote);
         this._syncLoteDataIntoForm();
+        this._updateSteps();
+    }
+
+    /**
+     * Flujo progresivo por pasos:
+     * 1) Clasificación (Área + Tipo)     → visible al seleccionar lote
+     * 2) Detalle de la selección del tipo → visible cuando Área y Tipo están completos
+     * 3) Descripción detallada            → visible cuando el detalle tiene al menos 1 ítem
+     * 4) Evidencia fotográfica + enviar   → visible cuando la descripción tiene contenido
+     */
+    _updateSteps() {
+        const form = this.container.querySelector('#form-novedades');
+        const step1 = this.container.querySelector('#nov-step-1');
+        const step2 = this.container.querySelector('#nov-step-2');
+        const step3 = this.container.querySelector('#nov-step-3');
+        const step4 = this.container.querySelector('#nov-step-4');
+
+        if (!this.activeLote) {
+            if (form) form.style.display = 'none';
+            return;
+        }
+
+        // Form visible cuando hay lote seleccionado
+        if (form) form.style.display = 'flex';
+
+        // Paso 1: Área + Tipo
+        const area = this.container.querySelector('#nov-area')?.value || '';
+        const tipo = this.container.querySelector('#nov-tipo')?.value || '';
+        const paso1Completo = area !== '' && (area === 'DISEÑO' || area === 'TELAS' || tipo !== '');
+
+        if (step1) step1.style.display = 'block';
+
+        // Paso 2: Detalle de la selección del tipo
+        if (step2) step2.style.display = paso1Completo ? 'block' : 'none';
+
+        // Paso 3: Descripción detallada (visible si hay al menos 1 ítem en el detalle o si es un área sin desglose)
+        const detalleOk = this._detalleListo();
+        if (step3) step3.style.display = (paso1Completo && detalleOk) ? 'block' : 'none';
+
+        // Paso 4: Evidencia fotográfica + botón enviar (visible si la descripción tiene contenido)
+        const observaciones = this.container.querySelector('#nov-observaciones')?.value?.trim() || '';
+        if (step4) step4.style.display = (paso1Completo && detalleOk && observaciones !== '') ? 'block' : 'none';
+    }
+
+    _detalleListo() {
+        const area = this.container.querySelector('#nov-area')?.value || '';
+
+        // Áreas sin desglose dinámico: se considera el detalle listo automáticamente
+        if (area === 'DISEÑO' || area === 'OTROS' || area === '') return true;
+
+        // CÓDIGOS: requiere tipo de solicitud definido
+        if (area === 'CODIGOS') {
+            const tipoSol = this.container.querySelector('#codigos-tipo-solicitud')?.value || '';
+            if (tipoSol === 'LOTE_COMPLETO') return true;
+            if (tipoSol === 'UNIDADES') {
+                const rows = this.container.querySelectorAll('#codigos-list-container .f-dynamic-row');
+                return rows.length > 0 && [...rows].some(r => r.querySelector('.item-talla')?.value?.trim());
+            }
+            return false;
+        }
+
+        // INSUMOS / CORTE / TELAS: requiere al menos una fila con tipo y cantidad
+        const selector = area === 'INSUMOS' ? '#insumos-list-container'
+            : area === 'CORTE' ? '#corte-list-container'
+            : '#telas-list-container';
+        const rows = this.container.querySelectorAll(`${selector} .f-dynamic-row`);
+        return rows.length > 0 && [...rows].some(r => r.querySelector('.item-type')?.value?.trim());
     }
 
     _render() {
@@ -122,7 +189,9 @@ export class NovedadesSubForm {
             <!-- Selector de Lote Integrado On-Demand -->
             <div id="nov-lote-mount" class="f-mount-section"></div>
 
-            <form id="form-novedades" class="f-subform-body">
+            <form id="form-novedades" class="f-subform-body" style="display:none;">
+                <!-- ── PASO 1: CLASIFICACIÓN DE LA NOVEDAD ── -->
+                <div class="f-nov-step" id="nov-step-1" style="display:none;">
                 <div class="f-section-title">
                     <span class="pill-num">1</span>
                     <span>Clasificación de la Novedad</span>
@@ -167,15 +236,14 @@ export class NovedadesSubForm {
                         <input type="number" id="nov-cant-normal" class="f-input" min="1" placeholder="Ingrese cantidad..." />
                     </div>
                 </div>
+                </div><!-- /nov-step-1 -->
 
+                <!-- ── PASO 2: DETALLE DE LA SELECCIÓN DEL TIPO ── -->
+                <div class="f-nov-step" id="nov-step-2" style="display:none;">
                 <!-- ── SECCIÓN DINÁMICA: INSUMOS ── -->
                 <div class="f-dynamic-block" id="sec-dyn-insumos" style="display:none;">
                     <div class="f-dynamic-header">
                         <div class="f-dynamic-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
-                                <line x1="7" y1="7" x2="7.01" y2="7"/>
-                            </svg>
                             <span>Detalle de Insumos Afectados</span>
                         </div>
                         <button type="button" class="f-btn-add-item" id="btn-add-insumo">+ Agregar Insumo</button>
@@ -187,13 +255,6 @@ export class NovedadesSubForm {
                 <div class="f-dynamic-block" id="sec-dyn-corte" style="display:none;">
                     <div class="f-dynamic-header">
                         <div class="f-dynamic-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="6" cy="6" r="3"/>
-                                <circle cx="6" cy="18" r="3"/>
-                                <line x1="20" y1="4" x2="8.12" y2="15.88"/>
-                                <line x1="14.47" y1="14.48" x2="20" y2="20"/>
-                                <line x1="8.12" y1="8.12" x2="12" y2="12"/>
-                            </svg>
                             <span>Detalle de Defectos en Corte / Moldería</span>
                         </div>
                         <button type="button" class="f-btn-add-item" id="btn-add-corte">+ Agregar Corte</button>
@@ -205,9 +266,6 @@ export class NovedadesSubForm {
                 <div class="f-dynamic-block" id="sec-dyn-telas" style="display:none;">
                     <div class="f-dynamic-header">
                         <div class="f-dynamic-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M2 12h20M12 2v20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93"/>
-                            </svg>
                             <span>Detalle de Imperfecciones en Tela</span>
                         </div>
                         <button type="button" class="f-btn-add-item" id="btn-add-tela">+ Agregar Defecto</button>
@@ -219,13 +277,7 @@ export class NovedadesSubForm {
                 <div class="f-dynamic-block" id="sec-dyn-codigos" style="display:none;">
                     <div class="f-dynamic-header">
                         <div class="f-dynamic-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="3" y="4" width="18" height="16" rx="2"/>
-                                <line x1="7" y1="8" x2="7" y2="16"/>
-                                <line x1="12" y1="8" x2="12" y2="16"/>
-                                <line x1="17" y1="8" x2="17" y2="16"/>
-                            </svg>
-                            <span>Solicitud de Códigos / Etiquetas</span>
+                            <span>Solicitud de Códigos</span>
                         </div>
                     </div>
 
@@ -234,8 +286,8 @@ export class NovedadesSubForm {
                             <label class="f-label">Tipo de Solicitud <span class="req">*</span></label>
                             <select id="codigos-tipo-solicitud" class="f-select">
                                 <option value="">Seleccione...</option>
-                                <option value="LOTE_COMPLETO">LOTE COMPLETO</option>
-                                <option value="UNIDADES">UNIDADES ESPECÍFICAS</option>
+                                <option value="LOTE_COMPLETO">COMPLETA</option>
+                                <option value="UNIDADES">UNIDADES</option>
                             </select>
                         </div>
 
@@ -261,13 +313,19 @@ export class NovedadesSubForm {
                 <datalist id="datalist-tallas-novedad">
                     ${CODIGOS_TALLAS_LIST.map(t => `<option value="${t}"></option>`).join('')}
                 </datalist>
+                </div><!-- /nov-step-2 -->
 
+                <!-- ── PASO 3: DESCRIPCIÓN DETALLADA ── -->
+                <div class="f-nov-step" id="nov-step-3" style="display:none;">
                 <!-- Observaciones y Descripción Detallada -->
                 <div class="f-form-group full" style="margin-top: 14px;">
                     <label class="f-label">Descripción Detallada y Contexto</label>
                     <textarea id="nov-observaciones" class="f-textarea" rows="3" placeholder="Escriba aquí los detalles y justificación de la novedad..."></textarea>
                 </div>
+                </div><!-- /nov-step-3 -->
 
+                <!-- ── PASO 4: EVIDENCIA FOTOGRÁFICA ── -->
+                <div class="f-nov-step" id="nov-step-4" style="display:none;">
                 <!-- Dropzone de Imágenes -->
                 <div class="f-section-title" style="margin-top: 20px;">
                     <span class="pill-num">2</span>
@@ -285,6 +343,7 @@ export class NovedadesSubForm {
                         <span>Registrar y Enviar Novedad</span>
                     </button>
                 </div>
+                </div><!-- /nov-step-4 -->
             </form>
         `;
 
@@ -312,6 +371,7 @@ export class NovedadesSubForm {
         });
 
         this._bindEvents();
+        this._updateSteps();
     }
 
     _syncLoteDataIntoForm() {
@@ -400,6 +460,33 @@ export class NovedadesSubForm {
             e.preventDefault();
             await this._handleSubmit();
         });
+
+        // Delegación: cualquier cambio/interacción en el form re-evalúa la visibilidad de pasos
+        this.container.querySelector('#form-novedades')?.addEventListener('input', (e) => {
+            if (e.target && (
+                e.target.id === 'nov-observaciones' ||
+                e.target.id === 'nov-cant-normal' ||
+                e.target.id === 'nov-tipo' ||
+                e.target.classList.contains('item-type') ||
+                e.target.classList.contains('item-qty') ||
+                e.target.classList.contains('item-talla') ||
+                e.target.classList.contains('item-color')
+            )) {
+                this._updateSteps();
+            }
+        });
+
+        this.container.querySelector('#form-novedades')?.addEventListener('change', (e) => {
+            if (e.target && (
+                e.target.id === 'nov-area' ||
+                e.target.id === 'nov-tipo' ||
+                e.target.id === 'nov-cant-normal' ||
+                e.target.id === 'codigos-tipo-solicitud' ||
+                e.target.classList.contains('item-type')
+            )) {
+                this._updateSteps();
+            }
+        });
     }
 
     _handleAreaChange(area) {
@@ -466,6 +553,8 @@ export class NovedadesSubForm {
             grpCantNormal.style.display = 'flex';
             inputCantNormal.required = true;
         }
+
+        this._updateSteps();
     }
 
     _handleCodigosTipoChange(tipo) {
@@ -487,23 +576,52 @@ export class NovedadesSubForm {
             grpLoteComp.style.display = 'none';
             grpUnidades.style.display = 'none';
         }
+
+        this._updateSteps();
+    }
+
+    /**
+     * Íconos descriptivos (SVG) que se renderizan DENTRO de los inputs
+     * del desglose dinámico, alineados con el estilo minimalista del módulo.
+     */
+    _getRowIcon(key) {
+        const icons = {
+            insumos: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`,
+            corte: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`,
+            telas: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+            talla: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>`,
+            color: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>`,
+            cant: `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`
+        };
+        return icons[key] || '';
     }
 
     _addDynamicRow(containerSelector, optionsList, label) {
         const container = this.container.querySelector(containerSelector);
         if (!container) return;
 
+        // Ícono descriptivo según la sección (visible DENTRO del input)
+        const iconKey = containerSelector.includes('insumos') ? 'insumos'
+            : containerSelector.includes('corte') ? 'corte' : 'telas';
+        const ico = this._getRowIcon(iconKey);
+
         const row = document.createElement('div');
         row.className = 'f-dynamic-row';
         row.innerHTML = `
             <div class="f-dyn-col-type">
-                <select class="f-select-sm item-type" required>
-                    <option value="">Seleccione ${label}...</option>
-                    ${optionsList.map(o => `<option value="${o}">${o}</option>`).join('')}
-                </select>
+                <div class="f-input-ico">
+                    ${ico}
+                    <select class="f-select-sm item-type" required>
+                        <option value="">Seleccione...</option>
+                        ${optionsList.map(o => `<option value="${o}">${o}</option>`).join('')}
+                    </select>
+                </div>
             </div>
             <div class="f-dyn-col-qty">
-                <input type="number" class="f-input-sm item-qty" min="1" placeholder="Cant." value="1" required />
+                <div class="f-input-ico">
+                    ${this._getRowIcon('cant')}
+                    <input type="number" class="f-input-sm item-qty" min="1" placeholder="Cant." value="1" required />
+                </div>
             </div>
             <button type="button" class="f-btn-del-row" title="Eliminar">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -519,9 +637,11 @@ export class NovedadesSubForm {
                 row.querySelector('.item-type').value = '';
                 row.querySelector('.item-qty').value = '1';
             }
+            this._updateSteps();
         });
 
         container.appendChild(row);
+        this._updateSteps();
     }
 
     _addCodigoRow() {
@@ -531,13 +651,16 @@ export class NovedadesSubForm {
         const row = document.createElement('div');
         row.className = 'f-dynamic-row f-dyn-row-3cols';
         row.innerHTML = `
-            <div>
+            <div class="f-input-ico">
+                ${this._getRowIcon('talla')}
                 <input type="text" class="f-input-sm item-talla" placeholder="Talla..." list="datalist-tallas-novedad" required autocomplete="off" />
             </div>
-            <div>
+            <div class="f-input-ico">
+                ${this._getRowIcon('color')}
                 <input type="text" class="f-input-sm item-color" placeholder="Color..." list="datalist-colores-novedad" required autocomplete="off" />
             </div>
-            <div>
+            <div class="f-input-ico">
+                ${this._getRowIcon('cant')}
                 <input type="number" class="f-input-sm item-qty" min="1" placeholder="Cant." value="1" required />
             </div>
             <button type="button" class="f-btn-del-row" title="Eliminar">
@@ -555,9 +678,11 @@ export class NovedadesSubForm {
                 row.querySelector('.item-color').value = '';
                 row.querySelector('.item-qty').value = '1';
             }
+            this._updateSteps();
         });
 
         container.appendChild(row);
+        this._updateSteps();
     }
 
     async _handleSubmit() {

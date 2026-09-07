@@ -14,7 +14,6 @@ export class BrowserCacheAdapter extends ICacheService {
         // Si el caché está deshabilitado, limpiar almacenamiento de residuos anteriores
         if (!this.isEnabled()) {
             this.clear();
-            console.info('[BrowserCacheAdapter] Caché DESHABILITADO por configuración (modo pruebas).');
         }
     }
 

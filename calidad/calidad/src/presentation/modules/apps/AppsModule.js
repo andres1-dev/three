@@ -132,7 +132,7 @@ export class AppsModule {
         this.container.id = 'module-apps-container';
 
         // Identificar apps activas vs en pruebas
-        const activeIds = new Set(['formularios', 'personas']);
+        const activeIds = new Set(['formularios', 'personas', 'nube']);
         if (this.router && this.router.routes) {
             for (const route of this.router.routes.keys()) {
                 if (route !== 'apps' && route !== 'inicio' && route !== 'perfil') {

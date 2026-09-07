@@ -11,6 +11,7 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1"
 import { decode } from "https://deno.land/std@0.177.0/encoding/base64.ts"
+import { S3Client, PutObjectCommand } from "npm:@aws-sdk/client-s3@3"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,19 @@ const corsHeaders = {
   "Access-Control-Expose-Headers": "Content-Length, X-JSON",
   "Access-Control-Max-Age": "86400",
 }
+
+// ── Cloudflare R2 ──────────────────────────────────────────────
+const r2 = new S3Client({
+  region: "auto",
+  endpoint: Deno.env.get("R2_ENDPOINT") ?? "",
+  credentials: {
+    accessKeyId:     Deno.env.get("R2_ACCESS_KEY_ID")     ?? "",
+    secretAccessKey: Deno.env.get("R2_SECRET_ACCESS_KEY") ?? "",
+  },
+});
+const R2_BUCKET     = Deno.env.get("R2_BUCKET")     ?? "calidad";
+const R2_PUBLIC_URL = Deno.env.get("R2_PUBLIC_URL") ?? "";
+// ──────────────────────────────────────────────────────────────
 
 const GAS_NOTIF_URL = 'https://script.google.com/macros/s/AKfycbw7PEB7D9TP_wDlzJtwKCJmxwUYguXyniYPb_vRAadPHpy7gDWG26fn0wRowI_mre9V/exec';
 
@@ -53,7 +67,7 @@ serve(async (req) => {
     if (accion === 'LISTAR_PRODUCTORAS') {
       const { data, error } = await supabaseClient
         .from('productoras')
-        .select('id_productora, nit, productora')
+        .select('id_productora, nit, productora, nombre_corto')
         .order('productora', { ascending: true });
       if (error) throw error;
       return new Response(JSON.stringify({ success: true, data: data || [] }), {
@@ -124,7 +138,11 @@ serve(async (req) => {
     }
 
     let publicUrl = "";
-    const imgData = payload.imagen || payload.archivo || payload.foto;
+    // ── Origen de la imagen: objeto {base64,mimeType,fileName} o primer item de payload.fotos ──
+    let imgData = payload.imagen || payload.archivo || payload.foto;
+    if ((!imgData || !imgData.base64) && Array.isArray(payload.fotos)) {
+      imgData = payload.fotos.find((f: any) => f && f.base64) || null;
+    }
     if (imgData && imgData.base64) {
       const options = { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' } as const;
       const formatter = new Intl.DateTimeFormat('es-CO', options);
@@ -135,18 +153,47 @@ serve(async (req) => {
       const timestamp = Date.now();
 
       const folderRoot = (hoja?.toUpperCase() === 'REPORTES' || payload.id_reporte) ? 'reportes' : 'novedades';
-      const prodId = payload.productora || user?.user_metadata?.id_productora || '0';
+      const prodId = String(payload.productora || user?.user_metadata?.id_productora || '0').replace(/[^a-zA-Z0-9._-]/g, '_');
       const fileName = (imgData.fileName || 'upload.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
       const filePath = `${folderRoot}/${prodId}/${year}/${month}/${day}/${timestamp}_${fileName}`;
 
       const contentType = imgData.mimeType || 'image/jpeg';
-      const { error: storageError } = await supabaseClient.storage
-        .from('novedades-imagenes')
-        .upload(filePath, decode(imgData.base64), { contentType, upsert: true });
-
-      if (!storageError) {
-        const { data: { publicUrl: pUrl } } = supabaseClient.storage.from('novedades-imagenes').getPublicUrl(filePath);
-        publicUrl = pUrl;
+      try {
+        await r2.send(new PutObjectCommand({
+          Bucket:      R2_BUCKET,
+          Key:         filePath,
+          Body:        decode(imgData.base64),
+          ContentType: contentType,
+        }));
+        if (!R2_PUBLIC_URL) {
+          console.warn(`[R2] OJO: R2_PUBLIC_URL no configurado → en la BD solo se guardará la RUTA relativa (${filePath}). La imagen NO será visible hasta configurarlo.`);
+        }
+        publicUrl = R2_PUBLIC_URL
+          ? `${R2_PUBLIC_URL.replace(/\/$/, "")}/${filePath}`
+          : filePath;
+        console.log(`[R2] Subido: ${filePath}`);
+      } catch (r2Err: any) {
+        console.error("[R2] Error:", r2Err?.message);
+        // ── Fallback: subir a Supabase Storage para no perder la evidencia ──
+        try {
+          const base64Clean = String(imgData.base64).includes(',')
+            ? String(imgData.base64).split(',')[1]
+            : imgData.base64;
+          const { error: upErr } = await supabaseClient.storage
+            .from('novedades-imagenes')
+            .upload(filePath, decode(base64Clean), { contentType, upsert: true });
+          if (upErr) throw upErr;
+          const { data: pubData } = supabaseClient.storage
+            .from('novedades-imagenes')
+            .getPublicUrl(filePath);
+          publicUrl = pubData?.publicUrl || filePath;
+          console.warn(`[R2] Fallback Supabase Storage OK: ${publicUrl}`);
+        } catch (fbErr: any) {
+          throw new Error(
+            `Error al subir imagen a R2: ${r2Err?.message ?? "desconocido"}` +
+            (fbErr?.message ? ` | Fallback Storage: ${fbErr.message}` : "")
+          );
+        }
       }
     }
 

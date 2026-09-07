@@ -68,33 +68,17 @@ input, textarea, select, button {
     touch-action: manipulation;
 }
 
-/* ── Canvas de partículas mejoradas ── */
-#particles-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: auto;
-    z-index: 0;
-    background: #ffffff;
-}
-
 /* ── Card ── */
 .login-card {
     position: relative;
     z-index: 1;
     width: 100%;
     max-width: 360px;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-radius: var(--radius-md);
-    border: 1px solid #edf2f7;
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.02),
-        0 16px 36px -4px rgba(15, 23, 42, 0.06),
-        0 30px 60px -12px rgba(37, 99, 235, 0.07);
-    overflow: hidden;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
     animation: rise .5s cubic-bezier(.22,1,.36,1) both;
 }
 
@@ -124,13 +108,6 @@ input, textarea, select, button {
 @keyframes float {
     0%, 100% { transform: translateY(0); }
     50%       { transform: translateY(-6px); }
-}
-
-/* ── Divider sutil ── */
-.login-divider {
-    height: 1px;
-    margin: 0 28px;
-    background: linear-gradient(90deg, transparent, rgba(226,232,240,.9), transparent);
 }
 
 /* ── Formulario ── */
@@ -274,27 +251,79 @@ input, textarea, select, button {
 }
 @keyframes rot { to { transform: rotate(360deg); } }
 
-/* ── Forgot ── */
-.forgot {
-    display: block;
-    text-align: center;
+/* ── Links de acceso ── */
+.login-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     margin-top: 13px;
+}
+.forgot {
+    display: inline-flex;
+    align-items: center;
     font-size: .73rem;
     color: var(--color-text-muted);
     background: none; border: none;
     cursor: pointer; font-family: var(--font);
+    padding: 0;
     transition: color var(--transition);
 }
 .forgot:hover { color: var(--color-primary); }
+.links-sep {
+    width: 1px;
+    height: 12px;
+    background: var(--color-border);
+    flex-shrink: 0;
+}
 
 /* ── Footer ── */
 .login-foot {
-    padding: 14px 28px;
-    border-top: 1px solid rgba(226,232,240,.7);
+    padding: 12px 28px 20px;
     text-align: center;
-    font-size: .64rem;
-    color: var(--color-text-light);
     letter-spacing: .2px;
+}
+.foot-social-msg {
+    font-size: .68rem;
+    color: var(--color-text-muted);
+    margin-bottom: 12px;
+}
+.foot-social {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 26px;
+    margin-bottom: 14px;
+}
+.foot-social-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    transition: transform var(--transition);
+}
+.foot-social-item img {
+    display: block;
+    width: 20px;
+    height: 20px;
+    opacity: .7;
+    transition: opacity var(--transition);
+}
+.foot-social-item span {
+    display: block;
+    font-size: .62rem;
+    font-weight: 500;
+    color: var(--color-text-light);
+    transition: color var(--transition);
+}
+.foot-social-item:hover { transform: translateY(-2px); }
+.foot-social-item:hover img { opacity: 1; }
+.foot-social-item:hover span { color: var(--color-primary); }
+.foot-dev {
+    font-size: .64rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
 }
 
 @media(max-width: 400px) {
@@ -304,9 +333,6 @@ input, textarea, select, button {
 
 </head>
 <body>
-
-<!-- Canvas de partículas siempre sobre fondo blanco -->
-<canvas id="particles-canvas"></canvas>
 
 <div class="login-card">
 
@@ -322,8 +348,6 @@ input, textarea, select, button {
             <path fill="#ffffff" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 755.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
         </svg>
     </div>
-
-    <div class="login-divider"></div>
 
     <div class="login-body">
         <form id="loginForm" novalidate>
@@ -366,14 +390,38 @@ input, textarea, select, button {
                 <span id="btnTxt">Ingresar</span>
             </button>
 
-            <button type="button" class="forgot" id="forgotBtn">
-                ¿Olvidaste tu contraseña?
-            </button>
+            <div class="login-links">
+                <button type="button" class="forgot" id="forgotBtn">
+                    ¿Olvidaste tu contraseña?
+                </button>
+                <span class="links-sep" aria-hidden="true"></span>
+                <!-- Pendiente: lógica de eliminar credenciales por definir -->
+                <button type="button" class="forgot" id="clearCredsBtn">
+                    Eliminar credenciales
+                </button>
+            </div>
 
         </form>
     </div>
 
-    <div class="login-foot">Desarrollado por Andrés Mendoza &copy; 2026</div>
+    <div class="login-foot">
+        <p class="foot-social-msg">¿Ya nos sigues en redes? ¡Siempre tenemos cosas nuevas!</p>
+        <div class="foot-social">
+            <a href="https://www.instagram.com/eltemplodelamoda/" target="_blank" rel="noopener" class="foot-social-item">
+                <img src="https://img.icons8.com/ios/50/9CA3AF/instagram-new.png" width="20" height="20" alt="Instagram">
+                <span>Instagram</span>
+            </a>
+            <a href="https://www.facebook.com/templodelamodaoficial/" target="_blank" rel="noopener" class="foot-social-item">
+                <img src="https://img.icons8.com/ios/50/9CA3AF/facebook-new.png" width="20" height="20" alt="Facebook">
+                <span>Facebook</span>
+            </a>
+            <a href="https://www.eltemplodelamoda.com/" target="_blank" rel="noopener" class="foot-social-item">
+                <img src="https://img.icons8.com/ios/50/9CA3AF/shopping-bag.png" width="20" height="20" alt="Tienda">
+                <span>Tienda</span>
+            </a>
+        </div>
+        <p class="foot-dev">&copy; <span id="footYear">2026</span> &middot; Desarrollado por Andrés Mendoza</p>
+    </div>
 
 </div>
 
@@ -381,169 +429,8 @@ input, textarea, select, button {
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-/* ── Partículas Profesionales y Estéticas (Fondo Blanco) ── */
-(function () {
-    const canvas = document.getElementById('particles-canvas');
-    const ctx = canvas.getContext('2d');
-    let W, H, dpr = 1, pts = [], animId;
 
-    const mouse = { x: null, y: null, radius: 140 };
 
-    // Configuración estética y suave sobre fondo blanco puro
-    const CONFIG = {
-        countRatio: 0.000075, // Ajuste dinámico según tamaño de pantalla
-        minCount: 45,
-        maxCount: 90,
-        maxDistance: 130,
-        mouseDistance: 150,
-        speed: 0.35,
-        colorLine: 'rgba(63, 81, 181, ',    // #3f51b5 original
-        colorDot:  'rgba(63, 81, 181, ',
-        colorHalo: 'rgba(92, 107, 192, '
-    };
-
-    function resize() {
-        dpr = window.devicePixelRatio || 1;
-        W = window.innerWidth;
-        H = window.innerHeight;
-        canvas.width = Math.floor(W * dpr);
-        canvas.height = Math.floor(H * dpr);
-        ctx.scale(dpr, dpr);
-        createParticles();
-    }
-
-    function createParticles() {
-        const targetCount = Math.min(
-            CONFIG.maxCount,
-            Math.max(CONFIG.minCount, Math.floor(W * H * CONFIG.countRatio))
-        );
-        pts = [];
-        for (let i = 0; i < targetCount; i++) {
-            const depth = Math.random(); // 0 (lejos) a 1 (cerca)
-            pts.push({
-                x: Math.random() * W,
-                y: Math.random() * H,
-                vx: (Math.random() - 0.5) * CONFIG.speed * (0.6 + depth * 0.8),
-                vy: (Math.random() - 0.5) * CONFIG.speed * (0.6 + depth * 0.8),
-                radius: 1.0 + depth * 1.8,
-                baseAlpha: 0.25 + depth * 0.45,
-                depth: depth
-            });
-        }
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, W, H);
-
-        const len = pts.length;
-
-        // 1. Líneas entre partículas con transparencia gradual
-        for (let i = 0; i < len; i++) {
-            const p1 = pts[i];
-            for (let j = i + 1; j < len; j++) {
-                const p2 = pts[j];
-                const dx = p1.x - p2.x;
-                const dy = p1.y - p2.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-
-                if (dist < CONFIG.maxDistance) {
-                    const depthFactor = (p1.depth + p2.depth) / 2;
-                    const alpha = (1 - dist / CONFIG.maxDistance) * 0.22 * depthFactor;
-                    ctx.beginPath();
-                    ctx.moveTo(p1.x, p1.y);
-                    ctx.lineTo(p2.x, p2.y);
-                    ctx.strokeStyle = CONFIG.colorLine + alpha + ')';
-                    ctx.lineWidth = 0.85;
-                    ctx.stroke();
-                }
-            }
-
-            // 2. Interacción suave con el cursor del mouse
-            if (mouse.x !== null && mouse.y !== null) {
-                const mdx = p1.x - mouse.x;
-                const mdy = p1.y - mouse.y;
-                const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
-
-                if (mDist < CONFIG.mouseDistance) {
-                    const mAlpha = (1 - mDist / CONFIG.mouseDistance) * 0.35;
-                    ctx.beginPath();
-                    ctx.moveTo(p1.x, p1.y);
-                    ctx.lineTo(mouse.x, mouse.y);
-                    ctx.strokeStyle = CONFIG.colorLine + mAlpha + ')';
-                    ctx.lineWidth = 1.0;
-                    ctx.stroke();
-
-                    // Suave empuje magnético
-                    const force = (1 - mDist / CONFIG.mouseDistance) * 0.4;
-                    p1.x += (mdx / (mDist || 1)) * force;
-                    p1.y += (mdy / (mDist || 1)) * force;
-                }
-            }
-        }
-
-        // 3. Dibujo de nodos de partículas con halo sutil
-        for (let i = 0; i < len; i++) {
-            const p = pts[i];
-
-            // Halo suave
-            if (p.depth > 0.5) {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, p.radius * 2.2, 0, Math.PI * 2);
-                ctx.fillStyle = CONFIG.colorHalo + (p.baseAlpha * 0.15) + ')';
-                ctx.fill();
-            }
-
-            // Núcleo del punto
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = CONFIG.colorDot + p.baseAlpha + ')';
-            ctx.fill();
-
-            // Desplazamiento
-            p.x += p.vx;
-            p.y += p.vy;
-
-            // Envoltura de bordes suave
-            const pad = 30;
-            if (p.x < -pad) p.x = W + pad;
-            if (p.x > W + pad) p.x = -pad;
-            if (p.y < -pad) p.y = H + pad;
-            if (p.y > H + pad) p.y = -pad;
-        }
-
-        animId = requestAnimationFrame(draw);
-    }
-
-    // Escuchadores de interacción
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-    });
-
-    window.addEventListener('mouseleave', () => {
-        mouse.x = null;
-        mouse.y = null;
-    });
-
-    window.addEventListener('touchmove', (e) => {
-        if (e.touches.length > 0) {
-            mouse.x = e.touches[0].clientX;
-            mouse.y = e.touches[0].clientY;
-        }
-    }, { passive: true });
-
-    window.addEventListener('touchend', () => {
-        mouse.x = null;
-        mouse.y = null;
-    });
-
-    window.addEventListener('resize', () => {
-        resize();
-    });
-
-    resize();
-    draw();
-})();
 
 /* ── Config Supabase ── */
 const SUPABASE_URL = 'https://efocfgjunowtkrgxepbn.supabase.co';
@@ -588,6 +475,10 @@ const errTxt    = document.getElementById('errTxt');
 const pwToggle  = document.getElementById('pwToggle');
 const eyeIcon   = document.getElementById('eyeIcon');
 const forgotBtn = document.getElementById('forgotBtn');
+
+/* ── Año dinámico del footer ── */
+const footYearEl = document.getElementById('footYear');
+if (footYearEl) footYearEl.textContent = new Date().getFullYear();
 
 /* ── Toggle contraseña ── */
 let pwVisible = false;

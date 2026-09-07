@@ -72,14 +72,30 @@ export class CalidadSubForm {
 
     setLote(lote) {
         this.activeLote = lote;
-        if (this.loteSelector) this.loteSelector.setActiveLote(lote);
-        this._recalcAQL();
+        if (this.loteSelector) {
+            this.loteSelector.setActiveLote(lote);
+            // Mantener los selects de configuración AQL alineados con la config vigente
+            this.loteSelector.setAqlConfig({ nivel: this.aqlConfig.nivel, aqlNivel: this.aqlConfig.aqlNivel });
+        }
+        const form = this.container.querySelector('#form-calidad-full');
+        // El formulario permanece oculto hasta que se seleccione una OP
+        if (form) form.style.display = lote ? 'flex' : 'none';
+        this._syncLoteDefaultData();
         this._actualizarVisibilidadCondicional();
+    }
+
+    /**
+     * Aplica al formulario los valores por defecto derivados de la OP seleccionada:
+     * la cantidad del lote define el muestreo AQL y la planta la ubicación del mapa.
+     */
+    _syncLoteDefaultData() {
+        this._recalcAQL();
         this._actualizarMapaPlanta();
     }
 
     _render() {
-        const userEmail = this.currentUser?.email || this.currentUser?.correo || '';
+        // El auditor se muestra por Nombre Completo (viene de Supabase Auth vía Store)
+        const auditorName = this.currentUser?.displayName || this.currentUser?.nombre || '';
 
         this.container.innerHTML = `
             <div class="page-header">
@@ -94,7 +110,7 @@ export class CalidadSubForm {
             <!-- Selector de Lote Integrado -->
             <div id="cal-lote-mount" class="f-mount-section"></div>
 
-            <form id="form-calidad-full" class="f-subform-body">
+            <form id="form-calidad-full" class="f-subform-body" style="display:none;">
                 <!-- 1. LOCALIZACIÓN GPS Y MAPA -->
                 <div class="f-section-title">
                     <span class="pill-num">1</span>
@@ -126,7 +142,7 @@ export class CalidadSubForm {
                     </div>
                 </div>
 
-                <!-- 2. CORREO Y TIPO DE VISITA -->
+                <!-- 2. AUDITOR Y TIPO DE VISITA -->
                 <div class="f-section-title" style="margin-top: 20px;">
                     <span class="pill-num">2</span>
                     <span>Datos de la Auditoría</span>
@@ -134,8 +150,8 @@ export class CalidadSubForm {
 
                 <div class="f-form-grid">
                     <div class="f-form-group">
-                        <label class="f-label">Correo del Auditor <span class="req">*</span></label>
-                        <input type="email" id="cal-email" class="f-input" value="${userEmail}" placeholder="auditor@grupotdm.com" required />
+                        <label class="f-label">Auditor <span class="req">*</span></label>
+                        <input type="text" id="cal-email" class="f-input" value="${auditorName}" placeholder="Nombre del auditor" required readonly />
                     </div>
 
                     <div class="f-form-group">
@@ -150,47 +166,9 @@ export class CalidadSubForm {
                     </div>
                 </div>
 
-                <!-- 3. MUESTREO AQL (ISO 2859-1) -->
+                <!-- 3. CONCLUSIÓN Y DICTAMEN (El Muestreo AQL es informativo: solapa bajo el filtro de Productora) -->
                 <div class="f-section-title" style="margin-top: 20px;">
                     <span class="pill-num">3</span>
-                    <span>Muestreo AQL (ISO 2859-1)</span>
-                </div>
-
-                <div class="f-aql-full-card" id="btn-trigger-aql-modal">
-                    <div class="f-aql-card-top">
-                        <div class="f-aql-badge-title">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                <line x1="16" y1="13" x2="8" y2="13"/>
-                                <line x1="16" y1="17" x2="8" y2="17"/>
-                            </svg>
-                            <span>Regla de Muestreo</span>
-                        </div>
-                        <span class="f-aql-open-hint">Configurar / Ver detalle →</span>
-                    </div>
-
-                    <div class="f-aql-stats-row">
-                        <div class="f-aql-stat-box">
-                            <span class="lbl">Revisar</span>
-                            <span class="num" id="aql-display-muestra">—</span>
-                            <span class="sub">unidades</span>
-                        </div>
-                        <div class="f-aql-stat-box accept">
-                            <span class="lbl">Aprobar si</span>
-                            <span class="num" id="aql-display-ac">—</span>
-                            <span class="sub">≤ defectos</span>
-                        </div>
-                        <div class="f-aql-stat-box reject">
-                            <span class="lbl">Rechazar si</span>
-                            <span class="num" id="aql-display-re">—</span>
-                            <span class="sub">≥ defectos</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. CONCLUSIÓN Y DICTAMEN -->
-                <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">4</span>
                     <span>Conclusión de la Inspección</span>
                 </div>
 
@@ -282,27 +260,29 @@ export class CalidadSubForm {
                 </div>
 
                 <!-- 7. NOVEDADES DE AUDITORÍA ASOCIADAS (Visible en AUDITORÍA) -->
-                <div id="cal-novedades-section" class="f-cond-section" style="margin-top: 16px;">
-                    <div class="f-cond-header" style="justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="12" cy="12" r="10"/>
-                                <line x1="12" y1="8" x2="12" y2="12"/>
-                                <line x1="12" y1="16" x2="12.01" y2="16"/>
-                            </svg>
-                            <span>Novedades del Lote (Cobros, Promociones, Sin Confeccionar)</span>
-                        </div>
-                        <button type="button" class="f-btn-add-nov" id="btn-open-modal-novedad-cal">+ Reportar Novedad</button>
+                <div id="cal-novedades-section" class="f-novedades-section" style="margin-top: 22px;">
+                    <div class="f-nov-section-head">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span>Novedades del Lote</span>
                     </div>
 
                     <div id="cal-novedades-cards-list" class="f-nov-cards-list">
                         <div class="f-empty-nov-hint">Sin novedades reportadas para este lote.</div>
                     </div>
+
+                    <button type="button" class="f-btn-report-nov" id="btn-open-modal-novedad-cal">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        <span>Reportar Novedad</span>
+                    </button>
                 </div>
 
-                <!-- 8. OBSERVACIONES Y PLANTILLA INTELIGENTE -->
+                <!-- 4. OBSERVACIONES Y PLANTILLA INTELIGENTE -->
                 <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">5</span>
+                    <span class="pill-num">4</span>
                     <span>Observaciones y Dictamen Técnico</span>
                 </div>
 
@@ -318,16 +298,16 @@ export class CalidadSubForm {
                     <textarea id="cal-observaciones-text" class="f-textarea" rows="4" placeholder="Detalle los hallazgos encontrados, costuras, tolerancias y motivos de la decisión..." required></textarea>
                 </div>
 
-                <!-- 9. SOPORTE Y FOTOS MÚLTIPLES -->
+                <!-- 5. SOPORTE Y FOTOS MÚLTIPLES -->
                 <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">6</span>
+                    <span class="pill-num">5</span>
                     <span>Soporte / Evidencias Fotográficas</span>
                 </div>
                 <div id="cal-dropzone-mount"></div>
 
-                <!-- 10. FIRMA DIGITAL INTEGRADA -->
+                <!-- 6. FIRMA DIGITAL INTEGRADA -->
                 <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">7</span>
+                    <span class="pill-num">6</span>
                     <span>Firma de Validación del Auditor</span>
                 </div>
 
@@ -410,11 +390,13 @@ export class CalidadSubForm {
                             <div id="modal-select-proceso-cobro" style="display:none; margin-top:8px;">
                                 <label class="f-label">Seleccione el proceso:</label>
                                 <select id="modal-cobro-proceso-val" class="f-select">
+                                    <option value="">Seleccione...</option>
                                     <option value="CONFECCION">CONFECCIÓN</option>
                                     <option value="ESTAMPADO">ESTAMPADO</option>
                                     <option value="OJAL Y BOTON">OJAL Y BOTÓN</option>
                                     <option value="BOTONADO">BOTONADO</option>
                                     <option value="TRANSFER">TRANSFER</option>
+                                    <option value="OJALETE">OJALETE</option>
                                     <option value="LAVADO">LAVADO</option>
                                     <option value="FUSIONADO">FUSIONADO</option>
                                     <option value="OTROS">OTROS</option>
@@ -440,7 +422,7 @@ export class CalidadSubForm {
             </div>
         `;
 
-        // 1. Instanciar Selector de Lote On-Demand
+        // 1. Instanciar Selector de Lote On-Demand (con solapa informativa AQL)
         const loteMount = this.container.querySelector('#cal-lote-mount');
         this.loteSelector = new LoteSelectorCard({
             container: loteMount,
@@ -448,11 +430,19 @@ export class CalidadSubForm {
             selectedProductora: this.selectedProductora,
             onSearchLotes: this.onSearchLotes,
             onProductoraChange: this.onProductoraChange,
-            onSelectLote: (lote) => this.setLote(lote)
+            onSelectLote: (lote) => this.setLote(lote),
+            // Configuración del muestreo (legado): recalcular al cambiar Nivel Inspección / Nivel AQL
+            onAqlConfigChange: (cfg) => {
+                this.aqlConfig.nivel = cfg.nivel;
+                this.aqlConfig.aqlNivel = cfg.aqlNivel;
+                this._recalcAQL();
+            },
+            aqlInfo: true
         });
 
         if (this.activeLote) {
-            this.loteSelector.setActiveLote(this.activeLote);
+            // Restaurar OP preservada: muestra el form y sincroniza AQL/mapa
+            this.setLote(this.activeLote);
         }
 
         // 2. Instanciar Dropzone
@@ -549,15 +539,25 @@ export class CalidadSubForm {
             modalNov.classList.remove('visible');
         });
 
-        // Tipo novedad modal changes
+        // Tipo novedad modal changes (comportamiento legacy: SIN PROCESO solo en PROMOCIONES, PROCESO ANTERIOR solo en COBROS)
         const tipoNovSel = this.container.querySelector('#modal-nov-tipo');
         tipoNovSel?.addEventListener('change', () => {
             const val = tipoNovSel.value;
             const sinProcWrap = this.container.querySelector('#modal-sin-proceso-wrap');
+            const sinProcCheck = this.container.querySelector('#modal-check-sin-proceso');
             const procAntWrap = this.container.querySelector('#modal-proceso-anterior-wrap');
+            const procAntCheck = this.container.querySelector('#modal-check-proceso-anterior');
+            const selProc = this.container.querySelector('#modal-select-proceso-cobro');
+            const procSel = this.container.querySelector('#modal-cobro-proceso-val');
 
-            if (sinProcWrap) sinProcWrap.style.display = (val === 'SIN CONFECCIONAR' || val === 'LAVADO') ? 'block' : 'none';
+            if (sinProcWrap) sinProcWrap.style.display = (val === 'PROMOCIONES') ? 'block' : 'none';
+            if (sinProcCheck && val !== 'PROMOCIONES') sinProcCheck.checked = false;
             if (procAntWrap) procAntWrap.style.display = (val === 'COBROS') ? 'block' : 'none';
+            if (val !== 'COBROS') {
+                if (procAntCheck) procAntCheck.checked = false;
+                if (procSel) procSel.value = '';
+                if (selProc) selProc.style.display = 'none';
+            }
         });
 
         const checkProcAnt = this.container.querySelector('#modal-check-proceso-anterior');
@@ -571,8 +571,8 @@ export class CalidadSubForm {
         });
 
         saveNovBtn?.addEventListener('click', () => {
-            this._guardarNovedadCalidadModal();
-            modalNov.classList.remove('visible');
+            const ok = this._guardarNovedadCalidadModal();
+            if (ok) modalNov.classList.remove('visible');
         });
 
         // Botón Limpiar Formulario
@@ -673,15 +673,17 @@ export class CalidadSubForm {
                     label.textContent = `Ubicación: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (±${Math.round(pos.coords.accuracy)}m)`;
                 }
 
-                // Renderizar Iframe de OpenStreetMap interactivo sin requerir API key externa
+                // Renderizar Iframe de Google Maps interactivo (mismo patrón legacy de impresión)
                 if (frameWrap) {
                     const lat = pos.coords.latitude;
                     const lng = pos.coords.longitude;
                     frameWrap.innerHTML = `
                         <iframe
                             class="f-map-iframe"
-                            src="https://www.openstreetmap.org/export/embed.html?bbox=${lng-0.005}%2C${lat-0.005}%2C${lng+0.005}%2C${lat+0.005}&amp;layer=mapnik&amp;marker=${lat}%2C${lng}"
-                            loading="lazy">
+                            src="https://maps.google.com/maps?q=${lat}%2C${lng}&z=16&output=embed"
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            allowfullscreen>
                         </iframe>
                     `;
                 }
@@ -721,6 +723,10 @@ export class CalidadSubForm {
         if (dispMuestra) dispMuestra.textContent = res.muestra;
         if (dispAc) dispAc.textContent = res.ac;
         if (dispRe) dispRe.textContent = res.re;
+
+        // Resumen colapsado en la solapa informativa (bajo el filtro de Productora)
+        const dispVal = this.container.querySelector('#aql-tab-value');
+        if (dispVal) dispVal.textContent = res.muestra ? `${res.muestra} uds` : '—';
     }
 
     _actualizarVisibilidadCondicional() {
@@ -779,6 +785,8 @@ export class CalidadSubForm {
         this.container.querySelector('#modal-sin-proceso-wrap').style.display = 'none';
         this.container.querySelector('#modal-proceso-anterior-wrap').style.display = 'none';
         this.container.querySelector('#modal-select-proceso-cobro').style.display = 'none';
+        const procSel = this.container.querySelector('#modal-cobro-proceso-val');
+        if (procSel) procSel.value = '';
 
         const codesList = this.container.querySelector('#modal-codes-list');
         if (codesList) {
@@ -812,38 +820,136 @@ export class CalidadSubForm {
         const tipo = this.container.querySelector('#modal-nov-tipo')?.value;
         if (!tipo) {
             Toast.warning('Seleccione el tipo de novedad.');
-            return;
+            return false;
         }
 
-        const sinProceso = this.container.querySelector('#modal-check-sin-proceso')?.checked || false;
-        const procesoAnterior = this.container.querySelector('#modal-check-proceso-anterior')?.checked || false;
-        const procesoCobro = this.container.querySelector('#modal-cobro-proceso-val')?.value || '';
+        const sinProcesoCheck = this.container.querySelector('#modal-check-sin-proceso');
+        const procAntCheck = this.container.querySelector('#modal-check-proceso-anterior');
+        const procSel = this.container.querySelector('#modal-cobro-proceso-val');
+
+        // Legacy: SIN PROCESO solo aplica a PROMOCIONES
+        let sinProceso = false;
+        if (tipo === 'PROMOCIONES') sinProceso = !!sinProcesoCheck?.checked;
+
+        // Legacy: PROCESO ANTERIOR solo aplica a COBROS, y el proceso es obligatorio si se marca
+        let procesoAnterior = false;
+        let procesoCobro = '';
+        if (tipo === 'COBROS' && procAntCheck?.checked) {
+            procesoAnterior = true;
+            procesoCobro = procSel?.value?.trim() || '';
+            if (!procesoCobro) {
+                Toast.warning('Si marca proceso anterior, debe seleccionar el proceso correspondiente.');
+                return false;
+            }
+        }
+
+        // Validación estricta de filas (legacy: talla, color y cantidad obligatorias en todas)
+        const rows = this.container.querySelectorAll('#modal-codes-list .f-code-row');
+        if (!rows.length) {
+            Toast.warning('Agregue al menos una fila de talla/color/cantidad.');
+            return false;
+        }
 
         const codigos = [];
-        this.container.querySelectorAll('#modal-codes-list .f-code-row').forEach(r => {
-            const talla = r.querySelector('.c-talla')?.value.trim();
-            const color = r.querySelector('.c-color')?.value.trim();
-            const cantidad = parseInt(r.querySelector('.c-cant')?.value, 10) || 1;
-            if (talla || color) {
-                codigos.push({ talla, color, cantidad });
-            }
+        let valido = true;
+        rows.forEach(r => {
+            const talla = r.querySelector('.c-talla')?.value.trim() || '';
+            const color = r.querySelector('.c-color')?.value.trim() || '';
+            const cantidad = parseInt(r.querySelector('.c-cant')?.value, 10) || 0;
+            if (!talla || !color || !cantidad) { valido = false; return; }
+            codigos.push({ talla, color, cantidad });
         });
 
-        const totalUnidades = codigos.reduce((acc, c) => acc + c.cantidad, 0);
+        if (!valido || codigos.length === 0) {
+            Toast.warning('Complete talla, color y cantidad en todas las filas.');
+            return false;
+        }
 
-        this.novedadesAgregadas.push({
-            tipo,
-            sinProceso,
-            procesoAnterior,
-            procesoCobro,
-            codigos,
-            totalUnidades
-        });
+        // Compactar códigos repetidos (misma talla+color suman cantidad) — legado
+        const codigosCompactados = this._compactarCodigosNovedad(codigos);
+
+        // Legacy: para COBROS con proceso anterior se guarda como "COBRO - PROCESO"
+        let displayTipo = tipo;
+        const tipoBase = tipo;
+        if (tipo === 'COBROS' && procesoCobro) {
+            displayTipo = `COBRO - ${procesoCobro}`;
+        }
+
+        const nuevaNovedad = {
+            tipo: displayTipo,
+            tipo_base: tipoBase,
+            sin_proceso: sinProceso,
+            proceso: procesoCobro || null,
+            codigos: codigosCompactados,
+            totalUnidades: codigosCompactados.reduce((acc, c) => acc + c.cantidad, 0)
+        };
+
+        // Agrupar/merge con grupos existentes del mismo tipo (comportamiento legacy)
+        let destino = null;
+        if (tipoBase === 'COBROS' && procesoCobro) {
+            destino = this.novedadesAgregadas.find(n => n.tipo === displayTipo);
+        } else if (tipoBase === 'COBROS' && !procesoCobro) {
+            destino = this.novedadesAgregadas.find(n => (n.tipo_base === 'COBROS' || n.tipo === 'COBROS') && !n.proceso);
+        } else {
+            destino = this.novedadesAgregadas.find(n => n.tipo === displayTipo && !!n.sin_proceso === !!sinProceso);
+        }
+
+        if (destino) {
+            destino.codigos = this._compactarCodigosNovedad(destino.codigos.concat(codigosCompactados));
+            destino.totalUnidades = destino.codigos.reduce((acc, c) => acc + c.cantidad, 0);
+        } else {
+            this.novedadesAgregadas.push(nuevaNovedad);
+        }
 
         this._renderNovedadesCalidadList();
         Toast.success('Novedad añadida al reporte.');
+        return true;
     }
 
+    _compactarCodigosNovedad(codigosArray) {
+        const map = {};
+        (codigosArray || []).forEach(c => {
+            const key = `${c.talla}|${c.color}`;
+            if (map[key]) map[key].cantidad += c.cantidad;
+            else map[key] = { talla: c.talla, color: c.color, cantidad: c.cantidad };
+        });
+        return Object.values(map);
+    }
+
+/**
+     * Íconos descriptivos SVG para las novedades del lote (equivalente a FontAwesome del legacy).
+     */
+    _novIcon(k) {
+        const I = {
+            tag: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+            scissors: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+            alert: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+            percent: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
+            money: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/></svg>',
+            dollar: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="18"/><path d="M16 8.5c0-1.5-1.79-2.5-4-2.5s-4 1-4 2.5 1.79 2.5 4 2.5 4 1 4 2.5-1.79 2.5-4 2.5-4-1-4-2.5"/></svg>',
+            invoice: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+            water: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>',
+            trash: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+        };
+        return I[k] || I.tag;
+    }
+
+    /**
+     * Tema (color + ícono + label) por tipo de novedad, replicando el original legacy.
+     */
+    _novedadTheme(n) {
+        const t = n.tipo || '';
+        const tb = n.tipo_base || '';
+        if (t === 'SIN CONFECCIONAR') return { color: '#ef4444', bg: '#fef2f2', icon: 'scissors', label: t };
+        if (t === 'PROMOCIONES') {
+            if (n.sin_proceso) return { color: '#db2777', bg: '#fdf2f8', icon: 'alert', label: 'PROM. SIN PROCESO' };
+            return { color: '#f59e0b', bg: '#fffbeb', icon: 'percent', label: t };
+        }
+        if (t.startsWith('COBRO -')) return { color: '#8b5cf6', bg: '#f5f3ff', icon: 'money', label: t };
+        if (t === 'COBROS' || tb === 'COBROS') return { color: '#10b981', bg: '#ecfdf5', icon: 'invoice', label: t };
+        if (t === 'LAVADO') return { color: '#6366f1', bg: '#eef2ff', icon: 'water', label: t };
+        return { color: '#3b82f6', bg: '#eff6ff', icon: 'tag', label: t };
+    }
     _renderNovedadesCalidadList() {
         const container = this.container.querySelector('#cal-novedades-cards-list');
         if (!container) return;
@@ -853,29 +959,68 @@ export class CalidadSubForm {
             return;
         }
 
-        container.innerHTML = this.novedadesAgregadas.map((n, idx) => `
-            <div class="f-nov-item-card">
-                <div class="f-nov-item-header">
-                    <span class="f-nov-badge-tipo">${n.tipo}</span>
-                    <span class="f-nov-units">${n.totalUnidades} uds.</span>
-                    <button type="button" class="f-btn-del-nov-card" data-index="${idx}">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                    </button>
+        container.innerHTML = this.novedadesAgregadas.map((n, idx) => {
+            const th = this._novedadTheme(n);
+            const esCobroProceso = (n.tipo_base === 'COBROS' || (n.tipo || '').startsWith('COBRO -')) && n.proceso;
+            const rows = n.codigos.map((c, ci) => `
+                <div class="f-nov-tr" title="${c.talla} / ${c.color}">
+                    <span class="f-nov-talla" title="${c.talla}">${c.talla}</span>
+                    <span class="f-nov-color" title="${c.color}">${c.color}</span>
+                    <span class="f-nov-cant-badge" style="background:${th.bg};color:${th.color};">${c.cantidad}</span>
+                    <span class="f-nov-actions">
+                        <button type="button" class="f-btn-del-nov-row" data-index="${idx}" data-code="${ci}" title="Quitar detalle">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </span>
                 </div>
-                ${n.procesoAnterior ? `<div class="f-nov-extra-tag">Cobro a proceso anterior: ${n.procesoCobro}</div>` : ''}
-                ${n.sinProceso ? `<div class="f-nov-extra-tag sin-proc">Marcado como Sin Proceso</div>` : ''}
-                <div class="f-nov-codes-summary">
-                    ${n.codigos.map(c => `<span class="chip-code">${c.talla} / ${c.color} (${c.cantidad})</span>`).join('')}
+            `).join('');
+
+            return `
+                <div class="f-nov-table-card" style="border-top-color:${th.color};">
+                    <div class="f-nov-table-head" style="background:${th.bg};">
+                        <span class="f-nov-tipo-ico" style="color:${th.color};">${this._novIcon(th.icon)}</span>
+                        <span class="f-nov-table-tipo">${th.label}</span>
+                        <span class="f-nov-table-units" style="color:${th.color};">${n.totalUnidades} UDS.</span>
+                        <button type="button" class="f-btn-del-nov-card" data-index="${idx}" title="Eliminar novedad">
+                            ${this._novIcon('trash')}
+                        </button>
+                    </div>
+                    ${esCobroProceso ? `<div class="f-nov-extra-tag">Cobro a proceso anterior: ${n.proceso}</div>` : ''}
+                    ${n.sin_proceso ? `<div class="f-nov-extra-tag sin-proc">Marcado como Sin Proceso</div>` : ''}
+                    <div class="f-nov-table">
+                        <div class="f-nov-tr f-nov-tr-head">
+                            <span>Talla</span>
+                            <span>Color</span>
+                            <span style="text-align:center;">Cant.</span>
+                            <span style="text-align:right;">Acción</span>
+                        </div>
+                        ${rows}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         container.querySelectorAll('.f-btn-del-nov-card').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.dataset.index, 10);
                 this.novedadesAgregadas.splice(idx, 1);
+                this._renderNovedadesCalidadList();
+            });
+        });
+
+        // Eliminar fila individual (talla/color)
+        container.querySelectorAll('.f-btn-del-nov-row').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const gi = parseInt(btn.dataset.index, 10);
+                const ci = parseInt(btn.dataset.code, 10);
+                const grp = this.novedadesAgregadas[gi];
+                if (!grp) return;
+                grp.codigos.splice(ci, 1);
+                if (grp.codigos.length === 0) {
+                    this.novedadesAgregadas.splice(gi, 1);
+                } else {
+                    grp.totalUnidades = grp.codigos.reduce((a, c) => a + c.cantidad, 0);
+                }
                 this._renderNovedadesCalidadList();
             });
         });
@@ -920,7 +1065,8 @@ export class CalidadSubForm {
                 referencia: this.activeLote.referencia,
                 tipoPrenda: this.activeLote.tipoPrenda,
                 cantidadTotal: this.activeLote.cantidad,
-                email: this.container.querySelector('#cal-email')?.value,
+                // El correo real viaja en el payload (columna 'email' en BD); la UI muestra el nombre del auditor
+                email: this.currentUser?.email || this.currentUser?.correo || '',
                 tipoVisita: this.container.querySelector('#cal-tipo-visita')?.value,
                 conclusion: this.container.querySelector('#cal-conclusion')?.value,
                 destinoTipo: this.container.querySelector('#cal-destino-tipo')?.value,

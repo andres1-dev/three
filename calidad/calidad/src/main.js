@@ -25,6 +25,12 @@ import { GetLotesUseCase }          from './core/usecases/formularios/GetLotesUs
 import { SubmitNovedadUseCase }     from './core/usecases/formularios/SubmitNovedadUseCase.js';
 import { SubmitCalidadUseCase }     from './core/usecases/formularios/SubmitCalidadUseCase.js';
 import { SubmitRuteroUseCase }      from './core/usecases/formularios/SubmitRuteroUseCase.js';
+import { SupabaseNubeAdapter }      from './infrastructure/supabase/SupabaseNubeAdapter.js';
+import { GuardarProgramacionUseCase } from './core/usecases/nube/GuardarProgramacionUseCase.js';
+import { ListarProgramacionUseCase }  from './core/usecases/nube/ListarProgramacionUseCase.js';
+import { GetProductorasNubeUseCase }  from './core/usecases/nube/GetProductorasNubeUseCase.js';
+import { ResumenProgramacionUseCase } from './core/usecases/nube/ResumenProgramacionUseCase.js';
+import { NubeModule }                 from './presentation/modules/nube/NubeModule.js';
 
 // ── Router y Estado ──────────────────────────────────────────
 import { Router }   from './presentation/router/Router.js';
@@ -73,13 +79,17 @@ async function bootstrap() {
     const submitCalidadUseCase  = new SubmitCalidadUseCase(dataService);
     const submitRuteroUseCase   = new SubmitRuteroUseCase(dataService);
 
+    // ── Módulo NUBE (Programación de Taller) ─────────────────────
+    const nubeService           = new SupabaseNubeAdapter();
+    const guardarProgramacionUseCase = new GuardarProgramacionUseCase(nubeService);
+    const listarProgramacionUseCase  = new ListarProgramacionUseCase(nubeService);
+    const getProductorasNubeUseCase  = new GetProductorasNubeUseCase(nubeService);
+    const resumenProgramacionUseCase = new ResumenProgramacionUseCase(nubeService);
+
     // ── 4. CARGAR USUARIO ACTUAL EN EL STORE ─────────────────
     try {
         const user = await getCurrentUserUseCase.execute();
         Store.setState({ currentUser: user });
-        if (user) {
-            console.log(`[Calidad] Sesión activa: ${user.displayName} (${user.rol})`);
-        }
     } catch (err) {
         console.error('[Main] Error al obtener usuario:', err);
     }
@@ -144,6 +154,20 @@ async function bootstrap() {
         unmount() { this._mod.unmount(); }
     });
 
+    router.register('nube', class {
+        constructor({ router, params }) {
+            this._mod = new NubeModule({
+                router,
+                guardarProgramacionUseCase,
+                listarProgramacionUseCase,
+                getProductorasNubeUseCase,
+                resumenProgramacionUseCase
+            });
+        }
+        async mount(vp) { await this._mod.mount(vp); }
+        unmount() { this._mod.unmount(); }
+    });
+
     router.register('chats', class {
         async mount(vp) {
             vp.innerHTML = `
@@ -196,11 +220,6 @@ async function bootstrap() {
         console.log(`%c[CALIDAD2] Caché ${enabled ? 'HABILITADO' : 'DESHABILITADO'}`, 'color: #0284c7; font-weight: bold;');
     };
     window.isCacheEnabled = () => cache.isEnabled();
-
-    console.log(
-        `%c[CALIDAD2] Sistema iniciado. Caché: ${cache.isEnabled() ? 'HABILITADO' : 'DESHABILITADO (Modo Pruebas)'}`,
-        `color: ${cache.isEnabled() ? '#10b981' : '#f59e0b'}; font-weight: bold; font-size: 11px;`
-    );
 
     // ── 7. INICIAR EN LA RUTA INICIAL ────────────────────────
 

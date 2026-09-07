@@ -459,37 +459,19 @@ export class SupabaseDataRepository extends IDataService {
         
         const prodId = Number(novedad.productora) || 1;
         const idNovedad = `NOV-${prodId}-${ymd}-${Date.now().toString().slice(-4)}`;
-        const client = this._getClient();
 
-        // 1. Subir imagen si viene archivo en fotos
-        let imagenUrl = '';
+        // 1. Imagen: enviar la primera foto (base64) a la Edge Function /formularios
+        //    para que se suba a Cloudflare R2 (con fallback a Supabase Storage).
+        let imagenPayload = '';
         const primeraFoto = Array.isArray(novedad.fotos) && novedad.fotos.length > 0 ? novedad.fotos[0] : null;
-        if (primeraFoto && primeraFoto.base64 && client) {
-            try {
-                const year = bogotaDate.getFullYear();
-                const month = pad(bogotaDate.getMonth() + 1);
-                const day = pad(bogotaDate.getDate());
-                const filePath = `novedades/${prodId}/${year}/${month}/${day}/${Date.now()}_${primeraFoto.name || 'foto.jpg'}`;
-                
-                const base64Clean = primeraFoto.base64.includes(',') ? primeraFoto.base64.split(',')[1] : primeraFoto.base64;
-                const byteCharacters = atob(base64Clean);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-
-                const { error: upErr } = await client.storage
-                    .from('novedades-imagenes')
-                    .upload(filePath, byteArray, { contentType: primeraFoto.type || 'image/jpeg', upsert: true });
-
-                if (!upErr) {
-                    const { data: pUrl } = client.storage.from('novedades-imagenes').getPublicUrl(filePath);
-                    imagenUrl = pUrl?.publicUrl || '';
-                }
-            } catch (e) {
-                console.warn('[DataRepository] Subida de foto en Storage:', e);
-            }
+        if (primeraFoto && primeraFoto.base64) {
+            imagenPayload = {
+                base64: primeraFoto.base64,
+                mimeType: primeraFoto.mimeType || primeraFoto.type || 'image/jpeg',
+                fileName: primeraFoto.fileName || primeraFoto.name || 'foto.jpg'
+            };
+        } else if (novedad.imagen && typeof novedad.imagen !== 'object') {
+            imagenPayload = novedad.imagen;
         }
 
         const cleanPayload = {
@@ -510,7 +492,7 @@ export class SupabaseDataRepository extends IDataService {
             tipo_detalle: tipoDetalle,
             descripcion: novedad.observaciones || novedad.descripcion || '',
             cantidad_solicitada: Number(novedad.cantidadSolicitada || novedad.cantidad_solicitada || novedad.cantidad || 0),
-            imagen: imagenUrl || novedad.imagen || '',
+            imagen: imagenPayload,
             estado: 'PENDIENTE',
             productora: prodId,
             tejido: novedad.tejido || null,
@@ -535,10 +517,23 @@ export class SupabaseDataRepository extends IDataService {
      * Envía auditoría de Calidad a Edge Function /formularios
      */
     async submitCalidad(calidadReport) {
+        // Normalizar evidencias: enviar solo la primera foto como objeto { base64, mimeType, fileName }
+        // para que la Edge Function /formularios la suba a Cloudflare R2 (payload ligero).
+        const payload = { ...calidadReport };
+        const firstFoto = Array.isArray(payload.fotos) && payload.fotos.length > 0 ? payload.fotos[0] : null;
+        if (firstFoto && firstFoto.base64 && (typeof payload.imagen !== 'object' || !payload.imagen?.base64)) {
+            payload.imagen = {
+                base64: firstFoto.base64,
+                mimeType: firstFoto.mimeType || firstFoto.type || 'image/jpeg',
+                fileName: firstFoto.fileName || firstFoto.name || 'foto.jpg'
+            };
+        }
+        delete payload.fotos;
+
         return this._callFormularios({
             accion: 'REPORTE_CALIDAD',
             hoja: 'REPORTES',
-            ...calidadReport
+            ...payload
         });
     }
 

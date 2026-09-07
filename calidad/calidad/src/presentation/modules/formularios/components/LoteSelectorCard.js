@@ -18,7 +18,9 @@ export class LoteSelectorCard {
         selectedProductora = '',
         onSearchLotes = null,
         onProductoraChange = null,
-        onSelectLote = null
+        onSelectLote = null,
+        onAqlConfigChange = null,
+        aqlInfo = false
     }) {
         this.container = container;
         this.productoras = productoras;
@@ -26,10 +28,13 @@ export class LoteSelectorCard {
         this.onSearchLotes = onSearchLotes;
         this.onProductoraChange = onProductoraChange;
         this.onSelectLote = onSelectLote;
+        this.onAqlConfigChange = onAqlConfigChange;
+        this.aqlInfo = aqlInfo;
 
         this.activeLote = null;
         this.isAccordionOpen = false;
         this.isFilterTabOpen = false;
+        this.isAqlTabOpen = false;
         this.searchTimeout = null;
         this.isLoading = false;
         this.currentResults = [];
@@ -53,6 +58,15 @@ export class LoteSelectorCard {
     setActiveLote(lote) {
         this.activeLote = lote;
         this._renderActiveLote();
+    }
+
+    /**
+     * Sincroniza los selects de configuración AQL con la configuración vigente
+     * (Nivel de Inspección I/II/III y Nivel AQL 1.0–6.5, herencia del legado).
+     */
+    setAqlConfig({ nivel, aqlNivel } = {}) {
+        if (this.aqlCfgNivel && nivel) this.aqlCfgNivel.value = nivel;
+        if (this.aqlCfgAql && aqlNivel) this.aqlCfgAql.value = aqlNivel;
     }
 
     _init() {
@@ -94,6 +108,73 @@ export class LoteSelectorCard {
                     </div>
                 </div>
 
+                ${this.aqlInfo ? `
+                <!-- Solapa Informativa: Muestreo AQL (ISO 2859-1) — mismo patrón que Filtro Productora -->
+                <!-- Oculta hasta seleccionar una OP (ver _renderActiveLote) -->
+                <div class="f-filter-tab-container f-aql-tab" id="aql-tab-container" style="display:none;">
+                    <div class="f-filter-tab-header" id="btn-toggle-aql-tab" role="button" tabindex="0" aria-expanded="false">
+                        <div class="f-tab-title-box">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;opacity:0.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                            <span class="f-tab-main-text">Muestreo AQL</span>
+                        </div>
+                        <div class="f-tab-controls">
+                            <span class="f-aql-tab-value" id="aql-tab-value">—</span>
+                            <svg class="f-tab-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo Desplegable -->
+                    <div class="f-filter-tab-body" id="aql-tab-drawer" style="display:none;">
+                        <div class="f-filter-tab-body-inner">
+                            <!-- Configuración del Muestreo (legado: aqlNivelInspeccion / aqlNivel) -->
+                            <div class="f-aql-config-grid">
+                                <div class="f-aql-config-item">
+                                    <label class="f-aql-config-lbl">Nivel de Inspección</label>
+                                    <select id="aql-cfg-nivel" class="f-aql-config-select" aria-label="Nivel de Inspección">
+                                        <option value="I">I — Reducido</option>
+                                        <option value="II" selected>II — Estándar</option>
+                                        <option value="III">III — Severo</option>
+                                    </select>
+                                </div>
+                                <div class="f-aql-config-item">
+                                    <label class="f-aql-config-lbl">Nivel AQL</label>
+                                    <select id="aql-cfg-aql" class="f-aql-config-select" aria-label="Nivel AQL">
+                                        <option value="1.0">1.0 — Crítico</option>
+                                        <option value="1.5">1.5 — Estricto</option>
+                                        <option value="2.5">2.5 — Normal</option>
+                                        <option value="4.0" selected>4.0 — Flexible</option>
+                                        <option value="6.5">6.5 — Permisivo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="f-aql-stats-row">
+                                <div class="f-aql-stat-box">
+                                    <span class="lbl">Revisar</span>
+                                    <span class="num" id="aql-display-muestra">—</span>
+                                    <span class="sub">unidades</span>
+                                </div>
+                                <div class="f-aql-stat-box accept">
+                                    <span class="lbl">Aprobar si</span>
+                                    <span class="num" id="aql-display-ac">—</span>
+                                    <span class="sub">≤ defectos</span>
+                                </div>
+                                <div class="f-aql-stat-box reject">
+                                    <span class="lbl">Rechazar si</span>
+                                    <span class="num" id="aql-display-re">—</span>
+                                    <span class="sub">≥ defectos</span>
+                                </div>
+                            </div>
+                            <button type="button" class="f-aql-detail-link" id="btn-trigger-aql-modal">Ver detalle ISO 2859-1 →</button>
+                        </div>
+                    </div>
+                </div>` : ''}
+
                 <!-- Buscador Principal On-Demand -->
                 <div class="f-search-row">
                     <div class="f-search-input-wrap">
@@ -134,8 +215,31 @@ export class LoteSelectorCard {
         this.searchIcon = this.container.querySelector('#icon-search-static');
         this.spinner = this.container.querySelector('#icon-search-spinner');
 
+        // Referencias de la Solapa Informativa AQL (solo cuando aqlInfo = true)
+        this.aqlTabContainer = this.container.querySelector('#aql-tab-container');
+        this.btnAqlToggle = this.container.querySelector('#btn-toggle-aql-tab');
+        this.aqlDrawer = this.container.querySelector('#aql-tab-drawer');
+        this.aqlCfgNivel = this.container.querySelector('#aql-cfg-nivel');
+        this.aqlCfgAql = this.container.querySelector('#aql-cfg-aql');
+
         this._renderProductoraOptions();
         this._bindEvents();
+    }
+
+    /**
+     * Resuelve el nombre corto de una productora a partir de su ID,
+     * usando el catálogo cargado vía Edge Function (tabla `productoras`).
+     * Prioriza `nombre_corto`; cae al nombre legal si la tabla no lo tiene.
+     */
+    _getProductoraName(val) {
+        if (val === null || val === undefined || val === '') return 'N/A';
+        const raw = String(val).trim();
+        const p = this.productoras.find(pr => {
+            const id = pr.id_productora ?? pr.id ?? pr.nit;
+            return id !== undefined && id !== null && String(id) === raw;
+        });
+        if (!p) return raw.toUpperCase();
+        return String(p.nombre_corto || p.productora || p.nombre || raw).toUpperCase();
     }
 
     _renderProductoraOptions() {
@@ -146,7 +250,7 @@ export class LoteSelectorCard {
             '<option value="">Todas las Productoras</option>',
             ...this.productoras.map(p => {
                 const id = p.id_productora ?? p.id ?? p.nit ?? p.productora;
-                const name = p.productora ?? p.nombre ?? id;
+                const name = String(p.nombre_corto || p.productora || p.nombre || String(id)).toUpperCase();
                 const isSelected = String(id) === String(currentVal) ? 'selected' : '';
                 return `<option value="${id}" ${isSelected}>${name}</option>`;
             })
@@ -164,7 +268,7 @@ export class LoteSelectorCard {
                 const id = p.id_productora ?? p.id ?? p.nit ?? p.productora;
                 return String(id) === String(this.selectedProductora);
             });
-            const name = found ? (found.productora || found.nombre) : this.selectedProductora;
+            const name = found ? String(found.nombre_corto || found.productora || found.nombre).toUpperCase() : String(this.selectedProductora).toUpperCase();
             this.labelFilter.textContent = name;
             this.tabContainer?.classList.add('has-active-filter');
             if (this.btnClearProd) this.btnClearProd.style.display = 'inline-flex';
@@ -191,6 +295,38 @@ export class LoteSelectorCard {
                 toggleHandler();
             }
         });
+
+        // Toggle Solapa Informativa AQL (mismo comportamiento que el filtro)
+        if (this.btnAqlToggle && this.aqlDrawer) {
+            const aqlToggleHandler = () => {
+                this.isAqlTabOpen = !this.isAqlTabOpen;
+                this.aqlDrawer.style.display = this.isAqlTabOpen ? 'block' : 'none';
+                this.aqlTabContainer.classList.toggle('is-open', this.isAqlTabOpen);
+                this.btnAqlToggle.setAttribute('aria-expanded', String(this.isAqlTabOpen));
+            };
+
+            this.btnAqlToggle.addEventListener('click', aqlToggleHandler);
+            this.btnAqlToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    aqlToggleHandler();
+                }
+            });
+        }
+
+        // Configuración del Muestreo AQL: notificar al propietario para recalcular
+        if (this.aqlCfgNivel && this.aqlCfgAql) {
+            const notifyAqlCfg = () => {
+                if (typeof this.onAqlConfigChange === 'function') {
+                    this.onAqlConfigChange({
+                        nivel: this.aqlCfgNivel.value,
+                        aqlNivel: this.aqlCfgAql.value
+                    });
+                }
+            };
+            this.aqlCfgNivel.addEventListener('change', notifyAqlCfg);
+            this.aqlCfgAql.addEventListener('change', notifyAqlCfg);
+        }
 
         // Limpiar Filtro de Productora
         this.btnClearProd?.addEventListener('click', (e) => {
@@ -304,7 +440,7 @@ export class LoteSelectorCard {
                 </div>
                 <div class="f-sug-body">
                     <span class="f-sug-ref">Ref: ${l.referencia || 'N/A'}</span>
-                    <span class="f-sug-qty">${(l.cantidad || 0).toLocaleString()} uds.</span>
+                    <span class="f-sug-qty">${(l.cantidad || 0).toLocaleString()}</span>
                 </div>
                 ${l.descripcion ? `<div class="f-sug-desc">${l.descripcion}</div>` : ''}
             </div>
@@ -331,8 +467,13 @@ export class LoteSelectorCard {
     _renderActiveLote() {
         if (!this.activeLote) {
             this.activeContainer.innerHTML = '';
+            // La solapa AQL solo es visible cuando hay una OP seleccionada
+            if (this.aqlTabContainer) this.aqlTabContainer.style.display = 'none';
             return;
         }
+
+        // OP seleccionada: mostrar la solapa informativa del muestreo
+        if (this.aqlTabContainer) this.aqlTabContainer.style.display = '';
 
         const l = this.activeLote;
         this.activeContainer.innerHTML = `
@@ -345,10 +486,17 @@ export class LoteSelectorCard {
                     </div>
                     <div class="f-lote-text">
                         <div class="f-lote-title-row">
-                            <span class="f-lote-tag">OP: ${l.lote || l.op}</span>
-                            <span class="f-lote-status">${l.estado || 'Activo'}</span>
+                            <span class="f-lote-title-item">
+                                <span class="f-lote-title-lbl">OP</span>
+                                <span class="f-lote-tag">${l.lote || l.op}</span>
+                            </span>
+                            ${l.referencia ? `
+                            <span class="f-lote-title-item">
+                                <span class="f-lote-title-lbl">Referencia</span>
+                                <span class="f-lote-ref-inline">${l.referencia}</span>
+                            </span>` : ''}
                         </div>
-                        <span class="f-lote-ref-text">Ref: ${l.referencia || 'N/A'} · Planta: ${l.planta || 'N/A'}</span>
+                        <span class="f-lote-ref-text">${l.planta || ''}</span>
                     </div>
                     <button type="button" class="f-accordion-chevron ${this.isAccordionOpen ? 'open' : ''}" aria-label="Ver detalles">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -360,40 +508,36 @@ export class LoteSelectorCard {
                 <div class="f-lote-details-body ${this.isAccordionOpen ? 'open' : ''}" id="lote-details-body">
                     <div class="f-details-grid">
                         <div class="f-detail-item">
-                            <span class="lbl">Cantidad Total</span>
-                            <span class="val">${(l.cantidad || 0).toLocaleString()} uds.</span>
+                            <span class="lbl">Cantidad</span>
+                            <span class="val">${(l.cantidad || 0).toLocaleString()}</span>
                         </div>
                         <div class="f-detail-item">
-                            <span class="lbl">Módulo / Línea</span>
-                            <span class="val">${l.modulo || l.linea || 'Línea 1'}</span>
+                            <span class="lbl">Productora</span>
+                            <span class="val">${this._getProductoraName(l.productora)}</span>
+                        </div>
+                        <div class="f-detail-item">
+                            <span class="lbl">Línea</span>
+                            <span class="val">${l.linea || l.modulo || 'N/A'}</span>
                         </div>
                         <div class="f-detail-item">
                             <span class="lbl">Proceso</span>
                             <span class="val">${l.proceso || 'Confección'}</span>
                         </div>
                         <div class="f-detail-item">
-                            <span class="lbl">Tipo Prenda</span>
-                            <span class="val">${l.tipoPrenda || l.prenda || 'Prenda'}</span>
+                            <span class="lbl">Prenda</span>
+                            <span class="val">${l.tipoPrenda || l.prenda || 'N/A'}</span>
                         </div>
                         <div class="f-detail-item">
-                            <span class="lbl">Género / Tejido</span>
-                            <span class="val">${[l.genero, l.tejido].filter(Boolean).join(' · ') || 'N/A'}</span>
+                            <span class="lbl">Género</span>
+                            <span class="val">${l.genero || 'N/A'}</span>
                         </div>
                         <div class="f-detail-item">
-                            <span class="lbl">SAM Estimado</span>
-                            <span class="val">${l.sam ? l.sam + ' min' : 'N/A'}</span>
-                        </div>
-                        <div class="f-detail-item">
-                            <span class="lbl">Fecha Entrada</span>
+                            <span class="lbl">Entrada</span>
                             <span class="val">${l.entrada || l.fechaEntrega || 'N/A'}</span>
                         </div>
                         <div class="f-detail-item">
-                            <span class="lbl">Fecha Salida</span>
+                            <span class="lbl">Salida</span>
                             <span class="val">${l.salida || l.fechaSalida || 'N/A'}</span>
-                        </div>
-                        <div class="f-detail-item full">
-                            <span class="lbl">Descripción Completa Master</span>
-                            <span class="val">${l.descripcion || 'Sin descripción adicional en master'}</span>
                         </div>
                     </div>
                 </div>
