@@ -1,0 +1,3 @@
+﻿615: <span class="carga-chip carga-chip-prod">Productora: <strong>${prod}</strong></span>
+653: <span class="carga-chip carga-chip-prod">Productora: <strong>${prod}</strong></span>`
+655: <span class="carga-chip carga-chip-prod">Productora: <strong>${prod}</strong></span>`;

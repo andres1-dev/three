@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+    <title>Auditorías - Grupo TDM</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+        integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css"
+            integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous"
+            rel="stylesheet">
+    </noscript>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            integrity="sha384-iw3OoTErCYJJB9mCa8LNS2hbsQ7M3C0EpIsO/H5+EGAkPGc6rk+V8i04oW/K5xq0" crossorigin="anonymous"
+            rel="stylesheet">
+    </noscript>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
+        rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@700&display=swap"
+            rel="stylesheet">
+    </noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"
+        integrity="sha384-rletO6VmZKncQ40DsuZoGaQ+b9dgf3afDQaUJQ6sf1dAjche8Sk9NyTnLMNPxl0R" crossorigin="anonymous"
+        media="print" onload="this.media='all'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vscode/codicons@0.0.35/dist/codicon.css"
+            integrity="sha384-rletO6VmZKncQ40DsuZoGaQ+b9dgf3afDQaUJQ6sf1dAjche8Sk9NyTnLMNPxl0R" crossorigin="anonymous">
+    </noscript>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --color-primary: #3f51b5;
+            --border-radius: 16px;
+        }
+
+        body {
+            padding-top: 0;
+            background-attachment: fixed;
+            color: #1e293b;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .wrapper-dashboard {
+            width: 96%;
+            max-width: 1400px;
+            margin: 80px auto 2rem;
+            padding: 2rem;
+            background: transparent;
+            position: relative;
+            z-index: 10;
+        }
+
+        .filters-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            background: transparent;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+            max-width: 350px;
+            position: relative;
+        }
+
+        .filter-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .filter-input {
+            width: 100%;
+            border: 1px solid rgba(203, 213, 225, 0.6);
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            color: #64748b;
+            height: 41px;
+        }
+
+        .filter-input::placeholder {
+            color: #94a3b8;
+            opacity: 1;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            background: rgba(255, 255, 255, 0.85);
+            color: #475569;
+        }
+
+        select.filter-input {
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+            padding-right: 2.25rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.65rem center;
+            background-size: 1rem;
+        }
+
+        select.filter-input option {
+            color: #475569;
+        }
+
+        .filter-input-wrap {
+            position: relative;
+        }
+
+        .filter-input-wrap .filter-input {
+            padding-left: 36px;
+        }
+
+        .filter-input-wrap .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            color: #64748b;
+            font-size: 0.95rem;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        .btn-export {
+            background: rgba(139, 92, 246, 0.8);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            height: 41px;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .btn-export.green {
+            background: rgba(16, 185, 129, 0.8);
+        }
+
+        .btn-export:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+
+        .btn-premium-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #475569;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-premium-back:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        .actions-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex: 1;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .actions-menu {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .fab-toggle {
+            display: none;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.02);
+        }
+
+        .card canvas {
+            background: transparent !important;
+        }
+
+        .reports-card {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e293b;
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .status-badge.ok {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+        }
+
+        .status-badge.rej {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+
+        .reports-card {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .reports-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 22px 24px 0;
+            flex-wrap: wrap;
+        }
+
+        .reports-card-header .card-title {
+            margin-bottom: 4px;
+        }
+
+        .reports-card-sub {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .reports-toolbar {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+            flex-wrap: wrap;
+        }
+
+        .reports-search-wrap {
+            flex: 1;
+            min-width: 220px;
+            position: relative;
+        }
+
+        .reports-search-wrap i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+
+        .reports-search-input {
+            width: 100%;
+            height: 42px;
+            padding: 0 14px 0 40px;
+            border: 1px solid rgba(203, 213, 225, 0.8);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.7);
+            color: #64748b;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .reports-search-input::placeholder {
+            color: #94a3b8;
+            opacity: 1;
+        }
+
+        .reports-search-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+            color: #475569;
+        }
+
+        .btn-table-clear {
+            height: 42px;
+            padding: 0 16px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #64748b;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-table-clear:hover {
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+
+        .reports-table-wrap {
+            max-height: 520px;
+            overflow: auto;
+            border-top: 1px solid rgba(241, 245, 249, 0.9);
+        }
+
+        .reports-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.76rem;
+        }
+
+        .reports-table thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+            box-shadow: 0 1px 0 #e2e8f0;
+        }
+
+        .reports-table th {
+            padding: 7px 10px;
+            font-size: 0.58rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .reports-table td {
+            padding: 7px 10px;
+            color: #1e293b;
+            font-weight: 500;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            line-height: 1.25;
+        }
+
+        .reports-table tbody tr:hover td {
+            background: #f8fafc;
+        }
+
+        .reports-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .cell-date {
+            color: #64748b;
+            font-weight: 600;
+            white-space: nowrap;
+            font-size: 0.72rem;
+            width: 1%;
+        }
+
+        .cell-lote {
+            font-weight: 700;
+            color: #3b82f6;
+            white-space: nowrap;
+            font-size: 0.72rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .cell-ref {
+            font-weight: 600;
+            color: #334155;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .cell-planta {
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.72rem;
+        }
+
+        .cell-auditor {
+            max-width: 130px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.72rem;
+        }
+
+        .cell-tipo {
+            font-size: 0.68rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        .cell-qty {
+            text-align: center;
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 0.72rem;
+            white-space: nowrap;
+        }
+
+        .estado-badge {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 12px;
+            font-size: 0.58rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+
+        .estado-badge.aprobado {
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+        }
+
+        .estado-badge.rechazado {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+        }
+
+        .btn-ver-reporte {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            padding: 0;
+            border: none;
+            border-radius: 6px;
+            background: none;
+            color: #64748b;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: color 0.15s, background 0.15s;
+        }
+
+        .btn-ver-reporte:hover {
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .reports-empty {
+            display: none;
+            text-align: center;
+            padding: 48px 24px;
+            color: #94a3b8;
+        }
+
+        .reports-empty i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.4;
+            display: block;
+        }
+
+        .reports-empty-title {
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .reports-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 14px 24px;
+            border-top: 1px solid #f1f5f9;
+            flex-wrap: wrap;
+        }
+
+        .reports-pagination-info {
+            font-size: 0.78rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .reports-pagination-btns {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .btn-page {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #475569;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .btn-page:hover:not(:disabled) {
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .btn-page:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-page.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.75rem;
+            width: auto;
+            padding: 0 10px;
+        }
+
+        #loaderOverlay {
+            position: fixed;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            height: calc(100% - 70px);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            z-index: 999;
+            overflow-y: auto;
+            padding-top: 2rem;
+        }
+
+        /* Modal Styles - Same as mis-reportes */
+        #reporteModal.show {
+            display: flex !important;
+            align-items: flex-start !important;
+            justify-content: center !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1055 !important;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding-top: 80px !important;
+            overflow-y: auto !important;
+        }
+
+        #reporteModal .modal-dialog {
+            z-index: 2000 !important;
+            position: relative !important;
+            margin: 0 !important;
+            max-width: 800px !important;
+            width: 90% !important;
+            margin-bottom: 50px !important;
+        }
+
+        #reporteModal .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            z-index: 1057 !important;
+            position: relative;
+            background-color: white;
+        }
+
+        #reporteModal .modal-header {
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            border: none;
+        }
+
+        #reporteModal .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        #reporteModal .form-label {
+            font-weight: 600;
+            color: #3f51b5;
+            font-size: 0.85rem;
+        }
+
+        #reporteModal .form-control {
+            border-radius: 8px;
+            border-color: #dee2e6;
+            font-size: 0.9rem;
+        }
+
+        #reporteModal .form-control:focus {
+            border-color: #3f51b5 !important;
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.1) !important;
+        }
+
+        #reporteModal .form-control[readonly] {
+            background-color: #f8fafc;
+            color: #64748b;
+            border-color: #dee2e6;
+        }
+
+        #reporteModal .modal-body {
+            background-color: white;
+            padding: 2rem !important;
+            padding-bottom: 1rem !important;
+        }
+
+        #reporteModal .modal-footer {
+            padding: 0.5rem 2rem !important;
+            margin-top: 0 !important;
+            background-color: white;
+            border-radius: 0 0 16px 16px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 767px) {
+            #loaderOverlay {
+                top: 60px;
+                height: calc(100% - 60px);
+                padding-top: 1rem;
+            }
+
+            .wrapper-dashboard {
+                padding: 1rem;
+                width: 100%;
+                margin-top: 60px;
+            }
+
+            .filters-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 15px;
+            }
+
+            .filter-group {
+                max-width: none;
+                margin-bottom: 10px;
+            }
+
+            .actions-container {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                z-index: 9999;
+                flex-direction: column-reverse;
+                align-items: flex-end;
+            }
+
+            .actions-menu {
+                display: none;
+                flex-direction: column;
+                align-items: flex-end;
+                background: rgba(255, 255, 255, 0.85);
+                padding: 15px;
+                border-radius: 16px;
+                backdrop-filter: blur(12px);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+                border: 1px solid rgba(226, 232, 240, 0.6);
+            }
+
+            .actions-container.open .actions-menu {
+                display: flex;
+            }
+
+            .fab-toggle {
+                display: flex;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #3b82f6, #60a5fa);
+                color: white;
+                justify-content: center;
+                align-items: center;
+                font-size: 1.5rem;
+                border: none;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+                outline: none;
+                cursor: pointer;
+                transition: transform 0.2s;
+            }
+
+            .actions-container.open .fab-toggle {
+                transform: none;
+                background: linear-gradient(135deg, #ef4444, #dc2626);
+            }
+
+            #reporteModal .modal-dialog {
+                width: 98% !important;
+                max-width: 98% !important;
+                margin-bottom: 10px !important;
+            }
+
+            #reporteModal .modal-body {
+                padding: 1rem 1.5rem !important;
+            }
+
+        }
+
+        /* SweetAlert z-index override for modal */
+        .swal-high-zindex {
+            z-index: 999999 !important;
+        }
+
+        .swal2-container.swal-high-zindex {
+            z-index: 999999 !important;
+        }
+
+        /* Spin animation for loading */
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Search OP bar */
+        .op-search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            background: transparent;
+            padding: 18px 20px;
+            border-radius: 16px;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+
+        .op-search-primary {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+            min-width: 280px;
+            align-items: flex-end;
+        }
+
+        .op-search-group {
+            flex: 1;
+            position: relative;
+        }
+
+        .op-search-label {
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #3f51b5;
+            letter-spacing: 0.06em;
+            margin-bottom: 7px;
+            display: block;
+        }
+
+        .op-search-input-wrap {
+            position: relative;
+        }
+
+        .op-search-input-wrap .input-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            color: #3f51b5;
+            font-size: 0.95rem;
+            pointer-events: none;
+            line-height: 1;
+        }
+
+        #searchOP {
+            width: 100%;
+            border: 2px solid rgba(63, 81, 181, 0.25);
+            border-radius: 10px;
+            padding: 11px 14px 11px 38px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            box-sizing: border-box;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.8);
+            color: #1e293b;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            letter-spacing: 0.03em;
+        }
+
+        #searchOP::placeholder {
+            color: #94a3b8;
+            font-weight: 400;
+            font-size: 0.88rem;
+        }
+
+        #searchOP:focus {
+            outline: none;
+            border-color: #3f51b5;
+            box-shadow: 0 0 0 3px rgba(63, 81, 181, 0.12);
+            background: #fff;
+        }
+
+        #btnBuscarOP {
+            height: 44px;
+            padding: 0 22px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #3f51b5 0%, #5c6bc0 100%);
+            color: white;
+            border: none;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            white-space: nowrap;
+            min-width: 100px;
+            box-shadow: 0 4px 12px rgba(63, 81, 181, 0.25);
+        }
+
+        #btnBuscarOP:hover:not(:disabled) {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        #btnBuscarOP:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #btnLimpiarOP {
+            height: 44px;
+            padding: 0 16px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            color: #64748b;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        #btnLimpiarOP:hover {
+            border-color: #cbd5e1;
+            color: #334155;
+        }
+
+        .op-secondary-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            padding-top: 12px;
+            border-top: 1px solid rgba(226, 232, 240, 0.7);
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .search-state-box {
+            border-radius: 14px;
+            border: 1px solid rgba(226, 232, 240, 0.7);
+            background: rgba(255, 255, 255, 0.6);
+            margin-bottom: 12px;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .results-header {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            background: rgba(63, 81, 181, 0.06);
+            border-radius: 10px;
+            border: 1px solid rgba(63, 81, 181, 0.12);
+            margin-bottom: 12px;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #475569;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="loaderOverlay">
+        <style>
+            @keyframes skeleton-loading {
+                0% {
+                    background-position: 200% 0;
+                }
+
+                100% {
+                    background-position: -200% 0;
+                }
+            }
+
+            .skeleton-box {
+                background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+                background-size: 200% 100%;
+                animation: skeleton-loading 1.5s infinite;
+                border-radius: 8px;
+            }
+
+            .dashboard-skeleton-shell {
+                width: 90%;
+                max-width: 1200px;
+                padding: 2rem;
+                display: flex;
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .skeleton-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 16px;
+            }
+
+            @media (max-width: 767px) {
+                .dashboard-skeleton-shell {
+                    width: 100%;
+                    padding: 1rem;
+                    gap: 16px;
+                }
+
+                .skeleton-header {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+            }
+        </style>
+        <div class="dashboard-skeleton-shell">
+            <div class="skeleton-header">
+                <div>
+                    <div class="skeleton-box" style="width: 300px; height: 32px; margin-bottom: 8px;"></div>
+                    <div class="skeleton-box" style="width: 400px; height: 16px;"></div>
+                </div>
+                <div class="skeleton-box" style="width: 150px; height: 36px; border-radius: 20px;"></div>
+            </div>
+            <div
+                style="background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 20px; height: 400px; display:flex; flex-direction:column; gap:15px;">
+                <div class="skeleton-box" style="width: 40%; height: 16px;"></div>
+                <div class="skeleton-box" style="width: 100%; flex:1; border-radius:12px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="wrapper-dashboard" id="dashboardContent" style="display: none;">
+
+        <!-- Barra de búsqueda por OP -->
+        <div class="op-search-bar">
+            <!-- Campo principal de búsqueda -->
+            <div class="op-search-primary">
+                <div class="op-search-group" style="flex:1;">
+                    <label class="op-search-label"><i class="fas fa-barcode" style="margin-right:4px;"></i>Número de OP
+                        / Lote</label>
+                    <div class="op-search-input-wrap">
+                        <i class="fas fa-hashtag input-icon" aria-hidden="true"></i>
+                        <input type="text" id="searchOP" placeholder="Ejemplo: 12345 ó 5955" autocomplete="off"
+                            spellcheck="false">
+                    </div>
+                </div>
+                <button id="btnBuscarOP" onclick="window.buscarPorOP()">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+                <button id="btnLimpiarOP" onclick="window.limpiarBusqueda()" title="Limpiar búsqueda">
+                    <i class="fas fa-times"></i> Limpiar
+                </button>
+            </div>
+
+            <!-- Filtros secundarios (ocultos inicialmente) -->
+            <div class="op-secondary-filters" id="secondaryFiltersContainer" style="display:none;">
+                <div class="filter-group" id="filterProductoraContainer" style="display:none;">
+                    <label class="filter-label">Productora</label>
+                    <select id="filterProductora" class="filter-input" onchange="window.applyFilters()">
+                        <option value="">Todas las productoras</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Auditor</label>
+                    <select id="filterAuditor" class="filter-input" onchange="window.applyFilters()">
+                        <option value="">Todos los auditores</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Tipo de Visita</label>
+                    <select id="filterTipo" class="filter-input" onchange="window.applyFilters()">
+                        <option value="">Todos los tipos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Estado</label>
+                    <select id="filterEstado" class="filter-input" onchange="window.applyFilters()">
+                        <option value="">Todos los estados</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado de búsqueda (loading / vacío / sin resultados) -->
+        <div id="searchStateBox" class="search-state-box"></div>
+
+        <!-- Header de resultados -->
+        <div id="resultsHeader" class="results-header"></div>
+
+        <div class="card mt-0 reports-card" id="reportsCard" style="display: none;">
+            <input type="hidden" id="tableSearch">
+            <input type="hidden" id="tableResultsMeta">
+            <div class="reports-table-wrap">
+                <table class="reports-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Lote</th>
+                            <th>Ref.</th>
+                            <th>Planta</th>
+                            <th>Auditor</th>
+                            <th>Tipo</th>
+                            <th class="text-center">Cant.</th>
+                            <th>Estado</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+                <div id="tableEmpty" class="reports-empty">
+                    <i class="fas fa-search"></i>
+                    <div class="reports-empty-title">Sin resultados</div>
+                    <div>No hay reportes que coincidan con la búsqueda o los filtros activos.</div>
+                </div>
+            </div>
+            <div class="reports-pagination" id="tablePagination" style="display: none;">
+                <span class="reports-pagination-info" id="tablePaginationInfo"></span>
+                <div class="reports-pagination-btns" id="tablePaginationBtns"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver reporte -->
+    <div id="reporteModal" class="modal fade" tabindex="-1" style="display: none;">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fas fa-eye me-2"></i>Ver Reporte
+                    </h5>
+                    <button type="button" class="btn-close" onclick="cerrarModalReporte()"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formVerReporte">
+                        <input type="hidden" id="viewReporteIndex">
+
+                        <!-- Información básica -->
+                        <div class="row mb-3" id="containerIdReporte">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold"><i class="fas fa-hashtag me-1"></i>ID
+                                    Reporte</label>
+                                <input type="text" id="viewIdReporte" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold"><i class="fas fa-barcode me-1"></i>Lote /
+                                    OP</label>
+                                <input type="text" id="viewLote" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="containerReferencia">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-tag me-1"></i>Referencia</label>
+                                <input type="text" id="viewReferencia" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-calendar-alt me-1"></i>Fecha</label>
+                                <input type="text" id="viewFecha" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="containerPlanta">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-address-card me-1"></i>Planta</label>
+                                <input type="text" id="viewPlanta" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-envelope me-1"></i>Email</label>
+                                <input type="text" id="viewEmail" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="containerLinea">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-layer-group me-1"></i>Línea</label>
+                                <input type="text" id="viewLinea" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold"><i class="fas fa-clipboard-check me-1"></i>Tipo
+                                    Visita</label>
+                                <input type="text" id="viewTipoVisita" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-venus-mars me-1"></i>Género</label>
+                                <input type="text" id="viewGenero" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <hr class="my-3">
+
+                        <!-- Geolocalización e Imagen en dos columnas -->
+                        <div class="row mb-3" id="containerGeoImagen">
+                            <div class="col-md-8">
+                                <label class="form-label fw-bold"><i
+                                        class="fas fa-map-marked-alt me-1"></i>Geolocalización</label>
+                                <div id="viewLocalizacionContainer"
+                                    style="height: 200px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+                                    <!-- Map will be rendered here -->
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="fas fa-camera me-1"></i>Evidencia
+                                    Fotográfica</label>
+                                <div id="viewSoporteContainer"
+                                    style="height: 200px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                                    <!-- Image will be rendered here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="containerSalidaEntradaProductora">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-sign-out-alt me-1"></i>Salida</label>
+                                <input type="text" id="viewSalida" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-sign-in-alt me-1"></i>Entrada</label>
+                                <input type="text" id="viewEntrada" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold"><i
+                                        class="fas fa-industry me-1"></i>Productora</label>
+                                <input type="text" id="viewProductora" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3" id="containerObservaciones">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-comment-alt me-1"></i>Observaciones Generales
+                            </label>
+                            <textarea id="viewObservaciones" class="form-control" rows="6" readonly></textarea>
+                        </div>
+
+                        <div class="row mb-3" id="containerConclusionProcesoPrenda">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i
+                                        class="fas fa-check-circle me-1"></i>Conclusión</label>
+                                <input type="text" id="viewConclusion" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="fas fa-cogs me-1"></i>Proceso</label>
+                                <input type="text" id="viewProceso" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="fas fa-tshirt me-1"></i>Prenda</label>
+                                <input type="text" id="viewPrenda" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" id="containerDestino">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="fas fa-map-marker-alt me-1"></i>Destino
+                                    Proceso</label>
+                                <input type="text" id="viewDestino" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="fas fa-building me-1"></i>Destino
+                                    Planta</label>
+                                <input type="text" id="viewDestinoPlanta" class="form-control" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold"><i class="fas fa-box me-1"></i>Cantidad</label>
+                                <input type="text" id="viewCantidad" class="form-control" readonly>
+                            </div>
+                        </div>
+
+                        <!-- Novedades Section -->
+                        <div class="mb-3" id="containerNovedades">
+                            <label class="form-label fw-bold">
+                                <i class="fas fa-exclamation-circle me-1"></i>Novedades Auditoría
+                            </label>
+                            <div id="viewNovedadesContainer">
+                                <!-- Novedades will be rendered here -->
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalReporte()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"
+        integrity="sha384-d+UOwmNNIC7V4izkTAKSXzWhjC2GxiS9PTykO1XdOPC3nc2z65UOS7SP6QdKPA70"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"
+        integrity="sha384-v5sCAl8qZOHabzoh1+noJcE2yaDE9V/9+mBHgmxFdpiY5chhD/Qf1rQ7igh8ew0q"
+        crossorigin="anonymous"></script>
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/forms/gas.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/sounds.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/particles-config.js"></script>
+    <script src="js/admin/auditorias.js"></script>
+
+    <script>
+        // El módulo ahora es búsqueda por OP — no se necesita lógica de FAB móvil
+    </script>
+</body>
+
+</html>
