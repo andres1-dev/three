@@ -20,6 +20,8 @@ export class LoteSelectorCard {
         onProductoraChange = null,
         onSelectLote = null,
         onAqlConfigChange = null,
+        onFetchExtensiones = null,
+        onExtensionesLoaded = null,
         aqlInfo = false
     }) {
         this.container = container;
@@ -29,6 +31,8 @@ export class LoteSelectorCard {
         this.onProductoraChange = onProductoraChange;
         this.onSelectLote = onSelectLote;
         this.onAqlConfigChange = onAqlConfigChange;
+        this.onFetchExtensiones = onFetchExtensiones;
+        this.onExtensionesLoaded = onExtensionesLoaded;
         this.aqlInfo = aqlInfo;
 
         this.activeLote = null;
@@ -58,6 +62,9 @@ export class LoteSelectorCard {
     setActiveLote(lote) {
         this.activeLote = lote;
         this._renderActiveLote();
+        // Al seleccionar la OP, consultar sus extensiones reales (talla · color)
+        // usando la clave id_productora + op.
+        this._loadExtensiones();
     }
 
     /**
@@ -175,6 +182,31 @@ export class LoteSelectorCard {
                     </div>
                 </div>` : ''}
 
+                <!-- Solapa Curva: colapsada debajo de AQL — visible SOLO cuando
+                     las extensiones de la OP ya están cargadas -->
+                <div class="f-filter-tab-container f-curva-tab" id="curva-tab-container" style="display:none;">
+                    <div class="f-filter-tab-header" id="btn-toggle-curva-tab" role="button" tabindex="0" aria-expanded="false">
+                        <div class="f-tab-title-box">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="flex-shrink:0;opacity:0.5">
+                                <rect x="3" y="14" width="4" height="8" rx="1"/>
+                                <rect x="10" y="9" width="4" height="13" rx="1"/>
+                                <rect x="17" y="4" width="4" height="18" rx="1"/>
+                            </svg>
+                            <span class="f-tab-main-text">Curva</span>
+                        </div>
+                        <div class="f-tab-controls">
+                            <svg class="f-tab-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo Desplegable (matriz Color x Talla con totales) -->
+                    <div class="f-filter-tab-body" id="curva-tab-drawer" style="display:none;">
+                        <div class="f-filter-tab-body-inner" id="curva-tab-body-inner"></div>
+                    </div>
+                </div>
+
                 <!-- Buscador Principal On-Demand -->
                 <div class="f-search-row">
                     <div class="f-search-input-wrap">
@@ -221,6 +253,13 @@ export class LoteSelectorCard {
         this.aqlDrawer = this.container.querySelector('#aql-tab-drawer');
         this.aqlCfgNivel = this.container.querySelector('#aql-cfg-nivel');
         this.aqlCfgAql = this.container.querySelector('#aql-cfg-aql');
+
+        // Referencias de la Solapa Curva (colapsada bajo AQL, solo con datos)
+        this.curvaTabContainer = this.container.querySelector('#curva-tab-container');
+        this.btnCurvaToggle = this.container.querySelector('#btn-toggle-curva-tab');
+        this.curvaDrawer = this.container.querySelector('#curva-tab-drawer');
+        this.curvaBody = this.container.querySelector('#curva-tab-body-inner');
+        this.isCurvaTabOpen = false;
 
         this._renderProductoraOptions();
         this._bindEvents();
@@ -310,6 +349,25 @@ export class LoteSelectorCard {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     aqlToggleHandler();
+                }
+            });
+        }
+
+        // Toggle Solapa Curva (colapsada bajo AQL): solo alcanzable con datos cargados
+        if (this.btnCurvaToggle && this.curvaDrawer) {
+            const curvaToggleHandler = () => {
+                this.isCurvaTabOpen = !this.isCurvaTabOpen;
+                this.curvaDrawer.style.display = this.isCurvaTabOpen ? 'block' : 'none';
+                this.curvaTabContainer.classList.toggle('is-open', this.isCurvaTabOpen);
+                this.btnCurvaToggle.setAttribute('aria-expanded', String(this.isCurvaTabOpen));
+                if (this.isCurvaTabOpen) this._renderCurvaBody();
+            };
+
+            this.btnCurvaToggle.addEventListener('click', curvaToggleHandler);
+            this.btnCurvaToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    curvaToggleHandler();
                 }
             });
         }
@@ -469,11 +527,18 @@ export class LoteSelectorCard {
             this.activeContainer.innerHTML = '';
             // La solapa AQL solo es visible cuando hay una OP seleccionada
             if (this.aqlTabContainer) this.aqlTabContainer.style.display = 'none';
+            // La solapa Curva solo es visible cuando las extensiones están cargadas
+            if (this.curvaTabContainer) this.curvaTabContainer.style.display = 'none';
             return;
         }
 
         // OP seleccionada: mostrar la solapa informativa del muestreo
         if (this.aqlTabContainer) this.aqlTabContainer.style.display = '';
+        // La solapa Curva SOLO aparece cuando las extensiones ya están cargadas
+        if (this.curvaTabContainer) {
+            this.curvaTabContainer.style.display =
+                Array.isArray(this.activeLote.extensiones) ? '' : 'none';
+        }
 
         const l = this.activeLote;
         this.activeContainer.innerHTML = `
@@ -495,6 +560,10 @@ export class LoteSelectorCard {
                                 <span class="f-lote-title-lbl">Referencia</span>
                                 <span class="f-lote-ref-inline">${l.referencia}</span>
                             </span>` : ''}
+                            <span class="f-lote-title-item">
+                                <span class="f-lote-title-lbl">Cant</span>
+                                <span class="f-lote-cant-inline">${(l.cantidad || 0).toLocaleString()}</span>
+                            </span>
                         </div>
                         <span class="f-lote-ref-text">${l.planta || ''}</span>
                     </div>
@@ -507,14 +576,6 @@ export class LoteSelectorCard {
 
                 <div class="f-lote-details-body ${this.isAccordionOpen ? 'open' : ''}" id="lote-details-body">
                     <div class="f-details-grid">
-                        <div class="f-detail-item">
-                            <span class="lbl">Cantidad</span>
-                            <span class="val">${(l.cantidad || 0).toLocaleString()}</span>
-                        </div>
-                        <div class="f-detail-item">
-                            <span class="lbl">Productora</span>
-                            <span class="val">${this._getProductoraName(l.productora)}</span>
-                        </div>
                         <div class="f-detail-item">
                             <span class="lbl">Línea</span>
                             <span class="val">${l.linea || l.modulo || 'N/A'}</span>
@@ -539,6 +600,10 @@ export class LoteSelectorCard {
                             <span class="lbl">Salida</span>
                             <span class="val">${l.salida || l.fechaSalida || 'N/A'}</span>
                         </div>
+                        <div class="f-detail-item full">
+                            <span class="lbl">Productora</span>
+                            <span class="val">${this._getProductoraName(l.productora)}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -553,5 +618,123 @@ export class LoteSelectorCard {
             chevron?.classList.toggle('open', this.isAccordionOpen);
             body?.classList.toggle('open', this.isAccordionOpen);
         });
+    }
+
+    /**
+     * Extensiones REALES de la OP activa (curva: talla · color · cantidad).
+     * Consulta la tabla `extensiones` con la clave id_productora + op vía la
+     * callback inyectada (onFetchExtensiones, Edge Function /nube).
+     */
+    async _loadExtensiones() {
+        const lote = this.activeLote;
+        if (!lote || typeof this.onFetchExtensiones !== 'function') return;
+        if (Array.isArray(lote.extensiones)) return; // ya cargadas
+
+        const op = Number(lote.op ?? lote.lote ?? lote.id_master) || 0;
+        let idProductora = String(lote.productora ?? this.selectedProductora ?? '').trim();
+        // Si el lote trae el NOMBRE de la productora, resolverlo al ID real
+        const byName = this.productoras.find(p =>
+            String(p.productora || '').toUpperCase() === idProductora.toUpperCase());
+        if (byName) {
+            idProductora = String(byName.id_productora ?? byName.id ?? byName.nit ?? byName.productora);
+        }
+        if (!op || !idProductora) return;
+
+        try {
+            const exts = await this.onFetchExtensiones({ op, idProductora });
+            if (this.activeLote !== lote) return; // el usuario cambió de OP mientras cargaba
+            lote.extensiones = Array.isArray(exts) ? exts : [];
+            this._renderActiveLote(); // hace VISIBLE la solapa Curva (datos cargados)
+            this._renderCurvaBody();  // puebla el drawer con la tabla
+            if (typeof this.onExtensionesLoaded === 'function') this.onExtensionesLoaded(lote);
+        } catch (err) {
+            console.warn('[LoteSelectorCard] Error consultando curva de la OP:', err);
+        }
+    }
+
+    /**
+     * Renderiza el cuerpo del drawer de la solapa "Curva" (solo se invoca con
+     * las extensiones ya cargadas). La tabla EXPANDE TODO el ancho del
+     * contenido del drawer (igual que Muestreo). Formato TABLA: columnas =
+     * tallas, filas = colores, celdas = cantidad, con totales por talla, por
+     * color y total general.
+     */
+    _renderCurvaBody() {
+        const body = this.curvaBody;
+        if (!body || !this.activeLote) return;
+        const exts = Array.isArray(this.activeLote.extensiones) ? this.activeLote.extensiones : [];
+        if (!exts.length) {
+            body.innerHTML = '<span class="f-ext-empty">Sin extensiones registradas para esta OP.</span>';
+            return;
+        }
+        body.innerHTML = this._buildExtensionesTable(exts);
+    }
+
+    /**
+     * Construye la matriz Color × Talla con cantidades y totales:
+     *  - Columnas: tallas únicas de la OP (en orden de llegada).
+     *  - Filas: colores únicos de la OP.
+     *  - Última fila: TOTAL por talla; última columna: TOTAL por color;
+     *    celda final: total general de la OP.
+     */
+    _buildExtensionesTable(exts) {
+        const tallas = [];
+        const colores = [];
+        const mapa = new Map(); // color -> Map(talla -> cantidad)
+
+        for (const e of exts) {
+            const t = String(e.talla || '').toUpperCase().trim() || '—';
+            const c = String(e.color || '').toUpperCase().trim() || '—';
+            if (!mapa.has(c)) { mapa.set(c, new Map()); colores.push(c); }
+            const fila = mapa.get(c);
+            fila.set(t, (fila.get(t) || 0) + (Number(e.cantidad) || 0));
+            if (!tallas.includes(t)) tallas.push(t);
+        }
+
+        const esc = (v) => this._escapeExt(v);
+        const totalPorTalla = new Map();
+        tallas.forEach(t => totalPorTalla.set(t, 0));
+        let totalGeneral = 0;
+
+        let filasHtml = '';
+        for (const c of colores) {
+            let totalColor = 0;
+            let celdas = '';
+            for (const t of tallas) {
+                const cant = mapa.get(c).get(t) || 0;
+                totalColor += cant;
+                totalPorTalla.set(t, (totalPorTalla.get(t) || 0) + cant);
+                celdas += `<td class="${cant > 0 ? 'has-val' : 'zero'}">${cant > 0 ? cant : '·'}</td>`;
+            }
+            totalGeneral += totalColor;
+            filasHtml += `<tr><th class="row-h">${esc(c)}</th>${celdas}<td class="total-cell">${totalColor}</td></tr>`;
+        }
+
+        const totalesRow = `<tr class="totals-row">
+            <th class="row-h">TOTAL</th>
+            ${tallas.map(t => `<td class="total-cell">${totalPorTalla.get(t) || 0}</td>`).join('')}
+            <td class="grand-total">${totalGeneral}</td>
+        </tr>`;
+
+        return `
+            <div class="f-ext-table-wrap">
+                <table class="f-ext-table">
+                    <thead>
+                        <tr>
+                            <th class="row-h">Color</th>
+                            ${tallas.map(t => `<th>${esc(t)}</th>`).join('')}
+                            <th class="col-total-h">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>${filasHtml}${totalesRow}</tbody>
+                </table>
+            </div>
+        `;
+    }
+
+    _escapeExt(v) {
+        return String(v ?? '')
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 }

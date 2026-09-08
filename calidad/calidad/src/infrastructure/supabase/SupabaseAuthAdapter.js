@@ -89,7 +89,7 @@ export class SupabaseAuthAdapter extends IAuthService {
     _mapSupabaseUser(sbUser) {
         if (!sbUser) return null;
         const meta = sbUser.user_metadata || {};
-        return User.fromRecord({
+        const user = User.fromRecord({
             id: sbUser.id,
             cedula: meta.cedula || '',
             nombre: meta.full_name || meta.name || meta.USUARIO || sbUser.email,
@@ -98,7 +98,12 @@ export class SupabaseAuthAdapter extends IAuthService {
             planta: meta.planta || '',
             cargo: meta.cargo || '',
             area: meta.area || '',
-            foto_url: meta.avatar_url || meta.foto_url || ''
+            foto_url: meta.avatar_url || meta.foto_url || '',
+            id_productora: meta.id_productora || null,
+            productora: meta.productora || ''
         });
+        // Guardar metadatos raw para compatibilidad con código legacy
+        user.raw_user_meta_data = meta;
+        return user;
     }
 }

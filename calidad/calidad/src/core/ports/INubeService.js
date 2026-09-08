@@ -1,6 +1,6 @@
 /**
  * Puerto: Servicio del módulo NUBE (Programación de Taller).
- * Toda la comunicación con la tabla `extensiones` y el catálogo `productoras`
+ * Toda la comunicación con la tabla `extensiones`, `master` y el catálogo `productoras`
  * se canaliza por la Edge Function dedicada `/nube`.
  */
 export class INubeService {
@@ -14,8 +14,12 @@ export class INubeService {
         throw new Error('INubeService.listarProgramacion no implementado');
     }
 
-    /** Resumen de la última actualización: { resumen: por productora, ultima: { fecha, updated_at, usuario, registros } }. */
-    async resumenProgramacion() {
+    /**
+     * Resumen COMPLETO en una sola llamada (rápido, vía RPC SQL).
+     * Filtros: { idProductora?: string, limitRows?: number }
+     * Devuelve: { extensiones, confeccion, procesos, rows: { confeccion, procesos }, ultima }
+     */
+    async resumenProgramacion(filtros = {}) {
         throw new Error('INubeService.resumenProgramacion no implementado');
     }
 
@@ -25,5 +29,29 @@ export class INubeService {
      */
     async guardarProgramacion(payload) {
         throw new Error('INubeService.guardarProgramacion no implementado');
+    }
+
+    /**
+     * Sincroniza registros de Confección en la tabla `master`.
+     * @param {{ rows: Array, idProductora: string }} payload
+     */
+    async syncConfeccion(payload) {
+        throw new Error('INubeService.syncConfeccion no implementado');
+    }
+
+    /**
+     * Sincroniza registros de Procesos en la tabla `master`.
+     * @param {{ rows: Array, idProductora: string }} payload
+     */
+    async syncProcesos(payload) {
+        throw new Error('INubeService.syncProcesos no implementado');
+    }
+
+    /**
+     * Lista registros de la tabla `master` (Confección/Procesos).
+     * Filtros: { tipo: 'CONFECCION'|'PROCESOS'|'TODO', idProductora, limit }
+     */
+    async listarMaster(filtros = {}) {
+        throw new Error('INubeService.listarMaster no implementado');
     }
 }

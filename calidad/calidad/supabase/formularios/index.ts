@@ -123,6 +123,41 @@ serve(async (req) => {
       });
     }
 
+    // ── CURVA DE LA OP (extensiones talla x color) ──
+    // Consulta desde FORMULARIOS con la clave id_productora + op
+    // (lo que el usuario está consultando/aceptando en el selector).
+    if (accion === 'LISTAR_CURVA') {
+      const { op, idProductora } = payload;
+      const opNum = Number(op) || 0;
+      const idProd = String(idProductora || '').trim();
+      if (!opNum || !idProd) throw new Error('Debe indicar op e id_productora.');
+
+      const { data, error } = await supabaseClient
+        .from('extensiones')
+        .select('id_productora, op, extensiones')
+        .eq('op', opNum)
+        .eq('id_productora', idProd)
+        .limit(100);
+      if (error) throw error;
+
+      // Aplanar el JSONB `extensiones` → [{ color, talla, cantidad }]
+      const curva: any[] = [];
+      for (const row of data || []) {
+        for (const e of row.extensiones || []) {
+          curva.push({
+            color: String(e.color || ''),
+            talla: String(e.talla || ''),
+            cantidad: Number(e.cantidad || 0)
+          });
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, data: curva }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200
+      });
+    }
+
     // ── 2. VALIDACIÓN DE SESIÓN AUTH PARA OPERACIONES DE ESCRITURA ──
     const authHeader = req.headers.get('Authorization');
     let user: any = null;

@@ -30,6 +30,9 @@ import { GuardarProgramacionUseCase } from './core/usecases/nube/GuardarPrograma
 import { ListarProgramacionUseCase }  from './core/usecases/nube/ListarProgramacionUseCase.js';
 import { GetProductorasNubeUseCase }  from './core/usecases/nube/GetProductorasNubeUseCase.js';
 import { ResumenProgramacionUseCase } from './core/usecases/nube/ResumenProgramacionUseCase.js';
+import { SyncConfeccionUseCase }   from './core/usecases/nube/SyncConfeccionUseCase.js';
+import { SyncProcesosUseCase }     from './core/usecases/nube/SyncProcesosUseCase.js';
+import { ListarMasterUseCase }     from './core/usecases/nube/ListarMasterUseCase.js';
 import { NubeModule }                 from './presentation/modules/nube/NubeModule.js';
 
 // ── Router y Estado ──────────────────────────────────────────
@@ -45,6 +48,14 @@ import { PerfilModule }      from './presentation/modules/perfil/PerfilModule.js
 import { FormulariosModule } from './presentation/modules/formularios/FormulariosModule.js';
 
 async function bootstrap() {
+    // ── 0. LIMPIAR SERVICE WORKERS LEGACY (sw.js viejo de migración) ───
+    if ('serviceWorker' in navigator) {
+        try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            await Promise.all(regs.map(r => r.unregister()));
+        } catch (_) { /* noop */ }
+    }
+
     // ── 1. GUARD ULTRARRÁPIDO (antes del router) ─────────────
     let hasToken = false;
     try {
@@ -85,6 +96,9 @@ async function bootstrap() {
     const listarProgramacionUseCase  = new ListarProgramacionUseCase(nubeService);
     const getProductorasNubeUseCase  = new GetProductorasNubeUseCase(nubeService);
     const resumenProgramacionUseCase = new ResumenProgramacionUseCase(nubeService);
+    const syncConfeccionUseCase   = new SyncConfeccionUseCase(nubeService);
+    const syncProcesosUseCase     = new SyncProcesosUseCase(nubeService);
+    const listarMasterUseCase     = new ListarMasterUseCase(nubeService);
 
     // ── 4. CARGAR USUARIO ACTUAL EN EL STORE ─────────────────
     try {
@@ -161,7 +175,10 @@ async function bootstrap() {
                 guardarProgramacionUseCase,
                 listarProgramacionUseCase,
                 getProductorasNubeUseCase,
-                resumenProgramacionUseCase
+                resumenProgramacionUseCase,
+                syncConfeccionUseCase,
+                syncProcesosUseCase,
+                listarMasterUseCase
             });
         }
         async mount(vp) { await this._mod.mount(vp); }

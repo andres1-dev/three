@@ -430,6 +430,24 @@ export class SupabaseDataRepository extends IDataService {
     }
 
     /**
+     * Obtiene la CURVA (extensiones talla x color) de una OP vía Edge Function
+     * /formularios. Clave: id_productora + op (lo que el usuario acepta).
+     */
+    async getCurvaOP({ op = 0, idProductora = '' } = {}) {
+        try {
+            const res = await this._callFormularios({
+                accion: 'LISTAR_CURVA',
+                op,
+                idProductora
+            });
+            if (res && res.data) return res.data;
+        } catch (err) {
+            console.error('[DataRepository] Error al obtener curva de la OP vía Edge Function:', err);
+        }
+        return [];
+    }
+
+    /**
      * Envía reporte de Novedad a Supabase con mapeo exacto de esquema y fallback SDK
      */
     async submitNovedad(novedad) {

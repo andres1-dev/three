@@ -243,8 +243,19 @@ input, textarea, select {
     opacity: 1;
 }
 
-.app-card.active-app .icon-card-box {
-    box-shadow: 0 3px 10px rgba(30, 35, 50, 0.12);
+/* APPS: sin sombra estática — el recuadro SOLO se ve al seleccionar (tap) */
+#view-apps .icon-card-box {
+    box-shadow: none;
+}
+
+#view-apps .icon-card-box:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+#view-apps .app-card:active .icon-card-box,
+#view-apps .app-card.selected .icon-card-box {
+    box-shadow: 0 0 0 2px var(--color-primary, #2563eb), 0 3px 10px rgba(30, 35, 50, 0.14);
 }
 
 /* Card de app */

@@ -270,6 +270,21 @@ export class FormulariosModule {
             this.selectedProductora = productoraId;
         };
 
+        // CURVA de la OP (talla · color · cantidad) consultada desde FORMULARIOS
+        // con SU PROPIA Edge Function (/formularios, acción LISTAR_CURVA),
+        // respetando la clave id_productora + op que el usuario acepta.
+        const onFetchExtensiones = async ({ op, idProductora }) => {
+            try {
+                const pid = String(idProductora || this.selectedProductora || currentUser?.idProductora || '').trim();
+                const opNum = Number(op) || 0;
+                if (!opNum || !pid) return [];
+                return await this.dataService.getCurvaOP({ op: opNum, idProductora: pid });
+            } catch (err) {
+                console.warn('[FormulariosModule] Error consultando curva de la OP:', err);
+                return [];
+            }
+        };
+
         const commonParams = {
             container: subViewport,
             activeLote: this.activeLote,
@@ -277,6 +292,7 @@ export class FormulariosModule {
             selectedProductora: this.selectedProductora,
             onSearchLotes,
             onProductoraChange,
+            onFetchExtensiones,
             currentUser,
             onBack: onBackToHub,
             onSuccess: onBackToHub

@@ -238,6 +238,15 @@
     background: #f8fafc;
 }
 
+.f-filter-tab-header.is-locked {
+    cursor: default;
+    opacity: 0.75;
+}
+
+.f-filter-tab-header.is-locked:hover {
+    background: transparent;
+}
+
 .f-tab-title-box {
     display: flex;
     align-items: center;
@@ -415,6 +424,21 @@
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
+    padding-left: 4px;
+}
+
+.f-productora-select option {
+    padding: 8px 12px;
+    font-size: 0.86rem;
+    font-family: inherit;
+    color: #334155;
+    background: #fff;
+}
+
+.f-productora-select:disabled {
+    cursor: not-allowed;
+    opacity: 0.85;
+    background: #f8fafc;
 }
 
 .f-search-row {
@@ -582,16 +606,17 @@
 .f-lote-main-info {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 18px;
+    gap: 10px;
+    /* compacto: menos padding para que OP · Referencia · Cant quepan en una fila */
+    padding: 8px 14px;
     cursor: pointer;
     user-select: none;
 }
 
 .f-lote-badge-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
     background: #f1f5f9;
     color: #475569;
     display: flex;
@@ -610,7 +635,7 @@
 .f-lote-title-row {
     display: flex;
     align-items: center;
-    gap: 14px;
+    gap: 10px;
 }
 
 /* Par label+valor del header: OP y Referencia (label al lado, centrado) */
@@ -640,6 +665,14 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: #64748b;
+    letter-spacing: -0.01em;
+}
+
+/* Cantidad (Cant) junto a Referencia: label pequeño + número grande */
+.f-lote-cant-inline {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: #1e293b;
     letter-spacing: -0.01em;
 }
 
@@ -894,6 +927,15 @@
     position: static;
     border-top: 1px solid transparent;
     /* Cancela el gap del wrapper: queda pegada justo debajo del filtro de Productora */
+    margin-top: -10px;
+    box-shadow: none;
+}
+
+/* ── Solapa Curva (mismo patrón que Muestreo AQL: pegada, sin gap) ── */
+.f-curva-tab {
+    position: static;
+    border-top: 1px solid transparent;
+    /* Cancela el gap del wrapper: queda pegada justo debajo de Muestreo AQL */
     margin-top: -10px;
     box-shadow: none;
 }
@@ -1769,4 +1811,92 @@
         padding-left: 24px;
         font-size: 0.8rem;
     }
+}
+
+/* Tabla CURVA: matriz Color (filas) x Talla (columnas) con totales.
+   100% responsive: se expande a TODO el ancho del contenido del drawer
+   (igual que Muestreo). El color se muestra SIEMPRE completo (nowrap,
+   sin margen fijo) y las columnas de tallas se comprimen/expanden
+   de manera simetrica. */
+.f-ext-table-wrap {
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.f-ext-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+}
+
+.f-ext-table th,
+.f-ext-table td {
+    padding: 6px 4px;
+    text-align: center;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: middle;
+}
+
+.f-ext-table thead th {
+    background: #f1f5f9;
+    color: #475569;
+    font-weight: 700;
+    white-space: normal;
+    word-break: break-word;
+    min-width: 0;
+}
+
+/* Color: siempre completo, ajustado al texto exacto (sin espacio fijo) */
+.f-ext-table .row-h {
+    width: 1px;
+    text-align: left;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    padding-left: 10px;
+    padding-right: 6px;
+}
+
+.f-ext-table td.has-val {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.f-ext-table td.zero {
+    color: #cbd5e1;
+}
+
+/* Columna TOTAL del header + totales: siempre legibles y completos */
+.f-ext-table .col-total-h,
+.f-ext-table .total-cell {
+    background: #f8fafc;
+    font-weight: 700;
+    color: #0f172a;
+    border-left: 1px solid #e2e8f0;
+    white-space: nowrap;
+    padding-right: 10px;
+}
+
+.f-ext-table .totals-row th,
+.f-ext-table .totals-row td {
+    background: #f1f5f9;
+    font-weight: 800;
+    border-bottom: none;
+}
+
+.f-ext-table .grand-total {
+    color: #0f172a;
+    border-left: 1px solid #e2e8f0;
+    padding-right: 10px;
+}
+
+.f-ext-loading,
+.f-ext-empty {
+    display: block;
+    font-size: 0.72rem;
+    color: #94a3b8;
 }

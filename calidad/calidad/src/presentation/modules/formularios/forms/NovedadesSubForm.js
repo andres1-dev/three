@@ -70,6 +70,7 @@ export class NovedadesSubForm {
         selectedProductora = '',
         onSearchLotes = null,
         onProductoraChange = null,
+        onFetchExtensiones = null,
         submitUseCase,
         currentUser = null,
         onBack = null,
@@ -82,6 +83,7 @@ export class NovedadesSubForm {
         this.selectedProductora = selectedProductora;
         this.onSearchLotes = onSearchLotes;
         this.onProductoraChange = onProductoraChange;
+        this.onFetchExtensiones = onFetchExtensiones;
         this.submitUseCase = submitUseCase;
         this.currentUser = currentUser;
         this.onBack = onBack;
@@ -355,6 +357,8 @@ export class NovedadesSubForm {
             selectedProductora: this.selectedProductora,
             onSearchLotes: this.onSearchLotes,
             onProductoraChange: this.onProductoraChange,
+            onFetchExtensiones: this.onFetchExtensiones,
+            onExtensionesLoaded: (lote) => this._applyExtensiones(lote),
             onSelectLote: (lote) => this.setLote(lote)
         });
 
@@ -385,11 +389,34 @@ export class NovedadesSubForm {
         if (cantCodigos) cantCodigos.value = cant;
 
         this._updateFilteredSizes();
+        this._updateFilteredColores();
+    }
+
+    /**
+     * Aplica las extensiones REALES de la OP (cargadas por el LoteSelectorCard)
+     * a los datalists de Talla y Color de la solicitud de códigos.
+     */
+    _applyExtensiones(lote) {
+        if (lote) this.activeLote = lote;
+        this._updateFilteredSizes();
+        this._updateFilteredColores();
     }
 
     _updateFilteredSizes() {
         const datalistTallas = this.container.querySelector('#datalist-tallas-novedad');
         if (!datalistTallas) return;
+
+        // PRIORIDAD: extensiones REALES de la OP (clave id_productora + op).
+        const exts = Array.isArray(this.activeLote?.extensiones) ? this.activeLote.extensiones : [];
+        if (exts.length) {
+            const tallasReales = [...new Set(exts
+                .map(e => String(e.talla || '').toUpperCase().trim())
+                .filter(Boolean))];
+            if (tallasReales.length) {
+                datalistTallas.innerHTML = tallasReales.map(s => `<option value="${s}"></option>`).join('');
+                return;
+            }
+        }
 
         let sizes = [...CODIGOS_TALLAS_LIST];
         if (this.activeLote) {
@@ -418,6 +445,24 @@ export class NovedadesSubForm {
         }
 
         datalistTallas.innerHTML = sizes.map(s => `<option value="${s}"></option>`).join('');
+    }
+
+    _updateFilteredColores() {
+        const datalistColores = this.container.querySelector('#datalist-colores-novedad');
+        if (!datalistColores) return;
+
+        // PRIORIDAD: colores REALES de las extensiones de la OP.
+        const exts = Array.isArray(this.activeLote?.extensiones) ? this.activeLote.extensiones : [];
+        if (exts.length) {
+            const coloresReales = [...new Set(exts
+                .map(e => String(e.color || '').toUpperCase().trim())
+                .filter(Boolean))];
+            if (coloresReales.length) {
+                datalistColores.innerHTML = coloresReales.map(c => `<option value="${c}"></option>`).join('');
+                return;
+            }
+        }
+        datalistColores.innerHTML = CODIGOS_COLORES_LIST.map(c => `<option value="${c}"></option>`).join('');
     }
 
     _bindEvents() {

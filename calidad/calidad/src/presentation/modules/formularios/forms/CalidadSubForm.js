@@ -23,6 +23,8 @@ export class CalidadSubForm {
         selectedProductora = '',
         onSearchLotes = null,
         onProductoraChange = null,
+        onFetchExtensiones = null,
+        onExtensionesLoaded = null,
         submitUseCase,
         currentUser = null,
         onBack = null,
@@ -35,6 +37,8 @@ export class CalidadSubForm {
         this.selectedProductora = selectedProductora;
         this.onSearchLotes = onSearchLotes;
         this.onProductoraChange = onProductoraChange;
+        this.onFetchExtensiones = onFetchExtensiones;
+        this.onExtensionesLoaded = onExtensionesLoaded;
         this.submitUseCase = submitUseCase;
         this.currentUser = currentUser;
         this.onBack = onBack;
@@ -430,6 +434,8 @@ export class CalidadSubForm {
             selectedProductora: this.selectedProductora,
             onSearchLotes: this.onSearchLotes,
             onProductoraChange: this.onProductoraChange,
+            onFetchExtensiones: this.onFetchExtensiones,
+            onExtensionesLoaded: () => this._refreshModalCodeRows(),
             onSelectLote: (lote) => this.setLote(lote),
             // Configuración del muestreo (legado): recalcular al cambiar Nivel Inspección / Nivel AQL
             onAqlConfigChange: (cfg) => {
@@ -795,6 +801,18 @@ export class CalidadSubForm {
         }
     }
 
+    /**
+     * Opciones REALES de talla/color derivadas de las extensiones de la OP
+     * (clave id_productora + op). Si la OP aún no tiene extensiones
+     * registradas, los campos quedan como texto libre (fallback).
+     */
+    _getExtOptions() {
+        const exts = Array.isArray(this.activeLote?.extensiones) ? this.activeLote.extensiones : [];
+        const tallas = [...new Set(exts.map(e => String(e.talla || '').toUpperCase().trim()).filter(Boolean))];
+        const colores = [...new Set(exts.map(e => String(e.color || '').toUpperCase().trim()).filter(Boolean))];
+        return { tallas, colores, disponible: exts.length > 0 };
+    }
+
     _addModalCodeRow() {
         const container = this.container.querySelector('#modal-codes-list');
         if (!container) return;
@@ -814,6 +832,64 @@ export class CalidadSubForm {
 
         row.querySelector('.f-btn-del-row')?.addEventListener('click', () => row.remove());
         container.appendChild(row);
+
+        // Alimentar con las extensiones REALES de la OP (talla/color como select)
+        this._upgradeRowSelects(row);
+    }
+
+    /**
+     * Convierte los inputs de talla/color de una fila en <select> poblados con
+     * las extensiones reales de la OP, preservando el valor ya elegido.
+     */
+    _upgradeRowSelects(row) {
+        if (!row) return;
+        const { tallas, colores, disponible } = this._getExtOptions();
+        if (!disponible) return;
+
+        const buildSelect = (list, cls, placeholder, cur) => {
+            const sel = document.createElement('select');
+            sel.className = `f-input-sm ${cls}`;
+            sel.style.flex = '1';
+            sel.innerHTML = [`<option value="">${placeholder}</option>`]
+                .concat(list.map(o => `<option value="${o}" ${o === cur ? 'selected' : ''}>${o}</option>`))
+                .join('');
+            return sel;
+        };
+
+        const tallaEl = row.querySelector('.c-talla');
+        if (tallaEl && tallaEl.tagName !== 'SELECT' && tallas.length) {
+            tallaEl.replaceWith(buildSelect(tallas, 'c-talla', 'Talla...', tallaEl.value.trim()));
+        }
+        const colorEl = row.querySelector('.c-color');
+        if (colorEl && colorEl.tagName !== 'SELECT' && colores.length) {
+            colorEl.replaceWith(buildSelect(colores, 'c-color', 'Color...', colorEl.value.trim()));
+        }
+
+        // Alimentar cantidad: si existe la combinación Talla+Color en las
+        // extensiones de la OP, sugerir la cantidad disponible.
+        const syncQty = () => {
+            const t = row.querySelector('.c-talla')?.value?.trim().toUpperCase();
+            const c = row.querySelector('.c-color')?.value?.trim().toUpperCase();
+            if (!t || !c) return;
+            const match = (this.activeLote?.extensiones || []).find(e =>
+                String(e.talla || '').toUpperCase().trim() === t &&
+                String(e.color || '').toUpperCase().trim() === c);
+            const qty = row.querySelector('.c-cant');
+            if (match && qty && (!qty.value || Number(qty.value) < 1)) qty.value = match.cantidad || 1;
+        };
+        row.querySelector('.c-talla')?.addEventListener('change', syncQty);
+        row.querySelector('.c-color')?.addEventListener('change', syncQty);
+    }
+
+    /**
+     * Refresca las filas ya creadas del modal cuando llegan las extensiones
+     * de la OP (carga async): convierte inputs en selects poblados.
+     */
+    _refreshModalCodeRows() {
+        const { disponible } = this._getExtOptions();
+        if (!disponible) return;
+        const rows = this.container.querySelectorAll('#modal-codes-list .f-code-row');
+        rows.forEach(row => this._upgradeRowSelects(row));
     }
 
     _guardarNovedadCalidadModal() {

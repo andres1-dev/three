@@ -3,7 +3,12 @@ export class ResumenProgramacionUseCase {
         this.nubeService = nubeService;
     }
 
-    async execute() {
-        return await this.nubeService.resumenProgramacion();
+    /**
+     * Resumen COMPLETO en una sola llamada a la Edge Function:
+     * { extensiones, confeccion, procesos, rows: { confeccion, procesos }, ultima }
+     * @param {{ idProductora?: string, limitRows?: number }} filtros
+     */
+    async execute(filtros = {}) {
+        return await this.nubeService.resumenProgramacion(filtros || {});
     }
 }
