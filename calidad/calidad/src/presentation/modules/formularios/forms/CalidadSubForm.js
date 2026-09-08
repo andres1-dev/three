@@ -115,13 +115,13 @@ export class CalidadSubForm {
             <div id="cal-lote-mount" class="f-mount-section"></div>
 
             <form id="form-calidad-full" class="f-subform-body" style="display:none;">
-                <!-- 1. LOCALIZACIÓN GPS Y MAPA -->
-                <div class="f-section-title">
+                <!-- 1. LOCALIZACIÓN GPS Y MAPA (Oculto - ahora en pestaña colapsada GPS) -->
+                <div class="f-section-title" style="display:none;">
                     <span class="pill-num">1</span>
                     <span>Localización GPS en Planta</span>
                 </div>
 
-                <div class="f-gps-container">
+                <div class="f-gps-container" style="display:none;">
                     <div class="f-gps-header">
                         <div class="f-gps-status-box">
                             <span class="f-gps-dot active" id="gps-dot"></span>
@@ -148,7 +148,7 @@ export class CalidadSubForm {
 
                 <!-- 2. AUDITOR Y TIPO DE VISITA -->
                 <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">2</span>
+                    <span class="pill-num">1</span>
                     <span>Datos de la Auditoría</span>
                 </div>
 
@@ -172,7 +172,7 @@ export class CalidadSubForm {
 
                 <!-- 3. CONCLUSIÓN Y DICTAMEN (El Muestreo AQL es informativo: solapa bajo el filtro de Productora) -->
                 <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">3</span>
+                    <span class="pill-num">2</span>
                     <span>Conclusión de la Inspección</span>
                 </div>
 
@@ -186,7 +186,7 @@ export class CalidadSubForm {
                     </select>
                 </div>
 
-                <!-- 5. DESTINO DEL LOTE (Visible solo si es AUDITORIA y APROBADO) -->
+                <!-- 3. DESTINO DEL LOTE (Visible solo si es AUDITORIA y APROBADO) -->
                 <div id="cal-destino-section" class="f-cond-section" style="display:none; margin-top: 16px;">
                     <div class="f-cond-header">
                         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">

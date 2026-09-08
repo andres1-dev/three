@@ -97,7 +97,7 @@ serve(async (req) => {
         const isNumeric = /^\d+$/.test(qTrim);
         if (isNumeric) {
           const num = parseInt(qTrim, 10);
-          q = q.or(`id_master.eq.${num},referencia.ilike.%${qTrim}%`);
+          q = q.or(`id_master.eq.${num},referencia.ilike.%${qTrim}%,nombre_planta.ilike.%${qTrim}%`);
         } else {
           q = q.or(
             `referencia.ilike.%${qTrim}%,nombre_planta.ilike.%${qTrim}%,descripcion.ilike.%${qTrim}%,proceso.ilike.%${qTrim}%`

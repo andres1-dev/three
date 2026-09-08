@@ -207,8 +207,32 @@ export class LoteSelectorCard {
                     </div>
                 </div>
 
+                <!-- Solapa GPS: colapsada debajo de Curva -->
+                <div class="f-filter-tab-container f-gps-tab" id="gps-tab-container" style="display:none;">
+                    <div class="f-filter-tab-header" id="btn-toggle-gps-tab" role="button" tabindex="0" aria-expanded="false">
+                        <div class="f-tab-title-box">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="flex-shrink:0;opacity:0.5">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                            </svg>
+                            <span class="f-tab-main-text">Ubicación</span>
+                        </div>
+                        <div class="f-tab-controls">
+                            <svg class="f-tab-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Cuerpo Desplegable (información GPS del lote) -->
+                    <div class="f-filter-tab-body" id="gps-tab-drawer" style="display:none;">
+                        <div class="f-filter-tab-body-inner" id="gps-tab-body-inner">
+                            <div class="f-gps-loading">Cargando ubicación...</div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Buscador Principal On-Demand -->
-                <div class="f-search-row">
+                <div class="f-search-row" id="search-row-container">
                     <div class="f-search-input-wrap">
                         <!-- Ícono lupa permanente -->
                         <svg class="f-search-icon" id="icon-search-static" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
@@ -240,6 +264,7 @@ export class LoteSelectorCard {
         this.labelFilter = this.container.querySelector('#label-productora-filter');
         this.btnClearProd = this.container.querySelector('#btn-clear-productora');
         this.selectProductora = this.container.querySelector('#select-productora');
+        this.searchRowContainer = this.container.querySelector('#search-row-container');
         this.inputSearch = this.container.querySelector('#input-search-lote');
         this.suggestionsBox = this.container.querySelector('#lote-suggestions-box');
         this.activeContainer = this.container.querySelector('#active-lote-container');
@@ -260,6 +285,13 @@ export class LoteSelectorCard {
         this.curvaDrawer = this.container.querySelector('#curva-tab-drawer');
         this.curvaBody = this.container.querySelector('#curva-tab-body-inner');
         this.isCurvaTabOpen = false;
+
+        // Referencias de la Solapa GPS (colapsada bajo Curva)
+        this.gpsTabContainer = this.container.querySelector('#gps-tab-container');
+        this.btnGpsToggle = this.container.querySelector('#btn-toggle-gps-tab');
+        this.gpsDrawer = this.container.querySelector('#gps-tab-drawer');
+        this.gpsBody = this.container.querySelector('#gps-tab-body-inner');
+        this.isGpsTabOpen = false;
 
         this._renderProductoraOptions();
         this._bindEvents();
@@ -372,6 +404,25 @@ export class LoteSelectorCard {
             });
         }
 
+        // Toggle Solapa GPS (colapsada bajo Curva)
+        if (this.btnGpsToggle && this.gpsDrawer) {
+            const gpsToggleHandler = () => {
+                this.isGpsTabOpen = !this.isGpsTabOpen;
+                this.gpsDrawer.style.display = this.isGpsTabOpen ? 'block' : 'none';
+                this.gpsTabContainer.classList.toggle('is-open', this.isGpsTabOpen);
+                this.btnGpsToggle.setAttribute('aria-expanded', String(this.isGpsTabOpen));
+                if (this.isGpsTabOpen) this._renderGpsBody();
+            };
+
+            this.btnGpsToggle.addEventListener('click', gpsToggleHandler);
+            this.btnGpsToggle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    gpsToggleHandler();
+                }
+            });
+        }
+
         // Configuración del Muestreo AQL: notificar al propietario para recalcular
         if (this.aqlCfgNivel && this.aqlCfgAql) {
             const notifyAqlCfg = () => {
@@ -428,7 +479,7 @@ export class LoteSelectorCard {
             if (this.searchTimeout) clearTimeout(this.searchTimeout);
             this.searchTimeout = setTimeout(() => {
                 this._ejecutarBusquedaOnDemand();
-            }, 260);
+            }, 500);
         });
 
         this.clearBtn?.addEventListener('click', () => {
@@ -490,17 +541,21 @@ export class LoteSelectorCard {
             return;
         }
 
+        const productoraName = l => this._getProductoraName(l.id_productora || l.productora);
+
         this.suggestionsBox.innerHTML = matches.map((l, index) => `
             <div class="f-suggestion-item" data-index="${index}">
                 <div class="f-sug-header">
-                    <span class="f-sug-op">OP: ${l.lote || l.op}</span>
-                    <span class="f-sug-planta">${l.planta || 'Sin Planta'}</span>
-                </div>
-                <div class="f-sug-body">
-                    <span class="f-sug-ref">Ref: ${l.referencia || 'N/A'}</span>
+                    <span class="f-sug-ref">${l.referencia || 'N/A'}</span>
+                    <span class="f-sug-op">${l.lote || l.op}</span>
                     <span class="f-sug-qty">${(l.cantidad || 0).toLocaleString()}</span>
                 </div>
-                ${l.descripcion ? `<div class="f-sug-desc">${l.descripcion}</div>` : ''}
+                <div class="f-sug-body">
+                    <span class="f-sug-planta">${l.planta || 'Sin Planta'}</span>
+                </div>
+                <div class="f-sug-footer">
+                    <span class="f-sug-productora">${productoraName(l)}</span>
+                </div>
             </div>
         `).join('');
 
@@ -525,20 +580,26 @@ export class LoteSelectorCard {
     _renderActiveLote() {
         if (!this.activeLote) {
             this.activeContainer.innerHTML = '';
+            // Mostrar buscador cuando no hay OP seleccionada
+            if (this.searchRowContainer) this.searchRowContainer.style.display = '';
             // La solapa AQL solo es visible cuando hay una OP seleccionada
             if (this.aqlTabContainer) this.aqlTabContainer.style.display = 'none';
-            // La solapa Curva solo es visible cuando las extensiones están cargadas
+            // La solapa Curva solo es visible cuando hay una OP seleccionada
             if (this.curvaTabContainer) this.curvaTabContainer.style.display = 'none';
+            // La solapa GPS solo es visible cuando hay una OP seleccionada
+            if (this.gpsTabContainer) this.gpsTabContainer.style.display = 'none';
             return;
         }
 
-        // OP seleccionada: mostrar la solapa informativa del muestreo
+        // OP seleccionada: ocultar buscador y mostrar tarjeta de lote
+        if (this.searchRowContainer) this.searchRowContainer.style.display = 'none';
+        
+        // OP seleccionada: mostrar la solapa informativa del muestreo inmediatamente
         if (this.aqlTabContainer) this.aqlTabContainer.style.display = '';
-        // La solapa Curva SOLO aparece cuando las extensiones ya están cargadas
-        if (this.curvaTabContainer) {
-            this.curvaTabContainer.style.display =
-                Array.isArray(this.activeLote.extensiones) ? '' : 'none';
-        }
+        // OP seleccionada: mostrar la solapa Curva inmediatamente (sin esperar datos)
+        if (this.curvaTabContainer) this.curvaTabContainer.style.display = '';
+        // OP seleccionada: mostrar la solapa GPS inmediatamente
+        if (this.gpsTabContainer) this.gpsTabContainer.style.display = '';
 
         const l = this.activeLote;
         this.activeContainer.innerHTML = `
@@ -570,6 +631,12 @@ export class LoteSelectorCard {
                     <button type="button" class="f-accordion-chevron ${this.isAccordionOpen ? 'open' : ''}" aria-label="Ver detalles">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
                             <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                    </button>
+                    <button type="button" id="btn-clear-lote" class="f-clear-lote-btn" aria-label="Limpiar selección">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
                         </svg>
                     </button>
                 </div>
@@ -612,11 +679,24 @@ export class LoteSelectorCard {
         const toggleBtn = this.activeContainer.querySelector('#btn-toggle-lote-details');
         const chevron = this.activeContainer.querySelector('.f-accordion-chevron');
         const body = this.activeContainer.querySelector('#lote-details-body');
+        const clearLoteBtn = this.activeContainer.querySelector('#btn-clear-lote');
 
         toggleBtn?.addEventListener('click', () => {
             this.isAccordionOpen = !this.isAccordionOpen;
             chevron?.classList.toggle('open', this.isAccordionOpen);
             body?.classList.toggle('open', this.isAccordionOpen);
+        });
+
+        clearLoteBtn?.addEventListener('click', () => {
+            this.activeLote = null;
+            this.inputSearch.value = '';
+            this.clearBtn.style.display = 'none';
+            this.suggestionsBox.style.display = 'none';
+            this._renderActiveLote();
+            
+            if (typeof this.onSelectLote === 'function') {
+                this.onSelectLote(null);
+            }
         });
     }
 
@@ -736,5 +816,47 @@ export class LoteSelectorCard {
         return String(v ?? '')
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    /**
+     * Renderiza el cuerpo del drawer de la solapa "Ubicación" (GPS).
+     * Muestra el campo de localización GPS existente del formulario.
+     */
+    _renderGpsBody() {
+        const body = this.gpsBody;
+        if (!body || !this.activeLote) return;
+        const l = this.activeLote;
+
+        body.innerHTML = `
+            <div class="f-gps-container">
+                <div class="f-gps-header">
+                    <div class="f-gps-status-box">
+                        <span class="f-gps-dot active" id="gps-dot"></span>
+                        <span class="f-gps-text" id="gps-status-label">Obteniendo señal GPS...</span>
+                    </div>
+                    <div class="f-gps-actions">
+                        <button type="button" class="f-btn-refresh-gps" id="btn-refresh-gps" title="Actualizar ubicación">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Mapa Visual -->
+                <div id="mapa-calidad-frame-wrap" class="f-map-wrap">
+                    <div id="map-placeholder" class="f-map-loading">
+                        <span class="f-spinner"></span>
+                        <span>Cargando mapa de ubicación...</span>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Notificar al formulario que el mapa GPS está listo para inicializar
+        if (typeof this.onGpsTabOpened === 'function') {
+            this.onGpsTabOpened();
+        }
     }
 }

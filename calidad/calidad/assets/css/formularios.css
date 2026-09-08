@@ -546,28 +546,55 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+}
+
+.f-sug-ref {
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: #64748b;
+    flex: 1;
 }
 
 .f-sug-op {
-    font-weight: 700;
-    font-size: 0.88rem;
+    font-weight: 800;
+    font-size: 0.92rem;
     color: #0f172a;
+    flex-shrink: 0;
 }
 
-.f-sug-planta {
-    font-size: 0.75rem;
-    background: #e0f2fe;
-    color: #0369a1;
-    padding: 2px 8px;
-    border-radius: 6px;
-    font-weight: 600;
+.f-sug-qty {
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: #059669;
+    background: #ecfdf5;
+    padding: 3px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .f-sug-body {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.78rem;
-    color: #64748b;
+    margin-top: 6px;
+}
+
+.f-sug-planta {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+}
+
+.f-sug-footer {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.f-sug-productora {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .f-sug-desc {
@@ -694,6 +721,22 @@
 }
 
 .f-accordion-chevron.open { transform: rotate(180deg); }
+
+.f-clear-lote-btn {
+    background: none;
+    border: none;
+    color: #ef4444;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+}
+
+.f-clear-lote-btn:hover {
+    color: #dc2626;
+}
 
 .f-lote-details-body {
     max-height: 0;
@@ -1820,54 +1863,62 @@
    de manera simetrica. */
 .f-ext-table-wrap {
     width: 100%;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border: none;
     border-radius: 10px;
     overflow: hidden;
 }
 
 .f-ext-table {
     width: 100%;
-    table-layout: auto;
+    table-layout: fixed;
     border-collapse: collapse;
-    font-size: 0.72rem;
+    font-size: 0.65rem;
 }
 
 .f-ext-table th,
 .f-ext-table td {
-    padding: 6px 4px;
+    padding: 8px 6px;
     text-align: center;
-    border-bottom: 1px solid #eef2f7;
     vertical-align: middle;
+    background: #f8fafc;
 }
 
 .f-ext-table thead th {
-    background: #f1f5f9;
-    color: #475569;
+    color: #0f172a;
     font-weight: 700;
+    text-transform: uppercase;
     white-space: normal;
     word-break: break-word;
-    min-width: 0;
 }
 
 /* Color: siempre completo, ajustado al texto exacto (sin espacio fijo) */
 .f-ext-table .row-h {
-    width: 1px;
+    width: 35%;
+    min-width: 80px;
     text-align: left;
     font-weight: 700;
     color: #0f172a;
+    text-transform: uppercase;
     white-space: nowrap;
-    padding-left: 10px;
-    padding-right: 6px;
+    padding-left: 12px;
+    padding-right: 8px;
+}
+
+.f-ext-table tbody .row-h {
+    background: #f8fafc;
 }
 
 .f-ext-table td.has-val {
     color: #0f172a;
-    font-weight: 600;
+    font-weight: 400;
+    font-size: 0.65rem;
+    background: #f8fafc;
 }
 
 .f-ext-table td.zero {
     color: #cbd5e1;
+    background: #f8fafc;
 }
 
 /* Columna TOTAL del header + totales: siempre legibles y completos */
@@ -1876,22 +1927,28 @@
     background: #f8fafc;
     font-weight: 700;
     color: #0f172a;
-    border-left: 1px solid #e2e8f0;
+    text-transform: uppercase;
     white-space: nowrap;
-    padding-right: 10px;
+    width: auto;
+    min-width: 50px;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .f-ext-table .totals-row th,
 .f-ext-table .totals-row td {
-    background: #f1f5f9;
-    font-weight: 800;
-    border-bottom: none;
+    background: #f8fafc;
+    font-weight: 700;
+    color: #0f172a;
+    text-transform: uppercase;
 }
 
 .f-ext-table .grand-total {
     color: #0f172a;
-    border-left: 1px solid #e2e8f0;
-    padding-right: 10px;
+    font-weight: 700;
+    font-size: 0.65rem;
+    padding-left: 8px;
+    padding-right: 8px;
 }
 
 .f-ext-loading,
@@ -1899,4 +1956,121 @@
     display: block;
     font-size: 0.72rem;
     color: #94a3b8;
+}
+
+/* GPS Tab Styles */
+.f-gps-loading {
+    padding: 20px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.f-gps-empty {
+    padding: 30px 20px;
+    text-align: center;
+    color: #64748b;
+}
+
+.f-gps-empty svg {
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.f-gps-empty p {
+    margin: 0 0 4px 0;
+    font-size: 0.85rem;
+}
+
+.f-gps-sub {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.f-gps-container {
+    padding: 16px;
+}
+
+.f-gps-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.f-gps-status-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.f-gps-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    transition: background 0.3s ease;
+}
+
+.f-gps-dot.active {
+    background: #22c55e;
+}
+
+.f-gps-text {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.f-gps-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.f-btn-refresh-gps {
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.f-btn-refresh-gps:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+.f-map-wrap {
+    width: 100%;
+    height: 200px;
+    background: #f8fafc;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.f-map-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.f-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
