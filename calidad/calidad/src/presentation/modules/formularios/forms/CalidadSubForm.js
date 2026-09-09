@@ -345,8 +345,8 @@ export class CalidadSubForm {
                 </div>
             </form>
 
-            <!-- Modal Novedades de Calidad (Sin Confeccionar, Cobros, Promociones...) -->
-            <div id="cal-modal-novedad-dialog" class="f-modal-backdrop">
+            <!-- Modal Novedades de Calidad (Template, se clona a document.body al abrir) -->
+            <div id="cal-modal-novedad-dialog" class="f-modal-backdrop" style="display:none;">
                 <div class="f-modal-sheet" style="max-width: 520px;">
                     <div class="f-sheet-header">
                         <div class="f-sheet-pill"></div>
@@ -530,55 +530,22 @@ export class CalidadSubForm {
         });
 
         // Modal Novedades Calidad
-        const modalNov = this.container.querySelector('#cal-modal-novedad-dialog');
         const openNovBtn = this.container.querySelector('#btn-open-modal-novedad-cal');
         const closeNovBtn = this.container.querySelector('#btn-close-nov-modal');
         const saveNovBtn = this.container.querySelector('#btn-save-nov-modal');
         const addCodeBtn = this.container.querySelector('#btn-modal-add-code');
 
         openNovBtn?.addEventListener('click', () => {
-            modalNov.classList.add('visible');
-            this._resetModalNovFields();
+            this._openModalNovedad();
         });
 
         closeNovBtn?.addEventListener('click', () => {
-            modalNov.classList.remove('visible');
-        });
-
-        // Tipo novedad modal changes (comportamiento legacy: SIN PROCESO solo en PROMOCIONES, PROCESO ANTERIOR solo en COBROS)
-        const tipoNovSel = this.container.querySelector('#modal-nov-tipo');
-        tipoNovSel?.addEventListener('change', () => {
-            const val = tipoNovSel.value;
-            const sinProcWrap = this.container.querySelector('#modal-sin-proceso-wrap');
-            const sinProcCheck = this.container.querySelector('#modal-check-sin-proceso');
-            const procAntWrap = this.container.querySelector('#modal-proceso-anterior-wrap');
-            const procAntCheck = this.container.querySelector('#modal-check-proceso-anterior');
-            const selProc = this.container.querySelector('#modal-select-proceso-cobro');
-            const procSel = this.container.querySelector('#modal-cobro-proceso-val');
-
-            if (sinProcWrap) sinProcWrap.style.display = (val === 'PROMOCIONES') ? 'block' : 'none';
-            if (sinProcCheck && val !== 'PROMOCIONES') sinProcCheck.checked = false;
-            if (procAntWrap) procAntWrap.style.display = (val === 'COBROS') ? 'block' : 'none';
-            if (val !== 'COBROS') {
-                if (procAntCheck) procAntCheck.checked = false;
-                if (procSel) procSel.value = '';
-                if (selProc) selProc.style.display = 'none';
-            }
-        });
-
-        const checkProcAnt = this.container.querySelector('#modal-check-proceso-anterior');
-        checkProcAnt?.addEventListener('change', () => {
-            const selProc = this.container.querySelector('#modal-select-proceso-cobro');
-            if (selProc) selProc.style.display = checkProcAnt.checked ? 'block' : 'none';
-        });
-
-        addCodeBtn?.addEventListener('click', () => {
-            this._addModalCodeRow();
+            this._closeModalNovedad();
         });
 
         saveNovBtn?.addEventListener('click', () => {
             const ok = this._guardarNovedadCalidadModal();
-            if (ok) modalNov.classList.remove('visible');
+            if (ok) this._closeModalNovedad();
         });
 
         // Botón Limpiar Formulario
@@ -590,6 +557,73 @@ export class CalidadSubForm {
         this.container.querySelector('#form-calidad-full')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             await this._handleSubmit();
+        });
+    }
+
+    _openModalNovedad() {
+        let modalNov = document.getElementById('cal-modal-novedad-dialog');
+        if (!modalNov) {
+            const template = this.container.querySelector('#cal-modal-novedad-dialog');
+            if (template) {
+                modalNov = template.cloneNode(true);
+                modalNov.id = 'cal-modal-novedad-dialog';
+                modalNov.style.display = '';
+                document.body.appendChild(modalNov);
+            }
+        }
+        if (modalNov) {
+            requestAnimationFrame(() => modalNov.classList.add('visible'));
+            this._resetModalNovFields();
+            this._rebindModalEvents(modalNov);
+        }
+    }
+
+    _closeModalNovedad() {
+        const modalNov = document.getElementById('cal-modal-novedad-dialog');
+        if (modalNov) {
+            modalNov.classList.remove('visible');
+            setTimeout(() => modalNov.remove(), 250);
+        }
+    }
+
+    _rebindModalEvents(modal) {
+        const closeBtn = modal.querySelector('#btn-close-nov-modal');
+        const saveBtn = modal.querySelector('#btn-save-nov-modal');
+        const addCodeBtn = modal.querySelector('#btn-modal-add-code');
+        const tipoSel = modal.querySelector('#modal-nov-tipo');
+        const checkProcAnt = modal.querySelector('#modal-check-proceso-anterior');
+
+        closeBtn?.addEventListener('click', () => this._closeModalNovedad());
+        saveBtn?.addEventListener('click', () => {
+            const ok = this._guardarNovedadCalidadModal();
+            if (ok) this._closeModalNovedad();
+        });
+        addCodeBtn?.addEventListener('click', () => this._addModalCodeRow());
+        tipoSel?.addEventListener('change', () => {
+            const val = tipoSel.value;
+            const sinProcWrap = modal.querySelector('#modal-sin-proceso-wrap');
+            const sinProcCheck = modal.querySelector('#modal-check-sin-proceso');
+            const procAntWrap = modal.querySelector('#modal-proceso-anterior-wrap');
+            const procAntCheck = modal.querySelector('#modal-check-proceso-anterior');
+            const selProc = modal.querySelector('#modal-select-proceso-cobro');
+            const procSel = modal.querySelector('#modal-cobro-proceso-val');
+
+            if (sinProcWrap) sinProcWrap.style.display = (val === 'PROMOCIONES') ? 'block' : 'none';
+            if (sinProcCheck && val !== 'PROMOCIONES') sinProcCheck.checked = false;
+            if (procAntWrap) procAntWrap.style.display = (val === 'COBROS') ? 'block' : 'none';
+            if (val !== 'COBROS') {
+                if (procAntCheck) procAntCheck.checked = false;
+                if (procSel) procSel.value = '';
+                if (selProc) selProc.style.display = 'none';
+            }
+        });
+        checkProcAnt?.addEventListener('change', () => {
+            const selProc = modal.querySelector('#modal-select-proceso-cobro');
+            if (selProc) selProc.style.display = checkProcAnt.checked ? 'block' : 'none';
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this._closeModalNovedad();
         });
     }
 
@@ -781,20 +815,23 @@ export class CalidadSubForm {
     }
 
     _resetModalNovFields() {
-        const tipoSel = this.container.querySelector('#modal-nov-tipo');
+        const modal = document.getElementById('cal-modal-novedad-dialog');
+        if (!modal) return;
+
+        const tipoSel = modal.querySelector('#modal-nov-tipo');
         if (tipoSel) tipoSel.value = '';
-        const sinProcCheck = this.container.querySelector('#modal-check-sin-proceso');
+        const sinProcCheck = modal.querySelector('#modal-check-sin-proceso');
         if (sinProcCheck) sinProcCheck.checked = false;
-        const procAntCheck = this.container.querySelector('#modal-check-proceso-anterior');
+        const procAntCheck = modal.querySelector('#modal-check-proceso-anterior');
         if (procAntCheck) procAntCheck.checked = false;
 
-        this.container.querySelector('#modal-sin-proceso-wrap').style.display = 'none';
-        this.container.querySelector('#modal-proceso-anterior-wrap').style.display = 'none';
-        this.container.querySelector('#modal-select-proceso-cobro').style.display = 'none';
-        const procSel = this.container.querySelector('#modal-cobro-proceso-val');
+        modal.querySelector('#modal-sin-proceso-wrap').style.display = 'none';
+        modal.querySelector('#modal-proceso-anterior-wrap').style.display = 'none';
+        modal.querySelector('#modal-select-proceso-cobro').style.display = 'none';
+        const procSel = modal.querySelector('#modal-cobro-proceso-val');
         if (procSel) procSel.value = '';
 
-        const codesList = this.container.querySelector('#modal-codes-list');
+        const codesList = modal.querySelector('#modal-codes-list');
         if (codesList) {
             codesList.innerHTML = '';
             this._addModalCodeRow();
@@ -814,7 +851,8 @@ export class CalidadSubForm {
     }
 
     _addModalCodeRow() {
-        const container = this.container.querySelector('#modal-codes-list');
+        const modal = document.getElementById('cal-modal-novedad-dialog');
+        const container = modal ? modal.querySelector('#modal-codes-list') : this.container.querySelector('#modal-codes-list');
         if (!container) return;
 
         const row = document.createElement('div');
@@ -888,20 +926,26 @@ export class CalidadSubForm {
     _refreshModalCodeRows() {
         const { disponible } = this._getExtOptions();
         if (!disponible) return;
-        const rows = this.container.querySelectorAll('#modal-codes-list .f-code-row');
+        const modal = document.getElementById('cal-modal-novedad-dialog');
+        const container = modal ? modal.querySelector('#modal-codes-list') : this.container.querySelector('#modal-codes-list');
+        if (!container) return;
+        const rows = container.querySelectorAll('.f-code-row');
         rows.forEach(row => this._upgradeRowSelects(row));
     }
 
     _guardarNovedadCalidadModal() {
-        const tipo = this.container.querySelector('#modal-nov-tipo')?.value;
+        const modal = document.getElementById('cal-modal-novedad-dialog');
+        if (!modal) return false;
+
+        const tipo = modal.querySelector('#modal-nov-tipo')?.value;
         if (!tipo) {
             Toast.warning('Seleccione el tipo de novedad.');
             return false;
         }
 
-        const sinProcesoCheck = this.container.querySelector('#modal-check-sin-proceso');
-        const procAntCheck = this.container.querySelector('#modal-check-proceso-anterior');
-        const procSel = this.container.querySelector('#modal-cobro-proceso-val');
+        const sinProcesoCheck = modal.querySelector('#modal-check-sin-proceso');
+        const procAntCheck = modal.querySelector('#modal-check-proceso-anterior');
+        const procSel = modal.querySelector('#modal-cobro-proceso-val');
 
         // Legacy: SIN PROCESO solo aplica a PROMOCIONES
         let sinProceso = false;
@@ -920,7 +964,7 @@ export class CalidadSubForm {
         }
 
         // Validación estricta de filas (legacy: talla, color y cantidad obligatorias en todas)
-        const rows = this.container.querySelectorAll('#modal-codes-list .f-code-row');
+        const rows = modal.querySelectorAll('#modal-codes-list .f-code-row');
         if (!rows.length) {
             Toast.warning('Agregue al menos una fila de talla/color/cantidad.');
             return false;
