@@ -232,6 +232,7 @@
     transition: transform var(--transition-normal);
     max-height: calc(100vh - var(--nav-height) - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
+    z-index: 1001;
 }
 
 .modal-backdrop.open .modal-content {

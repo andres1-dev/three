@@ -1593,6 +1593,7 @@
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: calc(100vh - var(--nav-height) - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
+    z-index: 1001;
 }
 
 .f-modal-backdrop.visible .f-modal-sheet {
