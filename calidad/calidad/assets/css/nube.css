@@ -635,7 +635,9 @@
     margin: 0 auto;
     background: #fff;
     border-radius: 20px 20px 0 0;
-    padding: 18px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    max-height: calc(100vh - var(--nav-height) - env(safe-area-inset-bottom, 0px));
+    overflow-y: auto;
 }
 
 .nube-cal-nav {

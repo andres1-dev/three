@@ -614,6 +614,8 @@
 
 .f-active-lote-container {
     width: 100%;
+    /* Cancela el gap: queda pegado justo debajo de la solapa GPS/Ubicación */
+    margin-top: -10px;
 }
 
 .f-active-lote-card {
@@ -979,6 +981,15 @@
     position: static;
     border-top: 1px solid transparent;
     /* Cancela el gap del wrapper: queda pegada justo debajo de Muestreo AQL */
+    margin-top: -10px;
+    box-shadow: none;
+}
+
+/* ── Solapa GPS/Ubicación (mismo patrón: pegada a Curva, sin gap) ── */
+.f-gps-tab {
+    position: static;
+    border-top: 1px solid transparent;
+    /* Cancela el gap del wrapper: queda pegada justo debajo de Curva */
     margin-top: -10px;
     box-shadow: none;
 }
@@ -1577,10 +1588,10 @@
     width: 100%;
     max-width: 480px;
     border-radius: 24px 24px 0 0;
-    padding: 18px 20px 24px;
+    padding: 18px 20px calc(24px + env(safe-area-inset-bottom, 0px));
     transform: translateY(100%);
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    max-height: 85vh;
+    max-height: calc(100vh - var(--nav-height) - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
 }
 
@@ -1629,6 +1640,7 @@
     margin-top: 20px;
     display: flex;
     gap: 10px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .f-btn-primary {

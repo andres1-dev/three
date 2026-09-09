@@ -226,10 +226,11 @@
     max-width: var(--max-mobile-width);
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--spacing-6);
+    padding-bottom: calc(var(--spacing-6) + env(safe-area-inset-bottom, 0px));
     box-shadow: var(--shadow-xl);
     transform: translateY(100%);
     transition: transform var(--transition-normal);
-    max-height: 85vh;
+    max-height: calc(100vh - var(--nav-height) - env(safe-area-inset-bottom, 0px));
     overflow-y: auto;
 }
 
