@@ -561,6 +561,9 @@ input, textarea, select, button {
                     <span id="btnTxt">Ingresar</span>
                 </button>
 
+                <!-- Estado del proceso de login (éxito) -->
+                <div class="bm-status" id="loginStatus" style="display:none"></div>
+
                 <div class="login-links">
                     <button type="button" class="forgot" id="forgotBtn">
                         ¿Olvidaste tu contraseña?
@@ -1114,16 +1117,24 @@ function hideErrManual()    { errBoxManual.className = 'err-box'; }
 
 function setLoading(on, label) {
     loginBtn.disabled = emailEl.disabled = passEl.disabled = on;
-    loginBtn.className = 'btn-login';
-    loginBtn.innerHTML = on
-        ? `<div class="spin"></div><span>${label}</span>`
-        : `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg><span>Ingresar</span>`;
+    
+    const statusEl = document.getElementById('loginStatus');
+    if (statusEl) {
+        statusEl.style.display = on ? 'flex' : 'none';
+        statusEl.className = 'bm-status';
+        statusEl.innerHTML = on ? `<div class="spin" style="width:16px;height:16px;border:2px solid rgba(0,0,0,.2);border-top-color:#64748b;"></div><span>${label}</span>` : '';
+    }
 }
 
 function setOk(label) {
-    loginBtn.disabled = true;
-    loginBtn.className = 'btn-login ok';
-    loginBtn.innerHTML = `<svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>${label}</span>`;
+    loginBtn.style.display = 'none';
+    
+    const statusEl = document.getElementById('loginStatus');
+    if (statusEl) {
+        statusEl.style.display = 'flex';
+        statusEl.className = 'bm-status ok';
+        statusEl.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>${label}</span>`;
+    }
 }
 </script>
 

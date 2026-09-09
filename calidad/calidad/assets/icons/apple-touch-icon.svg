@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
-  <!-- Fondo negro sólido para iOS -->
-  <rect width="180" height="180" fill="#1B1A1B"/>
+  <!-- Fondo blanco para iOS -->
+  <rect width="180" height="180" fill="#ffffff"/>
   
   <!-- Logo escalado a 0.75 para iOS (más pequeño que maskable pero más grande que el actual) -->
   <g transform="translate(90, 90) scale(0.14) translate(-512, -511.6)">
