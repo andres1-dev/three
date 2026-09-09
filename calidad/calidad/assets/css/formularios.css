@@ -376,6 +376,13 @@
     animation: slideDown 0.2s ease-out;
 }
 
+/* GPS tab body con el mismo padding que las otras pestañas */
+.f-gps-tab .f-filter-tab-body {
+    padding: 12px var(--spacing-4, 16px) 14px;
+    background: #f8fafc;
+    border-top: 1px solid #e9eef5;
+}
+
 @keyframes slideDown {
     from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -2001,14 +2008,11 @@
 }
 
 .f-gps-container {
-    padding: 16px;
+    padding: 0;
 }
 
 .f-gps-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
+    display: none;
 }
 
 .f-gps-status-box {
@@ -2048,6 +2052,9 @@
     padding: 4px;
     border-radius: 4px;
     transition: color 0.2s ease, background 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .f-btn-refresh-gps:hover {
@@ -2057,7 +2064,7 @@
 
 .f-map-wrap {
     width: 100%;
-    height: 200px;
+    height: 250px;
     background: #f8fafc;
     border-radius: 8px;
     overflow: hidden;
@@ -2075,6 +2082,13 @@
     font-size: 0.85rem;
 }
 
+.f-map-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+}
+
 .f-spinner {
     width: 24px;
     height: 24px;
@@ -2086,4 +2100,64 @@
 
 @keyframes spin {
     to { transform: rotate(360deg); }
+}
+
+/* ── Botón de Configuración ── */
+.config-btn {
+    margin-left: auto;
+}
+
+/* ── Modal de Configuración ── */
+.f-config-section {
+    margin-bottom: 16px;
+}
+
+.f-config-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0 0 4px 0;
+}
+
+.f-config-section-desc {
+    font-size: 0.8rem;
+    color: #64748b;
+    margin: 0 0 12px 0;
+}
+
+.f-checkbox-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.f-checkbox-row:last-child {
+    border-bottom: none;
+}
+
+.f-checkbox-lbl {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+}
+
+.f-checkbox-lbl input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.f-checkbox-lbl span {
+    font-size: 0.85rem;
+    color: #475569;
+}
+
+.f-sheet-title-icon.config {
+    background: #f1f5f9;
+    color: #64748b;
 }

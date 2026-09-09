@@ -221,7 +221,7 @@ input, textarea, select {
     background: #e2e8f0;
 }
 
-.apps-sep-badge {
+.apps-sep-toggle {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -232,6 +232,18 @@ input, textarea, select {
     padding: 5px 12px;
     border-radius: 20px;
     border: 1px solid #e2e8f0;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.apps-sep-toggle:hover {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.apps-sep-toggle .chevron-icon {
+    transition: transform 0.3s ease;
+}
     box-shadow: 0 1px 3px rgba(0,0,0,0.02);
 }
 
@@ -243,19 +255,32 @@ input, textarea, select {
     opacity: 1;
 }
 
-/* APPS: sin sombra estática — el recuadro SOLO se ve al seleccionar (tap) */
-#view-apps .icon-card-box {
+/* APPS: efectos hover profesionales sin sombra */
+#view-apps .icon-card-box,
+#view-formularios-hub .icon-card-box {
     box-shadow: none;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-#view-apps .icon-card-box:hover {
-    box-shadow: none;
-    transform: none;
+#view-apps .icon-card-box:hover,
+#view-formularios-hub .icon-card-box:hover {
+    transform: translateY(-4px) scale(1.05);
+}
+
+#view-apps .icon-card-box:hover svg,
+#view-apps .icon-card-box:hover > *,
+#view-formularios-hub .icon-card-box:hover svg,
+#view-formularios-hub .icon-card-box:hover > * {
+    transform: scale(1.1);
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 #view-apps .app-card:active .icon-card-box,
-#view-apps .app-card.selected .icon-card-box {
-    box-shadow: 0 0 0 2px var(--color-primary, #2563eb), 0 3px 10px rgba(30, 35, 50, 0.14);
+#view-apps .app-card.selected .icon-card-box,
+#view-formularios-hub .app-card:active .icon-card-box,
+#view-formularios-hub .app-card.selected .icon-card-box {
+    box-shadow: 0 8px 24px rgba(30, 35, 50, 0.18);
+    transform: scale(0.95);
 }
 
 /* Card de app */

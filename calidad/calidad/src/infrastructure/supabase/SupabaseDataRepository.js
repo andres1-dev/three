@@ -413,15 +413,22 @@ export class SupabaseDataRepository extends IDataService {
     /**
      * Obtiene lotes para el selector de formularios exclusivamente vía Edge Function /formularios
      */
-    async getLotes({ query = '', planta = '', productora = '', limit = 50 } = {}) {
+    async getLotes({ query = '', planta = '', productora = '', limit = 50, searchConfig = null } = {}) {
         try {
-            const res = await this._callFormularios({
+            const payload = {
                 accion: 'LISTAR_LOTES',
                 query,
                 planta,
                 productora,
                 limit
-            });
+            };
+
+            // Incluir configuración de búsqueda si está disponible
+            if (searchConfig) {
+                payload.searchConfig = searchConfig;
+            }
+
+            const res = await this._callFormularios(payload);
             if (res && res.data) return res.data;
         } catch (err) {
             console.error('[DataRepository] Error al obtener lotes vía Edge Function:', err);

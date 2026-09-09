@@ -3,6 +3,7 @@ import { MediaDropzone } from '../components/MediaDropzone.js';
 import { AqlModal } from '../components/AqlModal.js';
 import { LoteSelectorCard } from '../components/LoteSelectorCard.js';
 import { generarTextoPlantillaCalidad } from '../utils/plantillasCalidad.js';
+import { ENV } from '../../../../infrastructure/config/env.js';
 
 export class CalidadSubForm {
     /**
@@ -61,12 +62,32 @@ export class CalidadSubForm {
             letra: 'A'
         };
 
+        // Configuración de búsqueda por defecto (todo oculto hasta cargar desde Supabase)
+        this.searchConfig = {
+            searchFields: {
+                productora: true,
+                op: true,
+                referencia: true,
+                planta: true
+            },
+            filters: {
+                productora: false
+            },
+            tabs: {
+                aql: false,
+                curva: false,
+                gps: false
+            }
+        };
+
         this._render();
     }
 
     setLotes(lotes) {
         this.lotes = lotes || [];
-        if (this.loteSelector) this.loteSelector.setLotes(this.lotes);
+        if (this.loteSelector && typeof this.loteSelector.setLotes === 'function') {
+            this.loteSelector.setLotes(this.lotes);
+        }
     }
 
     setProductoras(productoras) {
@@ -109,6 +130,12 @@ export class CalidadSubForm {
                     </svg>
                 </button>
                 <h1 class="page-title">Calidad</h1>
+                <button class="icon-btn config-btn" id="btn-open-config" aria-label="Configuración" title="Configuración de búsqueda">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
             </div>
 
             <!-- Selector de Lote Integrado -->
@@ -424,6 +451,100 @@ export class CalidadSubForm {
                     </div>
                 </div>
             </div>
+
+            <!-- Modal Configuración de Búsqueda -->
+            <div id="cal-modal-config-dialog" class="f-modal-backdrop" style="display:none;">
+                <div class="f-modal-sheet" style="max-width: 480px;">
+                    <div class="f-sheet-header">
+                        <div class="f-sheet-pill"></div>
+                        <div class="f-sheet-title-row">
+                            <div class="f-sheet-title-icon config">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="f-sheet-title">Configuración de Búsqueda</h3>
+                                <p class="f-sheet-subtitle">Personaliza los campos y pestañas visibles</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="f-sheet-body">
+                        <div class="f-config-section">
+                            <h4 class="f-config-section-title">Campos de Búsqueda</h4>
+                            <p class="f-config-section-desc">Selecciona los campos para buscar lotes (mínimo 1)</p>
+                            
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-search-productora" checked />
+                                    <span>Productora</span>
+                                </label>
+                            </div>
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-search-op" checked />
+                                    <span>OP (Orden de Producción)</span>
+                                </label>
+                            </div>
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-search-referencia" checked />
+                                    <span>Referencia</span>
+                                </label>
+                            </div>
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-search-planta" checked />
+                                    <span>Planta</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="f-config-section" style="margin-top: 20px;">
+                            <h4 class="f-config-section-title">Filtros Visibles</h4>
+                            <p class="f-config-section-desc">Selecciona los filtros a mostrar</p>
+
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-filter-productora" checked />
+                                    <span>Filtro Productora</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="f-config-section" style="margin-top: 20px;">
+                            <h4 class="f-config-section-title">Pestañas Informativas</h4>
+                            <p class="f-config-section-desc">Selecciona las pestañas colapsables a mostrar</p>
+
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-tab-aql" checked />
+                                    <span>AQL (Muestreo)</span>
+                                </label>
+                            </div>
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-tab-curva" checked />
+                                    <span>Curva (Tallas/Colores)</span>
+                                </label>
+                            </div>
+                            <div class="f-checkbox-row">
+                                <label class="f-checkbox-lbl">
+                                    <input type="checkbox" id="config-tab-gps" checked />
+                                    <span>Ubicación (GPS)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="f-sheet-footer">
+                        <button type="button" class="f-btn-secondary" id="btn-close-config-modal">Cancelar</button>
+                        <button type="button" class="f-btn-primary" id="btn-save-config-modal">Guardar Configuración</button>
+                    </div>
+                </div>
+            </div>
         `;
 
         // 1. Instanciar Selector de Lote On-Demand (con solapa informativa AQL)
@@ -443,6 +564,12 @@ export class CalidadSubForm {
                 this.aqlConfig.aqlNivel = cfg.aqlNivel;
                 this._recalcAQL();
             },
+            // Capturar GPS al descolapsar pestaña de ubicación
+            onGpsTabOpened: () => {
+                this._initGPS();
+            },
+            // Configuración dinámica de búsqueda y pestañas
+            searchConfig: this.searchConfig,
             aqlInfo: true
         });
 
@@ -451,20 +578,20 @@ export class CalidadSubForm {
             this.setLote(this.activeLote);
         }
 
-        // 2. Instanciar Dropzone
+        // 3. Instanciar Dropzone
         const dropMount = this.container.querySelector('#cal-dropzone-mount');
         this.dropzone = new MediaDropzone({
             container: dropMount,
             maxFiles: 8
         });
 
-        // 3. Inicializar Firma
+        // 4. Inicializar Firma
         this._initFirmaCanvas();
 
-        // 4. Iniciar GPS y Mapa
-        this._initGPS();
+        // 5. Cargar configuración de búsqueda del usuario (async, no bloquear)
+        this._loadConfigFromUserProfile();
 
-        // 5. Vincular Eventos
+        // 6. Vincular Eventos
         this._bindEvents();
         this._recalcAQL();
         this._actualizarVisibilidadCondicional();
@@ -474,6 +601,29 @@ export class CalidadSubForm {
         // Volver al Menú
         this.container.querySelector('#btn-back-to-hub')?.addEventListener('click', () => {
             if (typeof this.onBack === 'function') this.onBack();
+        });
+
+        // Abrir Modal de Configuración
+        this.container.querySelector('#btn-open-config')?.addEventListener('click', () => {
+            this._openConfigModal();
+        });
+
+        // Cerrar Modal de Configuración
+        this.container.querySelector('#btn-close-config-modal')?.addEventListener('click', () => {
+            this._closeConfigModal();
+        });
+
+        // Guardar Configuración
+        this.container.querySelector('#btn-save-config-modal')?.addEventListener('click', async () => {
+            await this._saveConfig();
+        });
+
+        // Cerrar modal al hacer clic fuera
+        const configModal = this.container.querySelector('#cal-modal-config-dialog');
+        configModal?.addEventListener('click', (e) => {
+            if (e.target === configModal) {
+                this._closeConfigModal();
+            }
         });
 
         // Cambio de Tipo de Visita y Conclusión
@@ -675,27 +825,52 @@ export class CalidadSubForm {
         canvas.addEventListener('touchstart', start, { passive: false });
         canvas.addEventListener('touchmove', draw, { passive: false });
         canvas.addEventListener('touchend', stop);
-
-        this.container.querySelector('#btn-clear-sig-inline')?.addEventListener('click', () => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            this.haFirmado = false;
-        });
     }
 
     _initGPS() {
-        const dot = this.container.querySelector('#gps-dot');
-        const label = this.container.querySelector('#gps-status-label');
-        const frameWrap = this.container.querySelector('#mapa-calidad-frame-wrap');
+        // Limpiar cualquier watchPosition anterior
+        if (this.gpsWatchId) {
+            navigator.geolocation.clearWatch(this.gpsWatchId);
+            this.gpsWatchId = null;
+        }
 
-        if (!navigator.geolocation) {
-            if (label) label.textContent = 'GPS no disponible en este dispositivo';
-            if (dot) dot.className = 'f-gps-dot off';
+        // Limpiar cualquier timeout anterior
+        if (this.gpsTimeoutId) {
+            clearTimeout(this.gpsTimeoutId);
+            this.gpsTimeoutId = null;
+        }
+
+        // Buscar elementos GPS dentro de la pestaña colapsada en LoteSelectorCard
+        const loteMount = this.container.querySelector('#cal-lote-mount');
+        const frameWrap = loteMount?.querySelector('#mapa-calidad-frame-wrap');
+
+        if (!frameWrap) {
+            console.warn('[GPS] Elementos GPS no encontrados en la pestaña colapsada');
             return;
         }
 
-        if (label) label.textContent = 'Obteniendo localización...';
+        // Mostrar estado de carga
+        frameWrap.innerHTML = `
+            <div id="map-placeholder" class="f-map-loading">
+                <span class="f-spinner"></span>
+                <span>Cargando mapa de ubicación...</span>
+            </div>
+        `;
 
-        navigator.geolocation.getCurrentPosition(
+        // Solicitar ubicación con configuración optimizada para mayor precisión
+        if (!navigator.geolocation) {
+            this._updateGPSUIError({ code: 0, message: 'Geolocalización no soportada' }, loteMount);
+            return;
+        }
+
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 30000,
+            maximumAge: 0
+        };
+
+        // Usar watchPosition para obtener lecturas más precisas con el tiempo
+        this.gpsWatchId = navigator.geolocation.watchPosition(
             (pos) => {
                 this.gpsData = {
                     lat: pos.coords.latitude,
@@ -704,39 +879,86 @@ export class CalidadSubForm {
                     enabled: true
                 };
 
-                if (dot) dot.className = 'f-gps-dot active';
-                if (label) {
-                    label.textContent = `Ubicación: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)} (±${Math.round(pos.coords.accuracy)}m)`;
-                }
+                // Actualizar UI con los elementos de la pestaña colapsada
+                this._updateGPSUI(loteMount);
 
-                // Renderizar Iframe de Google Maps interactivo (mismo patrón legacy de impresión)
-                if (frameWrap) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    frameWrap.innerHTML = `
-                        <iframe
-                            class="f-map-iframe"
-                            src="https://maps.google.com/maps?q=${lat}%2C${lng}&z=16&output=embed"
-                            loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade"
-                            allowfullscreen>
-                        </iframe>
-                    `;
+                // Si la precisión es menor a 100m, cancelar watchPosition
+                if (pos.coords.accuracy < 100 && this.gpsWatchId) {
+                    navigator.geolocation.clearWatch(this.gpsWatchId);
+                    this.gpsWatchId = null;
                 }
             },
             (err) => {
-                if (dot) dot.className = 'f-gps-dot off';
-                if (label) label.textContent = 'No se pudo obtener GPS (' + err.message + ')';
-                if (frameWrap) {
-                    frameWrap.innerHTML = `
-                        <div class="f-map-loading">
-                            <span style="color:#ef4444;">Sin señal de ubicación</span>
-                        </div>
-                    `;
+                console.error('[GPS] Error obteniendo ubicación:', err);
+                this.gpsData = { lat: null, lng: null, enabled: false };
+                this._updateGPSUIError(err, loteMount);
+                if (this.gpsWatchId) {
+                    navigator.geolocation.clearWatch(this.gpsWatchId);
+                    this.gpsWatchId = null;
                 }
             },
-            { enableHighAccuracy: true, timeout: 10000 }
+            options
         );
+
+        // Cancelar watchPosition después de 30 segundos si no se obtiene buena precisión
+        this.gpsTimeoutId = setTimeout(() => {
+            if (this.gpsWatchId) {
+                navigator.geolocation.clearWatch(this.gpsWatchId);
+                this.gpsWatchId = null;
+            }
+            this.gpsTimeoutId = null;
+        }, 30000);
+    }
+
+    _updateGPSUI(container = null) {
+        const searchContainer = container || this.container;
+        const frameWrap = searchContainer.querySelector('#mapa-calidad-frame-wrap');
+
+        if (!this.gpsData.enabled) return;
+
+        // Renderizar Iframe de Google Maps interactivo
+        if (frameWrap) {
+            const lat = this.gpsData.lat;
+            const lng = this.gpsData.lng;
+            const iframeUrl = `https://maps.google.com/maps?q=${lat}%2C${lng}&z=16&output=embed`;
+            
+            // Crear iframe dinámicamente para asegurar que se renderice correctamente
+            const iframe = document.createElement('iframe');
+            iframe.className = 'f-map-iframe';
+            iframe.src = iframeUrl;
+            iframe.loading = 'lazy';
+            iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+            iframe.setAttribute('allowfullscreen', '');
+            
+            frameWrap.innerHTML = '';
+            frameWrap.appendChild(iframe);
+        }
+    }
+
+    _updateGPSUIError(err, container = null) {
+        const searchContainer = container || this.container;
+        const frameWrap = searchContainer.querySelector('#mapa-calidad-frame-wrap');
+
+        if (frameWrap) {
+            frameWrap.innerHTML = `
+                <div class="f-map-loading">
+                    <span style="color:#ef4444;">Sin señal de ubicación</span>
+                </div>
+            `;
+        }
+    }
+
+    _getGPSErrorMessage(err) {
+        switch (err.code) {
+            case err.PERMISSION_DENIED:
+                return 'Permiso denegado';
+            case err.POSITION_UNAVAILABLE:
+                return 'Ubicación no disponible';
+            case err.TIMEOUT:
+                return 'Tiempo de espera agotado';
+            default:
+                return err.message || 'Error desconocido';
+        }
     }
 
     _actualizarMapaPlanta() {
@@ -1211,6 +1433,212 @@ export class CalidadSubForm {
         } finally {
             btn.disabled = false;
             btn.innerHTML = origText;
+        }
+    }
+
+    _openConfigModal() {
+        const modal = this.container.querySelector('#cal-modal-config-dialog');
+        if (!modal) return;
+
+        // Cargar configuración actual si existe
+        this._loadConfigToModal();
+
+        modal.style.display = '';
+        document.body.appendChild(modal);
+        requestAnimationFrame(() => modal.classList.add('visible'));
+    }
+
+    _closeConfigModal() {
+        const modal = document.getElementById('cal-modal-config-dialog');
+        if (!modal) return;
+
+        modal.classList.remove('visible');
+        setTimeout(() => {
+            modal.style.display = 'none';
+            this.container.appendChild(modal);
+        }, 250);
+    }
+
+    _loadConfigToModal() {
+        // Configuración por defecto
+        const defaultConfig = {
+            searchFields: {
+                productora: true,
+                op: true,
+                referencia: true,
+                planta: true
+            },
+            filters: {
+                productora: true
+            },
+            tabs: {
+                aql: true,
+                curva: true,
+                gps: true
+            }
+        };
+
+        // Cargar configuración guardada o usar default
+        const savedConfig = this.searchConfig || defaultConfig;
+
+        // Buscar el modal en document.body (donde se movió al abrir)
+        const modal = document.getElementById('cal-modal-config-dialog');
+        if (!modal) return;
+
+        // Actualizar checkboxes de campos de búsqueda
+        const prodCheck = modal.querySelector('#config-search-productora');
+        const opCheck = modal.querySelector('#config-search-op');
+        const refCheck = modal.querySelector('#config-search-referencia');
+        const plantaCheck = modal.querySelector('#config-search-planta');
+
+        if (prodCheck) prodCheck.checked = savedConfig.searchFields.productora;
+        if (opCheck) opCheck.checked = savedConfig.searchFields.op;
+        if (refCheck) refCheck.checked = savedConfig.searchFields.referencia;
+        if (plantaCheck) plantaCheck.checked = savedConfig.searchFields.planta;
+
+        // Actualizar checkboxes de filtros
+        const filterProdCheck = modal.querySelector('#config-filter-productora');
+        if (filterProdCheck) filterProdCheck.checked = savedConfig.filters?.productora ?? true;
+
+        // Actualizar checkboxes de pestañas
+        const aqlCheck = modal.querySelector('#config-tab-aql');
+        const curvaCheck = modal.querySelector('#config-tab-curva');
+        const gpsCheck = modal.querySelector('#config-tab-gps');
+
+        if (aqlCheck) aqlCheck.checked = savedConfig.tabs.aql;
+        if (curvaCheck) curvaCheck.checked = savedConfig.tabs.curva;
+        if (gpsCheck) gpsCheck.checked = savedConfig.tabs.gps;
+    }
+
+    async _saveConfig() {
+        // Buscar el modal en document.body (donde se movió al abrir)
+        const modal = document.getElementById('cal-modal-config-dialog');
+        if (!modal) {
+            Toast.error('Modal de configuración no encontrado');
+            return;
+        }
+
+        // Validar que al menos 1 campo de búsqueda esté seleccionado
+        const searchFields = {
+            productora: modal.querySelector('#config-search-productora')?.checked || false,
+            op: modal.querySelector('#config-search-op')?.checked || false,
+            referencia: modal.querySelector('#config-search-referencia')?.checked || false,
+            planta: modal.querySelector('#config-search-planta')?.checked || false
+        };
+
+        const selectedSearchFields = Object.values(searchFields).filter(v => v).length;
+        if (selectedSearchFields === 0) {
+            Toast.error('Debes seleccionar al menos 1 campo de búsqueda');
+            return;
+        }
+
+        // Guardar configuración
+        this.searchConfig = {
+            searchFields,
+            filters: {
+                productora: modal.querySelector('#config-filter-productora')?.checked || false
+            },
+            tabs: {
+                aql: modal.querySelector('#config-tab-aql')?.checked || false,
+                curva: modal.querySelector('#config-tab-curva')?.checked || false,
+                gps: modal.querySelector('#config-tab-gps')?.checked || false
+            }
+        };
+
+        // Guardar en perfil de usuario (JSONB)
+        await this._saveConfigToUserProfile();
+
+        // Aplicar configuración al LoteSelectorCard (maneja visibilidad internamente)
+        if (this.loteSelector) {
+            this.loteSelector.updateConfig(this.searchConfig);
+        }
+
+        Toast.success('Configuración guardada correctamente');
+        this._closeConfigModal();
+    }
+
+    async _saveConfigToUserProfile() {
+        try {
+            // Obtener token de localStorage (forma más simple)
+            let accessToken = null;
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k || !k.includes('-auth-token')) continue;
+                const s = JSON.parse(localStorage.getItem(k) || 'null');
+                if (s?.access_token) {
+                    accessToken = s.access_token;
+                    break;
+                }
+            }
+
+            if (!accessToken) {
+                throw new Error('No hay sesión de usuario activa');
+            }
+
+            // Llamar a edge function /perfiles con acción ACTUALIZAR_CONFIG_BUSQUEDA
+            const resp = await fetch(`${ENV.FUNCTIONS_URL}/perfiles`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'apikey': ENV.SUPABASE_KEY
+                },
+                body: JSON.stringify({
+                    accion: 'ACTUALIZAR_CONFIG_BUSQUEDA',
+                    config_busqueda: this.searchConfig
+                })
+            });
+
+            const result = await resp.json();
+            if (!resp.ok || !result.success) {
+                throw new Error(result.message || 'Error al guardar configuración');
+            }
+        } catch (err) {
+            console.error('[Config] Error guardando configuración:', err);
+            Toast.error('Error al guardar configuración: ' + err.message);
+        }
+    }
+
+    async _loadConfigFromUserProfile() {
+        try {
+            // Obtener token de localStorage (forma más simple)
+            let accessToken = null;
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (!k || !k.includes('-auth-token')) continue;
+                const s = JSON.parse(localStorage.getItem(k) || 'null');
+                if (s?.access_token) {
+                    accessToken = s.access_token;
+                    break;
+                }
+            }
+
+            if (!accessToken) {
+                return;
+            }
+
+            // Llamar a edge function /perfiles con acción OBTENER_PERFIL
+            const resp = await fetch(`${ENV.FUNCTIONS_URL}/perfiles`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'apikey': ENV.SUPABASE_KEY
+                },
+                body: JSON.stringify({ accion: 'OBTENER_PERFIL' })
+            });
+
+            const result = await resp.json();
+            if (resp.ok && result.success && result.data?.config_busqueda) {
+                this.searchConfig = result.data.config_busqueda;
+
+                // Aplicar configuración al LoteSelectorCard si ya existe
+                if (this.loteSelector) {
+                    this.loteSelector.updateConfig(this.searchConfig);
+                }
+            }
+        } catch (err) {
+            // Usar configuración por defecto en caso de error
         }
     }
 }

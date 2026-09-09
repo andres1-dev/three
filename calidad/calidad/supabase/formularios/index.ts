@@ -77,7 +77,7 @@ serve(async (req) => {
     }
 
     if (accion === 'LISTAR_LOTES') {
-      const { query, planta, productora, limit = 50 } = payload;
+      const { query, planta, productora, limit = 50, searchConfig } = payload;
       let q = supabaseClient.from('master').select('*').limit(limit);
 
       if (productora && productora !== 'TODAS') {
@@ -95,13 +95,36 @@ serve(async (req) => {
       if (query && query.trim()) {
         const qTrim = query.trim();
         const isNumeric = /^\d+$/.test(qTrim);
-        if (isNumeric) {
-          const num = parseInt(qTrim, 10);
-          q = q.or(`id_master.eq.${num},referencia.ilike.%${qTrim}%,nombre_planta.ilike.%${qTrim}%`);
+
+        // Usar configuración de búsqueda si está disponible
+        if (searchConfig && searchConfig.searchFields) {
+          const fields = searchConfig.searchFields;
+          const conditions = [];
+
+          if (isNumeric) {
+            const num = parseInt(qTrim, 10);
+            if (fields.op) conditions.push(`id_master.eq.${num}`);
+            if (fields.referencia) conditions.push(`referencia.ilike.%${qTrim}%`);
+            if (fields.planta) conditions.push(`nombre_planta.ilike.%${qTrim}%`);
+          } else {
+            if (fields.referencia) conditions.push(`referencia.ilike.%${qTrim}%`);
+            if (fields.planta) conditions.push(`nombre_planta.ilike.%${qTrim}%`);
+            if (fields.productora) conditions.push(`productora.ilike.%${qTrim}%`);
+          }
+
+          if (conditions.length > 0) {
+            q = q.or(conditions.join(','));
+          }
         } else {
-          q = q.or(
-            `referencia.ilike.%${qTrim}%,nombre_planta.ilike.%${qTrim}%,descripcion.ilike.%${qTrim}%,proceso.ilike.%${qTrim}%`
-          );
+          // Comportamiento por defecto (buscar en todas las columnas)
+          if (isNumeric) {
+            const num = parseInt(qTrim, 10);
+            q = q.or(`id_master.eq.${num},referencia.ilike.%${qTrim}%,nombre_planta.ilike.%${qTrim}%`);
+          } else {
+            q = q.or(
+              `referencia.ilike.%${qTrim}%,nombre_planta.ilike.%${qTrim}%,descripcion.ilike.%${qTrim}%,proceso.ilike.%${qTrim}%`
+            );
+          }
         }
       }
 

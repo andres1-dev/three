@@ -1117,6 +1117,7 @@ function hideErrManual()    { errBoxManual.className = 'err-box'; }
 
 function setLoading(on, label) {
     loginBtn.disabled = emailEl.disabled = passEl.disabled = on;
+    loginBtn.style.display = on ? 'none' : '';
     
     const statusEl = document.getElementById('loginStatus');
     if (statusEl) {

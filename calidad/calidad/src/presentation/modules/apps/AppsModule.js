@@ -162,20 +162,23 @@ export class AppsModule {
                     ${activeApps.map(app => renderCard(app, true)).join('')}
                 </div>
 
-                <!-- Separador Visual: Próximamente -->
+                <!-- Separador Visual: Próximamente (Colapsable) -->
                 <div class="apps-section-separator">
                     <div class="apps-sep-line"></div>
-                    <span class="apps-sep-badge">
+                    <button type="button" class="apps-sep-toggle" id="toggleInactive">
                         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                         </svg>
-                        Próximamente
-                    </span>
+                        <span>Próximamente</span>
+                        <svg class="chevron-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
                     <div class="apps-sep-line"></div>
                 </div>
 
-                <!-- Sección 2: Apps en Desarrollo -->
-                <div class="apps-grid apps-grid-inactive">
+                <!-- Sección 2: Apps en Desarrollo (Colapsada por defecto) -->
+                <div class="apps-grid apps-grid-inactive" id="inactiveAppsGrid" style="display:none">
                     ${inactiveApps.map(app => renderCard(app, false)).join('')}
                 </div>
             </div>
@@ -202,6 +205,20 @@ export class AppsModule {
                     Toast.info(`Módulo "${label}" en proceso de activación`);
                 }
             });
+        });
+
+        // Toggle sección inactiva
+        const toggleBtn = this.container.querySelector('#toggleInactive');
+        const inactiveGrid = this.container.querySelector('#inactiveAppsGrid');
+        const chevron = toggleBtn?.querySelector('.chevron-icon');
+        
+        toggleBtn?.addEventListener('click', () => {
+            const isHidden = inactiveGrid.style.display === 'none';
+            inactiveGrid.style.display = isHidden ? 'grid' : 'none';
+            if (chevron) {
+                chevron.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+                chevron.style.transition = 'transform 0.3s ease';
+            }
         });
     }
 

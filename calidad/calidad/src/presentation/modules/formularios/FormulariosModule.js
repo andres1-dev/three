@@ -251,13 +251,14 @@ export class FormulariosModule {
 
         const onBackToHub = () => this._renderHubView();
 
-        const onSearchLotes = async ({ query, productora }) => {
+        const onSearchLotes = async ({ query, productora, searchConfig }) => {
             try {
                 const results = await this.getLotesUseCase.execute({
                     query,
                     productora: productora || this.selectedProductora,
                     planta: currentUser?.planta || '',
-                    limit: 30
+                    limit: 30,
+                    searchConfig
                 });
                 return results || [];
             } catch (err) {

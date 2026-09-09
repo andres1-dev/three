@@ -26,12 +26,13 @@ export class GetLotesUseCase {
      * @param {string} params.planta
      * @param {string} params.productora
      * @param {number} params.limit
+     * @param {Object} params.searchConfig
      * @returns {Promise<Lote[]>}
      */
-    async execute({ query = '', planta = '', productora = '', limit = 40 } = {}) {
+    async execute({ query = '', planta = '', productora = '', limit = 40, searchConfig = null } = {}) {
         try {
             if (typeof this.dataService.getLotes === 'function') {
-                const raw = await this.dataService.getLotes({ query, planta, productora, limit });
+                const raw = await this.dataService.getLotes({ query, planta, productora, limit, searchConfig });
                 return (raw || []).map(l => l instanceof Lote ? l : new Lote(l));
             }
             return [];

@@ -50,6 +50,8 @@ interface PerfilPayload {
     // Preferencias
     email_copia?: boolean
     notificaciones_activas?: boolean
+    // Configuración de búsqueda (Calidad)
+    config_busqueda?: any
     // Imágenes
     foto_url?: string
     portada_url?: string
@@ -98,6 +100,9 @@ async function obtenerPerfil(supabaseClient: any, userId: string) {
         .eq('auth_user_id', userId)
         .single()
 
+    console.log('[perfiles] Datos de perfiles:', data)
+    console.log('[perfiles] config_busqueda en BD:', data?.config_busqueda)
+
     if (error && error.code !== 'PGRST116') {
         // PGRST116 = no rows returned (usuario sin perfil todavía)
         throw new Error(`Error al obtener perfil: ${error.message}`)
@@ -124,7 +129,10 @@ async function obtenerPerfil(supabaseClient: any, userId: string) {
         disponible: data?.disponible !== false,
         email_copia: data?.email_copia || false,
         notificaciones_activas: data?.notificaciones_activas !== false,
+        config_busqueda: data?.config_busqueda || null,
     }
+
+    console.log('[perfiles] Perfil final con config_busqueda:', perfilFinal.config_busqueda)
 
     // 4. Auto-curar registro en la BD si faltaba cédula o datos básicos
     try {
@@ -221,6 +229,8 @@ async function actualizarPerfil(supabaseClient: any, userId: string, payload: Pe
 
     if (payload.email_copia !== undefined) updates.email_copia = payload.email_copia
     if (payload.notificaciones_activas !== undefined) updates.notificaciones_activas = payload.notificaciones_activas
+
+    if (payload.config_busqueda !== undefined) updates.config_busqueda = payload.config_busqueda
 
     if (payload.foto_url !== undefined) updates.foto_url = payload.foto_url
     if (payload.portada_url !== undefined) updates.portada_url = payload.portada_url
@@ -384,6 +394,37 @@ async function eliminarFoto(supabaseClient: any, fileName: string) {
     return { success: true, message: 'Archivo eliminado correctamente' }
 }
 
+/**
+ * ACTUALIZAR_CONFIG_BUSQUEDA - Actualiza solo la configuración de búsqueda del usuario
+ */
+async function actualizarConfigBusqueda(supabaseClient: any, userId: string, payload: PerfilPayload) {
+    console.log('[perfiles] Actualizando config_busqueda para usuario:', userId)
+    console.log('[perfiles] Payload config_busqueda:', JSON.stringify(payload.config_busqueda))
+
+    // Validar que config_busqueda tenga el formato correcto
+    if (!payload.config_busqueda) {
+        throw new Error('Se requiere config_busqueda en el payload')
+    }
+
+    console.log('[perfiles] Ejecutando update en tabla perfiles')
+    const { data, error } = await supabaseClient
+        .from('perfiles')
+        .update({ config_busqueda: payload.config_busqueda })
+        .eq('auth_user_id', userId)
+        .select()
+        .single()
+
+    console.log('[perfiles] Resultado update:', { data, error })
+
+    if (error) {
+        console.error('[perfiles] Error en update:', error)
+        throw new Error(`Error al actualizar config_busqueda: ${error.message}`)
+    }
+
+    console.log('[perfiles] Configuración actualizada exitosamente:', data.config_busqueda)
+    return { success: true, message: 'Configuración de búsqueda actualizada', data: data }
+}
+
 // ================================================================
 // SERVIDOR PRINCIPAL
 // ================================================================
@@ -446,6 +487,10 @@ serve(async (req) => {
 
             case 'ACTUALIZAR_PERFIL':
                 result = await actualizarPerfil(supabaseClient, user.id, payload)
+                break
+
+            case 'ACTUALIZAR_CONFIG_BUSQUEDA':
+                result = await actualizarConfigBusqueda(supabaseClient, user.id, payload)
                 break
 
             case 'SUBIR_FOTO':

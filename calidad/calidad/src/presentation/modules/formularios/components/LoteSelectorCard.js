@@ -22,6 +22,8 @@ export class LoteSelectorCard {
         onAqlConfigChange = null,
         onFetchExtensiones = null,
         onExtensionesLoaded = null,
+        onGpsTabOpened = null,
+        searchConfig = null,
         aqlInfo = false
     }) {
         this.container = container;
@@ -33,7 +35,27 @@ export class LoteSelectorCard {
         this.onAqlConfigChange = onAqlConfigChange;
         this.onFetchExtensiones = onFetchExtensiones;
         this.onExtensionesLoaded = onExtensionesLoaded;
+        this.onGpsTabOpened = onGpsTabOpened;
         this.aqlInfo = aqlInfo;
+
+        // Configuración dinámica (por defecto todo oculto hasta cargar desde Supabase)
+        this.config = searchConfig || {
+            searchFields: {
+                productora: true,
+                op: true,
+                referencia: true,
+                planta: true
+            },
+            filters: {
+                productora: false
+            },
+            tabs: {
+                aql: false,
+                curva: false,
+                gps: false
+            }
+        };
+        this.searchFields = this.config.searchFields;
 
         this.activeLote = null;
         this.isAccordionOpen = false;
@@ -61,6 +83,10 @@ export class LoteSelectorCard {
 
     setActiveLote(lote) {
         this.activeLote = lote;
+        // AQL tiene datos cuando hay un lote seleccionado con cantidad válida
+        this.aqlDataLoaded = lote && lote.cantidad > 0;
+        // Resetear estado de curva (se marcará como cargado al obtener extensiones)
+        this.curvaDataLoaded = false;
         this._renderActiveLote();
         // Al seleccionar la OP, consultar sus extensiones reales (talla · color)
         // usando la clave id_productora + op.
@@ -74,6 +100,21 @@ export class LoteSelectorCard {
     setAqlConfig({ nivel, aqlNivel } = {}) {
         if (this.aqlCfgNivel && nivel) this.aqlCfgNivel.value = nivel;
         if (this.aqlCfgAql && aqlNivel) this.aqlCfgAql.value = aqlNivel;
+    }
+
+    updateConfig(newConfig) {
+        if (!newConfig) return;
+
+        this.config = newConfig;
+        this.searchFields = this.config.searchFields || this.config;
+
+        // Actualizar visibilidad de filtros (ocultar solo el header del filtro)
+        if (this.config.filters && this.filterTabHeader) {
+            this.filterTabHeader.style.display = this.config.filters.productora ? '' : 'none';
+        }
+
+        // Actualizar visibilidad de pestañas (usando el método centralizado)
+        this._updateTabVisibility();
     }
 
     _init() {
@@ -217,6 +258,12 @@ export class LoteSelectorCard {
                             <span class="f-tab-main-text">Ubicación</span>
                         </div>
                         <div class="f-tab-controls">
+                            <button type="button" class="f-btn-refresh-gps" id="btn-refresh-gps-header" title="Actualizar ubicación" style="display:none;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
+                                    <polyline points="23 4 23 10 17 10"></polyline>
+                                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                                </svg>
+                            </button>
                             <svg class="f-tab-chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2">
                                 <polyline points="6 9 12 15 18 9"/>
                             </svg>
@@ -272,6 +319,9 @@ export class LoteSelectorCard {
         this.searchIcon = this.container.querySelector('#icon-search-static');
         this.spinner = this.container.querySelector('#icon-search-spinner');
 
+        // Referencia específica al header del filtro (lo que el usuario quiere ocultar)
+        this.filterTabHeader = this.container.querySelector('#btn-toggle-productora-filter');
+
         // Referencias de la Solapa Informativa AQL (solo cuando aqlInfo = true)
         this.aqlTabContainer = this.container.querySelector('#aql-tab-container');
         this.btnAqlToggle = this.container.querySelector('#btn-toggle-aql-tab');
@@ -292,6 +342,21 @@ export class LoteSelectorCard {
         this.gpsDrawer = this.container.querySelector('#gps-tab-drawer');
         this.gpsBody = this.container.querySelector('#gps-tab-body-inner');
         this.isGpsTabOpen = false;
+
+        // Estado de datos cargados
+        this.aqlDataLoaded = false;
+        this.curvaDataLoaded = false;
+
+        // Aplicar configuración inicial de visibilidad de filtros y pestañas
+        if (this.config) {
+            // Aplicar visibilidad de filtros (ocultar el header del filtro, no el contenedor completo)
+            if (this.config.filters && this.filterTabHeader) {
+                this.filterTabHeader.style.display = this.config.filters.productora ? '' : 'none';
+            }
+
+            // Aplicar visibilidad de pestañas (usando método centralizado que respeta datos)
+            this._updateTabVisibility();
+        }
 
         this._renderProductoraOptions();
         this._bindEvents();
@@ -411,7 +476,18 @@ export class LoteSelectorCard {
                 this.gpsDrawer.style.display = this.isGpsTabOpen ? 'block' : 'none';
                 this.gpsTabContainer.classList.toggle('is-open', this.isGpsTabOpen);
                 this.btnGpsToggle.setAttribute('aria-expanded', String(this.isGpsTabOpen));
-                if (this.isGpsTabOpen) this._renderGpsBody();
+                
+                if (this.isGpsTabOpen) {
+                    // Al abrir, limpiar contenido y renderizar nuevamente para disparar GPS
+                    this.gpsBody.innerHTML = '';
+                    this._renderGpsBody();
+                } else {
+                    // Al cerrar, ocultar botón de refresh en el header
+                    const refreshBtn = this.container.querySelector('#btn-refresh-gps-header');
+                    if (refreshBtn) {
+                        refreshBtn.style.display = 'none';
+                    }
+                }
             };
 
             this.btnGpsToggle.addEventListener('click', gpsToggleHandler);
@@ -509,7 +585,8 @@ export class LoteSelectorCard {
             if (typeof this.onSearchLotes === 'function') {
                 const results = await this.onSearchLotes({
                     query,
-                    productora: this.selectedProductora
+                    productora: this.selectedProductora,
+                    searchConfig: this.config
                 });
                 this.currentResults = results || [];
                 this._renderSuggestions(this.currentResults);
@@ -582,24 +659,21 @@ export class LoteSelectorCard {
             this.activeContainer.innerHTML = '';
             // Mostrar buscador cuando no hay OP seleccionada
             if (this.searchRowContainer) this.searchRowContainer.style.display = '';
-            // La solapa AQL solo es visible cuando hay una OP seleccionada
+            // Resetear estado de datos
+            this.aqlDataLoaded = false;
+            this.curvaDataLoaded = false;
+            // Ocultar todas las pestañas colapsadas
             if (this.aqlTabContainer) this.aqlTabContainer.style.display = 'none';
-            // La solapa Curva solo es visible cuando hay una OP seleccionada
             if (this.curvaTabContainer) this.curvaTabContainer.style.display = 'none';
-            // La solapa GPS solo es visible cuando hay una OP seleccionada
             if (this.gpsTabContainer) this.gpsTabContainer.style.display = 'none';
             return;
         }
 
         // OP seleccionada: ocultar buscador y mostrar tarjeta de lote
         if (this.searchRowContainer) this.searchRowContainer.style.display = 'none';
-        
-        // OP seleccionada: mostrar la solapa informativa del muestreo inmediatamente
-        if (this.aqlTabContainer) this.aqlTabContainer.style.display = '';
-        // OP seleccionada: mostrar la solapa Curva inmediatamente (sin esperar datos)
-        if (this.curvaTabContainer) this.curvaTabContainer.style.display = '';
-        // OP seleccionada: mostrar la solapa GPS inmediatamente
-        if (this.gpsTabContainer) this.gpsTabContainer.style.display = '';
+
+        // Actualizar visibilidad de pestañas basado en config y datos
+        this._updateTabVisibility();
 
         const l = this.activeLote;
         this.activeContainer.innerHTML = `
@@ -708,7 +782,12 @@ export class LoteSelectorCard {
     async _loadExtensiones() {
         const lote = this.activeLote;
         if (!lote || typeof this.onFetchExtensiones !== 'function') return;
-        if (Array.isArray(lote.extensiones)) return; // ya cargadas
+        if (Array.isArray(lote.extensiones)) {
+            // Ya cargadas: marcar como disponibles y actualizar visibilidad
+            this.curvaDataLoaded = true;
+            this._updateTabVisibility();
+            return;
+        }
 
         const op = Number(lote.op ?? lote.lote ?? lote.id_master) || 0;
         let idProductora = String(lote.productora ?? this.selectedProductora ?? '').trim();
@@ -724,7 +803,8 @@ export class LoteSelectorCard {
             const exts = await this.onFetchExtensiones({ op, idProductora });
             if (this.activeLote !== lote) return; // el usuario cambió de OP mientras cargaba
             lote.extensiones = Array.isArray(exts) ? exts : [];
-            this._renderActiveLote(); // hace VISIBLE la solapa Curva (datos cargados)
+            this.curvaDataLoaded = true; // Marcar datos de curva como cargados
+            this._updateTabVisibility(); // Actualizar visibilidad basado en config y datos
             this._renderCurvaBody();  // puebla el drawer con la tabla
             if (typeof this.onExtensionesLoaded === 'function') this.onExtensionesLoaded(lote);
         } catch (err) {
@@ -748,6 +828,39 @@ export class LoteSelectorCard {
             return;
         }
         body.innerHTML = this._buildExtensionesTable(exts);
+    }
+
+    /**
+     * Actualiza la visibilidad de las pestañas basándose en:
+     * 1. Configuración del usuario (this.config)
+     * 2. Disponibilidad de datos (this.aqlDataLoaded, this.curvaDataLoaded)
+     * 3. Estado del lote activo
+     */
+    _updateTabVisibility() {
+        if (!this.config || !this.config.tabs) {
+            // Sin configuración: ocultar todo
+            if (this.aqlTabContainer) this.aqlTabContainer.style.display = 'none';
+            if (this.curvaTabContainer) this.curvaTabContainer.style.display = 'none';
+            if (this.gpsTabContainer) this.gpsTabContainer.style.display = 'none';
+            return;
+        }
+
+        // AQL: visible solo si está activo en config Y hay lote con cantidad válida
+        if (this.aqlTabContainer) {
+            const shouldShow = this.config.tabs.aql && this.aqlDataLoaded;
+            this.aqlTabContainer.style.display = shouldShow ? '' : 'none';
+        }
+
+        // Curva: visible solo si está activo en config Y hay datos cargados
+        if (this.curvaTabContainer) {
+            const shouldShow = this.config.tabs.curva && this.curvaDataLoaded;
+            this.curvaTabContainer.style.display = shouldShow ? '' : 'none';
+        }
+
+        // GPS: visible solo si está activo en config
+        if (this.gpsTabContainer) {
+            this.gpsTabContainer.style.display = this.config.tabs.gps ? '' : 'none';
+        }
     }
 
     /**
@@ -820,7 +933,7 @@ export class LoteSelectorCard {
 
     /**
      * Renderiza el cuerpo del drawer de la solapa "Ubicación" (GPS).
-     * Muestra el campo de localización GPS existente del formulario.
+     * Muestra solo el mapa de Google Maps sin contenedor interno.
      */
     _renderGpsBody() {
         const body = this.gpsBody;
@@ -828,35 +941,84 @@ export class LoteSelectorCard {
         const l = this.activeLote;
 
         body.innerHTML = `
-            <div class="f-gps-container">
-                <div class="f-gps-header">
-                    <div class="f-gps-status-box">
-                        <span class="f-gps-dot active" id="gps-dot"></span>
-                        <span class="f-gps-text" id="gps-status-label">Obteniendo señal GPS...</span>
-                    </div>
-                    <div class="f-gps-actions">
-                        <button type="button" class="f-btn-refresh-gps" id="btn-refresh-gps" title="Actualizar ubicación">
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2">
-                                <polyline points="23 4 23 10 17 10"></polyline>
-                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Contenedor del Mapa Visual -->
-                <div id="mapa-calidad-frame-wrap" class="f-map-wrap">
-                    <div id="map-placeholder" class="f-map-loading">
-                        <span class="f-spinner"></span>
-                        <span>Cargando mapa de ubicación...</span>
-                    </div>
+            <div id="mapa-calidad-frame-wrap" class="f-map-wrap">
+                <div id="map-placeholder" class="f-map-loading">
+                    <span class="f-spinner"></span>
+                    <span>Cargando mapa de ubicación...</span>
                 </div>
             </div>
         `;
 
+        // Mostrar botón de refresh en el header
+        const refreshBtn = this.container.querySelector('#btn-refresh-gps-header');
+        if (refreshBtn) {
+            refreshBtn.style.display = 'inline-flex';
+            refreshBtn.onclick = () => {
+                // Notificar al formulario para recapturar GPS
+                if (typeof this.onGpsTabOpened === 'function') {
+                    this.onGpsTabOpened();
+                }
+            };
+        }
+
         // Notificar al formulario que el mapa GPS está listo para inicializar
         if (typeof this.onGpsTabOpened === 'function') {
             this.onGpsTabOpened();
+        }
+    }
+
+    /**
+     * Actualiza la configuración dinámica del componente
+     * @param {Object} config - Configuración con searchFields y tabs
+     */
+    updateConfig(config) {
+        if (!config) return;
+
+        this.config = config;
+
+        // Actualizar visibilidad de pestañas usando método centralizado que respeta datos
+        this._updateTabVisibility();
+
+        // Actualizar campos de búsqueda (requiere recargar el HTML de búsqueda)
+        if (config.searchFields) {
+            this.searchFields = config.searchFields;
+            // Recargar el input de búsqueda con los campos configurados
+            this._renderSearchInput();
+        }
+    }
+
+    _renderSearchInput() {
+        if (!this.searchInputContainer) return;
+
+        const fields = this.searchFields || {
+            productora: true,
+            op: true,
+            referencia: true,
+            planta: true
+        };
+
+        let placeholder = 'Buscar por ';
+        const activeFields = [];
+        
+        if (fields.productora) activeFields.push('productora');
+        if (fields.op) activeFields.push('OP');
+        if (fields.referencia) activeFields.push('referencia');
+        if (fields.planta) activeFields.push('planta');
+
+        if (activeFields.length === 0) {
+            placeholder = 'Buscar...';
+        } else if (activeFields.length === 1) {
+            placeholder = `Buscar por ${activeFields[0]}...`;
+        } else if (activeFields.length === 2) {
+            placeholder = `Buscar por ${activeFields.join(' o ')}...`;
+        } else {
+            const last = activeFields.pop();
+            placeholder = `Buscar por ${activeFields.join(', ')} o ${last}...`;
+        }
+
+        const input = this.searchInputContainer.querySelector('#lote-search-input');
+        if (input) {
+            input.placeholder = placeholder;
         }
     }
 }
