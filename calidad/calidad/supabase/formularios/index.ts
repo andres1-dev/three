@@ -49,6 +49,46 @@ function normalizeDate(dateStr: any): string | null {
   return dateStr;
 }
 
+/**
+ * Normaliza `novedades_auditoria` para guardarla SIEMPRE como
+ * string JSON de ARRAY sin comillas externas ni backslashes literales:
+ *
+ *   CORRECTO  →  [{"tipo":"SIN CONFECCIONAR",...}]
+ *   INCORRECTO →  "[{\"tipo\":\"SIN CONFECCIONAR\",...}]"
+ *
+ * Desenrolla TODAS las capas de doble/triple stringify que puedan
+ * llegar (JSON.parse en bucle hasta obtener el array real).
+ */
+function normalizeNovedades(raw: any): string | null {
+  if (raw === undefined || raw === null) return null;
+
+  let value: any = raw;
+  // Desenrollar capas de string JSON hasta quedarnos con lo de adentro.
+  for (let i = 0; i < 4; i++) {
+    if (typeof value !== 'string') break;
+
+    const t = value.trim();
+    if (t === '') return null;
+
+    // ¿Empieza con comilla externa? → el contenido interno está escapado → desenrollar.
+    if (t.startsWith('"')) {
+      try {
+        value = JSON.parse(t); // quita la capa externa (comillas + backslashes)
+        continue;              // puede haber otra capa → iterar de nuevo
+      } catch (_) {
+        // No es JSON válido → devolver tal cual (mejor que romper el insert)
+        return t;
+      }
+    }
+
+    // Ya NO empieza con comilla → es el JSON limpio (array u objeto)
+    return t;
+  }
+
+  // value quedó como array/objeto real → serializar UNA sola vez, sin escapes extra
+  return JSON.stringify(value);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders, status: 204 });
@@ -293,19 +333,60 @@ serve(async (req) => {
           firma_svg: payload.firma || "",
           destino_proceso: payload.destinoProceso || "",
           destino_planta: payload.destinoPlanta || "",
-          novedades_auditoria: payload.novedadesAsociadas ? JSON.stringify(payload.novedadesAsociadas) : null,
+          novedades_auditoria: normalizeNovedades(payload.novedadesAsociadas || payload.novedades_auditoria),
           avance: payload.avanceProduccion || 0,
-          productora: payload.productora || 1
+          productora: payload.productora || payload.idProductora || 1,
+          // ── SOLO columnas que EXISTEN en `reportes` (confirmadas en la fila devuelta) ──
+          linea: payload.linea || payload.cuento || payload.modulo || "",
+          proceso: payload.proceso || "",
+          prenda: payload.prenda || payload.tipoPrenda || payload.descripcion || "",
+          genero: payload.genero || "",
+          salida: payload.salida || payload.fechaSalida || payload.fecha_salida || null,
+          entrada: payload.entrada || payload.fechaEntrega || payload.fecha_entrega || null
         };
 
-        const { data: repData, error: repError } = await supabaseClient
-          .from('reportes')
-          .insert([insertRow])
-          .select()
-          .single();
+        console.log(
+          "[FORMULARIOS] REPORTE_CALIDAD insertRow → novedades_auditoria:",
+          insertRow.novedades_auditoria
+        );
+
+        // Insert robusto: si una columna no existe en la BD (esquema cambiante),
+        // reintentar con el set MÍNIMO garantizado para no perder el reporte.
+        const insertWith = async (row: any) => {
+          return supabaseClient.from("reportes").insert([row]).select().single();
+        };
+
+        let { data: repData, error: repError } = await insertWith(insertRow);
 
         if (repError) {
-          console.warn('[FORMULARIOS] Error insertando reporte en BD:', repError);
+          console.warn("[FORMULARIOS] Error insertando reporte, reintento con set mínimo:", repError);
+          const minimalRow: any = {
+            id_reporte: idReporte,
+            fecha: fechaBogota,
+            id: payload.lote || payload.op,
+            referencia: payload.referencia || "",
+            cantidad: Number(payload.cantidadTotal || payload.cantidad || 0),
+            planta: payload.planta || "",
+            email: payload.email || user?.email || "",
+            localizacion: payload.gps ? JSON.stringify(payload.gps) : (payload.localizacion || ""),
+            tipo_visita: payload.tipoVisita || "AUDITORIA",
+            conclusion: payload.conclusion || "APROBADO",
+            observaciones: payload.observaciones || "",
+            soporte: publicUrl || payload.soporte || "",
+            firma_svg: payload.firma || "",
+            destino_proceso: payload.destinoProceso || "",
+            destino_planta: payload.destinoPlanta || "",
+            novedades_auditoria: normalizeNovedades(payload.novedadesAsociadas || payload.novedades_auditoria),
+            avance: payload.avanceProduccion || 0,
+            productora: payload.productora || payload.idProductora || 1
+          };
+          const retry = await insertWith(minimalRow);
+          repData = retry.data;
+          repError = retry.error;
+        }
+
+        if (repError) {
+          console.warn("[FORMULARIOS] Error insertando reporte en BD:", repError);
         }
 
         try {

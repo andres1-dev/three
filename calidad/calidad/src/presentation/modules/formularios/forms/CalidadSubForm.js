@@ -174,36 +174,32 @@ export class CalidadSubForm {
                 </div>
 
                 <!-- 2. AUDITOR Y TIPO DE VISITA -->
-                <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">1</span>
-                    <span>Datos de la Auditoría</span>
-                </div>
-
-                <div class="f-form-grid">
-                    <div class="f-form-group">
-                        <label class="f-label">Auditor <span class="req">*</span></label>
-                        <input type="text" id="cal-email" class="f-input" value="${auditorName}" placeholder="Nombre del auditor" required readonly />
+                <div class="f-form-group">
+                    <label class="f-label">Auditor <span class="req">*</span></label>
+                    <div class="cal-input-wrap">
+                        <input type="text" id="cal-email" class="f-input cal-email-locked" value="${auditorName}" placeholder="Nombre del auditor" required disabled />
+                        <span class="cal-lock-icon">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
                     </div>
-
-                    <div class="f-form-group">
-                        <label class="f-label">Tipo de Visita <span class="req">*</span></label>
-                        <select id="cal-tipo-visita" class="f-select" required>
-                            <option value="">Seleccione tipo...</option>
-                            <option value="AUDITORIA" selected>AUDITORÍA</option>
-                            <option value="RONDA">RONDA</option>
-                            <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
-                            <option value="SEGUIMIENTO">SEGUIMIENTO</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- 3. CONCLUSIÓN Y DICTAMEN (El Muestreo AQL es informativo: solapa bajo el filtro de Productora) -->
-                <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">2</span>
-                    <span>Conclusión de la Inspección</span>
                 </div>
 
                 <div class="f-form-group">
+                    <label class="f-label">Tipo de Visita <span class="req">*</span></label>
+                    <select id="cal-tipo-visita" class="f-select" required>
+                        <option value="">Seleccione tipo...</option>
+                        <option value="AUDITORIA" selected>AUDITORÍA</option>
+                        <option value="RONDA">RONDA</option>
+                        <option value="CONTRAMUESTRA">CONTRAMUESTRA</option>
+                        <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                    </select>
+                </div>
+
+                <!-- 3. CONCLUSIÓN -->
+                <div class="f-form-group" style="margin-top: 16px;">
                     <label class="f-label">Conclusión del Lote <span class="req">*</span></label>
                     <select id="cal-conclusion" class="f-select" required>
                         <option value="">Seleccione una conclusión...</option>
@@ -214,95 +210,73 @@ export class CalidadSubForm {
                 </div>
 
                 <!-- 3. DESTINO DEL LOTE (Visible solo si es AUDITORIA y APROBADO) -->
-                <div id="cal-destino-section" class="f-cond-section" style="display:none; margin-top: 16px;">
-                    <div class="f-cond-header">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="12 6 12 12 16 14"/>
-                        </svg>
-                        <span>Destino del Lote</span>
+                <div id="cal-destino-section" style="display:none;">
+                    <div class="f-form-group">
+                        <label class="f-label">Destino <span class="req">*</span></label>
+                        <select id="cal-destino-tipo" class="f-select" required>
+                            <option value="">Seleccione destino...</option>
+                            <option value="CDI" selected>CDI (Centro de Distribución)</option>
+                            <option value="PROCESO">Otro Proceso / Taller</option>
+                        </select>
                     </div>
 
-                    <div class="f-form-grid">
-                        <div class="f-form-group">
-                            <label class="f-label">¿Para dónde va el lote?</label>
-                            <select id="cal-destino-tipo" class="f-select">
-                                <option value="">Seleccione destino...</option>
-                                <option value="CDI" selected>CDI (Centro de Distribución)</option>
-                                <option value="PROCESO">Otro Proceso / Taller</option>
-                            </select>
-                        </div>
+                    <div class="f-form-group" id="cal-destino-proceso-wrap" style="display:none;">
+                        <label class="f-label">Proceso de Destino</label>
+                        <select id="cal-destino-proceso" class="f-select">
+                            <option value="">Seleccione...</option>
+                            <option value="CONFECCION">CONFECCIÓN</option>
+                            <option value="ESTAMPADO">ESTAMPADO</option>
+                            <option value="OJAL Y BOTON">OJAL Y BOTÓN</option>
+                            <option value="BOTONADO">BOTONADO</option>
+                            <option value="TRANSFER">TRANSFER</option>
+                            <option value="OJALETE">OJALETE</option>
+                            <option value="APLIQUE">APLIQUE</option>
+                            <option value="RESORTADO">RESORTADO</option>
+                            <option value="FUSIONADO">FUSIONADO</option>
+                            <option value="LAVADO">LAVADO</option>
+                            <option value="OTROS">OTROS (Especificar...)</option>
+                        </select>
+                    </div>
 
-                        <div class="f-form-group" id="cal-destino-proceso-wrap" style="display:none;">
-                            <label class="f-label">Proceso de Destino</label>
-                            <select id="cal-destino-proceso" class="f-select">
-                                <option value="">Seleccione...</option>
-                                <option value="CONFECCION">CONFECCIÓN</option>
-                                <option value="ESTAMPADO">ESTAMPADO</option>
-                                <option value="OJAL Y BOTON">OJAL Y BOTÓN</option>
-                                <option value="BOTONADO">BOTONADO</option>
-                                <option value="TRANSFER">TRANSFER</option>
-                                <option value="OJALETE">OJALETE</option>
-                                <option value="APLIQUE">APLIQUE</option>
-                                <option value="RESORTADO">RESORTADO</option>
-                                <option value="FUSIONADO">FUSIONADO</option>
-                                <option value="LAVADO">LAVADO</option>
-                                <option value="OTROS">OTROS (Especificar...)</option>
-                            </select>
-                        </div>
+                    <div class="f-form-group" id="cal-destino-otro-wrap" style="display:none;">
+                        <label class="f-label">Especifique el Otro Proceso</label>
+                        <input type="text" id="cal-destino-otro-text" class="f-input" placeholder="Nombre del proceso de destino..." />
+                    </div>
 
-                        <div class="f-form-group full" id="cal-destino-otro-wrap" style="display:none;">
-                            <label class="f-label">Especifique el Otro Proceso</label>
-                            <input type="text" id="cal-destino-otro-text" class="f-input" placeholder="Nombre del proceso de destino..." />
-                        </div>
-
-                        <div class="f-form-group full" id="cal-destino-planta-wrap" style="display:none;">
-                            <label class="f-label">¿A qué planta / taller se envía?</label>
-                            <input type="text" id="cal-destino-planta-input" class="f-input" placeholder="Nombre de la planta o taller..." />
-                        </div>
+                    <div class="f-form-group" id="cal-destino-planta-wrap" style="display:none;">
+                        <label class="f-label">¿A qué planta / taller se envía?</label>
+                        <input type="text" id="cal-destino-planta-input" class="f-input" placeholder="Nombre de la planta o taller..." />
                     </div>
                 </div>
 
                 <!-- 6. AVANCE DE PRODUCCIÓN (Visible solo en RONDA y CONTRAMUESTRA) -->
-                <div id="cal-avance-section" class="f-cond-section" style="display:none; margin-top: 16px;">
-                    <div class="f-cond-header">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="18" y1="20" x2="18" y2="10"/>
-                            <line x1="12" y1="20" x2="12" y2="4"/>
-                            <line x1="6" y1="20" x2="6" y2="14"/>
-                        </svg>
-                        <span>Avance de Producción</span>
-                    </div>
-
-                    <div class="f-range-advanced">
-                        <div class="f-range-top-row">
-                            <span class="lbl">Porcentaje de Avance Físico:</span>
-                            <span class="val" id="cal-avance-badge">0%</span>
-                        </div>
-                        <input type="range" id="cal-slider-avance" min="0" max="100" step="5" value="0" class="f-range-track" />
-                        <div class="f-range-ticks">
-                            <span>0%</span>
-                            <span>25%</span>
-                            <span>50%</span>
-                            <span>75%</span>
-                            <span>100%</span>
+                <div id="cal-avance-section" style="display:none; margin-top: 16px;">
+                    <div class="f-form-group">
+                        <label class="f-label">Porcentaje de Avance Físico</label>
+                        <div class="f-range-advanced">
+                            <div class="f-range-top-row">
+                                <span class="lbl">Avance:</span>
+                                <span class="val" id="cal-avance-badge">0%</span>
+                            </div>
+                            <input type="range" id="cal-slider-avance" min="0" max="100" step="5" value="0" class="f-range-track" />
+                            <div class="f-range-ticks">
+                                <span>0%</span>
+                                <span>25%</span>
+                                <span>50%</span>
+                                <span>75%</span>
+                                <span>100%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- 7. NOVEDADES DE AUDITORÍA ASOCIADAS (Visible en AUDITORÍA) -->
                 <div id="cal-novedades-section" class="f-novedades-section" style="margin-top: 22px;">
-                    <div class="f-nov-section-head">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="8" x2="12" y2="12"/>
-                            <line x1="12" y1="16" x2="12.01" y2="16"/>
-                        </svg>
-                        <span>Novedades del Lote</span>
+                    <div class="f-form-group">
+                        <label class="f-label">Novedades</label>
                     </div>
 
                     <div id="cal-novedades-cards-list" class="f-nov-cards-list">
-                        <div class="f-empty-nov-hint">Sin novedades reportadas para este lote.</div>
                     </div>
 
                     <button type="button" class="f-btn-report-nov" id="btn-open-modal-novedad-cal">
@@ -311,15 +285,11 @@ export class CalidadSubForm {
                     </button>
                 </div>
 
-                <!-- 4. OBSERVACIONES Y PLANTILLA INTELIGENTE -->
-                <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">4</span>
-                    <span>Observaciones y Dictamen Técnico</span>
-                </div>
-
-                <div class="f-obs-wrap">
-                    <div class="f-obs-tools">
-                        <button type="button" class="f-btn-tool" id="btn-generar-plantilla">
+                <!-- 4. OBSERVACIONES -->
+                <div class="f-form-group" style="margin-top: 20px;">
+                    <div class="f-label-row">
+                        <label class="f-label">Observaciones</label>
+                        <button type="button" class="f-btn-tool-inline" id="btn-generar-plantilla">
                             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
                             </svg>
@@ -329,27 +299,21 @@ export class CalidadSubForm {
                     <textarea id="cal-observaciones-text" class="f-textarea" rows="4" placeholder="Detalle los hallazgos encontrados, costuras, tolerancias y motivos de la decisión..." required></textarea>
                 </div>
 
-                <!-- 5. SOPORTE Y FOTOS MÚLTIPLES -->
-                <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">5</span>
-                    <span>Soporte / Evidencias Fotográficas</span>
-                </div>
-                <div id="cal-dropzone-mount"></div>
-
-                <!-- 6. FIRMA DIGITAL INTEGRADA -->
-                <div class="f-section-title" style="margin-top: 20px;">
-                    <span class="pill-num">6</span>
-                    <span>Firma de Validación del Auditor</span>
+                <!-- 5. SOPORTE FOTOGRÁFICO -->
+                <div class="f-form-group" style="margin-top: 20px;">
+                    <label class="f-label">Soporte Fotográfico</label>
+                    <div id="cal-dropzone-mount"></div>
                 </div>
 
-                <div class="f-inline-signature-box">
-                    <div class="f-sig-canvas-header">
-                        <span class="f-sig-title">Firme en el recuadro para validar el reporte:</span>
+                <!-- 6. FIRMA DIGITAL -->
+                <div class="f-form-group" style="margin-top: 20px;">
+                    <label class="f-label">Firma de Validación</label>
+                    <div class="f-inline-signature-box">
+                        <div class="f-sig-canvas-inner">
+                            <canvas id="cal-inline-sig-canvas" width="400" height="160"></canvas>
+                            <div class="f-sig-baseline"></div>
+                        </div>
                         <button type="button" class="f-btn-clear-sig-inline" id="btn-clear-sig-inline">Borrar Firma</button>
-                    </div>
-                    <div class="f-sig-canvas-inner">
-                        <canvas id="cal-inline-sig-canvas" width="400" height="160"></canvas>
-                        <div class="f-sig-baseline"></div>
                     </div>
                 </div>
 
@@ -681,21 +645,9 @@ export class CalidadSubForm {
 
         // Modal Novedades Calidad
         const openNovBtn = this.container.querySelector('#btn-open-modal-novedad-cal');
-        const closeNovBtn = this.container.querySelector('#btn-close-nov-modal');
-        const saveNovBtn = this.container.querySelector('#btn-save-nov-modal');
-        const addCodeBtn = this.container.querySelector('#btn-modal-add-code');
 
         openNovBtn?.addEventListener('click', () => {
             this._openModalNovedad();
-        });
-
-        closeNovBtn?.addEventListener('click', () => {
-            this._closeModalNovedad();
-        });
-
-        saveNovBtn?.addEventListener('click', () => {
-            const ok = this._guardarNovedadCalidadModal();
-            if (ok) this._closeModalNovedad();
         });
 
         // Botón Limpiar Formulario
@@ -710,20 +662,77 @@ export class CalidadSubForm {
         });
     }
 
-    _openModalNovedad() {
-        const modalNov = this.container.querySelector('#cal-modal-novedad-dialog');
+    _openModalNovedad(novedadExistente = null) {
+        const modalNov = document.getElementById('cal-modal-novedad-dialog') || this.container.querySelector('#cal-modal-novedad-dialog');
         if (!modalNov) return;
 
         modalNov.style.display = '';
-        document.body.appendChild(modalNov);
+        if (modalNov.parentElement !== document.body) document.body.appendChild(modalNov);
         requestAnimationFrame(() => modalNov.classList.add('visible'));
-        this._resetModalNovFields();
+
+        if (novedadExistente) {
+            // Poblar modal con datos existentes
+            this._poblarModalConNovedad(novedadExistente);
+        } else {
+            // Nueva novedad: limpiar cualquier índice de edición previo
+            this._editingNovedadIdx = null;
+            this._editingRowIdx = null;
+            this._resetModalNovFields();
+        }
         this._rebindModalEvents(modalNov);
+    }
+
+    /**
+     * Puebla el modal con los datos de una novedad existente
+     */
+    _poblarModalConNovedad(novedad) {
+        const modalNov = document.getElementById('cal-modal-novedad-dialog') || this.container.querySelector('#cal-modal-novedad-dialog');
+        if (!modalNov || !novedad) return;
+
+        const base = novedad.tipo_base || novedad.tipo || '';
+
+        // 1. Tipo primero, y disparar change ANTES de poblar checks/filas,
+        //    para que los wraps se muestren y NO se reseteen los valores.
+        const tipoSel = modalNov.querySelector('#modal-nov-tipo');
+        if (tipoSel && base) {
+            tipoSel.value = base;
+            tipoSel.dispatchEvent(new Event('change'));
+        }
+
+        // 2. Sin proceso (PROMOCIONES)
+        const sinProcCheck = modalNov.querySelector('#modal-check-sin-proceso');
+        if (sinProcCheck) sinProcCheck.checked = !!novedad.sin_proceso;
+
+        // 3. Proceso anterior (COBROS): marcar check, mostrar select y setear proceso
+        const procAntCheck = modalNov.querySelector('#modal-check-proceso-anterior');
+        const selProcWrap = modalNov.querySelector('#modal-select-proceso-cobro');
+        const procSel = modalNov.querySelector('#modal-cobro-proceso-val');
+        if (procAntCheck) procAntCheck.checked = !!(novedad.proceso || novedad.procesoAnterior);
+        if (selProcWrap) selProcWrap.style.display = (procAntCheck && procAntCheck.checked) ? 'block' : 'none';
+        if (procSel && novedad.proceso) procSel.value = novedad.proceso;
+
+        // 4. Limpiar y poblar filas con el contenido REAL de la tarjeta
+        const codesWrap = modalNov.querySelector('#modal-codes-list');
+        if (codesWrap) {
+            codesWrap.innerHTML = '';
+            const filas = Array.isArray(novedad.codigos) ? novedad.codigos : [];
+            if (filas.length > 0) {
+                filas.forEach(c => {
+                    this._addModalCodeRow(c.talla ?? '', c.color ?? '', c.cantidad ?? 1);
+                });
+            } else {
+                this._addModalCodeRow();
+            }
+        }
     }
 
     _closeModalNovedad() {
         const modalNov = document.getElementById('cal-modal-novedad-dialog');
         if (!modalNov) return;
+
+        // Limpiar estado de edición al cerrar (evita reemplazos involuntarios)
+        this._editingNovedadIdx = null;
+        this._editingRowIdx = null;
 
         modalNov.classList.remove('visible');
         setTimeout(() => {
@@ -733,6 +742,12 @@ export class CalidadSubForm {
     }
 
     _rebindModalEvents(modal) {
+        // ⚠️ CRÍTICO: El modal es UN SOLO nodo DOM que se mueve entre container y body.
+        // Si rebindeamos listeners en cada apertura, se acumulan y al guardar se
+        // ejecuta la acción N veces (creando tarjetas duplicadas).
+        if (modal.dataset.eventsBound === 'true') return;
+        modal.dataset.eventsBound = 'true';
+
         const closeBtn = modal.querySelector('#btn-close-nov-modal');
         const saveBtn = modal.querySelector('#btn-save-nov-modal');
         const addCodeBtn = modal.querySelector('#btn-modal-add-code');
@@ -1068,7 +1083,7 @@ export class CalidadSubForm {
         return { tallas, colores, disponible: exts.length > 0 };
     }
 
-    _addModalCodeRow() {
+    _addModalCodeRow(talla = '', color = '', cantidad = 1) {
         const modal = document.getElementById('cal-modal-novedad-dialog');
         const container = modal ? modal.querySelector('#modal-codes-list') : this.container.querySelector('#modal-codes-list');
         if (!container) return;
@@ -1076,9 +1091,9 @@ export class CalidadSubForm {
         const row = document.createElement('div');
         row.className = 'f-code-row';
         row.innerHTML = `
-            <input type="text" class="f-input-sm c-talla" placeholder="Talla (S, M, 32...)" style="flex:1;" />
-            <input type="text" class="f-input-sm c-color" placeholder="Color" style="flex:1;" />
-            <input type="number" class="f-input-sm c-cant" min="1" value="1" placeholder="Cant." style="width:70px;" />
+            <input type="text" class="f-input-sm c-talla" placeholder="Talla (S, M, 32...)" value="${talla}" style="flex:1;" />
+            <input type="text" class="f-input-sm c-color" placeholder="Color" value="${color}" style="flex:1;" />
+            <input type="number" class="f-input-sm c-cant" min="1" value="${cantidad}" placeholder="Cant." style="width:70px;" />
             <button type="button" class="f-btn-del-row" title="Quitar">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
                     <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -1106,8 +1121,9 @@ export class CalidadSubForm {
             const sel = document.createElement('select');
             sel.className = `f-input-sm ${cls}`;
             sel.style.flex = '1';
+            const curU = String(cur || '').toUpperCase().trim();
             sel.innerHTML = [`<option value="">${placeholder}</option>`]
-                .concat(list.map(o => `<option value="${o}" ${o === cur ? 'selected' : ''}>${o}</option>`))
+                .concat(list.map(o => `<option value="${o}" ${o === curU ? 'selected' : ''}>${o}</option>`))
                 .join('');
             return sel;
         };
@@ -1222,25 +1238,51 @@ export class CalidadSubForm {
             totalUnidades: codigosCompactados.reduce((acc, c) => acc + c.cantidad, 0)
         };
 
-        // Agrupar/merge con grupos existentes del mismo tipo (comportamiento legacy)
-        let destino = null;
-        if (tipoBase === 'COBROS' && procesoCobro) {
-            destino = this.novedadesAgregadas.find(n => n.tipo === displayTipo);
-        } else if (tipoBase === 'COBROS' && !procesoCobro) {
-            destino = this.novedadesAgregadas.find(n => (n.tipo_base === 'COBROS' || n.tipo === 'COBROS') && !n.proceso);
+        // Si estamos editando, reemplazar la novedad existente
+        const esEdicion = (this._editingNovedadIdx !== undefined && this._editingNovedadIdx !== null);
+        
+        if (esEdicion) {
+            // Al editar: si el nuevo tipo/flags coincide con OTRA tarjeta existente,
+            // fusionar en una sola (no dejar dos tarjetas iguales en la interfaz)
+            const editIdx = this._editingNovedadIdx;
+            const dupIdx = (tipoBase === 'COBROS')
+                ? -1 // COBROS con proceso distinto mantiene tarjetas separadas
+                : this._findIndiceDestinoNovedad(displayTipo, tipoBase, sinProceso, procesoCobro, editIdx);
+            if (dupIdx !== -1) {
+                const destino = this.novedadesAgregadas[dupIdx];
+                destino.codigos = this._compactarCodigosNovedad(destino.codigos.concat(codigosCompactados));
+                destino.totalUnidades = destino.codigos.reduce((acc, c) => acc + c.cantidad, 0);
+                this.novedadesAgregadas.splice(editIdx, 1);
+            } else {
+                this.novedadesAgregadas[editIdx] = nuevaNovedad;
+            }
+            this._editingNovedadIdx = null;
+            this._editingRowIdx = null;
         } else {
-            destino = this.novedadesAgregadas.find(n => n.tipo === displayTipo && !!n.sin_proceso === !!sinProceso);
-        }
+            // Merge: si ya existe una tarjeta del mismo tipo (+ mismo proceso/sin_proceso),
+            // agregar las filas a esa tarjeta en vez de crear una duplicada
+            let destinoIdx = -1;
+            if (tipoBase === 'COBROS') {
+                if (procesoCobro) {
+                    destinoIdx = this.novedadesAgregadas.findIndex(n => n.tipo === displayTipo);
+                } else {
+                    destinoIdx = this.novedadesAgregadas.findIndex(n => (n.tipo_base === 'COBROS' || n.tipo === 'COBROS') && !n.proceso);
+                }
+            } else {
+                destinoIdx = this._findIndiceDestinoNovedad(displayTipo, tipoBase, sinProceso, procesoCobro, -1);
+            }
 
-        if (destino) {
-            destino.codigos = this._compactarCodigosNovedad(destino.codigos.concat(codigosCompactados));
-            destino.totalUnidades = destino.codigos.reduce((acc, c) => acc + c.cantidad, 0);
-        } else {
-            this.novedadesAgregadas.push(nuevaNovedad);
+            if (destinoIdx !== -1) {
+                const destino = this.novedadesAgregadas[destinoIdx];
+                destino.codigos = this._compactarCodigosNovedad(destino.codigos.concat(codigosCompactados));
+                destino.totalUnidades = destino.codigos.reduce((acc, c) => acc + c.cantidad, 0);
+            } else {
+                this.novedadesAgregadas.push(nuevaNovedad);
+            }
         }
 
         this._renderNovedadesCalidadList();
-        Toast.success('Novedad añadida al reporte.');
+        Toast.success(esEdicion ? 'Novedad actualizada.' : 'Novedad añadida al reporte.');
         return true;
     }
 
@@ -1252,6 +1294,21 @@ export class CalidadSubForm {
             else map[key] = { talla: c.talla, color: c.color, cantidad: c.cantidad };
         });
         return Object.values(map);
+    }
+
+    /**
+     * Busca el índice de una tarjeta destino con el mismo tipo + flags,
+     * ignorando el índice `excluirIdx` (útil al editar para no autofusionarse).
+     * Retorna -1 si no hay coincidencia.
+     */
+    _findIndiceDestinoNovedad(displayTipo, tipoBase, sinProceso, procesoCobro, excluirIdx = -1) {
+        return this.novedadesAgregadas.findIndex((n, i) =>
+            i !== excluirIdx &&
+            n.tipo === displayTipo &&
+            (n.tipo_base || '') === (tipoBase || '') &&
+            !!n.sin_proceso === !!sinProceso &&
+            (n.proceso || '') === (procesoCobro || '')
+        );
     }
 
 /**
@@ -1280,7 +1337,7 @@ export class CalidadSubForm {
         const tb = n.tipo_base || '';
         if (t === 'SIN CONFECCIONAR') return { color: '#ef4444', bg: '#fef2f2', icon: 'scissors', label: t };
         if (t === 'PROMOCIONES') {
-            if (n.sin_proceso) return { color: '#db2777', bg: '#fdf2f8', icon: 'alert', label: 'PROM. SIN PROCESO' };
+            if (n.sin_proceso) return { color: '#db2777', bg: '#fdf2f8', icon: 'alert', label: 'PROMOCIÓN - SIN PROCESO' };
             return { color: '#f59e0b', bg: '#fffbeb', icon: 'percent', label: t };
         }
         if (t.startsWith('COBRO -')) return { color: '#8b5cf6', bg: '#f5f3ff', icon: 'money', label: t };
@@ -1292,22 +1349,50 @@ export class CalidadSubForm {
         const container = this.container.querySelector('#cal-novedades-cards-list');
         if (!container) return;
 
+        // Delegación única: se asigna una sola vez por nodo contenedor.
+        // El contenedor NO se re-crea en cada render (solo su innerHTML), así el listener nunca se duplica.
+        if (!container.dataset.eventsBound) {
+            container.onclick = (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                e.stopPropagation();
+                e.preventDefault();
+                const idx = parseInt(btn.dataset.index, 10);
+                if (isNaN(idx)) return;
+
+                if (btn.classList.contains('f-btn-edit-nov-card')) {
+                    this._editNovedad(idx);
+                } else if (btn.classList.contains('f-btn-del-nov-card')) {
+                    const ci = parseInt(btn.dataset.code, 10);
+                    const grp = this.novedadesAgregadas[idx];
+                    if (!grp) return;
+                    grp.codigos.splice(ci, 1);
+                    if (grp.codigos.length === 0) {
+                        this.novedadesAgregadas.splice(idx, 1);
+                    } else {
+                        grp.totalUnidades = grp.codigos.reduce((a, c) => a + c.cantidad, 0);
+                    }
+                    this._renderNovedadesCalidadList();
+                }
+            };
+            container.dataset.eventsBound = 'true';
+        }
+
         if (!this.novedadesAgregadas.length) {
-            container.innerHTML = `<div class="f-empty-nov-hint">Sin novedades reportadas para este lote.</div>`;
+            container.innerHTML = '';
             return;
         }
 
         container.innerHTML = this.novedadesAgregadas.map((n, idx) => {
             const th = this._novedadTheme(n);
-            const esCobroProceso = (n.tipo_base === 'COBROS' || (n.tipo || '').startsWith('COBRO -')) && n.proceso;
             const rows = n.codigos.map((c, ci) => `
                 <div class="f-nov-tr" title="${c.talla} / ${c.color}">
                     <span class="f-nov-talla" title="${c.talla}">${c.talla}</span>
                     <span class="f-nov-color" title="${c.color}">${c.color}</span>
-                    <span class="f-nov-cant-badge" style="background:${th.bg};color:${th.color};">${c.cantidad}</span>
+                    <span class="f-nov-cant">${c.cantidad}</span>
                     <span class="f-nov-actions">
-                        <button type="button" class="f-btn-del-nov-row" data-index="${idx}" data-code="${ci}" title="Quitar detalle">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        <button type="button" class="f-btn-del-nov-card" data-index="${idx}" data-code="${ci}" title="Eliminar">
+                            ${this._novIcon('trash')}
                         </button>
                     </span>
                 </div>
@@ -1315,16 +1400,16 @@ export class CalidadSubForm {
 
             return `
                 <div class="f-nov-table-card" style="border-top-color:${th.color};">
-                    <div class="f-nov-table-head" style="background:${th.bg};">
-                        <span class="f-nov-tipo-ico" style="color:${th.color};">${this._novIcon(th.icon)}</span>
+                    <div class="f-nov-table-head" style="background:${th.bg};color:${th.color};">
+                        <span class="f-nov-tipo-ico" style="color:inherit;">${this._novIcon(th.icon)}</span>
                         <span class="f-nov-table-tipo">${th.label}</span>
-                        <span class="f-nov-table-units" style="color:${th.color};">${n.totalUnidades} UDS.</span>
-                        <button type="button" class="f-btn-del-nov-card" data-index="${idx}" title="Eliminar novedad">
-                            ${this._novIcon('trash')}
-                        </button>
+                        <span class="f-nov-table-units">${n.totalUnidades} UDS.</span>
+                        <span class="f-nov-card-actions">
+                            <button type="button" class="f-btn-edit-nov-card" data-index="${idx}" title="Editar">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                            </button>
+                        </span>
                     </div>
-                    ${esCobroProceso ? `<div class="f-nov-extra-tag">Cobro a proceso anterior: ${n.proceso}</div>` : ''}
-                    ${n.sin_proceso ? `<div class="f-nov-extra-tag sin-proc">Marcado como Sin Proceso</div>` : ''}
                     <div class="f-nov-table">
                         <div class="f-nov-tr f-nov-tr-head">
                             <span>Talla</span>
@@ -1338,36 +1423,27 @@ export class CalidadSubForm {
             `;
         }).join('');
 
-        container.querySelectorAll('.f-btn-del-nov-card').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const idx = parseInt(btn.dataset.index, 10);
-                this.novedadesAgregadas.splice(idx, 1);
-                this._renderNovedadesCalidadList();
-            });
-        });
+        // FIN: la delegación ya quedó bindeada arriba (una sola vez por contenedor).
+    }
 
-        // Eliminar fila individual (talla/color)
-        container.querySelectorAll('.f-btn-del-nov-row').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const gi = parseInt(btn.dataset.index, 10);
-                const ci = parseInt(btn.dataset.code, 10);
-                const grp = this.novedadesAgregadas[gi];
-                if (!grp) return;
-                grp.codigos.splice(ci, 1);
-                if (grp.codigos.length === 0) {
-                    this.novedadesAgregadas.splice(gi, 1);
-                } else {
-                    grp.totalUnidades = grp.codigos.reduce((a, c) => a + c.cantidad, 0);
-                }
-                this._renderNovedadesCalidadList();
-            });
-        });
+    /**
+     * Abre el modal de novedad para editar una existente
+     */
+    _editNovedad(idx) {
+        const novedad = this.novedadesAgregadas[idx];
+        if (!novedad) return;
+        this._editingNovedadIdx = idx;
+        this._openModalNovedad(novedad);
     }
 
     _limpiarFormulario() {
         this.container.querySelector('#form-calidad-full')?.reset();
         this.novedadesAgregadas = [];
-        this._renderNovedadesCalidadList();
+        this._editingNovedadIdx = null;
+        this._editingRowIdx = null;
+        // Re-render directo sin rebindear (el onclick por delegación se asigna una sola vez)
+        const listEl = this.container.querySelector('#cal-novedades-cards-list');
+        if (listEl) listEl.innerHTML = '';
         if (this.dropzone) this.dropzone.clear();
         if (this.firmaCtx && this.firmaCanvas) {
             this.firmaCtx.clearRect(0, 0, this.firmaCanvas.width, this.firmaCanvas.height);
@@ -1400,8 +1476,20 @@ export class CalidadSubForm {
                 planta: this.activeLote.planta,
                 modulo: this.activeLote.modulo || this.activeLote.linea,
                 linea: this.activeLote.linea,
+                cuento: this.activeLote.cuento || this.activeLote.modulo || this.activeLote.linea,
                 referencia: this.activeLote.referencia,
                 tipoPrenda: this.activeLote.tipoPrenda,
+                prenda: this.activeLote.tipoPrenda || this.activeLote.descripcion || this.activeLote.prenda,
+                descripcion: this.activeLote.descripcion || this.activeLote.tipoPrenda,
+                proceso: this.activeLote.proceso || this.activeLote.PROCESO || '',
+                genero: this.activeLote.genero || '',
+                tejido: this.activeLote.tejido || '',
+                fechaSalida: this.activeLote.fechaSalida || this.activeLote.salida || this.activeLote.SALIDA || '',
+                fechaEntrega: this.activeLote.fechaEntrega || this.activeLote.entrada || this.activeLote.ENTRADA || '',
+                salida: this.activeLote.fechaSalida || this.activeLote.salida || this.activeLote.SALIDA || '',
+                entrada: this.activeLote.fechaEntrega || this.activeLote.entrada || this.activeLote.ENTRADA || '',
+                productora: this.activeLote.idProductora || this.activeLote.productora || this.activeLote.PRODUCTORA || '',
+                idProductora: this.activeLote.idProductora || this.activeLote.productora || '',
                 cantidadTotal: this.activeLote.cantidad,
                 // El correo real viaja en el payload (columna 'email' en BD); la UI muestra el nombre del auditor
                 email: this.currentUser?.email || this.currentUser?.correo || '',

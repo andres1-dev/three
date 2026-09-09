@@ -363,17 +363,38 @@ export class LoteSelectorCard {
     }
 
     /**
-     * Resuelve el nombre corto de una productora a partir de su ID,
+     * Resuelve el nombre corto de una productora a partir de su ID o nombre,
      * usando el catálogo cargado vía Edge Function (tabla `productoras`).
      * Prioriza `nombre_corto`; cae al nombre legal si la tabla no lo tiene.
+     * Busca por ID (id_productora) o por nombre completo (productora).
      */
     _getProductoraName(val) {
         if (val === null || val === undefined || val === '') return 'N/A';
         const raw = String(val).trim();
-        const p = this.productoras.find(pr => {
+        const rawUpper = raw.toUpperCase();
+
+        // 1. Buscar por ID numérico
+        let p = this.productoras.find(pr => {
             const id = pr.id_productora ?? pr.id ?? pr.nit;
             return id !== undefined && id !== null && String(id) === raw;
         });
+
+        // 2. Si no coincide por ID, buscar por nombre completo (productora)
+        if (!p) {
+            p = this.productoras.find(pr => {
+                const nombre = String(pr.productora || '').toUpperCase().trim();
+                return nombre === rawUpper;
+            });
+        }
+
+        // 3. Si no encuentra nada, buscar por nombre corto
+        if (!p) {
+            p = this.productoras.find(pr => {
+                const corto = String(pr.nombre_corto || '').toUpperCase().trim();
+                return corto === rawUpper;
+            });
+        }
+
         if (!p) return raw.toUpperCase();
         return String(p.nombre_corto || p.productora || p.nombre || raw).toUpperCase();
     }
@@ -622,15 +643,23 @@ export class LoteSelectorCard {
 
         this.suggestionsBox.innerHTML = matches.map((l, index) => `
             <div class="f-suggestion-item" data-index="${index}">
-                <div class="f-sug-header">
-                    <span class="f-sug-ref">${l.referencia || 'N/A'}</span>
-                    <span class="f-sug-op">${l.lote || l.op}</span>
-                    <span class="f-sug-qty">${(l.cantidad || 0).toLocaleString()}</span>
+                <div class="f-sug-title-row">
+                    <span class="f-sug-title-item">
+                        <span class="f-sug-title-lbl">OP</span>
+                        <span class="f-sug-tag">${l.lote || l.op}</span>
+                    </span>
+                    ${l.referencia ? `
+                    <span class="f-sug-title-item">
+                        <span class="f-sug-title-lbl">Referencia</span>
+                        <span class="f-sug-ref-inline">${l.referencia}</span>
+                    </span>` : ''}
+                    <span class="f-sug-title-item">
+                        <span class="f-sug-title-lbl">Cant</span>
+                        <span class="f-sug-cant-inline">${(l.cantidad || 0).toLocaleString()}</span>
+                    </span>
                 </div>
-                <div class="f-sug-body">
+                <div class="f-sug-ref-text">
                     <span class="f-sug-planta">${l.planta || 'Sin Planta'}</span>
-                </div>
-                <div class="f-sug-footer">
                     <span class="f-sug-productora">${productoraName(l)}</span>
                 </div>
             </div>

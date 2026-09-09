@@ -244,6 +244,12 @@ export class FormulariosModule {
     }
 
     _openForm(formId) {
+        // Limpiar cualquier modal huérfano de una instancia anterior (mismo ID duplicado en DOM)
+        document.querySelectorAll('#cal-modal-novedad-dialog, #cal-modal-config-dialog').forEach(el => el.remove());
+        if (this.currentSubFormInstance?.unmount) {
+            try { this.currentSubFormInstance.unmount(); } catch (_) { /* noop */ }
+        }
+        this.currentSubFormInstance = null;
         this.currentView = formId;
         this.container.innerHTML = `<div id="subform-viewport" class="f-subform-viewport"></div>`;
         const subViewport = this.container.querySelector('#subform-viewport');

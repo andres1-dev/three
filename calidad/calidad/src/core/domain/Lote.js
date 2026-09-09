@@ -22,7 +22,7 @@ export class Lote {
         this.fechaSalida = data.fecha_salida || data.SALIDA || data.salida || '';
         this.salida = this.fechaSalida;
         this.productora = (data.productora || data.PRODUCTORA || '').toString().trim();
-        this.idProductora = (data.productora || data.id_productora || data.ID_PRODUCTORA || '').toString().trim();
+        this.idProductora = (data.id_productora || data.ID_PRODUCTORA || data.productora || data.PRODUCTORA || '').toString().trim();
         this.sam = parseFloat(data.sam || data.SAM || 0);
         this.cliente = (data.cliente || data.CLIENTE || '').toString().trim();
         this.marca = (data.marca || data.MARCA || '').toString().trim();
