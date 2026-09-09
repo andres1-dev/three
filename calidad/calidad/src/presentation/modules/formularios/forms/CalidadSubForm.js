@@ -561,29 +561,25 @@ export class CalidadSubForm {
     }
 
     _openModalNovedad() {
-        let modalNov = document.getElementById('cal-modal-novedad-dialog');
-        if (!modalNov) {
-            const template = this.container.querySelector('#cal-modal-novedad-dialog');
-            if (template) {
-                modalNov = template.cloneNode(true);
-                modalNov.id = 'cal-modal-novedad-dialog';
-                modalNov.style.display = '';
-                document.body.appendChild(modalNov);
-            }
-        }
-        if (modalNov) {
-            requestAnimationFrame(() => modalNov.classList.add('visible'));
-            this._resetModalNovFields();
-            this._rebindModalEvents(modalNov);
-        }
+        const modalNov = this.container.querySelector('#cal-modal-novedad-dialog');
+        if (!modalNov) return;
+
+        modalNov.style.display = '';
+        document.body.appendChild(modalNov);
+        requestAnimationFrame(() => modalNov.classList.add('visible'));
+        this._resetModalNovFields();
+        this._rebindModalEvents(modalNov);
     }
 
     _closeModalNovedad() {
         const modalNov = document.getElementById('cal-modal-novedad-dialog');
-        if (modalNov) {
-            modalNov.classList.remove('visible');
-            setTimeout(() => modalNov.remove(), 250);
-        }
+        if (!modalNov) return;
+
+        modalNov.classList.remove('visible');
+        setTimeout(() => {
+            modalNov.style.display = 'none';
+            this.container.appendChild(modalNov);
+        }, 250);
     }
 
     _rebindModalEvents(modal) {
