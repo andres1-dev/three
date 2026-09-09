@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
-  <!-- Fondo negro para maskable (se extiende a todo el canvas) -->
-  <rect width="1024" height="1024" fill="#1B1A1B"/>
+  <!-- Fondo blanco para maskable -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
   
   <!-- Logo escalado a 0.65 para cumplir con safe zone de maskable (80% del contenido en el centro) -->
   <g transform="translate(512, 512) scale(0.65) translate(-512, -511.6)">
