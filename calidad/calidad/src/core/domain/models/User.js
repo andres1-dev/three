@@ -28,7 +28,8 @@ export class User {
         barrio = '',
         antiguedad = '',
         estadoPersonalizado = '',
-        idProductora = null
+        idProductora = null,
+        descripcion = ''
     }) {
         this.id = id || cedula;
         this.cedula = String(cedula || '').trim();
@@ -54,6 +55,7 @@ export class User {
         this.antiguedad = antiguedad;
         this.estadoPersonalizado = estadoPersonalizado || '';
         this.idProductora = idProductora;
+        this.descripcion = (descripcion || '').trim();
     }
 
     get displayName() {
@@ -132,7 +134,8 @@ export class User {
             barrio: raw.barrio || raw.BARRIO || '',
             antiguedad: raw.antiguedad || raw.ANTIGUEDAD || '',
             estadoPersonalizado: raw.estado_personalizado || raw.estadoPersonalizado || '',
-            idProductora: raw.id_productora || raw.ID_PRODUCTORA || null
+            idProductora: raw.id_productora || raw.ID_PRODUCTORA || null,
+            descripcion: raw.descripcion || raw.DESCRIPCION || ''
         });
     }
 }

@@ -50,20 +50,46 @@ function normalizeDate(dateStr: any): string | null {
 }
 
 /**
- * Normaliza `novedades_auditoria` para guardarla SIEMPRE como
- * string JSON de ARRAY sin comillas externas ni backslashes literales:
- *
- *   CORRECTO  →  [{"tipo":"SIN CONFECCIONAR",...}]
- *   INCORRECTO →  "[{\"tipo\":\"SIN CONFECCIONAR\",...}]"
- *
- * Desenrolla TODAS las capas de doble/triple stringify que puedan
- * llegar (JSON.parse en bucle hasta obtener el array real).
+ * Normaliza LA localización para guardarla como JSONB REAL en la columna
+ * `localizacion` (ya es jsonb en Supabase):
+ *   - GPS activo  →  { lat, lng }  (objeto JS → jsonb object)
+ *   - Sin GPS     →  null          (SQL NULL, no un string vacío ni "false")
+ *   - String JSON legacy  → se parsea y se guarda como objeto jsonb.
  */
-function normalizeNovedades(raw: any): string | null {
+function normalizeLocalizacion(raw: any): any | null {
+  let value: any = raw;
+  if (typeof value === 'string' && value.trim() !== '') {
+    try {
+      value = JSON.parse(value);
+    } catch (_) {
+      return null; // no es JSON válido → nada que guardar en jsonb
+    }
+  }
+  if (!value || typeof value !== 'object') return null;
+  const lat = Number(value.lat);
+  const lng = Number(value.lng);
+  if (Number.isNaN(lat) || Number.isNaN(lng) || lat === 0 || lng === 0) return null;
+  return { lat, lng };
+}
+
+/**
+ * Normaliza `novedades_auditoria` para guardarla SIEMPRE como valor JSONB REAL
+ * (array/objeto JS), replicando la misma forma en que se guarda `tipo_detalle`
+ * en la tabla `novedades` (se pasa el objeto/array JS, NO un string de JSON):
+ *
+ *   CORRECTO  →  [ { "tipo": "SIN CONFECCIONAR", ... } ]   (array JS → jsonb array)
+ *   INCORRECTO →  "[{\"tipo\":\"SIN CONFECCIONAR\",...}]"   (string JSON → jsonb string)
+ *
+ * Desenrolla TODAS las capas de doble/triple stringify que puedan llegar
+ * (JSON.parse en bucle hasta obtener el objeto/array real) y devuelve el valor
+ * JS resultante, para que Supabase lo serialice como JSONB (array) y no como
+ * string JSON doble-encodificado.
+ */
+function normalizeNovedades(raw: any): any | null {
   if (raw === undefined || raw === null) return null;
 
   let value: any = raw;
-  // Desenrollar capas de string JSON hasta quedarnos con lo de adentro.
+  // Desenrollar capas de string JSON hasta quedarnos con el objeto/array real.
   for (let i = 0; i < 4; i++) {
     if (typeof value !== 'string') break;
 
@@ -81,12 +107,36 @@ function normalizeNovedades(raw: any): string | null {
       }
     }
 
-    // Ya NO empieza con comilla → es el JSON limpio (array u objeto)
-    return t;
+    // Ya NO empieza con comilla → es JSON limpio (array u objeto) → parsear a JS real
+    try {
+      value = JSON.parse(t);
+      break;
+    } catch (_) {
+      // No es JSON válido → devolver tal cual (mejor que romper el insert)
+      return t;
+    }
   }
 
-  // value quedó como array/objeto real → serializar UNA sola vez, sin escapes extra
-  return JSON.stringify(value);
+  // `tipo_base` es solo un helper de la UI para agrupar tarjetas: NO debe
+  // persistirse. Se fuerza el COBROS (el detalle va en `proceso`) y se
+  // elimina `tipo_base` del objeto final guardado en `novedades_auditoria`.
+  if (Array.isArray(value)) {
+    value = value.map((nov: any) => {
+      if (!nov || typeof nov !== 'object') return nov;
+      const tb = String(nov.tipo_base || '');
+      const tp = String(nov.tipo || '');
+      let clean: any = nov;
+      // COBROS: el tipo SIEMPRE debe llamarse "COBROS"; el proceso va en `proceso`
+      if (tb === 'COBROS' || /^COBRO\s*-/i.test(tp)) {
+        clean = { ...nov, tipo: 'COBROS' };
+      }
+      const { tipo_base, ...rest } = clean;
+      return rest;
+    });
+  }
+
+  // value ya es objeto/array JS real → devolverlo para que JSONB lo guarde como array
+  return value;
 }
 
 serve(async (req) => {
@@ -235,48 +285,59 @@ serve(async (req) => {
       }
     }
 
-    let publicUrl = "";
-    // ── Origen de la imagen: objeto {base64,mimeType,fileName} o primer item de payload.fotos ──
-    let imgData = payload.imagen || payload.archivo || payload.foto;
-    if ((!imgData || !imgData.base64) && Array.isArray(payload.fotos)) {
-      imgData = payload.fotos.find((f: any) => f && f.base64) || null;
+    // ── ORIGEN DE IMÁGENES (una o varias) ────────────────────────────────────
+    // El payload puede traer `imagenes` (array), `fotos` (array) o un solo
+    // `imagen`/`archivo`/`foto`. Se suben TODAS y se guardan en la BD
+    // SEPARADAS POR COMA (mismo formato del legacy uploadArchivoAsync):
+    //   soporte = "url1,url2,url3"
+    const fuentesImg: any[] = Array.isArray(payload.imagenes)
+      ? payload.imagenes
+      : (Array.isArray(payload.fotos) ? payload.fotos : []);
+    const imgDataSingle = payload.imagen || payload.archivo || payload.foto;
+    if (imgDataSingle && imgDataSingle.base64 && !fuentesImg.some((i: any) => i && i.base64 === imgDataSingle.base64)) {
+      fuentesImg.unshift(imgDataSingle);
     }
-    if (imgData && imgData.base64) {
-      const options = { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' } as const;
-      const formatter = new Intl.DateTimeFormat('es-CO', options);
-      const parts = formatter.formatToParts(new Date());
-      const year = parts.find(p => p.type === 'year')?.value || String(new Date().getFullYear());
-      const month = parts.find(p => p.type === 'month')?.value || String(new Date().getMonth() + 1).padStart(2, '0');
-      const day = parts.find(p => p.type === 'day')?.value || String(new Date().getDate()).padStart(2, '0');
-      const timestamp = Date.now();
 
-      const folderRoot = (hoja?.toUpperCase() === 'REPORTES' || payload.id_reporte) ? 'reportes' : 'novedades';
-      const prodId = String(payload.productora || user?.user_metadata?.id_productora || '0').replace(/[^a-zA-Z0-9._-]/g, '_');
-      const fileName = (imgData.fileName || 'upload.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
+    const publicUrls: string[] = [];
+
+    const options = { timeZone: 'America/Bogota', year: 'numeric', month: '2-digit', day: '2-digit' } as const;
+    const formatter = new Intl.DateTimeFormat('es-CO', options);
+    const parts = formatter.formatToParts(new Date());
+    const year = parts.find(p => p.type === 'year')?.value || String(new Date().getFullYear());
+    const month = parts.find(p => p.type === 'month')?.value || String(new Date().getMonth() + 1).padStart(2, '0');
+    const day = parts.find(p => p.type === 'day')?.value || String(new Date().getDate()).padStart(2, '0');
+
+    const folderRoot = (hoja?.toUpperCase() === 'REPORTES' || payload.id_reporte) ? 'reportes' : 'novedades';
+    const prodId = String(payload.productora || user?.user_metadata?.id_productora || '0').replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    for (const [idx, img] of fuentesImg.entries()) {
+      if (!img || !img.base64) continue;
+      const timestamp = Date.now() + idx; // timestamp único por foto
+      const fileName = (img.fileName || 'upload.jpg').replace(/[^a-zA-Z0-9._-]/g, '_');
       const filePath = `${folderRoot}/${prodId}/${year}/${month}/${day}/${timestamp}_${fileName}`;
 
-      const contentType = imgData.mimeType || 'image/jpeg';
+      const contentType = img.mimeType || 'image/jpeg';
       try {
         await r2.send(new PutObjectCommand({
           Bucket:      R2_BUCKET,
           Key:         filePath,
-          Body:        decode(imgData.base64),
+          Body:        decode(img.base64),
           ContentType: contentType,
         }));
         if (!R2_PUBLIC_URL) {
           console.warn(`[R2] OJO: R2_PUBLIC_URL no configurado → en la BD solo se guardará la RUTA relativa (${filePath}). La imagen NO será visible hasta configurarlo.`);
         }
-        publicUrl = R2_PUBLIC_URL
+        publicUrls.push(R2_PUBLIC_URL
           ? `${R2_PUBLIC_URL.replace(/\/$/, "")}/${filePath}`
-          : filePath;
+          : filePath);
         console.log(`[R2] Subido: ${filePath}`);
       } catch (r2Err: any) {
         console.error("[R2] Error:", r2Err?.message);
         // ── Fallback: subir a Supabase Storage para no perder la evidencia ──
         try {
-          const base64Clean = String(imgData.base64).includes(',')
-            ? String(imgData.base64).split(',')[1]
-            : imgData.base64;
+          const base64Clean = String(img.base64).includes(',')
+            ? String(img.base64).split(',')[1]
+            : img.base64;
           const { error: upErr } = await supabaseClient.storage
             .from('novedades-imagenes')
             .upload(filePath, decode(base64Clean), { contentType, upsert: true });
@@ -284,8 +345,9 @@ serve(async (req) => {
           const { data: pubData } = supabaseClient.storage
             .from('novedades-imagenes')
             .getPublicUrl(filePath);
-          publicUrl = pubData?.publicUrl || filePath;
-          console.warn(`[R2] Fallback Supabase Storage OK: ${publicUrl}`);
+          const urlFallback = pubData?.publicUrl || filePath;
+          publicUrls.push(urlFallback);
+          console.warn(`[R2] Fallback Supabase Storage OK: ${urlFallback}`);
         } catch (fbErr: any) {
           throw new Error(
             `Error al subir imagen a R2: ${r2Err?.message ?? "desconocido"}` +
@@ -294,6 +356,8 @@ serve(async (req) => {
         }
       }
     }
+
+    const soporteUrls = publicUrls.join(',');
 
     let result: any = { success: false, message: "" };
 
@@ -314,7 +378,37 @@ serve(async (req) => {
           }
         }
 
-        const idReporte = `REP-${Date.now().toString(36).toUpperCase()}`;
+        // Consecutivo del reporte de calidad: REP{YYYYMMDD}-{COUNT}
+        // (ej: REP20260909-2).
+        //
+        // SIN reinicios: el COUNT es un consecutivo SIEMPRE CRECIENTE a nivel
+        // global (REP20260909-1, REP20260909-2, … y al día siguiente continúa
+        // REP20260910-3, nunca vuelve a 1). Por eso el cálculo se hace vía
+        // SELECT sobre TODOS los id_reporte existentes (máximo numérico + 1),
+        // no solo los del día.
+        //
+        // Nota: SEQUENCE (nextval/currval/setval) es la herramienta nativa y
+        // vigente de PostgreSQL 18 para numeración atómica; aquí NO se usa
+        // porque se pidió explícitamente que el número NO se genere con una
+        // secuencia PostgreSQL (SEQUENCE).
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const bogotaDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Bogota" }));
+        const ymd = `${bogotaDate.getFullYear()}${pad(bogotaDate.getMonth() + 1)}${pad(bogotaDate.getDate())}`;
+
+        // Escanear TODOS los id_reporte (formato actual y legacy) y tomar el
+        // sufijo numérico más alto registrado → consecutivo global creciente.
+        const { data: repRows } = await supabaseClient
+          .from("reportes")
+          .select("id_reporte")
+          .ilike("id_reporte", "REP%");
+        let maxCount = 0;
+        for (const r of repRows || []) {
+          const match = /(\d+)$/.exec(String(r.id_reporte || ""));
+          if (!match) continue;
+          const n = Number(match[1]);
+          if (!Number.isNaN(n) && n > maxCount) maxCount = n;
+        }
+        const idReporte = `REP${ymd}-${maxCount + 1}`;
         const fechaBogota = new Date().toISOString();
 
         const insertRow: any = {
@@ -325,11 +419,11 @@ serve(async (req) => {
           cantidad: Number(payload.cantidadTotal || payload.cantidad || 0),
           planta: payload.planta || "",
           email: payload.email || user?.email || "",
-          localizacion: payload.gps ? JSON.stringify(payload.gps) : (payload.localizacion || ""),
+          localizacion: normalizeLocalizacion(payload.gps ?? payload.localizacion),
           tipo_visita: payload.tipoVisita || "AUDITORIA",
           conclusion: payload.conclusion || "APROBADO",
           observaciones: payload.observaciones || "",
-          soporte: publicUrl || payload.soporte || "",
+          soporte: soporteUrls || payload.soporte || "",
           firma_svg: payload.firma || "",
           destino_proceso: payload.destinoProceso || "",
           destino_planta: payload.destinoPlanta || "",
@@ -368,11 +462,11 @@ serve(async (req) => {
             cantidad: Number(payload.cantidadTotal || payload.cantidad || 0),
             planta: payload.planta || "",
             email: payload.email || user?.email || "",
-            localizacion: payload.gps ? JSON.stringify(payload.gps) : (payload.localizacion || ""),
+            localizacion: normalizeLocalizacion(payload.gps ?? payload.localizacion),
             tipo_visita: payload.tipoVisita || "AUDITORIA",
             conclusion: payload.conclusion || "APROBADO",
             observaciones: payload.observaciones || "",
-            soporte: publicUrl || payload.soporte || "",
+            soporte: soporteUrls || payload.soporte || "",
             firma_svg: payload.firma || "",
             destino_proceso: payload.destinoProceso || "",
             destino_planta: payload.destinoPlanta || "",
@@ -454,7 +548,24 @@ serve(async (req) => {
           const fechaBogota = `${bogotaDate.getFullYear()}-${pad(bogotaDate.getMonth() + 1)}-${pad(bogotaDate.getDate())}T${pad(bogotaDate.getHours())}:${pad(bogotaDate.getMinutes())}:${pad(bogotaDate.getSeconds())}.${String(now.getMilliseconds()).padStart(3, '0')}-05:00`;
           
           const prodId = Number(payload.productora) || 1;
-          const idNovedad = payload.id_novedad || `NOV-${prodId}-${ymd}-${Date.now().toString().slice(-4)}`;
+
+          // Consecutivo propio de NOVEDADES (NOV), INDEPENDIENTE del de
+          // REPORTES (REP); cada tabla lleva su propio correlativo creciente:
+          //   NOV{YYYYMMDD}-{COUNT}  (ej: NOV20260909-2)
+          // SIN reinicios: COUNT = máximo sufijo numérico global en la tabla
+          // `novedades` + 1. NO se usa SEQUENCE PostgreSQL (por requerimiento).
+          const { data: novRows } = await supabaseClient
+            .from("novedades")
+            .select("id_novedad")
+            .ilike("id_novedad", "NOV%");
+          let maxNovedad = 0;
+          for (const r of novRows || []) {
+            const num = /(\d+)$/.exec(String(r.id_novedad || ""));
+            if (!num) continue;
+            const n = Number(num[1]);
+            if (!Number.isNaN(n) && n > maxNovedad) maxNovedad = n;
+          }
+          const idNovedad = `NOV${ymd}-${maxNovedad + 1}`;
           
           let tipoDetalle: any = null;
           if (Array.isArray(payload.insumos) && payload.insumos.length > 0) {
@@ -491,7 +602,7 @@ serve(async (req) => {
             tipo_detalle: tipoDetalle,
             descripcion: payload.observaciones || payload.descripcion || '',
             cantidad_solicitada: Number(payload.cantidadSolicitada || payload.cantidad_solicitada || 0),
-            imagen: publicUrl || payload.imagen || '',
+            imagen: soporteUrls || payload.imagen || '',
             estado: 'PENDIENTE',
             productora: prodId,
             comentarios: payload.comentarios || ''

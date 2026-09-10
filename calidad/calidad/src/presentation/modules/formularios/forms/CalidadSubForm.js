@@ -48,10 +48,11 @@ export class CalidadSubForm {
         this.dropzone = null;
         this.loteSelector = null;
         this.novedadesAgregadas = []; // Lista de novedades reportadas en la auditoría
-        this.gpsData = { lat: null, lng: null, enabled: true };
+        this.gpsData = { lat: null, lng: null, enabled: false };
         this.firmaCanvas = null;
         this.firmaCtx = null;
         this.haFirmado = false;
+        this.firmaStrokes = []; // Series de trazos de la firma → exportar como SVG (patrón legacy FirmaTaller)
 
         this.aqlConfig = {
             nivel: 'II',
@@ -552,6 +553,10 @@ export class CalidadSubForm {
         // 4. Inicializar Firma
         this._initFirmaCanvas();
 
+        // 4b. Capturar GPS de inmediato aunque la pestaña de ubicación NO esté
+        //     abierta: si la localización está activa, ya viaja en el payload.
+        this._initGPS(true);
+
         // 5. Cargar configuración de búsqueda del usuario (async, no bloquear)
         this._loadConfigFromUserProfile();
 
@@ -818,6 +823,7 @@ export class CalidadSubForm {
             drawing = true;
             this.haFirmado = true;
             const pos = getXY(e);
+            this.firmaStrokes.push([pos]); // nuevo trazo
             ctx.beginPath();
             ctx.moveTo(pos.x, pos.y);
         };
@@ -826,6 +832,8 @@ export class CalidadSubForm {
             if (!drawing) return;
             e.preventDefault();
             const pos = getXY(e);
+            const current = this.firmaStrokes[this.firmaStrokes.length - 1];
+            if (current) current.push(pos);
             ctx.lineTo(pos.x, pos.y);
             ctx.stroke();
         };
@@ -842,7 +850,7 @@ export class CalidadSubForm {
         canvas.addEventListener('touchend', stop);
     }
 
-    _initGPS() {
+    _initGPS(silent = false) {
         // Limpiar cualquier watchPosition anterior
         if (this.gpsWatchId) {
             navigator.geolocation.clearWatch(this.gpsWatchId);
@@ -859,22 +867,27 @@ export class CalidadSubForm {
         const loteMount = this.container.querySelector('#cal-lote-mount');
         const frameWrap = loteMount?.querySelector('#mapa-calidad-frame-wrap');
 
-        if (!frameWrap) {
+        // En modo silencioso (captura inmediata al abrir el formulario) no se
+        // requiere que la pestaña/mapa exista todavía; solo se obtienen coords.
+        if (!silent && !frameWrap) {
             console.warn('[GPS] Elementos GPS no encontrados en la pestaña colapsada');
             return;
         }
 
-        // Mostrar estado de carga
-        frameWrap.innerHTML = `
+        // Mostrar estado de carga solo en modo visible (pestaña abierta)
+        if (!silent && frameWrap) {
+            frameWrap.innerHTML = `
             <div id="map-placeholder" class="f-map-loading">
                 <span class="f-spinner"></span>
                 <span>Cargando mapa de ubicación...</span>
             </div>
         `;
+        }
 
         // Solicitar ubicación con configuración optimizada para mayor precisión
         if (!navigator.geolocation) {
-            this._updateGPSUIError({ code: 0, message: 'Geolocalización no soportada' }, loteMount);
+            this.gpsData = { lat: null, lng: null, enabled: false };
+            if (!silent) this._updateGPSUIError({ code: 0, message: 'Geolocalización no soportada' }, loteMount);
             return;
         }
 
@@ -894,8 +907,8 @@ export class CalidadSubForm {
                     enabled: true
                 };
 
-                // Actualizar UI con los elementos de la pestaña colapsada
-                this._updateGPSUI(loteMount);
+                // Actualizar UI únicamente si ya estaba abierta la pestaña
+                if (!silent) this._updateGPSUI(loteMount);
 
                 // Si la precisión es menor a 100m, cancelar watchPosition
                 if (pos.coords.accuracy < 100 && this.gpsWatchId) {
@@ -906,7 +919,7 @@ export class CalidadSubForm {
             (err) => {
                 console.error('[GPS] Error obteniendo ubicación:', err);
                 this.gpsData = { lat: null, lng: null, enabled: false };
-                this._updateGPSUIError(err, loteMount);
+                if (!silent) this._updateGPSUIError(err, loteMount);
                 if (this.gpsWatchId) {
                     navigator.geolocation.clearWatch(this.gpsWatchId);
                     this.gpsWatchId = null;
@@ -1222,12 +1235,12 @@ export class CalidadSubForm {
         // Compactar códigos repetidos (misma talla+color suman cantidad) — legado
         const codigosCompactados = this._compactarCodigosNovedad(codigos);
 
-        // Legacy: para COBROS con proceso anterior se guarda como "COBRO - PROCESO"
-        let displayTipo = tipo;
+        // El tipo de novedad NO se modifica al guardar: SIEMPRE se persiste el
+        // tipo base (COBROS, PROMOCIONES, ...). El proceso anterior de COBROS
+        // se guarda en el campo `proceso`; la UI sí muestra "COBRO - PROCESO"
+        // pero en BD el `tipo` sigue siendo "COBROS".
         const tipoBase = tipo;
-        if (tipo === 'COBROS' && procesoCobro) {
-            displayTipo = `COBRO - ${procesoCobro}`;
-        }
+        const displayTipo = tipoBase;
 
         const nuevaNovedad = {
             tipo: displayTipo,
@@ -1264,7 +1277,8 @@ export class CalidadSubForm {
             let destinoIdx = -1;
             if (tipoBase === 'COBROS') {
                 if (procesoCobro) {
-                    destinoIdx = this.novedadesAgregadas.findIndex(n => n.tipo === displayTipo);
+                    // Mismo proceso anterior → misma tarjeta (definido por `proceso`, no por `tipo`)
+                    destinoIdx = this.novedadesAgregadas.findIndex(n => (n.tipo_base === 'COBROS' || n.tipo === 'COBROS') && n.proceso === procesoCobro);
                 } else {
                     destinoIdx = this.novedadesAgregadas.findIndex(n => (n.tipo_base === 'COBROS' || n.tipo === 'COBROS') && !n.proceso);
                 }
@@ -1302,10 +1316,16 @@ export class CalidadSubForm {
      * Retorna -1 si no hay coincidencia.
      */
     _findIndiceDestinoNovedad(displayTipo, tipoBase, sinProceso, procesoCobro, excluirIdx = -1) {
+        // `tipo_base` ya no se persiste; para COBROS la agrupación depende solo
+        // de `tipo === "COBROS"` (los objetos cargados sin `tipo_base` igual
+        // deben fusionarse con los nuevos).
+        const matchTipoBase = (n) => (tipoBase === 'COBROS'
+            ? (n.tipo === 'COBROS' || (n.tipo_base || '') === 'COBROS')
+            : (n.tipo_base || '') === (tipoBase || ''));
         return this.novedadesAgregadas.findIndex((n, i) =>
             i !== excluirIdx &&
             n.tipo === displayTipo &&
-            (n.tipo_base || '') === (tipoBase || '') &&
+            matchTipoBase(n) &&
             !!n.sin_proceso === !!sinProceso &&
             (n.proceso || '') === (procesoCobro || '')
         );
@@ -1340,8 +1360,15 @@ export class CalidadSubForm {
             if (n.sin_proceso) return { color: '#db2777', bg: '#fdf2f8', icon: 'alert', label: 'PROMOCIÓN - SIN PROCESO' };
             return { color: '#f59e0b', bg: '#fffbeb', icon: 'percent', label: t };
         }
-        if (t.startsWith('COBRO -')) return { color: '#8b5cf6', bg: '#f5f3ff', icon: 'money', label: t };
-        if (t === 'COBROS' || tb === 'COBROS') return { color: '#10b981', bg: '#ecfdf5', icon: 'invoice', label: t };
+        // COBROS: en BD `tipo` SIEMPRE es "COBROS" (el detalle está en `proceso`),
+        // pero la UI muestra "COBRO - PROCESO" cuando hay proceso anterior.
+        if (t.startsWith('COBRO -')) return { color: '#8b5cf6', bg: '#f5f3ff', icon: 'money', label: t }; // legado guardado antes del fix
+        if (t === 'COBROS' || tb === 'COBROS') {
+            const label = n.proceso ? `COBRO - ${n.proceso}` : 'COBROS';
+            return n.proceso
+                ? { color: '#8b5cf6', bg: '#f5f3ff', icon: 'money', label }
+                : { color: '#10b981', bg: '#ecfdf5', icon: 'invoice', label };
+        }
         if (t === 'LAVADO') return { color: '#6366f1', bg: '#eef2ff', icon: 'water', label: t };
         return { color: '#3b82f6', bg: '#eff6ff', icon: 'tag', label: t };
     }
@@ -1448,8 +1475,83 @@ export class CalidadSubForm {
         if (this.firmaCtx && this.firmaCanvas) {
             this.firmaCtx.clearRect(0, 0, this.firmaCanvas.width, this.firmaCanvas.height);
             this.haFirmado = false;
+            this.firmaStrokes = [];
         }
         Toast.info('Formulario restablecido.');
+    }
+
+    /**
+     * Exporta la firma como SVG vectorial (muy liviano, ~1-8KB), replicando el
+     * comportamiento del legacy `FirmaTaller.getSVG()` (firma.js):
+     *   - Sin usar base64/PNG: la columna firma_svg recibe SVG texto plano.
+     *   - Norma a viewBox 600×150, autocontenido, centrado.
+     * Devuelve null si no hay trazos (no se debe guardar nada).
+     */
+    _generarFirmaSvg() {
+        if (!this.firmaStrokes || !this.haFirmado || this.firmaStrokes.length === 0) return null;
+
+        const W = 600;
+        const H = 150;
+
+        let minX = Infinity, maxX = -Infinity;
+        let minY = Infinity, maxY = -Infinity;
+        this.firmaStrokes.forEach(stroke => {
+            stroke.forEach(p => {
+                if (p.x < minX) minX = p.x;
+                if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y;
+                if (p.y > maxY) maxY = p.y;
+            });
+        });
+
+        if (minX === Infinity || minY === Infinity) {
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"></svg>`;
+        }
+
+        const sigW = maxX - minX;
+        const sigH = maxY - minY;
+
+        const maxUsefulW = W - 40;
+        const maxUsefulH = H - 30;
+
+        let scale = 1;
+        if (sigW > 0 || sigH > 0) {
+            const scaleX = maxUsefulW / (sigW || 1);
+            const scaleY = maxUsefulH / (sigH || 1);
+            scale = Math.min(scaleX, scaleY, 1.5);
+        }
+
+        const finalSigW = sigW * scale;
+        const finalSigH = sigH * scale;
+        const offsetX = (W - finalSigW) / 2;
+        const offsetY = (H - finalSigH) / 2;
+
+        const paths = this.firmaStrokes.map(stroke => {
+            if (stroke.length < 2) return '';
+            const d = stroke.map((p, i) => {
+                const x = ((p.x - minX) * scale + offsetX).toFixed(1);
+                const y = ((p.y - minY) * scale + offsetY).toFixed(1);
+                return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+            }).join(' ');
+            return `<path d="${d}" fill="none" stroke="#0f172a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }).join('');
+
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">${paths}</svg>`;
+    }
+
+    /**
+     * Payload de localización para el envío:
+     *   - Si NO hay localización activa → null (no se guarda nada).
+     *   - Si está activa con coords válidas → solo { lat, lng }.
+     * Nunca envía { lat: null, lng: null, enabled: true }.
+     */
+    _getGpsPayload() {
+        const g = this.gpsData || {};
+        if (!g.enabled) return null;
+        const lat = Number(g.lat);
+        const lng = Number(g.lng);
+        if (Number.isNaN(lat) || Number.isNaN(lng) || lat === 0 || lng === 0) return null;
+        return { lat, lng };
     }
 
     async _handleSubmit() {
@@ -1469,7 +1571,7 @@ export class CalidadSubForm {
         btn.innerHTML = `<span class="f-spinner"></span> Enviando Auditoría...`;
 
         try {
-            const firmaBase64 = this.firmaCanvas ? this.firmaCanvas.toDataURL('image/png') : null;
+            const firmaSvg = this._generarFirmaSvg();
             const payload = {
                 lote: this.activeLote.lote || this.activeLote.op,
                 op: this.activeLote.op || this.activeLote.lote,
@@ -1500,11 +1602,15 @@ export class CalidadSubForm {
                 destinoOtro: this.container.querySelector('#cal-destino-otro-text')?.value,
                 destinoPlanta: this.container.querySelector('#cal-destino-planta-input')?.value,
                 avanceProduccion: parseInt(this.container.querySelector('#cal-slider-avance')?.value || 0, 10),
-                novedadesAsociadas: this.novedadesAgregadas,
+                // `tipo_base` es helper interno de la UI (agrupar tarjetas); NO se envía
+                novedadesAsociadas: this.novedadesAgregadas.map(n => {
+                    const { tipo_base, ...rest } = n;
+                    return rest;
+                }),
                 observaciones: this.container.querySelector('#cal-observaciones-text')?.value,
                 aql: this.aqlConfig,
-                gps: this.gpsData,
-                firma: firmaBase64,
+                gps: this._getGpsPayload(),
+                firma: firmaSvg,
                 fotos: this.dropzone ? this.dropzone.getFiles() : [],
                 auditor: this.currentUser?.displayName || this.currentUser?.nombre || 'Auditor'
             };

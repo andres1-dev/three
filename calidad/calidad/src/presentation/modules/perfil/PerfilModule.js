@@ -228,6 +228,9 @@ export class PerfilModule {
                     <!-- Nombre en vista -->
                     <h2 class="profile-name" id="perfil-nombre">—</h2>
 
+                    <!-- Descripción (solo lectura, no editable desde la interfaz) -->
+                    <p class="profile-descripcion" id="perfil-descripcion" style="display:none;"></p>
+
                     <!-- Nombre en edición in-place -->
                     <div id="pe-name-edit-wrap" style="display:none; flex-direction:column; align-items:center; gap:4px; width:100%;">
                         <label class="pe-label" style="font-size:0.7rem; color:var(--color-primary); font-weight:700;">NOMBRE COMPLETO</label>
@@ -999,6 +1002,18 @@ export class PerfilModule {
         // 3. Nombre y metadatos
         const nameEl = root.querySelector('#perfil-nombre');
         if (nameEl) nameEl.textContent = u.displayName || 'Sin nombre';
+
+        // Descripción debajo del nombre, centrada, solo lectura (no editable en la interfaz)
+        const descEl = root.querySelector('#perfil-descripcion');
+        if (descEl) {
+            if (u.descripcion && String(u.descripcion).trim()) {
+                descEl.textContent = String(u.descripcion).trim();
+                descEl.style.display = '';
+            } else {
+                descEl.textContent = '';
+                descEl.style.display = 'none';
+            }
+        }
 
         const cumpleTexto = formatBirthdayText(u.cumpleanos);
         const metaCumple = root.querySelector('#perfil-meta-cumple');

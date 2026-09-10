@@ -190,6 +190,7 @@ export class GetProfileUseCase {
                 if (extra.ciudad)               finalUser.ciudad              = extra.ciudad;
                 if (extra.direccion)            finalUser.direccion           = extra.direccion;
                 if (extra.barrio)               finalUser.barrio              = extra.barrio;
+                if (extra.descripcion)          finalUser.descripcion         = extra.descripcion;
             }
         }
 

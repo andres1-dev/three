@@ -38,7 +38,9 @@ export class CalidadReport {
         this.fecha = data.fecha || new Date().toISOString();
         this.firma = data.firma || data.firma_svg || '';
         this.gps = data.gps || null;
-        this.localizacion = data.localizacion || (data.gps && typeof data.gps === 'object' ? JSON.stringify(data.gps) : '');
+        // `localizacion` en Supabase ahora es JSONB: mantenerlo como objeto
+        // { lat, lng } (o null si no hay GPS). NO usar JSON.stringify.
+        this.localizacion = normalizeLocalizacion(data.localizacion ?? data.gps);
         this.aql = data.aql || null;
         this.novedadesAsociadas = parseNovedadesArray(data.novedadesAsociadas || data.novedades_auditoria);
         // Datos del Lote (maestro) que deben persistir en el reporte
@@ -65,6 +67,27 @@ function tryParseJson(str, fallback) {
     } catch (_) {
         return fallback;
     }
+}
+
+/**
+ * Normaliza la localización a objeto { lat, lng } o null.
+ * La columna `localizacion` en Supabase es JSONB: se guarda como valor JS
+ * (objeto), NUNCA con JSON.stringify. Sin GPS → null (SQL NULL).
+ */
+function normalizeLocalizacion(raw) {
+    let value = raw;
+    if (typeof value === 'string' && value.trim() !== '') {
+        try {
+            value = JSON.parse(value); // string JSON legacy → objeto
+        } catch (_) {
+            return null;
+        }
+    }
+    if (!value || typeof value !== 'object') return null;
+    const lat = Number(value.lat);
+    const lng = Number(value.lng);
+    if (Number.isNaN(lat) || Number.isNaN(lng) || lat === 0 || lng === 0) return null;
+    return { lat, lng };
 }
 
 /**

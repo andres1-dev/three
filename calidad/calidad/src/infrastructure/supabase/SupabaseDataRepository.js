@@ -483,25 +483,28 @@ export class SupabaseDataRepository extends IDataService {
         const fechaBogota = `${bogotaDate.getFullYear()}-${pad(bogotaDate.getMonth() + 1)}-${pad(bogotaDate.getDate())}T${pad(bogotaDate.getHours())}:${pad(bogotaDate.getMinutes())}:${pad(bogotaDate.getSeconds())}.${String(now.getMilliseconds()).padStart(3, '0')}-05:00`;
         
         const prodId = Number(novedad.productora) || 1;
-        const idNovedad = `NOV-${prodId}-${ymd}-${Date.now().toString().slice(-4)}`;
+        // El consecutivo id_novedad (NOV{YYYYMMDD}-{COUNT}) lo genera la Edge
+        // Function /formularios consultando la tabla `novedades`; NO se calcula
+        // aquí para no romper el correlativo creciente de la tabla.
 
-        // 1. Imagen: enviar la primera foto (base64) a la Edge Function /formularios
-        //    para que se suba a Cloudflare R2 (con fallback a Supabase Storage).
-        let imagenPayload = '';
-        const primeraFoto = Array.isArray(novedad.fotos) && novedad.fotos.length > 0 ? novedad.fotos[0] : null;
-        if (primeraFoto && primeraFoto.base64) {
-            imagenPayload = {
-                base64: primeraFoto.base64,
-                mimeType: primeraFoto.mimeType || primeraFoto.type || 'image/jpeg',
-                fileName: primeraFoto.fileName || primeraFoto.name || 'foto.jpg'
-            };
-        } else if (novedad.imagen && typeof novedad.imagen !== 'object') {
-            imagenPayload = novedad.imagen;
-        }
+        // 1. Imágenes: enviar TODAS las fotos en `imagenes` para que la Edge
+        //    Function /formularios las suba y las guarde SEPARADAS POR COMA en
+        //    la columna (mismo formato legacy: "url1,url2,url3").
+        //    `imagen` sigue siendo la primera, por compatibilidad.
+        const fotosNovedad = Array.isArray(novedad.fotos) ? novedad.fotos : [];
+        const imagenesNov = fotosNovedad
+            .filter(f => f && f.base64)
+            .map(f => ({
+                base64: f.base64,
+                mimeType: f.mimeType || f.type || 'image/jpeg',
+                fileName: f.fileName || f.name || 'foto.jpg'
+            }));
+        const imagenPayload = imagenesNov.length
+            ? imagenesNov[0]
+            : (typeof novedad.imagen === 'string' ? novedad.imagen : '');
 
         const cleanPayload = {
             hoja: 'NOVEDADES',
-            id_novedad: idNovedad,
             fecha: fechaBogota,
             id: Number(novedad.lote || novedad.op || novedad.id) || 0,
             referencia: novedad.referencia || '',
@@ -518,6 +521,7 @@ export class SupabaseDataRepository extends IDataService {
             descripcion: novedad.observaciones || novedad.descripcion || '',
             cantidad_solicitada: Number(novedad.cantidadSolicitada || novedad.cantidad_solicitada || novedad.cantidad || 0),
             imagen: imagenPayload,
+            imagenes: imagenesNov.length ? imagenesNov : undefined,
             estado: 'PENDIENTE',
             productora: prodId,
             tejido: novedad.tejido || null,
@@ -529,8 +533,8 @@ export class SupabaseDataRepository extends IDataService {
         if (res && res.success) {
             return {
                 success: true,
-                message: res.message || `Novedad ${res.id_novedad || idNovedad} registrada exitosamente.`,
-                id_novedad: res.id_novedad || idNovedad,
+                message: res.message || `Novedad ${res.id_novedad} registrada exitosamente.`,
+                id_novedad: res.id_novedad,
                 data: res.data
             };
         }
@@ -542,16 +546,26 @@ export class SupabaseDataRepository extends IDataService {
      * Envía auditoría de Calidad a Edge Function /formularios
      */
     async submitCalidad(calidadReport) {
-        // Normalizar evidencias: enviar solo la primera foto como objeto { base64, mimeType, fileName }
-        // para que la Edge Function /formularios la suba a Cloudflare R2 (payload ligero).
+        // Normalizar evidencias: enviar TODAS las fotos en `imagenes` (array de
+        // { base64, mimeType, fileName }) para que la Edge Function /formularios
+        // las suba y las guarde SEPARADAS POR COMA en `soporte` (mismo formato
+        // del legacy uploadArchivoAsync: "url1,url2,url3").
+        // `imagen` se mantiene con la primera por compatibilidad.
+
         const payload = { ...calidadReport };
-        const firstFoto = Array.isArray(payload.fotos) && payload.fotos.length > 0 ? payload.fotos[0] : null;
-        if (firstFoto && firstFoto.base64 && (typeof payload.imagen !== 'object' || !payload.imagen?.base64)) {
-            payload.imagen = {
-                base64: firstFoto.base64,
-                mimeType: firstFoto.mimeType || firstFoto.type || 'image/jpeg',
-                fileName: firstFoto.fileName || firstFoto.name || 'foto.jpg'
-            };
+        const fotosCal = Array.isArray(payload.fotos) ? payload.fotos : [];
+        const imagenesCal = fotosCal
+            .filter(f => f && f.base64)
+            .map(f => ({
+                base64: f.base64,
+                mimeType: f.mimeType || f.type || 'image/jpeg',
+                fileName: f.fileName || f.name || 'foto.jpg'
+            }));
+        if (imagenesCal.length > 0) {
+            payload.imagenes = imagenesCal;
+            if (typeof payload.imagen !== 'object' || !payload.imagen?.base64) {
+                payload.imagen = imagenesCal[0];
+            }
         }
         delete payload.fotos;
 
