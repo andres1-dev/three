@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte de Calidad — Grupo TDM (Plantilla de Impresión)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #3F51B5;
+      --primary-dark: #303F9F;
+      --primary-light: #E8EAF6;
+      --text-dark: #0F172A;
+      --text-body: #334155;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --border-dark: #CBD5E1;
+      --bg-light: #F8FAFC;
+      --bg-subtle: #F1F5F9;
+      --success: #166534;
+      --success-bg: #F0FDF4;
+      --success-border: #BBF7D0;
+      --danger: #991B1B;
+      --danger-bg: #FEF2F2;
+      --danger-border: #FECACA;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text-body);
+      background: #E5E7EB;
+      padding: 30px 15px;
+      line-height: 1.35;
+      font-size: 11px;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Hoja de impresión centrada */
+    .sheet {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #FFFFFF;
+      padding: 26px 30px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    /* Utilidades de impresión */
+    @media print {
+      body {
+        background: #fff !important;
+        padding: 0 !important;
+        font-size: 10.5px !important;
+      }
+      .sheet {
+        max-width: 100% !important;
+        width: 100% !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+      }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      .avoid-break { page-break-inside: avoid; }
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+
+    /* ================================================================
+       1. ENCABEZADO INSTITUCIONAL
+       ================================================================ */
+    .header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2.5px solid var(--primary);
+      padding-bottom: 12px;
+      margin-bottom: 12px;
+    }
+
+    .header-logo-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 32%;
+    }
+
+    .logo-brand-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .logo-brand-text .brand-title {
+      font-weight: 900;
+      color: var(--primary);
+      font-size: 15px;
+      letter-spacing: 0.8px;
+    }
+    .logo-brand-text .brand-sub {
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 8.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .header-title-area {
+      text-align: center;
+      flex: 1;
+      padding: 0 10px;
+    }
+    .header-title-area h1 {
+      margin: 0;
+      font-size: 16.5px;
+      font-weight: 900;
+      color: var(--primary);
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+    }
+    .header-title-area .productora-tag {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      margin-top: 3px;
+      letter-spacing: 0.3px;
+    }
+
+    .header-meta-area {
+      text-align: right;
+      width: 30%;
+    }
+    .report-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin: 0;
+      letter-spacing: 0.3px;
+    }
+    .report-date {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-weight: 500;
+    }
+
+    /* ================================================================
+       2. TARJETA DE CONCLUSIÓN / DECISIÓN
+       ================================================================ */
+    .conclusion-card {
+      padding: 10px 16px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      border: 1px solid var(--border);
+    }
+    .conclusion-card.aprobado {
+      background-color: var(--success-bg);
+      border-color: var(--success-border);
+    }
+    .conclusion-card.rechazado {
+      background-color: var(--danger-bg);
+      border-color: var(--danger-border);
+    }
+
+    .conclusion-badge {
+      font-weight: 900;
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .conclusion-badge.aprobado { color: var(--success); }
+    .conclusion-badge.rechazado { color: var(--danger); }
+
+    .conclusion-audited-info {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 2.2fr 1.3fr 0.8fr;
+      gap: 14px;
+      border-left: 2px solid rgba(0,0,0,0.1);
+      padding-left: 16px;
+    }
+
+    .info-block .label {
+      font-size: 8px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+    .info-block .value {
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    /* ================================================================
+       3. SECCIONES Y GRIDS
+       ================================================================ */
+    .section {
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .section-header {
+      background: var(--bg-light);
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 10.5px;
+      border-bottom: 1px solid var(--border);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .section-content {
+      padding: 10px 12px;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .data-grid.grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .data-grid.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .data-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .data-label {
+      font-size: 8.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .data-value {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-dark);
+      word-break: break-word;
+    }
+    .data-value.highlight {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* Barra de progreso de avance */
+    .progress-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 7px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+    }
+
+    /* ================================================================
+       4. TABLA CURVA DE PRODUCCIÓN (TALLA / COLOR)
+       ================================================================ */
+    .curva-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .curva-table th, .curva-table td {
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+    }
+    .curva-table th {
+      background: var(--bg-subtle);
+      color: var(--text-dark);
+      font-weight: 800;
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .curva-table th.col-color {
+      text-align: left;
+      width: 32%;
+      padding-left: 12px;
+    }
+    .curva-table td.cell-color {
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dark);
+      padding-left: 12px;
+    }
+    .curva-color-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .color-pill {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    .curva-table td.cell-qty {
+      font-weight: 600;
+      color: var(--text-body);
+    }
+    .curva-table td.cell-qty.empty {
+      color: #94A3B8;
+      font-weight: 400;
+    }
+    .curva-table td.cell-total-row, .curva-table th.col-total {
+      background: var(--bg-light);
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .curva-table tr.row-grand-total td {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+      font-weight: 900;
+      font-size: 10.5px;
+    }
+
+    /* ================================================================
+       5. GEOLOCALIZACIÓN Y EVIDENCIA
+       ================================================================ */
+    .evidence-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .map-box {
+      height: 165px;
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .map-box iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .photo-box {
+      height: 165px;
+      background: var(--bg-light);
+      border: 1px solid var(--border);
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .photo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* ================================================================
+       6. HALLAZGOS CUANTITATIVOS (EXPANDIDO EN CURVA TALLA / COLOR)
+       ================================================================ */
+    .nov-curva-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .nov-curva-table th, .nov-curva-table td {
+      border: 1px solid var(--border);
+      padding: 5px 8px;
+    }
+    .nov-curva-table th {
+      background: var(--bg-subtle);
+      color: var(--text-dark);
+      font-weight: 800;
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-nov {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 8.5px;
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-nov.sin-confeccionar {
+      background-color: #FEE2E2;
+      color: #991B1B;
+      border-color: #FECACA;
+    }
+    .badge-nov.promociones {
+      background-color: #FEF3C7;
+      color: #92400E;
+      border-color: #FDE68A;
+    }
+    .badge-nov.prom-sp {
+      background-color: #FCE7F3;
+      color: #9D174D;
+      border-color: #FBCFE8;
+    }
+    .badge-nov.cobros {
+      background-color: #EDE9FE;
+      color: #5B21B6;
+      border-color: #DDD6FE;
+    }
+    .badge-nov.lavado {
+      background-color: #E0E7FF;
+      color: #3730A3;
+      border-color: #C7D2FE;
+    }
+    .nov-curva-table td.cell-qty.defect {
+      color: #991B1B;
+      font-weight: 800;
+      background-color: #FEF2F2;
+    }
+    .nov-curva-table td.cell-total-row.defect {
+      color: #991B1B;
+      font-weight: 900;
+      background-color: #FEE2E2;
+    }
+    .nov-curva-table tr.row-grand-total td {
+      background: #FEF2F2;
+      color: #991B1B;
+      font-weight: 800;
+      font-size: 10.5px;
+    }
+
+    /* ================================================================
+       7. OBSERVACIONES Y TÉRMINOS
+       ================================================================ */
+    .obs-box {
+      background: var(--bg-light);
+      padding: 12px 14px;
+      border-radius: 0 0 6px 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      line-height: 1.55;
+      color: var(--text-dark);
+      white-space: pre-wrap;
+    }
+
+    .terms-box {
+      background: #FAFAFA;
+      border-top: 1px solid var(--border);
+      padding: 9px 12px;
+      font-size: 9px;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+    .terms-box ol {
+      margin: 0;
+      padding-left: 14px;
+    }
+    .terms-box li {
+      margin-bottom: 2px;
+    }
+
+    /* ================================================================
+       8. FIRMAS DE CONFORMIDAD
+       ================================================================ */
+    .signatures-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      padding: 14px 20px;
+      background: var(--bg-light);
+      border-radius: 0 0 6px 6px;
+      min-height: 160px;
+    }
+
+    .sig-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      text-align: center;
+    }
+    .sig-col.border-right {
+      border-right: 1px dashed var(--border-dark);
+      padding-right: 16px;
+    }
+    .sig-col.padding-left {
+      padding-left: 16px;
+    }
+
+    .sig-img-wrap {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .digital-seal {
+      border: 1.5px dashed var(--primary);
+      border-radius: 6px;
+      padding: 6px 12px;
+      background: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 8.5px;
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    .digital-seal i {
+      font-size: 16px;
+      margin-bottom: 3px;
+      color: var(--primary);
+    }
+    .digital-seal .seal-meta {
+      font-size: 7.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .sig-line {
+      width: 85%;
+      border-top: 1px solid var(--text-dark);
+      margin: 8px 0 4px;
+    }
+    .sig-name {
+      font-weight: 800;
+      font-size: 10.5px;
+      color: var(--text-dark);
+      text-transform: uppercase;
+    }
+    .sig-doc {
+      font-size: 9px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .sig-role {
+      font-size: 8px;
+      color: var(--primary);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      margin-top: 1px;
+    }
+
+    /* ================================================================
+       9. FOOTER CORPORATIVO
+       ================================================================ */
+    .footer-doc {
+      margin-top: 12px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 8.5px;
+      color: var(--text-muted);
+    }
+
+    /* ================================================================
+       PANEL DE CONTROL FLOTANTE (Solo pantalla)
+       ================================================================ */
+    .control-panel {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      gap: 10px;
+      z-index: 10000;
+    }
+    .btn-action {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(63, 81, 181, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(63, 81, 181, 0.5);
+    }
+    .btn-toggle {
+      background: #1E293B;
+      color: #fff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 50px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+    }
+    .btn-toggle:hover {
+      background: #0F172A;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HOJA PRINCIPAL -->
+  <div class="sheet" id="reporteSheet">
+
+    <!-- 1. ENCABEZADO -->
+    <div class="header-main">
+      <div class="header-logo-area">
+        <!-- SVG oficial Grupo TDM -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" style="width: 44px; height: 44px; flex-shrink:0;">
+          <defs>
+            <linearGradient id="tdmGrad" gradientUnits="userSpaceOnUse" x1="433.5" y1="929" x2="500" y2="94">
+              <stop offset="0" stop-color="#3F51B5"/>
+              <stop offset="1" stop-color="#3F51B5"/>
+            </linearGradient>
+          </defs>
+          <path fill="url(#tdmGrad)" d="M501.29 94.22C502.23 94.18 503.17 94.14 504.11 94.12C610.95 90.39 714.86 129.47 792.76 202.68C874.77 279.04 922.28 385.41 924.41 497.45C927.94 610.9 886.34 721.12 808.73 803.95C735.84 880.85 628.02 926.37 522.38 929.03C415.75 931.76 312.19 893.19 233.33 821.37C147.09 742.19 103.37 637.2 99.56 521.11C97.15 417.07 135.16 308.02 205.34 230.91C285.17 143.21 383.61 99.15 501.29 94.22Z"/>
+          <path fill="url(#tdmGrad)" d="M426.33 154.08C431.45 149.93 470.37 144.28 478.06 144.29C493.6 144.31 511.27 140.43 526.43 142.84L526.05 142.87C528.52 143.6 538.76 143.93 542.62 144.48L542.9 145.34C590.46 150.07 630.89 160.44 674.28 181.54C683.92 182.53 702.83 193.82 710.49 199.47C756.29 225.96 812.88 288.53 836.35 338.09C836.52 338.45 836.62 340.12 836.65 340.55C837.08 341.98 841.18 350.22 842.02 351.99C845.51 359.13 848.7 366.43 851.56 373.84C865.26 409.89 873.53 447.76 876.12 486.24C877.68 507.61 876.43 530.03 873.9 551.29C865.2 628.47 832.97 701.1 781.58 759.34C654.1 906.04 420.5 918.78 275.08 791.32C216.44 740.15 175.56 671.7 158.32 595.81C153.45 573.29 150.3 550.43 148.91 527.43C147.98 513.34 148.62 500.36 149.48 486.32C154.25 409.18 186.54 328.14 237.67 269.84C241.59 264.43 251.37 254.42 256.21 249.54C287.76 217.42 325.27 191.75 366.65 173.98C375.73 170.05 388.39 164.92 397.97 162.32C403.22 159.73 419.84 156.03 426.33 154.08Z"/>
+          <path fill="#ffffff" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.4 550.72 591.4 550.72 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 754.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
+        </svg>
+        <div class="logo-brand-text">
+          <span class="brand-title">GRUPO TDM</span>
+          <span class="brand-sub">AUDITORÍA DE CALIDAD</span>
+        </div>
+      </div>
+
+      <div class="header-title-area">
+        <h1>REPORTE DE AUDITORÍA DE CALIDAD</h1>
+        <div class="productora-tag">PRODUCTORA: 4 — EL TEMPLO DE LA MODA S.A.S.</div>
+      </div>
+
+      <div class="header-meta-area">
+        <div class="report-id">REP-2026-0841</div>
+        <div class="report-date">10/09/2026 03:14 PM</div>
+      </div>
+    </div>
+
+    <!-- 2. TARJETA DE DECISIÓN / CONCLUSIÓN -->
+    <div class="conclusion-card aprobado" id="decisionCard">
+      <div class="conclusion-badge aprobado" id="decisionBadge">
+        <i class="fas fa-check-circle" id="decisionIcon"></i>
+        <span id="decisionText">APROBADO</span>
+      </div>
+      <div class="conclusion-audited-info">
+        <div class="info-block">
+          <div class="label">Planta / Taller Confección</div>
+          <div class="value">CARLOS ANDRÉS MENDOZA ARIAS</div>
+        </div>
+        <div class="info-block">
+          <div class="label">Proceso Auditado</div>
+          <div class="value">CONFECCIÓN</div>
+        </div>
+        <div class="info-block">
+          <div class="label">OP / Lote</div>
+          <div class="value">222</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. DETALLES DE OPERACIÓN Y TIEMPOS DE COMPROMISO -->
+    <div class="section avoid-break">
+      <div class="section-header">
+        <i class="fas fa-boxes-stacked"></i> Detalles de Operación y Tiempos de Compromiso
+      </div>
+      <div class="section-content">
+        <div class="data-grid grid-4">
+          <!-- Fila 1 -->
+          <div class="data-item">
+            <span class="data-label">Referencia</span>
+            <span class="data-value highlight">REF-9024-DENIM</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Línea de Producto</span>
+            <span class="data-value">DENIM MASCULINO</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Tipo de Visita</span>
+            <span class="data-value">AUDITORÍA INICIAL</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Cantidad Auditada</span>
+            <span class="data-value highlight">350 UNDS.</span>
+          </div>
+
+          <!-- Fila 2 -->
+          <div class="data-item">
+            <span class="data-label">Tipo de Prenda</span>
+            <span class="data-value">PANTALÓN JEAN</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Género</span>
+            <span class="data-value">CABALLERO</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Proceso Destino</span>
+            <span class="data-value highlight">LAVANDERÍA</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Lugar Destino</span>
+            <span class="data-value">TALLER LAVAMAX (SOPÓ)</span>
+          </div>
+
+          <!-- Fila 3: Tiempos y Contacto -->
+          <div class="data-item">
+            <span class="data-label">Fecha Despacho / Salida</span>
+            <span class="data-value">11/09/2026</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Fecha Entrega Acordada</span>
+            <span class="data-value">16/09/2026</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Teléfono Planta</span>
+            <span class="data-value">316 800 7979</span>
+          </div>
+          <div class="data-item">
+            <span class="data-label">Correo Notificación</span>
+            <span class="data-value">nixandres2@gmail.com</span>
+          </div>
+
+          <!-- Fila 4: Barra de Avance -->
+          <div class="data-item" style="grid-column: span 4; margin-top: 4px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="data-label">Avance General del Lote</span>
+              <span style="font-weight:800; font-size:11px; color:var(--text-dark);">85% Completado</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-track">
+                <div class="progress-fill" style="width: 85%;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. CURVA DE PRODUCCIÓN — DISTRIBUCIÓN TALLA / COLOR -->
+    <div class="section avoid-break">
+      <div class="section-header">
+        <i class="fas fa-layer-group"></i> Curva de Producción — Matriz Talla / Color (OP 222 · Total 350 UNDS.)
+      </div>
+      <div class="section-content" style="padding: 0;">
+        <table class="curva-table">
+          <thead>
+            <tr>
+              <th class="col-color">Color / Variante</th>
+              <th style="width: 9%;">28</th>
+              <th style="width: 9%;">30</th>
+              <th style="width: 9%;">32</th>
+              <th style="width: 9%;">34</th>
+              <th style="width: 9%;">36</th>
+              <th style="width: 9%;">38</th>
+              <th class="col-total" style="width: 14%;">Total Color</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #1E3A8A;"></span>
+                  <span>AZUL OSCURO (INDIGO)</span>
+                </div>
+              </td>
+              <td class="cell-qty">15</td>
+              <td class="cell-qty">35</td>
+              <td class="cell-qty">60</td>
+              <td class="cell-qty">45</td>
+              <td class="cell-qty">25</td>
+              <td class="cell-qty">10</td>
+              <td class="cell-total-row">190</td>
+            </tr>
+            <tr>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #3B82F6;"></span>
+                  <span>AZUL MEDIO (STONE)</span>
+                </div>
+              </td>
+              <td class="cell-qty">10</td>
+              <td class="cell-qty">20</td>
+              <td class="cell-qty">35</td>
+              <td class="cell-qty">25</td>
+              <td class="cell-qty">15</td>
+              <td class="cell-qty">5</td>
+              <td class="cell-total-row">110</td>
+            </tr>
+            <tr>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #1E293B;"></span>
+                  <span>NEGRO CARBÓN</span>
+                </div>
+              </td>
+              <td class="cell-qty">5</td>
+              <td class="cell-qty">10</td>
+              <td class="cell-qty">15</td>
+              <td class="cell-qty">12</td>
+              <td class="cell-qty">5</td>
+              <td class="cell-qty">3</td>
+              <td class="cell-total-row">50</td>
+            </tr>
+            <!-- Fila Totales Curva -->
+            <tr class="row-grand-total">
+              <td style="text-align: left; padding-left: 12px;">TOTAL POR TALLA</td>
+              <td>30</td>
+              <td>65</td>
+              <td>110</td>
+              <td>82</td>
+              <td>45</td>
+              <td>18</td>
+              <td style="background: var(--primary); color: #fff; font-size: 11px;">350 UNDS.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. GEOLOCALIZACIÓN Y EVIDENCIA FOTOGRÁFICA (2/3 y 1/3) -->
+    <div class="evidence-grid avoid-break">
+      <!-- Geolocalización -->
+      <div class="section" style="margin: 0;">
+        <div class="section-header">
+          <i class="fas fa-map-location-dot"></i> Geolocalización de la Inspección
+        </div>
+        <div class="map-box">
+          <iframe 
+            src="https://maps.google.com/maps?q=4.60971,-74.08175&z=15&output=embed" 
+            loading="lazy">
+          </iframe>
+        </div>
+      </div>
+
+      <!-- Evidencia Fotográfica -->
+      <div class="section" style="margin: 0;">
+        <div class="section-header">
+          <i class="fas fa-camera"></i> Evidencia Fotográfica
+        </div>
+        <div class="photo-box">
+          <img src="https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=400&q=80" alt="Muestra de Calidad Auditada">
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. HALLAZGOS CUANTITATIVOS (NOVEDADES DE AUDITORÍA) -->
+    <div class="section avoid-break">
+      <div class="section-header">
+        <i class="fas fa-magnifying-glass-chart"></i> Hallazgos Cuantitativos y Defectos de Auditoría
+      </div>
+      <div class="section-content" style="padding: 0;">
+        <table class="nov-curva-table">
+          <thead>
+            <tr>
+              <th style="width: 25%; text-align: left; padding-left: 12px;">Tipo de Defecto / Novedad</th>
+              <th style="width: 23%; text-align: left; padding-left: 12px;">Color / Variante</th>
+              <th style="width: 7%;">28</th>
+              <th style="width: 7%;">30</th>
+              <th style="width: 7%;">32</th>
+              <th style="width: 7%;">34</th>
+              <th style="width: 7%;">36</th>
+              <th style="width: 7%;">38</th>
+              <th class="col-total" style="width: 10%;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Fila 1: Sin Confeccionar - Azul Oscuro -->
+            <tr>
+              <td style="text-align: left; padding-left: 12px;">
+                <span class="badge-nov sin-confeccionar"><i class="fas fa-scissors"></i> SIN CONFECCIONAR</span>
+              </td>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #1E3A8A;"></span>
+                  <span>AZUL OSCURO (INDIGO)</span>
+                </div>
+              </td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty defect">2</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-total-row defect">2</td>
+            </tr>
+
+            <!-- Fila 2: Sin Confeccionar - Azul Medio -->
+            <tr>
+              <td style="text-align: left; padding-left: 12px;">
+                <span class="badge-nov sin-confeccionar"><i class="fas fa-scissors"></i> SIN CONFECCIONAR</span>
+              </td>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #3B82F6;"></span>
+                  <span>AZUL MEDIO (STONE)</span>
+                </div>
+              </td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty defect">2</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-total-row defect">2</td>
+            </tr>
+
+            <!-- Fila 3: Promoción - Azul Oscuro -->
+            <tr>
+              <td style="text-align: left; padding-left: 12px;">
+                <span class="badge-nov promociones"><i class="fas fa-tag"></i> PROMOCIÓN — COSTURA</span>
+              </td>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #1E3A8A;"></span>
+                  <span>AZUL OSCURO (INDIGO)</span>
+                </div>
+              </td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty defect">1</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-total-row defect">1</td>
+            </tr>
+
+            <!-- Fila 4: Promoción - Negro Stone -->
+            <tr>
+              <td style="text-align: left; padding-left: 12px;">
+                <span class="badge-nov promociones"><i class="fas fa-tag"></i> PROMOCIÓN — COSTURA</span>
+              </td>
+              <td class="cell-color">
+                <div class="curva-color-wrap">
+                  <span class="color-pill" style="background-color: #1E293B;"></span>
+                  <span>NEGRO STONE</span>
+                </div>
+              </td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty defect">2</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-qty empty">-</td>
+              <td class="cell-total-row defect">2</td>
+            </tr>
+
+            <!-- Fila Totales Defectos -->
+            <tr class="row-grand-total defect-total">
+              <td colspan="2" style="text-align: left; padding-left: 12px; font-weight: 800;">
+                TOTAL DEFECTOS POR TALLA
+              </td>
+              <td>0</td>
+              <td style="color: #991B1B; font-weight: 900;">1</td>
+              <td style="color: #991B1B; font-weight: 900;">4</td>
+              <td style="color: #991B1B; font-weight: 900;">2</td>
+              <td>0</td>
+              <td>0</td>
+              <td style="background: #FEE2E2; color: #991B1B; font-size: 11px; font-weight: 900; border-color: #FECACA;">7 UNDS.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 7. OBSERVACIONES GENERALES -->
+    <div class="section avoid-break">
+      <div class="section-header">
+        <i class="fas fa-comment-dots"></i> Observaciones Generales del Auditor
+      </div>
+      <div class="obs-box">Se realiza inspección aleatoria sobre el 100% de la Orden de Producción 222. Se evidencia buen manejo de tensiones en costuras y correcta aplicación de hiladillas. Las 7 unidades identificadas con desviación menor en pespunte fueron marcadas y separadas para corrección inmediata antes del envío a lavandería. El lote cumple a cabalidad con la ficha técnica y las especificaciones de calidad del Grupo TDM. Lote liberado con concepto de APROBADO para continuar su ruta hacia el proceso de Lavandería en Taller Lavamax.</div>
+      
+      <!-- Términos y Políticas Integradas -->
+      <div class="terms-box">
+        <ol>
+          <li>De acuerdo con las políticas operativas del <strong>Grupo TDM</strong>, la planta receptora dispone de un plazo máximo de <strong>24 horas hábiles</strong> a partir del despacho para reportar cualquier faltante o inconsistencia técnica. Vencido dicho plazo, se considerará recibido a entera conformidad.</li>
+          <li>Cualquier reclamación posterior no reportada dentro del periodo establecido podrá generar cobros proporcionales según políticas de producción.</li>
+          <li>Horario de atención y soporte técnico: lunes a viernes de 7:10 a.m. a 4:43 p.m.</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- 8. FIRMAS DE CONFORMIDAD -->
+    <div class="section avoid-break">
+      <div class="section-header">
+        <i class="fas fa-file-signature"></i> Firmas de Conformidad y Responsabilidad
+      </div>
+      <div class="signatures-grid">
+        <!-- Columna 1: Auditor -->
+        <div class="sig-col border-right">
+          <div class="sig-img-wrap">
+            <!-- Sello Digital Certificado -->
+            <div class="digital-seal">
+              <i class="fas fa-certificate"></i> Certificación Digital de Auditoría
+              <div class="seal-meta">
+                AUDITOR: JUAN CARLOS RAMÍREZ<br>
+                REGISTRO: AUTH-TDM-OK-2026<br>
+                ESTADO: FIRMADO ELECTRÓNICAMENTE
+              </div>
+            </div>
+          </div>
+          <div class="sig-line"></div>
+          <span class="sig-name">JUAN CARLOS RAMÍREZ PÉREZ</span>
+          <span class="sig-doc">C.C. 1.098.765.432</span>
+          <span class="sig-role">Auditor de Calidad — Grupo TDM</span>
+        </div>
+
+        <!-- Columna 2: Planta / Taller -->
+        <div class="sig-col padding-left">
+          <div class="sig-img-wrap">
+            <!-- SVG de firma manuscrita digitalizada de la planta -->
+            <svg viewBox="0 0 300 80" style="max-height: 65px; width: auto;" stroke="#1E293B" stroke-width="2.5" fill="none" stroke-linecap="round">
+              <path d="M 20 50 Q 50 10, 80 45 T 140 30 Q 180 60, 220 20 T 280 40 M 60 45 L 240 45" />
+            </svg>
+          </div>
+          <div class="sig-line"></div>
+          <span class="sig-name">CARLOS ANDRÉS MENDOZA ARIAS</span>
+          <span class="sig-doc">C.C. 1.144.167.164</span>
+          <span class="sig-role">Representante Planta / Taller Confección</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. PIE DE PÁGINA -->
+    <div class="footer-doc">
+      <span>Grupo TDM — El Templo de la Moda | Sistema Integral de Gestión de Calidad</span>
+      <span>Generado: 10/09/2026 15:14 — Documento Oficial Válido</span>
+      <span>Página 1 de 1</span>
+    </div>
+
+  </div>
+
+  <!-- BOTONES FLOTANTES DE CONTROL (NO SE IMPRIMEN) -->
+  <div class="control-panel no-print">
+    <button class="btn-toggle" onclick="toggleDecision()">
+      <i class="fas fa-arrows-rotate"></i> Alternar Aprobado / Rechazado
+    </button>
+    <button class="btn-action" onclick="window.print()">
+      <i class="fas fa-print"></i> Imprimir / Guardar como PDF
+    </button>
+  </div>
+
+  <script>
+    let isAprobado = true;
+    function toggleDecision() {
+      isAprobado = !isAprobado;
+      const card = document.getElementById('decisionCard');
+      const badge = document.getElementById('decisionBadge');
+      const icon = document.getElementById('decisionIcon');
+      const text = document.getElementById('decisionText');
+
+      if (isAprobado) {
+        card.className = 'conclusion-card aprobado';
+        badge.className = 'conclusion-badge aprobado';
+        icon.className = 'fas fa-check-circle';
+        text.textContent = 'APROBADO';
+      } else {
+        card.className = 'conclusion-card rechazado';
+        badge.className = 'conclusion-badge rechazado';
+        icon.className = 'fas fa-times-circle';
+        text.textContent = 'RECHAZADO';
+      }
+    }
+  </script>
+</body>
+</html>

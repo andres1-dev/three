@@ -455,6 +455,41 @@ export class SupabaseDataRepository extends IDataService {
     }
 
     /**
+     * Lista plantillas de calidad por tipo ('PAQUETEO' | 'ETIQUETA').
+     * @param {string} tipo
+     * @returns {Promise<Array<{id:number, tipo:string, texto:string}>>}
+     */
+    async getPlantillas(tipo = '') {
+        try {
+            const res = await this._callFormularios({ accion: 'LISTAR_PLANTILLAS', tipo });
+            return res?.data || [];
+        } catch (err) {
+            console.error('[DataRepository] Error al listar plantillas:', err);
+            return [];
+        }
+    }
+
+    /**
+     * Crea una plantilla de calidad.
+     * @param {{ tipo: string, texto: string }} plantilla
+     */
+    async createPlantilla({ tipo, texto }) {
+        const res = await this._callFormularios({ accion: 'CREAR_PLANTILLA', tipo, texto });
+        if (!res?.success) throw new Error(res?.message || 'Error al crear plantilla.');
+        return res.data;
+    }
+
+    /**
+     * Elimina una plantilla por id.
+     * @param {number} id
+     */
+    async deletePlantilla(id) {
+        const res = await this._callFormularios({ accion: 'ELIMINAR_PLANTILLA', id });
+        if (!res?.success) throw new Error(res?.message || 'Error al eliminar plantilla.');
+        return true;
+    }
+
+    /**
      * Envía reporte de Novedad a Supabase con mapeo exacto de esquema y fallback SDK
      */
     async submitNovedad(novedad) {
@@ -482,7 +517,8 @@ export class SupabaseDataRepository extends IDataService {
         const ymd = `${bogotaDate.getFullYear()}${pad(bogotaDate.getMonth() + 1)}${pad(bogotaDate.getDate())}`;
         const fechaBogota = `${bogotaDate.getFullYear()}-${pad(bogotaDate.getMonth() + 1)}-${pad(bogotaDate.getDate())}T${pad(bogotaDate.getHours())}:${pad(bogotaDate.getMinutes())}:${pad(bogotaDate.getSeconds())}.${String(now.getMilliseconds()).padStart(3, '0')}-05:00`;
         
-        const prodId = Number(novedad.productora) || 1;
+        const prodId = Number(novedad.idProductora || novedad.id_productora || novedad.productora) || 1;
+        const nombreProductora = novedad.nombreProductora || novedad.productoraNombre || novedad.productora_nombre || '';
         // El consecutivo id_novedad (NOV{YYYYMMDD}-{COUNT}) lo genera la Edge
         // Function /formularios consultando la tabla `novedades`; NO se calcula
         // aquí para no romper el correlativo creciente de la tabla.
@@ -506,7 +542,7 @@ export class SupabaseDataRepository extends IDataService {
         const cleanPayload = {
             hoja: 'NOVEDADES',
             fecha: fechaBogota,
-            id: Number(novedad.lote || novedad.op || novedad.id) || 0,
+            lote: Number(novedad.lote || novedad.op || novedad.id) || 0,
             referencia: novedad.referencia || '',
             cantidad: Number(novedad.cantidadTotal || novedad.cantidad_total || 0),
             planta: novedad.planta || '',
@@ -523,7 +559,10 @@ export class SupabaseDataRepository extends IDataService {
             imagen: imagenPayload,
             imagenes: imagenesNov.length ? imagenesNov : undefined,
             estado: 'PENDIENTE',
-            productora: prodId,
+            idProductora: prodId,
+            nombreProductora: nombreProductora,
+            auditor: novedad.auditor || novedad.auditorNombre || '',
+            correo: novedad.email || novedad.correo || '',
             tejido: novedad.tejido || null,
             comentarios: novedad.comentarios || ''
         };

@@ -35,6 +35,7 @@ export class CalidadReport {
         this.fotos = data.fotos || [];
         this.auditor = data.auditor || '';
         this.email = data.email || data.correo || '';
+        this.correo = this.email;
         this.fecha = data.fecha || new Date().toISOString();
         this.firma = data.firma || data.firma_svg || '';
         this.gps = data.gps || null;
@@ -55,8 +56,18 @@ export class CalidadReport {
         this.salida = this.fechaSalida;
         this.fechaEntrega = data.fechaEntrega || data.fecha_entrega || data.entrada || '';
         this.entrada = this.fechaEntrega;
-        this.productora = data.productora || data.idProductora || '';
-        this.idProductora = data.idProductora || data.productora || '';
+        // id numérico de la productora (FK)
+        this.idProductora = Number(data.idProductora || data.id_productora) || null;
+        // nombre legible de la productora
+        this.nombreProductora = data.nombreProductora || data.productoraNombre || data.productora_nombre || data.productora || '';
+        // Proceso anterior rechazado: { estado: 'RECHAZADO', proceso, observaciones } | null
+        this.procesoAnterior = data.procesoAnterior || data.proceso_anterior || null;
+        // RONDA
+        this.compromisoRonda = data.compromisoRonda || data.compromiso || null;
+        // CONTRAMUESTRA
+        this.paqueteo          = data.paqueteo || null;
+        this.etiqueta          = data.ubicacionEtiqueta || data.etiqueta || null;
+        this.cita              = data.cita || null;
     }
 }
 

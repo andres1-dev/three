@@ -2,8 +2,8 @@
 // Edge Function: formularios
 // Gestión centralizada de operaciones para el Módulo de Formularios:
 // - Consulta de Lotes (master) y Plantas
-// - Reporte de Calidad (reportes + notificaciones GAS)
-// - Reporte de Novedades (novedades + fotos + notificaciones GAS)
+// - Reporte de Calidad (reportes + notificaciones Resend)
+// - Reporte de Novedades (novedades + fotos + notificaciones Resend)
 // - Rutero y Agenda de Visitas (rutero/visitas)
 // - Actualización Técnica de Planta (censo, maquinaria, GPS, firmas)
 // ================================================================
@@ -34,7 +34,7 @@ const R2_BUCKET     = Deno.env.get("R2_BUCKET")     ?? "calidad";
 const R2_PUBLIC_URL = Deno.env.get("R2_PUBLIC_URL") ?? "";
 // ──────────────────────────────────────────────────────────────
 
-const GAS_NOTIF_URL = 'https://script.google.com/macros/s/AKfycbw7PEB7D9TP_wDlzJtwKCJmxwUYguXyniYPb_vRAadPHpy7gDWG26fn0wRowI_mre9V/exec';
+const RESEND_EMAIL_URL = Deno.env.get("SUPABASE_URL")?.replace(/\/$/, "") + "/functions/v1/emails" ?? "";
 
 function normalizeDate(dateStr: any): string | null {
   if (!dateStr || typeof dateStr !== 'string') return dateStr;
@@ -271,6 +271,53 @@ serve(async (req) => {
       });
     }
 
+    // ── PLANTILLAS DE CALIDAD (paqueteo / etiqueta) ──────────────────────────
+    if (accion === 'LISTAR_PLANTILLAS') {
+      const tipo = String(payload.tipo || '').toUpperCase().trim();
+      let q = supabaseClient
+        .from('plantillas')
+        .select('id, tipo, texto, created_at')
+        .order('created_at', { ascending: true });
+      if (tipo) q = q.eq('tipo', tipo);
+      const { data, error } = await q;
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, data: data || [] }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    if (accion === 'CREAR_PLANTILLA') {
+      const tipo  = String(payload.tipo  || '').toUpperCase().trim();
+      const texto = String(payload.texto || '').trim();
+      if (!tipo)  throw new Error('Debe indicar el tipo de plantilla.');
+      if (!texto) throw new Error('El texto de la plantilla no puede estar vacío.');
+      const { data, error } = await supabaseClient
+        .from('plantillas')
+        .insert([{ tipo, texto }])
+        .select()
+        .single();
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, data }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
+    if (accion === 'ELIMINAR_PLANTILLA') {
+      const id = Number(payload.id);
+      if (!id) throw new Error('Se requiere el id de la plantilla.');
+      const { error } = await supabaseClient
+        .from('plantillas')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      });
+    }
+
     // ── 2. VALIDACIÓN DE SESIÓN AUTH PARA OPERACIONES DE ESCRITURA ──
     const authHeader = req.headers.get('Authorization');
     let user: any = null;
@@ -414,11 +461,12 @@ serve(async (req) => {
         const insertRow: any = {
           id_reporte: idReporte,
           fecha: fechaBogota,
-          id: payload.lote || payload.op,
+          op: payload.lote || payload.op,
           referencia: payload.referencia || "",
           cantidad: Number(payload.cantidadTotal || payload.cantidad || 0),
           planta: payload.planta || "",
-          email: payload.email || user?.email || "",
+          correo: payload.email || payload.correo || user?.email || "",
+          auditor: auditorName,
           localizacion: normalizeLocalizacion(payload.gps ?? payload.localizacion),
           tipo_visita: payload.tipoVisita || "AUDITORIA",
           conclusion: payload.conclusion || "APROBADO",
@@ -429,7 +477,13 @@ serve(async (req) => {
           destino_planta: payload.destinoPlanta || "",
           novedades_auditoria: normalizeNovedades(payload.novedadesAsociadas || payload.novedades_auditoria),
           avance: payload.avanceProduccion || 0,
-          productora: payload.productora || payload.idProductora || 1,
+          id_productora: Number(payload.idProductora || payload.productora) || 1,
+          productora: payload.nombreProductora || payload.productoraNombre || "",
+          proceso_anterior: payload.procesoAnterior || payload.proceso_anterior || null,
+          compromiso: payload.compromisoRonda || payload.compromiso || null,
+          paqueteo: payload.paqueteo || null,
+          etiqueta: payload.ubicacionEtiqueta || payload.etiqueta || null,
+          cita: payload.cita || null,
           // ── SOLO columnas que EXISTEN en `reportes` (confirmadas en la fila devuelta) ──
           linea: payload.linea || payload.cuento || payload.modulo || "",
           proceso: payload.proceso || "",
@@ -457,11 +511,12 @@ serve(async (req) => {
           const minimalRow: any = {
             id_reporte: idReporte,
             fecha: fechaBogota,
-            id: payload.lote || payload.op,
+            op: payload.lote || payload.op,
             referencia: payload.referencia || "",
             cantidad: Number(payload.cantidadTotal || payload.cantidad || 0),
             planta: payload.planta || "",
-            email: payload.email || user?.email || "",
+            correo: payload.email || payload.correo || user?.email || "",
+            auditor: auditorName,
             localizacion: normalizeLocalizacion(payload.gps ?? payload.localizacion),
             tipo_visita: payload.tipoVisita || "AUDITORIA",
             conclusion: payload.conclusion || "APROBADO",
@@ -472,7 +527,13 @@ serve(async (req) => {
             destino_planta: payload.destinoPlanta || "",
             novedades_auditoria: normalizeNovedades(payload.novedadesAsociadas || payload.novedades_auditoria),
             avance: payload.avanceProduccion || 0,
-            productora: payload.productora || payload.idProductora || 1
+            id_productora: Number(payload.idProductora || payload.productora) || 1,
+            productora: payload.nombreProductora || payload.productoraNombre || "",
+            proceso_anterior: payload.procesoAnterior || payload.proceso_anterior || null,
+            compromiso: payload.compromisoRonda || payload.compromiso || null,
+            paqueteo: payload.paqueteo || null,
+            etiqueta: payload.ubicacionEtiqueta || payload.etiqueta || null,
+            cita: payload.cita || null
           };
           const retry = await insertWith(minimalRow);
           repData = retry.data;
@@ -483,21 +544,105 @@ serve(async (req) => {
           console.warn("[FORMULARIOS] Error insertando reporte en BD:", repError);
         }
 
+// ────────────────────────────────────────────────────────────────
+// Buscar el correo REAL de la planta en la tabla `plantas`
+
         try {
-          await fetch(GAS_NOTIF_URL, {
-            method: "POST",
-            body: JSON.stringify({
-              accion: 'REPORTE_CALIDAD',
-              email: payload.email,
-              reporte: {
-                ...payload,
-                id_reporte: idReporte,
-                auditor_nombre: auditorName,
-                chat_url: chatUrl
-              }
-            })
-          });
-        } catch (_) {}
+          const emailUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/emails`;
+          const serviceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+          // ── Buscar correo REAL en tabla `plantas` ──────────────────
+          // NO usar payload.email como fallback — ese es el correo del auditor
+          let plantaEmail: string = "";
+          const plantaNombre: string = (payload.planta || "").trim();
+          const idProductora: string = String(payload.idProductora || payload.id_productora || payload.productora || "").trim();
+
+          console.log(`[REPORTE_CALIDAD] Buscando planta: nombre="${plantaNombre}" | idProductora="${idProductora}"`);
+
+          try {
+            // Buscar por nombre de planta primero (match exacto), luego por id_productora
+            let plantaQuery = supabaseClient.from("plantas").select("correo, planta");
+            if (plantaNombre) {
+              plantaQuery = plantaQuery.eq("planta", plantaNombre);
+            } else if (idProductora) {
+              plantaQuery = plantaQuery.eq("productora", idProductora);
+            } else {
+              console.warn("[REPORTE_CALIDAD] Sin nombre ni idProductora — no se puede buscar planta");
+            }
+            const { data: plantaData, error: plantaError } = await plantaQuery.limit(1).single();
+
+            console.log(`[REPORTE_CALIDAD] Resultado plantas BD:`, JSON.stringify(plantaData), "| error:", plantaError?.message);
+
+            if (plantaError) {
+              console.warn("[REPORTE_CALIDAD] No se encontró la planta en BD:", plantaError.message);
+            } else if (plantaData?.correo) {
+              plantaEmail = plantaData.correo.trim();
+              console.log(`[REPORTE_CALIDAD] ✅ Correo encontrado: ${plantaEmail}`);
+            } else {
+              console.warn(`[REPORTE_CALIDAD] ⚠️ La planta "${plantaNombre}" no tiene correo registrado`);
+            }
+          } catch (plantaErr) {
+            console.warn("[REPORTE_CALIDAD] Error consultando tabla plantas:", plantaErr);
+          }
+
+          // Si no hay correo de la planta → NO enviar email
+          if (!plantaEmail) {
+            console.warn(`[REPORTE_CALIDAD] Sin correo de planta — email omitido para: "${plantaNombre}"`);
+          } else {
+            console.log(`[REPORTE_CALIDAD] Enviando email a planta: ${plantaEmail}`);
+            console.log(`[REPORTE_CALIDAD] Email URL: ${emailUrl}`);
+
+            const emailRes = await fetch(emailUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${serviceRole}`
+              },
+              body: JSON.stringify({
+                accion: 'REPORTE_CALIDAD',
+                email: plantaEmail,
+                nombre: payload.planta || payload.nombre || 'Productora',
+                reporte: {
+                  // 1) Campos DB (snake_case) del insertRow — fuente de verdad
+                  ...insertRow,
+                  // 2) Campos originales del frontend (camelCase) — fallback
+                  ...payload,
+                  // 3) Campos calculados/obligatorios que siempre deben estar presentes
+                  id_reporte: idReporte,
+                  ID_REPORTE: idReporte,
+                  fecha: fechaBogota,
+                  auditor: auditorName,
+                  auditor_nombre: auditorName,
+                  chat_url: chatUrl,
+                  // Campos clave en ambas convenciones para máxima compatibilidad
+                  cantidad: insertRow.cantidad,
+                  cantidadTotal: insertRow.cantidad,
+                  destino_proceso: insertRow.destino_proceso,
+                  destinoProceso: insertRow.destino_proceso,
+                  destino_planta: insertRow.destino_planta,
+                  destinoPlanta: insertRow.destino_planta,
+                  novedades_auditoria: insertRow.novedades_auditoria,
+                  novedadesAsociadas: insertRow.novedades_auditoria,
+                  tipo_visita: insertRow.tipo_visita,
+                  tipoVisita: insertRow.tipo_visita
+                }
+              })
+            });
+
+            const emailData = await emailRes.json();
+            console.log(`[REPORTE_CALIDAD] Email response:`, emailData);
+
+            if (!emailRes.ok) {
+              console.error(`[REPORTE_CALIDAD] Error enviando email:`, emailData);
+            } else {
+              console.log(`[REPORTE_CALIDAD] ✅ Email enviado exitosamente a ${plantaEmail}`);
+            }
+          } // fin else plantaEmail
+        } catch (emailErr) {
+          console.error(`[REPORTE_CALIDAD] Error en envío de email:`, emailErr);
+          // No bloquear el insert si falla el email
+        }
+
 
         result = {
           success: true,
@@ -547,17 +692,18 @@ serve(async (req) => {
           const ymd = `${bogotaDate.getFullYear()}${pad(bogotaDate.getMonth() + 1)}${pad(bogotaDate.getDate())}`;
           const fechaBogota = `${bogotaDate.getFullYear()}-${pad(bogotaDate.getMonth() + 1)}-${pad(bogotaDate.getDate())}T${pad(bogotaDate.getHours())}:${pad(bogotaDate.getMinutes())}:${pad(bogotaDate.getSeconds())}.${String(now.getMilliseconds()).padStart(3, '0')}-05:00`;
           
-          const prodId = Number(payload.productora) || 1;
+          const prodId = Number(payload.idProductora || payload.productora) || 1;
 
           // Consecutivo propio de NOVEDADES (NOV), INDEPENDIENTE del de
           // REPORTES (REP); cada tabla lleva su propio correlativo creciente:
           //   NOV{YYYYMMDD}-{COUNT}  (ej: NOV20260909-2)
           // SIN reinicios: COUNT = máximo sufijo numérico global en la tabla
           // `novedades` + 1. NO se usa SEQUENCE PostgreSQL (por requerimiento).
-          const { data: novRows } = await supabaseClient
+          const { data: novRows, error: novRowsError } = await supabaseClient
             .from("novedades")
             .select("id_novedad")
             .ilike("id_novedad", "NOV%");
+          console.log("[NOVEDADES] SELECT id_novedad rows:", novRows, "error:", novRowsError);
           let maxNovedad = 0;
           for (const r of novRows || []) {
             const num = /(\d+)$/.exec(String(r.id_novedad || ""));
@@ -566,6 +712,7 @@ serve(async (req) => {
             if (!Number.isNaN(n) && n > maxNovedad) maxNovedad = n;
           }
           const idNovedad = `NOV${ymd}-${maxNovedad + 1}`;
+          console.log("[NOVEDADES] id_novedad calculado:", idNovedad, "maxNovedad:", maxNovedad);
           
           let tipoDetalle: any = null;
           if (Array.isArray(payload.insumos) && payload.insumos.length > 0) {
@@ -587,7 +734,7 @@ serve(async (req) => {
           const novRow: any = {
             id_novedad: idNovedad,
             fecha: fechaBogota,
-            id: Number(payload.lote || payload.op || payload.id) || 0,
+            op: Number(payload.lote || payload.op || payload.id) || 0,
             referencia: payload.referencia || '',
             cantidad: Number(payload.cantidadTotal || payload.cantidad_total || payload.cantidad || 0),
             planta: payload.planta || '',
@@ -604,16 +751,21 @@ serve(async (req) => {
             cantidad_solicitada: Number(payload.cantidadSolicitada || payload.cantidad_solicitada || 0),
             imagen: soporteUrls || payload.imagen || '',
             estado: 'PENDIENTE',
-            productora: prodId,
+            id_productora: prodId,
+            productora: payload.nombreProductora || payload.productoraNombre || '',
+            auditor: payload.auditor || user?.user_metadata?.nombre || user?.email || '',
+            correo: payload.email || payload.correo || user?.email || '',
             comentarios: payload.comentarios || ''
           };
 
+          console.log("[NOVEDADES] INSERT novRow.id_novedad:", novRow.id_novedad);
           const { data: novData, error: novError } = await supabaseClient
             .from('novedades')
             .insert([novRow])
             .select()
             .single();
 
+          console.log("[NOVEDADES] INSERT result → novData.id_novedad:", novData?.id_novedad, "error:", novError);
           if (novError) throw novError;
 
           const finalId = novData?.id_novedad || idNovedad;

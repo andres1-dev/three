@@ -30,7 +30,7 @@
     --color-primary-glow: rgba(63,81,181,.28);
     --color-error:        #dc2626;
     --color-error-dim:    rgba(220,38,38,.07);
-    --color-success:      #16a34a;
+    --color-success:      #3f51b5;
     --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     --radius-sm: 11px;
     --radius-md: 22px;
@@ -575,6 +575,60 @@ input, textarea, select, button {
                 </div>
             </div>
 
+            <!-- ── VISTA RESTABLECER CONTRASEÑA (al abrir link del correo) ── -->
+            <div id="resetPwView" style="display:none">
+                <div style="text-align:center;margin-bottom:18px;">
+                    <h3 style="font-size:1.05rem;font-weight:600;color:var(--color-text);margin-bottom:4px;">Nueva Contraseña</h3>
+                    <p style="font-size:.82rem;color:var(--color-text-muted);">Crea una nueva contraseña segura para tu cuenta.</p>
+                </div>
+
+                <div class="field">
+                    <div class="field-wrap">
+                        <div class="field-icon">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <input type="password" id="f-newpass" class="field-input field-input-pw"
+                               placeholder="Nueva contraseña (mín. 6 caracteres)"
+                               autocomplete="new-password" required>
+                        <button type="button" class="pw-toggle" id="pwToggleNew" tabindex="-1" aria-label="Mostrar contraseña">
+                            <svg id="eyeIconNew" viewBox="0 0 24 24">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="field-wrap">
+                        <div class="field-icon">
+                            <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        </div>
+                        <input type="password" id="f-confirmpass" class="field-input field-input-pw"
+                               placeholder="Confirmar nueva contraseña"
+                               autocomplete="new-password" required>
+                    </div>
+                </div>
+
+                <div class="err-box" id="errBoxReset" role="alert">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span class="err-txt" id="errTxtReset"></span>
+                </div>
+
+                <button type="button" class="btn-login" id="saveNewPwBtn">
+                    <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span id="savePwBtnTxt">Guardar contraseña</span>
+                </button>
+
+                <div class="bm-status" id="resetStatus" style="display:none"></div>
+
+                <div class="login-links" style="margin-top:14px;">
+                    <button type="button" class="forgot" id="cancelResetBtn">
+                        Volver a inicio de sesión
+                    </button>
+                </div>
+            </div>
+
         </form>
     </div>
 
@@ -620,6 +674,16 @@ const BM_MAP_KEY    = 'calidad_biometric_ids';
 /* ── Guard: sesión activa → index.html ── */
 (async function () {
     sessionStorage.removeItem('_auth_redirecting');
+
+    // Si la URL contiene parámetros de recuperación de contraseña, NO redirigir a index.html
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    if (hash.includes('type=recovery') || search.includes('type=recovery') || 
+        hash.includes('mode=reset-password') || search.includes('mode=reset-password')) {
+        console.log('[AUTH] Enlace de recuperación detectado — omitiendo redirección automática.');
+        return;
+    }
+
     try {
         // Primero buscar tokens en localStorage
         let foundToken = false;
@@ -666,7 +730,7 @@ function getSB() {
     if (_sb) return _sb;
     if (typeof window.supabase === 'undefined') return null;
     _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     });
     return _sb;
 }
@@ -772,7 +836,36 @@ if (footYearEl) footYearEl.textContent = new Date().getFullYear();
 let _bmSupported = false;
 let _bmEmail     = null;
 
+function _showResetPwView() {
+    if (bmView) bmView.style.display = 'none';
+    if (manualView) manualView.style.display = 'none';
+    const resetView = document.getElementById('resetPwView');
+    if (resetView) {
+        resetView.style.display = 'block';
+        setTimeout(() => document.getElementById('f-newpass')?.focus(), 250);
+    }
+}
+
 (async function initView() {
+    const hash = window.location.hash || '';
+    const search = window.location.search || '';
+    if (hash.includes('type=recovery') || search.includes('type=recovery') || 
+        hash.includes('mode=reset-password') || search.includes('mode=reset-password')) {
+        _showResetPwView();
+        return;
+    }
+
+    // Escuchar evento PASSWORD_RECOVERY si el token llega por callback asíncrono
+    const sb = getSB();
+    if (sb) {
+        sb.auth.onAuthStateChange((event) => {
+            if (event === 'PASSWORD_RECOVERY') {
+                console.log('[AUTH] Evento PASSWORD_RECOVERY activado');
+                _showResetPwView();
+            }
+        });
+    }
+
     _bmSupported = await BM.isSupported();
 
     if (_bmSupported) {
@@ -948,22 +1041,175 @@ pwToggle.addEventListener('click', () => {
         : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
 });
 
+/* ── UI Helpers — vista restablecer contraseña ── */
+const errBoxReset = document.getElementById('errBoxReset');
+const errTxtReset = document.getElementById('errTxtReset');
+function showErrReset(msg) { 
+    if (errTxtReset) errTxtReset.textContent = msg; 
+    if (errBoxReset) errBoxReset.className = 'err-box show'; 
+}
+function hideErrReset() { 
+    if (errBoxReset) errBoxReset.className = 'err-box'; 
+}
+
+/* ── Toggle nueva contraseña ── */
+const pwToggleNew = document.getElementById('pwToggleNew');
+const eyeIconNew  = document.getElementById('eyeIconNew');
+const newPassEl   = document.getElementById('f-newpass');
+const confirmPassEl = document.getElementById('f-confirmpass');
+let pwNewVisible = false;
+
+if (pwToggleNew && newPassEl && eyeIconNew) {
+    pwToggleNew.addEventListener('click', () => {
+        pwNewVisible = !pwNewVisible;
+        newPassEl.type = pwNewVisible ? 'text' : 'password';
+        eyeIconNew.innerHTML = pwNewVisible
+            ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`
+            : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+    });
+}
+
+/* ── Cancelar restablecimiento y volver al login ── */
+const cancelResetBtn = document.getElementById('cancelResetBtn');
+if (cancelResetBtn) {
+    cancelResetBtn.addEventListener('click', () => {
+        if (window.history.replaceState) {
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+        document.getElementById('resetPwView').style.display = 'none';
+        _showManualView();
+    });
+}
+
+/* ── Guardar nueva contraseña ── */
+const saveNewPwBtn = document.getElementById('saveNewPwBtn');
+if (saveNewPwBtn) {
+    saveNewPwBtn.addEventListener('click', async () => {
+        hideErrReset();
+        const p1 = (newPassEl?.value || '').trim();
+        const p2 = (confirmPassEl?.value || '').trim();
+
+        if (!p1 || p1.length < 6) {
+            showErrReset('La contraseña debe tener al menos 6 caracteres.');
+            newPassEl?.focus();
+            return;
+        }
+        if (p1 !== p2) {
+            showErrReset('Las contraseñas no coinciden. Verifica de nuevo.');
+            confirmPassEl?.focus();
+            return;
+        }
+
+        saveNewPwBtn.disabled = true;
+        const savePwBtnTxt = document.getElementById('savePwBtnTxt');
+        if (savePwBtnTxt) savePwBtnTxt.textContent = 'Actualizando...';
+
+        try {
+            const sb = getSB();
+            if (!sb) throw new Error('Sin conexión con el servidor.');
+
+            const { data, error } = await sb.auth.updateUser({ password: p1 });
+            if (error) throw error;
+
+            // Limpiar credenciales biométricas locales anteriores (ya no coinciden con la nueva clave)
+            BM.clearAll();
+
+            // Limpiar parámetros de la URL
+            if (window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+
+            saveNewPwBtn.style.display = 'none';
+            const resetStatus = document.getElementById('resetStatus');
+            if (resetStatus) {
+                resetStatus.style.display = 'flex';
+                resetStatus.className = 'bm-status ok';
+                resetStatus.innerHTML = `<svg viewBox="0 0 24 24" style="width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><polyline points="20 6 9 17 4 12"/></svg><span>¡Contraseña actualizada!</span>`;
+            }
+
+            // Redirigir a la app tras éxito
+            setTimeout(() => {
+                window.location.replace('index.html');
+            }, 1200);
+
+        } catch (err) {
+            saveNewPwBtn.disabled = false;
+            if (savePwBtnTxt) savePwBtnTxt.textContent = 'Guardar contraseña';
+            const m = err.message || '';
+            if (/same_password/i.test(m)) {
+                showErrReset('La nueva contraseña debe ser diferente a la anterior.');
+            } else if (/expired|invalid/i.test(m)) {
+                showErrReset('El enlace ha expirado o es inválido. Solicita uno nuevo.');
+            } else {
+                showErrReset(m || 'Error al actualizar la contraseña.');
+            }
+        }
+    });
+}
+
 /* ── Recuperar contraseña ── */
 forgotBtn.addEventListener('click', async () => {
     const email = emailEl.value.trim();
     if (!email || !email.includes('@')) {
-        showErrManual('Ingresa tu correo primero.'); emailEl.focus(); return;
+        showErrManual('Ingresa tu correo en el campo superior primero.'); 
+        emailEl.focus(); 
+        return;
     }
-    hideErrManual(); setLoading(true, 'Enviando...');
+    hideErrManual(); 
+    setLoading(true, 'Enviando enlace seguro...');
+
+    const redirectUrl = window.location.origin + window.location.pathname;
+
     try {
-        const { error } = await getSB().auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/index.html'
-        });
-        if (error) throw error;
-        setOk('¡Enlace enviado! Revisa tu correo.');
-    } catch (_) {
-        showErrManual('No se pudo enviar. Verifica el correo.');
-        setLoading(false);
+        // 1. Intentar enviar con Edge Function 'emails' (vía GAS y con plantilla oficial Grupo TDM)
+        let enviado = false;
+        try {
+            const res = await fetch(`${FUNCTIONS_URL}/emails`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    accion: 'RECUPERAR_PASSWORD',
+                    email: email,
+                    redirectTo: redirectUrl
+                })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+                enviado = true;
+            } else {
+                console.warn('[AUTH] Edge function emails aviso:', data.message);
+            }
+        } catch (fnErr) {
+            console.warn('[AUTH] Error llamando Edge Function emails:', fnErr);
+        }
+
+        // 2. Si no se pudo por Edge Function, fallback nativo a Supabase Auth
+        if (!enviado) {
+            console.log('[AUTH] Utilizando canal de recuperación directo de Supabase Auth');
+            const { error: sbErr } = await getSB().auth.resetPasswordForEmail(email, {
+                redirectTo: redirectUrl
+            });
+            if (sbErr) throw sbErr;
+        }
+
+        // 3. Confirmación corta en azul según diseño
+        setOk('¡Correo enviado!');
+        setTimeout(() => {
+            setLoading(false);
+            const statusEl = document.getElementById('loginStatus');
+            if (statusEl) statusEl.style.display = 'none';
+            loginBtn.style.display = '';
+        }, 3500);
+    } catch (err) {
+        console.error('[AUTH] Error en restablecimiento:', err);
+        // Mensaje genérico de seguridad corto en azul
+        setOk('¡Correo enviado!');
+        setTimeout(() => {
+            setLoading(false);
+            const statusEl = document.getElementById('loginStatus');
+            if (statusEl) statusEl.style.display = 'none';
+            loginBtn.style.display = '';
+        }, 3500);
     }
 });
 

@@ -12,6 +12,7 @@ export class CalidadSubForm {
      * @param {Object} options.activeLote
      * @param {Array} options.lotes
      * @param {Object} options.submitUseCase
+     * @param {Object} options.dataService
      * @param {Object} options.currentUser
      * @param {Function} options.onBack
      * @param {Function} options.onSuccess
@@ -27,6 +28,7 @@ export class CalidadSubForm {
         onFetchExtensiones = null,
         onExtensionesLoaded = null,
         submitUseCase,
+        dataService = null,
         currentUser = null,
         onBack = null,
         onSuccess = null
@@ -41,6 +43,7 @@ export class CalidadSubForm {
         this.onFetchExtensiones = onFetchExtensiones;
         this.onExtensionesLoaded = onExtensionesLoaded;
         this.submitUseCase = submitUseCase;
+        this.dataService = dataService;
         this.currentUser = currentUser;
         this.onBack = onBack;
         this.onSuccess = onSuccess;
@@ -199,15 +202,50 @@ export class CalidadSubForm {
                     </select>
                 </div>
 
-                <!-- 3. CONCLUSIÓN -->
+                <!-- 3. CONCLUSIÓN + BOTÓN RECHAZAR PROCESO ANTERIOR -->
                 <div class="f-form-group" style="margin-top: 16px;">
-                    <label class="f-label">Conclusión del Lote <span class="req">*</span></label>
+                    <div class="f-label-row">
+                        <label class="f-label">Conclusión <span class="req">*</span></label>
+                        <button type="button" class="f-btn-tool-inline" id="btn-rechazar-proc-ant" style="display:none;">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                            <span>Rechazar Proceso</span>
+                        </button>
+                    </div>
                     <select id="cal-conclusion" class="f-select" required>
                         <option value="">Seleccione una conclusión...</option>
                         <option value="APROBADO" selected>APROBADO</option>
                         <option value="RECHAZADO">RECHAZADO</option>
                         <option value="PAUSADO">PAUSADO</option>
                     </select>
+                </div>
+
+                <!-- 4. RECHAZO DE PROCESO ANTERIOR (oculto inicialmente) -->
+                <div id="cal-proc-ant-section" style="display:none;">
+                    <div class="f-form-group">
+                        <label class="f-label">Proceso rechazado <span class="req">*</span></label>
+                        <select id="cal-proc-ant-proceso" class="f-select">
+                            <option value="">Seleccione el proceso...</option>
+                            <option value="CONFECCION">CONFECCIÓN</option>
+                            <option value="CORTE">CORTE</option>
+                            <option value="ESTAMPADO">ESTAMPADO</option>
+                            <option value="BORDADO">BORDADO</option>
+                            <option value="OJAL Y BOTON">OJAL Y BOTÓN</option>
+                            <option value="BOTONADO">BOTONADO</option>
+                            <option value="TRANSFER">TRANSFER</option>
+                            <option value="OJALETE">OJALETE</option>
+                            <option value="APLIQUE">APLIQUE</option>
+                            <option value="RESORTADO">RESORTADO</option>
+                            <option value="FUSIONADO">FUSIONADO</option>
+                            <option value="LAVADO">LAVADO</option>
+                            <option value="TERMINACION">TERMINACIÓN</option>
+                            <option value="EMPAQUE">EMPAQUE</option>
+                            <option value="OTROS">OTROS</option>
+                        </select>
+                    </div>
+                    <div class="f-form-group">
+                        <label class="f-label">Observaciones del rechazo <span class="req">*</span></label>
+                        <textarea id="cal-proc-ant-obs" class="f-textarea" rows="3" placeholder="Describa el motivo del rechazo del proceso anterior..."></textarea>
+                    </div>
                 </div>
 
                 <!-- 3. DESTINO DEL LOTE (Visible solo si es AUDITORIA y APROBADO) -->
@@ -268,6 +306,58 @@ export class CalidadSubForm {
                                 <span>100%</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN RONDA: Fecha de Compromiso -->
+                <div id="cal-ronda-section" style="display:none; margin-top:16px;">
+                    <div class="f-visit-section-header">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        Datos de Ronda
+                    </div>
+                    <div class="f-form-group" style="margin-top:12px;">
+                        <label class="f-label">Fecha de Compromiso <span class="req">*</span></label>
+                        <input type="date" id="cal-ronda-compromiso" class="f-input" />
+                        <span class="f-input-hint">Fecha en que la planta se compromete a entregar el lote.</span>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN CONTRAMUESTRA: Paqueteo, Etiqueta, Cita -->
+                <div id="cal-contra-section" style="display:none; margin-top:16px;">
+                    <div class="f-visit-section-header">
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        Datos de Contramuestra
+                    </div>
+
+                    <!-- Paqueteo con botón plantillas -->
+                    <div class="f-form-group" style="margin-top:12px;">
+                        <div class="f-label-row">
+                            <label class="f-label">Instrucción de Paqueteo</label>
+                            <button type="button" class="f-btn-tool-inline" id="btn-plantillas-paqueteo">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                <span>Plantillas</span>
+                            </button>
+                        </div>
+                        <textarea id="cal-contra-paqueteo" class="f-textarea" rows="3" placeholder="Instrucción de paqueteo para la planta..."></textarea>
+                    </div>
+
+                    <!-- Etiqueta con botón plantillas -->
+                    <div class="f-form-group">
+                        <div class="f-label-row">
+                            <label class="f-label">Ubicación de Etiqueta</label>
+                            <button type="button" class="f-btn-tool-inline" id="btn-plantillas-etiqueta">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                <span>Plantillas</span>
+                            </button>
+                        </div>
+                        <textarea id="cal-contra-etiqueta" class="f-textarea" rows="3" placeholder="Instrucción de ubicación de etiqueta..."></textarea>
+                    </div>
+
+                    <!-- Cita -->
+                    <div class="f-form-group">
+                        <label class="f-label">Cita de Revisión <span class="req">*</span></label>
+                        <input type="datetime-local" id="cal-contra-cita" class="f-input" />
+                        <span class="f-input-hint">Fecha y hora de la cita pactada para la contramuestra.</span>
                     </div>
                 </div>
 
@@ -606,6 +696,16 @@ export class CalidadSubForm {
             this._actualizarPlantillaObservaciones();
         });
 
+        // Botón Rechazar Proceso Anterior
+        this.container.querySelector('#btn-rechazar-proc-ant')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = this.container.querySelector('#cal-proc-ant-section');
+            if (section) {
+                const isHidden = section.style.display === 'none';
+                section.style.display = isHidden ? 'block' : 'none';
+            }
+        });
+
         // Destino tipo cambio
         this.container.querySelector('#cal-destino-tipo')?.addEventListener('change', (e) => {
             const isProceso = e.target.value === 'PROCESO';
@@ -646,6 +746,155 @@ export class CalidadSubForm {
         // Autogenerar Plantilla
         this.container.querySelector('#btn-generar-plantilla')?.addEventListener('click', () => {
             this._actualizarPlantillaObservaciones(true);
+        });
+
+        // Botones de plantillas de Contramuestra
+        const PLANTILLAS_PAQUETEO = [
+            'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.',
+            'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 20 unidades, separadas por talla y color, asegurando y amarrando las etiquetas correspondientes.',
+            'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, ensambladas espalda con espalda, dobladas individualmente y con las etiquetas aseguradas y amarradas.',
+            'INSTRUCCIÓN DE PAQUETEO: Paquetear en grupos de 10 unidades, organizadas una sobre otra; doblar las piernas y posteriormente la prenda a la mitad, asegurando el paquete y amarrando las etiquetas correspondientes.',
+            'INSTRUCCIÓN DE PAQUETEO: Paquetear blusa principal y combinaciones sin ensamblar, separadas por talla y color.',
+        ];
+        const PLANTILLAS_ETIQUETA = [
+            'UBICACIÓN DE ETIQUETA: Manga izquierda de la prenda puesta, ubicada entre costuras.',
+            'UBICACIÓN DE ETIQUETA: Pasador delantero izquierdo de la prenda puesta.',
+            'UBICACIÓN DE ETIQUETA: Marquilla de talla.',
+            'UBICACIÓN DE ETIQUETA: Delantero izquierdo de la prenda puesta, ubicada entre costuras a 5 cm del costado.',
+            'UBICACIÓN DE ETIQUETA: Sisa izquierda de la prenda puesta, ubicada entre costuras.',
+            'UBICACIÓN DE ETIQUETA: En la tira libre izquierda de la prenda puesta.',
+            'UBICACIÓN DE ETIQUETA: Lado izquierdo, prenda puesta. Ubicar las 2 etiquetas en el hombro, sujetando ambas prendas. Ubicar la etiqueta de precio en la manga, centrada sobre la costura.',
+            'UBICACIÓN DE ETIQUETA: Ensamblar las prendas del DUO (posterior con posterior). Ubicar la etiqueta principal del dúo a la altura del cuello y asegurarla con dos plastiflechas, una a cada lado del cuello, garantizando que la etiqueta quede centrada y uniendo ambas prendas.',
+        ];
+
+        const openSheet = async (sheetId, tipo, targetId) => {
+            // Cargar plantillas desde BD
+            let plantillas = [];
+            try {
+                if (this.dataService && typeof this.dataService.getPlantillas === 'function') {
+                    plantillas = await this.dataService.getPlantillas(tipo);
+                } else {
+                    // Fallback a plantillas hardcodeadas si no hay dataService
+                    plantillas = tipo === 'PAQUETEO' ? PLANTILLAS_PAQUETEO : PLANTILLAS_ETIQUETA;
+                }
+            } catch (err) {
+                console.warn('Error cargando plantillas:', err);
+                plantillas = tipo === 'PAQUETEO' ? PLANTILLAS_PAQUETEO : PLANTILLAS_ETIQUETA;
+            }
+
+            // Crear sheet dinámicamente si no existe
+            let sheet = document.getElementById(sheetId);
+            if (!sheet) {
+                sheet = document.createElement('div');
+                sheet.id = sheetId;
+                sheet.className = 'p-backdrop';
+                document.body.appendChild(sheet);
+            }
+
+            const titulo = tipo === 'PAQUETEO' ? 'Plantillas de Paqueteo' : 'Plantillas de Ubicación de Etiqueta';
+            sheet.innerHTML = `
+                <div class="p-sheet">
+                    <div class="p-sheet-header">
+                        <span class="p-sheet-title">${titulo}</span>
+                        <button class="p-sheet-close" aria-label="Cerrar">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div class="p-sheet-body" data-tipo="${tipo}">
+                        ${plantillas.map((t, i) => `
+                            <div class="p-plantilla-item" data-id="${t.id || ''}" data-idx="${i}">
+                                <div class="p-plantilla-text">${t.texto || t}</div>
+                                ${t.id ? `<button type="button" class="p-plantilla-delete" title="Eliminar" data-id="${t.id}">
+                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                </button>` : ''}
+                            </div>
+                        `).join('')}
+                        <div class="p-plantilla-add-form" style="margin-top:12px; padding:12px; border-top:1px solid #f1f5f9;">
+                            <div style="font-size:0.85rem; color:#64748b; margin-bottom:8px;">Agregar nueva:</div>
+                            <textarea class="f-textarea" id="new-plantilla-input" rows="2" placeholder="Ingrese una nueva plantilla..." style="margin-bottom:8px;"></textarea>
+                            <button type="button" class="f-btn-primary" id="btn-add-plantilla" style="width:100%;">Guardar Plantilla</button>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(sheet);
+
+            const close = () => {
+                sheet.classList.remove('open');
+                sheet.querySelector('.p-sheet').classList.remove('open');
+            };
+
+            // Cerrar
+            sheet.querySelector('.p-sheet-close').addEventListener('click', close);
+            sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+
+            // Seleccionar plantilla existente
+            sheet.querySelectorAll('.p-plantilla-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.p-plantilla-delete')) return;
+                    const target = this.container.querySelector(`#${targetId}`);
+                    if (target) {
+                        const textDiv = item.querySelector('.p-plantilla-text');
+                        target.value = textDiv ? textDiv.textContent : item.textContent;
+                        target.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                    close();
+                });
+            });
+
+            // Eliminar plantilla
+            sheet.querySelectorAll('.p-plantilla-delete').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const id = btn.dataset.id;
+                    if (!id) return;
+                    try {
+                        if (this.dataService && typeof this.dataService.deletePlantilla === 'function') {
+                            await this.dataService.deletePlantilla(Number(id));
+                            Toast.success('Plantilla eliminada');
+                            // Recargar sheet
+                            openSheet(sheetId, tipo, targetId);
+                        }
+                    } catch (err) {
+                        Toast.error('Error eliminando plantilla: ' + err.message);
+                    }
+                });
+            });
+
+            // Agregar plantilla nueva
+            const inputNew = sheet.querySelector('#new-plantilla-input');
+            const btnAdd = sheet.querySelector('#btn-add-plantilla');
+            btnAdd?.addEventListener('click', async () => {
+                const texto = (inputNew?.value || '').trim();
+                if (!texto) {
+                    Toast.warning('Ingrese una plantilla');
+                    return;
+                }
+                try {
+                    if (this.dataService && typeof this.dataService.createPlantilla === 'function') {
+                        await this.dataService.createPlantilla({ tipo, texto });
+                        Toast.success('Plantilla guardada');
+                        inputNew.value = '';
+                        // Recargar sheet
+                        openSheet(sheetId, tipo, targetId);
+                    }
+                } catch (err) {
+                    Toast.error('Error guardando plantilla: ' + err.message);
+                }
+            });
+
+            // Abrir con la clase .open
+            sheet.classList.add('open');
+            sheet.querySelector('.p-sheet').classList.add('open');
+        };
+
+        this.container.querySelector('#btn-plantillas-paqueteo')?.addEventListener('click', async () => {
+            await openSheet('cal-sheet-paqueteo', 'PAQUETEO', 'cal-contra-paqueteo');
+        });
+        this.container.querySelector('#btn-plantillas-etiqueta')?.addEventListener('click', async () => {
+            await openSheet('cal-sheet-etiqueta', 'ETIQUETA', 'cal-contra-etiqueta');
         });
 
         // Modal Novedades Calidad
@@ -1019,23 +1268,50 @@ export class CalidadSubForm {
         const tipo = this.container.querySelector('#cal-tipo-visita')?.value || '';
         const conclusion = this.container.querySelector('#cal-conclusion')?.value || '';
 
-        const destinoSection = this.container.querySelector('#cal-destino-section');
-        const avanceSection = this.container.querySelector('#cal-avance-section');
+        const destinoSection   = this.container.querySelector('#cal-destino-section');
+        const avanceSection    = this.container.querySelector('#cal-avance-section');
         const novedadesSection = this.container.querySelector('#cal-novedades-section');
+        const btnRechazarProcAnt = this.container.querySelector('#btn-rechazar-proc-ant');
+        const procAntSection   = this.container.querySelector('#cal-proc-ant-section');
+        const rondaSection     = this.container.querySelector('#cal-ronda-section');
+        const contraSection    = this.container.querySelector('#cal-contra-section');
 
-        // Destino: Visible si AUDITORIA y APROBADO
+        const esAuditoria    = tipo === 'AUDITORIA';
+        const esRonda        = tipo === 'RONDA';
+        const esContra       = tipo === 'CONTRAMUESTRA';
+
+        // Destino: solo AUDITORIA + APROBADO
         if (destinoSection) {
-            destinoSection.style.display = (tipo === 'AUDITORIA' && conclusion === 'APROBADO') ? 'block' : 'none';
+            destinoSection.style.display = (esAuditoria && conclusion === 'APROBADO') ? 'block' : 'none';
         }
 
-        // Avance: Visible en RONDA o CONTRAMUESTRA
+        // Botón Rechazar Proceso Anterior: solo si APROBADO
+        if (btnRechazarProcAnt) {
+            const mostrar = conclusion === 'APROBADO';
+            btnRechazarProcAnt.style.display = mostrar ? 'inline-flex' : 'none';
+            if (!mostrar && procAntSection) {
+                procAntSection.style.display = 'none';
+            }
+        }
+
+        // Avance: RONDA (obligatorio) y CONTRAMUESTRA (opcional)
         if (avanceSection) {
-            avanceSection.style.display = (tipo === 'RONDA' || tipo === 'CONTRAMUESTRA') ? 'block' : 'none';
+            avanceSection.style.display = (esRonda || esContra) ? 'block' : 'none';
         }
 
-        // Novedades: Visible en AUDITORIA
+        // Novedades: solo AUDITORIA
         if (novedadesSection) {
-            novedadesSection.style.display = (tipo === 'AUDITORIA') ? 'block' : 'none';
+            novedadesSection.style.display = esAuditoria ? 'block' : 'none';
+        }
+
+        // Sección RONDA
+        if (rondaSection) {
+            rondaSection.style.display = esRonda ? 'block' : 'none';
+        }
+
+        // Sección CONTRAMUESTRA
+        if (contraSection) {
+            contraSection.style.display = esContra ? 'block' : 'none';
         }
     }
 
@@ -1477,6 +1753,18 @@ export class CalidadSubForm {
             this.haFirmado = false;
             this.firmaStrokes = [];
         }
+        // Reset proceso anterior
+        const procAntSection = this.container.querySelector('#cal-proc-ant-section');
+        if (procAntSection) procAntSection.style.display = 'none';
+        // Reset RONDA / CONTRAMUESTRA
+        const rondaComp = this.container.querySelector('#cal-ronda-compromiso');
+        if (rondaComp) rondaComp.value = '';
+        const contraP = this.container.querySelector('#cal-contra-paqueteo');
+        if (contraP) contraP.value = '';
+        const contraE = this.container.querySelector('#cal-contra-etiqueta');
+        if (contraE) contraE.value = '';
+        const contraCita = this.container.querySelector('#cal-contra-cita');
+        if (contraCita) contraCita.value = '';
         Toast.info('Formulario restablecido.');
     }
 
@@ -1565,6 +1853,21 @@ export class CalidadSubForm {
             return;
         }
 
+        // Validar proceso anterior si la sección está visible/abierta
+        const procAntSection = this.container.querySelector('#cal-proc-ant-section');
+        if (procAntSection && procAntSection.style.display !== 'none') {
+            const procAntProceso = this.container.querySelector('#cal-proc-ant-proceso')?.value || '';
+            const procAntObs = this.container.querySelector('#cal-proc-ant-obs')?.value?.trim() || '';
+            if (!procAntProceso) {
+                Toast.warning('Seleccione el proceso anterior que se rechaza.');
+                return;
+            }
+            if (!procAntObs) {
+                Toast.warning('Ingrese las observaciones del rechazo del proceso anterior.');
+                return;
+            }
+        }
+
         const btn = this.container.querySelector('#btn-submit-calidad-final');
         const origText = btn.innerHTML;
         btn.disabled = true;
@@ -1592,6 +1895,7 @@ export class CalidadSubForm {
                 entrada: this.activeLote.fechaEntrega || this.activeLote.entrada || this.activeLote.ENTRADA || '',
                 productora: this.activeLote.idProductora || this.activeLote.productora || this.activeLote.PRODUCTORA || '',
                 idProductora: this.activeLote.idProductora || this.activeLote.productora || '',
+                nombreProductora: (this.productoras || []).find(p => String(p.id_productora) === String(this.activeLote.idProductora || this.activeLote.productora || this.activeLote.PRODUCTORA))?.productora || '',
                 cantidadTotal: this.activeLote.cantidad,
                 // El correo real viaja en el payload (columna 'email' en BD); la UI muestra el nombre del auditor
                 email: this.currentUser?.email || this.currentUser?.correo || '',
@@ -1612,7 +1916,21 @@ export class CalidadSubForm {
                 gps: this._getGpsPayload(),
                 firma: firmaSvg,
                 fotos: this.dropzone ? this.dropzone.getFiles() : [],
-                auditor: this.currentUser?.displayName || this.currentUser?.nombre || 'Auditor'
+                auditor: this.currentUser?.displayName || this.currentUser?.nombre || 'Auditor',
+                procesoAnterior: (() => {
+                    const section = this.container.querySelector('#cal-proc-ant-section');
+                    if (!section || section.style.display === 'none') return null;
+                    const proceso = this.container.querySelector('#cal-proc-ant-proceso')?.value || '';
+                    const obs = this.container.querySelector('#cal-proc-ant-obs')?.value?.trim() || '';
+                    if (!proceso || !obs) return null;
+                    return { estado: 'RECHAZADO', proceso, observaciones: obs };
+                })(),
+                // RONDA
+                compromisoRonda: this.container.querySelector('#cal-ronda-compromiso')?.value || null,
+                // CONTRAMUESTRA
+                paqueteo:          this.container.querySelector('#cal-contra-paqueteo')?.value || null,
+                ubicacionEtiqueta: this.container.querySelector('#cal-contra-etiqueta')?.value || null,
+                cita:              this.container.querySelector('#cal-contra-cita')?.value || null,
             };
 
             const res = await this.submitUseCase.execute(payload);
@@ -1834,5 +2152,13 @@ export class CalidadSubForm {
         } catch (err) {
             // Usar configuración por defecto en caso de error
         }
+    }
+
+    /** Limpieza al salir del módulo */
+    destroy() {
+        // Limpiar sheets de plantillas del body
+        ['cal-sheet-paqueteo', 'cal-sheet-etiqueta'].forEach(id => {
+            document.getElementById(id)?.remove();
+        });
     }
 }

@@ -309,7 +309,8 @@ export class FormulariosModule {
             case 'calidad':
                 this.currentSubFormInstance = new CalidadSubForm({
                     ...commonParams,
-                    submitUseCase: this.submitCalidadUseCase
+                    submitUseCase: this.submitCalidadUseCase,
+                    dataService: this.dataService
                 });
                 break;
 

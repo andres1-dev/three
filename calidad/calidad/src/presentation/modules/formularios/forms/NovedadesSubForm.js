@@ -842,6 +842,7 @@ export class NovedadesSubForm {
                 tejido: this.activeLote.tejido || null,
                 salida: this.activeLote.fecha_salida || this.activeLote.salida || null,
                 productora: this.activeLote.productora || this.selectedProductora || 1,
+                nombreProductora: (this.productoras || []).find(p => String(p.id_productora) === String(this.activeLote.productora || this.activeLote.id_productora || this.selectedProductora))?.productora || '',
                 area,
                 tipoNovedad,
                 insumos,
