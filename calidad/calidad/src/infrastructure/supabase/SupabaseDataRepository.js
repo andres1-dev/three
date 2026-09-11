@@ -374,6 +374,69 @@ export class SupabaseDataRepository extends IDataService {
         return this._callPersonas('CREAR_PLANTA', payload);
     }
 
+    /**
+     * Actualiza una planta/taller existente vía Edge Function /personas (ACTUALIZAR_PLANTA)
+     */
+    async updatePersonaPlant(payload) {
+        this._plantsCache = null;
+        return this._callPersonas('ACTUALIZAR_PLANTA', payload);
+    }
+
+    /**
+     * Guarda o actualiza los datos de un taller/planta en Supabase (tabla plantas) usando Edge Function /archivo.
+     * Busca SOLO por campo planta (match exacto). Si no existe, crea el registro.
+     * Genera ID temporal si no se proporciona uno.
+     */
+    async guardarOActualizarPlanta({ id_planta, planta, correo, telefono, rol = 'GUEST' }) {
+        this._plantsCache = null;
+        const normNombre = String(planta || '').trim().toUpperCase();
+        
+        if (!normNombre) {
+            throw new Error('Se requiere el nombre de la planta');
+        }
+
+        const plants = await this.getPlants();
+        
+        // Match EXACTO por campo planta en tabla plantas
+        const existente = plants.find(p => {
+            const pPlanta = String(p.planta || p.nombre || '').trim().toUpperCase();
+            return pPlanta === normNombre;
+        });
+
+        // Generar ID si no existe
+        let finalId = String(id_planta || '').trim();
+        if (!finalId) {
+            if (existente) {
+                finalId = String(existente.id || existente.nit || existente.id_planta || '').trim();
+            } else {
+                // Generar ID numérico simple basado en el nombre
+                const hash = normNombre.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+                finalId = String(9000000000 + (hash % 999999999)); // Rango 9xxxxxxxx
+            }
+        }
+
+        const payload = {
+            accion: existente ? 'ACTUALIZAR_PLANTA' : 'CREAR_PLANTA',
+            id: finalId,
+            id_planta: parseInt(finalId, 10),
+            planta: normNombre,
+            nombrePlanta: normNombre,
+            correo: (correo || '').trim(),
+            email: (correo || '').trim(),
+            telefono: (telefono || '').trim(),
+            rol: rol || 'GUEST'
+        };
+
+        const result = await this._callArchivo(payload);
+
+        this._plantsCache = null;
+        return {
+            success: true,
+            isNew: !existente,
+            data: result?.data || result
+        };
+    }
+
     // ── EDGE FUNCTION /FORMULARIOS ───────────────────────────────────────────
 
     /**
@@ -393,6 +456,27 @@ export class SupabaseDataRepository extends IDataService {
         if (!resp.ok) {
             const text = await resp.text().catch(() => resp.status);
             throw new Error(`[formularios] HTTP ${resp.status}: ${text}`);
+        }
+        return resp.json();
+    }
+
+    /**
+     * Llama a la Edge Function /archivo
+     */
+    async _callArchivo(payload = {}) {
+        const token = await this._getAccessToken();
+        const resp = await fetch(`${ENV.FUNCTIONS_URL}/archivo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'apikey': ENV.SUPABASE_KEY
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+            const text = await resp.text().catch(() => resp.status);
+            throw new Error(`[archivo] HTTP ${resp.status}: ${text}`);
         }
         return resp.json();
     }
@@ -640,5 +724,73 @@ export class SupabaseDataRepository extends IDataService {
 
     async getMasterLotes(options = {}) {
         return this.getLotes(options);
+    }
+
+    // ── Edge Function /archivo ────────────────────────────────
+    async _callArchivo(payload = {}) {
+        const token = await this._getAccessToken();
+        const resp = await fetch(`${ENV.FUNCTIONS_URL}/archivo`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'apikey': ENV.SUPABASE_KEY
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+            const text = await resp.text().catch(() => resp.status);
+            throw new Error(`[archivo] HTTP ${resp.status}: ${text}`);
+        }
+        return resp.json();
+    }
+
+    async listarReportes({ fecha = '', mes, anio, email = '', rol = '', productora = '' } = {}) {
+        return this._callArchivo({ accion: 'LISTAR_REPORTES', fecha, mes, anio, email, rol, productora });
+    }
+
+    async listarLiquidaciones({ mes, anio, email = '', rol = '' } = {}) {
+        return this._callArchivo({ accion: 'LISTAR_LIQUIDACIONES', mes, anio, email, rol });
+    }
+
+    async obtenerReporte(idReporte) {
+        return this._callArchivo({ accion: 'OBTENER_REPORTE', id_reporte: idReporte });
+    }
+
+    // ── Edge Function /emails ─────────────────────────────────
+    async _callEmails(payload = {}) {
+        const token = await this._getAccessToken();
+        const resp = await fetch(ENV.EMAIL_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'apikey': ENV.SUPABASE_KEY
+            },
+            body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ message: `HTTP ${resp.status}` }));
+            throw new Error(err.message || err.error || `Error enviando correo: HTTP ${resp.status}`);
+        }
+        return resp.json();
+    }
+
+    /**
+     * Envía explícitamente un reporte de calidad por correo con su plantilla .html
+     * @param {Object} payload
+     * @param {string} payload.email - Destinatario
+     * @param {Array<string>} [payload.cc] - Con copia
+     * @param {string} [payload.subject] - Asunto personalizado
+     * @param {string} [payload.attachmentHtml] - HTML completo de la plantilla de impresión
+     * @param {string} [payload.attachmentName] - Nombre del archivo adjunto .html
+     * @param {Object} [payload.reporte] - Datos completos del reporte
+     * @param {string} [payload.nombre] - Nombre de la planta o destinatario
+     */
+    async enviarEmailReporte(payload = {}) {
+        return this._callEmails({
+            accion: 'REPORTE_CALIDAD',
+            ...payload
+        });
     }
 }

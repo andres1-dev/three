@@ -1,0 +1,46 @@
+/* Variables y Tokens de Diseño Institucional Grupo TDM */
+:root {
+  --primary: #3F51B5;
+  --primary-dark: #303F9F;
+  --primary-light: #E8EAF6;
+  --text-dark: #0F172A;
+  --text-body: #334155;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --border-dark: #CBD5E1;
+  --bg-light: #F8FAFC;
+  --bg-subtle: #F1F5F9;
+
+  /* Estados y Aprobaciones */
+  --success: #166534;
+  --success-bg: #F0FDF4;
+  --success-border: #BBF7D0;
+  --danger: #991B1B;
+  --danger-bg: #FEF2F2;
+  --danger-border: #FECACA;
+
+  /* Pasteles Suaves para Clasificación de Defectos */
+  --nov-red-bg: #FEE2E2;
+  --nov-red-text: #991B1B;
+  --nov-red-border: #FECACA;
+
+  --nov-amber-bg: #FEF3C7;
+  --nov-amber-text: #92400E;
+  --nov-amber-border: #FDE68A;
+
+  --nov-purple-bg: #EDE9FE;
+  --nov-purple-text: #5B21B6;
+  --nov-purple-border: #DDD6FE;
+
+  --nov-pink-bg: #FCE7F3;
+  --nov-pink-text: #9D174D;
+  --nov-pink-border: #FBCFE8;
+
+  --nov-green-bg: #D1FAE5;
+  --nov-green-text: #065F46;
+  --nov-green-border: #A7F3D0;
+
+  --nov-indigo-bg: #E0E7FF;
+  --nov-indigo-text: #3730A3;
+  --nov-indigo-border: #C7D2FE;
+}

@@ -34,6 +34,7 @@ import { SyncConfeccionUseCase }   from './core/usecases/nube/SyncConfeccionUseC
 import { SyncProcesosUseCase }     from './core/usecases/nube/SyncProcesosUseCase.js';
 import { ListarMasterUseCase }     from './core/usecases/nube/ListarMasterUseCase.js';
 import { NubeModule }                 from './presentation/modules/nube/NubeModule.js';
+import { ArchivoModule }             from './presentation/modules/archivo/ArchivoModule.js';
 
 // ── Router y Estado ──────────────────────────────────────────
 import { Router }   from './presentation/router/Router.js';
@@ -180,6 +181,14 @@ async function bootstrap() {
                 syncProcesosUseCase,
                 listarMasterUseCase
             });
+        }
+        async mount(vp) { await this._mod.mount(vp); }
+        unmount() { this._mod.unmount(); }
+    });
+
+    router.register('archivo', class {
+        constructor({ router, params }) {
+            this._mod = new ArchivoModule({ router, dataService });
         }
         async mount(vp) { await this._mod.mount(vp); }
         unmount() { this._mod.unmount(); }

@@ -17,6 +17,7 @@ function doPost(e) {
     var html       = body.html        || "";
     var senderName = body.senderName  || "GRUPO TDM";
     var attachHtml = body.attachmentHtml || "";  // adjunto opcional
+    var attachName = (body.attachmentName || "reporte.html").trim();
 
     // Validación básica — NO reintentar, simplemente rechazar
     if (!to || to.indexOf("@") === -1) {
@@ -42,9 +43,9 @@ function doPost(e) {
       noReply: false
     };
 
-    // Si viene adjunto HTML → añadirlo como reporte.html
+    // Si viene adjunto HTML → añadirlo con su nombre oficial
     if (attachHtml) {
-      var blob = Utilities.newBlob(attachHtml, 'text/html', 'reporte.html');
+      var blob = Utilities.newBlob(attachHtml, 'text/html', attachName);
       mailOptions.attachments = [blob];
     }
 

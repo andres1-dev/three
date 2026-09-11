@@ -575,14 +575,14 @@ async function crearPlanta(supabaseClient: any, payload: PersonaPayload) {
     if (!nombrePlanta && !planta) {
         throw new Error('Se requiere nombre de la planta')
     }
-    if (!correo && !email) {
-        throw new Error('Se requiere correo')
+    if (!correo && !email && !telefono) {
+        throw new Error('Se requiere al menos correo o teléfono de contacto')
     }
 
     const nuevaPlanta = {
         id_planta: parseInt(id || cedula || '0'),
         planta: nombrePlanta || planta,
-        correo: correo || email,
+        correo: correo || email || '',
         telefono: telefono ? parseInt(telefono.replace(/\D/g, '')) : null,
         rol: normalizarRol(rol) === 'DESHABILITADO' ? 'DESHABILITADO' : 'GUEST',
         productora: payload.id_productora || null,
@@ -617,7 +617,7 @@ async function crearPlanta(supabaseClient: any, payload: PersonaPayload) {
  * ACTUALIZAR_PLANTA - Actualiza una planta existente
  */
 async function actualizarPlanta(supabaseClient: any, payload: PersonaPayload) {
-    const { id, cedula, nuevoId, nombrePlanta, correo, email, telefono, rol } = payload
+    const { id, cedula, nuevoId, nombrePlanta, planta, correo, email, telefono, rol } = payload
 
     const idActual = parseInt(id || cedula || '0')
     if (!idActual) {
@@ -627,9 +627,9 @@ async function actualizarPlanta(supabaseClient: any, payload: PersonaPayload) {
     // Construir objeto de actualización
     const updates: any = {}
 
-    if (nombrePlanta) updates.planta = nombrePlanta
+    if (nombrePlanta || planta) updates.planta = nombrePlanta || planta
     if (correo || email) updates.correo = correo || email
-    if (telefono !== undefined) updates.telefono = telefono ? parseInt(telefono.replace(/\D/g, '')) : null
+    if (telefono !== undefined) updates.telefono = telefono ? parseInt(String(telefono).replace(/\D/g, '')) : null
     if (rol) updates.rol = normalizarRol(rol) === 'DESHABILITADO' ? 'DESHABILITADO' : 'GUEST'
     if (payload.id_productora !== undefined) updates.productora = payload.id_productora
 

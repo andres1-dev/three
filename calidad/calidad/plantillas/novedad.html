@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte de Novedad — Grupo TDM</title>
+  <meta name="description" content="Plantilla de impresión para Reportes de Novedades del sistema de calidad Grupo TDM.">
+
+  <!-- Fuentes Corporativas -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Sistema de Diseño Compartido (mismo que plantilla de Calidad) -->
+  <link rel="stylesheet" href="./presentation/styles/reporte-tokens.css">
+  <link rel="stylesheet" href="./presentation/styles/reporte-print.css">
+
+  <style>
+    /* Panel de Control Flotante (Solo en pantalla) */
+    .control-panel {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      gap: 10px;
+      z-index: 10000;
+    }
+    .btn-action {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 50px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(63, 81, 181, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-action:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(63, 81, 181, 0.5);
+    }
+    .btn-nav {
+      background: #1E293B;
+      color: #fff;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 50px;
+      font-size: 12.5px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-nav:hover {
+      background: #0F172A;
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Contenedor Montado por la Capa de Presentación / Infraestructura -->
+  <main id="app">
+    <div style="text-align:center; padding: 40px; color: var(--text-muted);">
+      <i class="fas fa-spinner fa-spin" style="font-size: 24px; margin-bottom: 12px; color: var(--primary);"></i>
+      <p>Cargando plantilla de novedad...</p>
+    </div>
+  </main>
+
+  <!-- Panel Flotante de Control -->
+  <div class="control-panel no-print">
+    <a class="btn-nav" href="./calidad.html">
+      <i class="fas fa-arrow-left"></i> Ver Calidad
+    </a>
+    <button class="btn-action" onclick="window.print()">
+      <i class="fas fa-print"></i> Imprimir / PDF
+    </button>
+  </div>
+
+  <!-- Bootstrapper Modular con Arquitectura Hexagonal -->
+  <script type="module">
+    import { MockNovedadRepository } from './infrastructure/repositories/MockNovedadRepository.js';
+    import { HtmlNovedadRenderer }   from './infrastructure/renderers/HtmlNovedadRenderer.js';
+
+    // Inyección de Dependencias
+    // En producción: sustituir MockNovedadRepository por FirestoreNovedadRepository
+    const repository = new MockNovedadRepository();
+    const renderer   = new HtmlNovedadRenderer();
+    const appEl      = document.getElementById('app');
+
+    async function init() {
+      // 1. Obtener datos a través del repositorio (Puerto IReportRepository)
+      const novedad = await repository.getReportById();
+
+      // 2. Renderizar mediante el adaptador de presentación (Puerto IReportRenderer)
+      appEl.innerHTML = renderer.render(novedad);
+    }
+
+    init();
+  </script>
+</body>
+</html>

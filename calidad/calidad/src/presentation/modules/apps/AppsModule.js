@@ -35,7 +35,7 @@ const APPS_DEFINITIONS = [
     { id: 'equipo',            label: 'Equipo',          icon: 'hierarchy-15-flat',                   palette: 'Verde' },
     { id: 'estadisticas',      label: 'Estadísticas',    icon: 'content-statistic-flat',              palette: 'Morado' },
     { id: 'mensajes',          label: 'Mensajes',        icon: 'mail-send-email-message-flat',        palette: 'Naranja' },
-    { id: 'archivos',          label: 'Archivos',        icon: 'file-folder-flat',                    palette: 'Turquesa' },
+    { id: 'archivo',           label: 'Archivo',         icon: 'file-folder-flat',                    palette: 'Turquesa' },
     { id: 'nube',              label: 'Nube',            icon: 'cloud-data-transfer-flat',            palette: 'Celeste' },
     { id: 'seguridad',         label: 'Seguridad',       icon: 'shield-1-flat',                       palette: 'Rosa' },
     { id: 'guardados',         label: 'Guardados',       icon: 'archive-box-flat',                    palette: 'Celeste' },

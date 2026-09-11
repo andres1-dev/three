@@ -440,10 +440,20 @@ serve(async (req) => {
         throw new Error(`Acción no reconocida: ${accion}`)
     }
 
-    // Adjunto solo para REPORTE_CALIDAD o si se pasa explícitamente attachmentHtml
-    const attachHtml = (accion === "REPORTE_CALIDAD" && payload.adjunto !== false)
-      ? htmlBody
-      : (payload.attachmentHtml || undefined)
+    if (payload.subject) {
+      subject = payload.subject
+    }
+    if (payload.html) {
+      htmlBody = payload.html
+    }
+
+    // Adjunto: si el cliente envía attachmentHtml (la plantilla en .html), usarla con prioridad
+    const attachHtml = payload.attachmentHtml || payload.plantillaHtml || (
+      (accion === "REPORTE_CALIDAD" && payload.adjunto !== false) ? htmlBody : undefined
+    )
+    const attachName = payload.attachmentName || (
+      idNovedad !== "N/A" ? `reporte_${idNovedad}.html` : "reporte.html"
+    )
 
     // Enviar con GAS
     await sendWithGAS({
@@ -451,6 +461,7 @@ serve(async (req) => {
       subject,
       html: htmlBody,
       attachmentHtml: attachHtml,
+      attachmentName: attachName,
       cc: Array.isArray(cc) ? cc : undefined
     })
 
@@ -479,6 +490,7 @@ async function sendWithGAS(options: {
   subject: string
   html: string
   attachmentHtml?: string
+  attachmentName?: string
   cc?: string[]
 }) {
   if (!GAS_URL) {
@@ -502,6 +514,7 @@ async function sendWithGAS(options: {
       subject: options.subject,
       html: options.html,
       attachmentHtml: options.attachmentHtml || "",
+      attachmentName: options.attachmentName || "reporte.html",
       senderName: SENDER_NAME
     }),
     // Sin signal/timeout: GAS puede tardar hasta 10s, es aceptable
