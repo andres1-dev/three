@@ -143,14 +143,14 @@ function renderFirmaHtml(firma, fallbackText = 'Firma Digital') {
     if (f.startsWith('<svg') || f.includes('<svg')) {
         const match = f.match(/<svg[\s\S]*<\/svg>/i);
         let svg = match ? match[0] : f;
-        // Rescatar viewBox a partir de width/height si no lo tiene
+        // Rescatar viewBox desde width/height si no existe
         if (!svg.includes('viewBox') && !svg.includes('viewbox')) {
             const wM = svg.match(/width=["'](\d+(?:\.\d+)?)["']/i);
             const hM = svg.match(/height=["'](\d+(?:\.\d+)?)["']/i);
             if (wM && hM) svg = svg.replace(/<svg/i, `<svg viewBox="0 0 ${wM[1]} ${hM[1]}"`);
         }
-        // Eliminar atributos width/height absolutos para que el CSS controle el tamaño
-        svg = svg.replace(/\s+width=["'][^"']*["']/gi, '').replace(/\s+height=["'][^"']*["']/gi, '');
+        // Quitar width/height absolutos para que el style controle el tamaño
+        svg = svg.replace(/(\s)width=["'][^"']*["']/gi, '$1').replace(/(\s)height=["'][^"']*["']/gi, '$1');
         return svg.replace(/<svg/i, '<svg style="max-height:46px;max-width:160px;width:auto;height:auto;display:inline-block;"');
     }
     if (f.startsWith('data:') || f.startsWith('http')) {
@@ -431,7 +431,7 @@ const CSS = `
     .fa-svg { display:inline-block; vertical-align:-0.125em; }
 `;
 
-const SVG_LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" width="40" height="40" style="width:40px;height:40px;display:block;" aria-label="Logo Grupo TDM">
+const SVG_LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" width="40" height="40" aria-label="Logo Grupo TDM">
   <defs><linearGradient id="tdmG" gradientUnits="userSpaceOnUse" x1="433" y1="929" x2="500" y2="94"><stop offset="0" stop-color="#3f51b5"/><stop offset="1" stop-color="#303f9f"/></linearGradient></defs>
   <path fill="url(#tdmG)" d="M501.29 94.22C502.23 94.18 503.17 94.14 504.11 94.12C610.95 90.39 714.86 129.47 792.76 202.68C874.77 279.04 922.28 385.41 924.41 497.45C927.94 610.9 886.34 721.12 808.73 803.95C735.84 880.85 628.02 926.37 522.38 929.03C415.75 931.76 312.19 893.19 233.33 821.37C147.09 742.19 103.37 637.2 99.56 521.11C97.15 417.07 135.16 308.02 205.34 230.91C285.17 143.21 383.61 99.15 501.29 94.22Z"/>
   <path fill="#fff" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 755.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
@@ -480,12 +480,12 @@ export function generarReporteCalidadHtmlStatico(raw) {
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reporte de Calidad — ${fmt(raw?.id_reporte)} — OP ${fmt(raw?.op)}</title>
   <style>${CSS}</style>
 </head>
 <body>
 <div class="sheet">
+  <style>${CSS}</style>
 
   <!-- CABECERA -->
   <div class="header-block">
