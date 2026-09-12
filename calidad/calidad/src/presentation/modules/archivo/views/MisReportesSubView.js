@@ -136,7 +136,6 @@ export class MisReportesSubView {
         // El label[for="ar-fecha"] activa el date picker nativamente en todos los
         // navegadores incluyendo iOS Safari (no necesita JS — el label lo hace solo).
         // En teclado: Enter/Space sobre el label también lo abre.
-        const btnCal = this.container.querySelector('#ar-btn-cal');
         btnCal?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
