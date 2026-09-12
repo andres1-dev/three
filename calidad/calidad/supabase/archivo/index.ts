@@ -223,28 +223,94 @@ async function obtenerReporte(adminClient: any, payload: any, userEmail: string,
         }
     }
 
-    // 3. Enriquecer con datos del auditor desde perfiles
-    let auditorPerfil: any = {}
+    // 3. Enriquecer con datos del auditor desde Auth y perfiles
+    let auditorCedula = ''
+    let auditorNombre = r.auditor || ''
+    let auditorFirma = ''
+
     try {
-        const { data: perfil } = await adminClient
-            .from('perfiles')
-            .select('full_name, cedula, firma_svg')
-            .ilike('email', r.correo || '')
-            .limit(1)
-            .single()
-        if (perfil) auditorPerfil = perfil
-    } catch (_) { /* noop — datos opcionales */ }
+        const correoBuscado = (r.correo || '').toLowerCase().trim()
+        let authUser: any = null
+
+        // A. Buscar usuario en Auth para obtener cédula desde user_metadata
+        try {
+            const { data: authData } = await adminClient.auth.admin.listUsers({ perPage: 1000 })
+            const users = authData?.users || []
+            if (correoBuscado) {
+                authUser = users.find((u: any) =>
+                    (u.email || '').toLowerCase().trim() === correoBuscado
+                )
+            }
+            if (!authUser && r.auditor) {
+                const nomBuscado = r.auditor.trim().toLowerCase()
+                authUser = users.find((u: any) => {
+                    const m = u.user_metadata || {}
+                    const nm = (m.full_name || m.name || m.usuario || '').toLowerCase()
+                    return nm && (nm.includes(nomBuscado) || nomBuscado.includes(nm))
+                })
+            }
+        } catch (authErr) {
+            console.warn('[archivo] Error consultando admin.listUsers:', authErr)
+        }
+
+        if (authUser) {
+            const meta = authUser.user_metadata || {}
+            auditorCedula = meta.cedula || meta.ID_USUARIO || meta.documento || ''
+            if (!auditorNombre && (meta.full_name || meta.name || meta.usuario)) {
+                auditorNombre = meta.full_name || meta.name || meta.usuario
+            }
+        }
+
+        // B. Buscar perfil en tabla perfiles para obtener la firma_svg
+        let perfil: any = null
+        if (authUser?.id) {
+            const { data: p } = await adminClient
+                .from('perfiles')
+                .select('*')
+                .eq('auth_user_id', authUser.id)
+                .maybeSingle()
+            if (p) perfil = p
+        }
+
+        if (!perfil && correoBuscado) {
+            const { data: p } = await adminClient
+                .from('perfiles')
+                .select('*')
+                .ilike('email', correoBuscado)
+                .maybeSingle()
+            if (p) perfil = p
+        }
+
+        if (!perfil && r.auditor) {
+            const { data: p } = await adminClient
+                .from('perfiles')
+                .select('*')
+                .ilike('full_name', `%${r.auditor.trim()}%`)
+                .maybeSingle()
+            if (p) perfil = p
+        }
+
+        if (perfil) {
+            if (perfil.firma_svg) auditorFirma = perfil.firma_svg
+            if (!auditorCedula && perfil.cedula) auditorCedula = perfil.cedula
+            if (!auditorNombre && perfil.full_name) auditorNombre = perfil.full_name
+        }
+    } catch (err) {
+        console.warn('[archivo] Error enriqueciendo auditor:', err)
+    }
 
     // 4. Enriquecer con datos de la productora
     let productoraNombre = r.productora || ''
+    let productoraNit = r.nit_productora || r.nit || ''
     if (r.id_productora) {
         try {
             const { data: prod } = await adminClient
                 .from('productoras')
-                .select('productora')
+                .select('productora, nit')
                 .eq('id_productora', r.id_productora)
                 .single()
             if (prod?.productora) productoraNombre = `${r.id_productora} — ${prod.productora}`
+            if (prod?.nit) productoraNit = prod.nit
         } catch (_) { /* noop */ }
     }
 
@@ -295,6 +361,7 @@ async function obtenerReporte(adminClient: any, payload: any, userEmail: string,
             soporte:              r.soporte,
             id_productora:        r.id_productora,
             productora:           productoraNombre,
+            nit_productora:       productoraNit || '',
             firma_svg:            r.firma_svg,
             destino_proceso:      r.destino_proceso,
             destino_planta:       r.destino_planta,
@@ -303,9 +370,9 @@ async function obtenerReporte(adminClient: any, payload: any, userEmail: string,
             auditor:              r.auditor,
             estado:               r.estado,
             // Datos enriquecidos del auditor
-            auditor_nombre:  auditorPerfil.full_name  || r.auditor || '',
-            auditor_cedula:  auditorPerfil.cedula      || '',
-            auditor_firma:   auditorPerfil.firma_svg   || '',
+            auditor_nombre:  auditorNombre || r.auditor || '',
+            auditor_cedula:  auditorCedula || '',
+            auditor_firma:   auditorFirma  || '',
             // Curva de producción desde tabla extensiones
             curva_extensiones: curvaExtensiones,
         }
@@ -382,6 +449,10 @@ serve(async (req) => {
                 result = await obtenerReporte(adminClient, payload, userEmail, userRol)
                 break
 
+            case 'LISTAR_PLANTAS':
+                result = await listarPlantas(adminClient)
+                break
+
             case 'CREAR_PLANTA':
                 result = await crearPlanta(adminClient, payload)
                 break
@@ -412,35 +483,106 @@ serve(async (req) => {
 })
 
 // ================================================================
+// LISTAR_PLANTAS
+// Obtiene todas las plantas con paginación automática
+// ================================================================
+async function listarPlantas(adminClient: any) {
+    let allData: any[] = []
+    let from = 0
+    const limit = 1000
+    let hasMore = true
+
+    while (hasMore) {
+        const { data, error } = await adminClient
+            .from('plantas')
+            .select('*')
+            .order('planta', { ascending: true })
+            .range(from, from + limit - 1)
+
+        if (error) throw new Error(`Error al listar plantas: ${error.message}`)
+
+        if (data && data.length > 0) {
+            allData = allData.concat(data)
+            from += limit
+            hasMore = data.length === limit
+        } else {
+            hasMore = false
+        }
+    }
+
+    const normalizedData = allData.map((p: any) => ({
+        ID_PLANTA:  p.id_planta?.toString() || '',
+        id_planta:  p.id_planta,
+        PLANTA:     p.planta || '',
+        planta:     p.planta || '',
+        CORREO:     p.correo || '',
+        EMAIL:      p.correo || '',
+        correo:     p.correo || '',
+        email:      p.correo || '',
+        TELEFONO:   p.telefono?.toString() || '',
+        telefono:   p.telefono?.toString() || '',
+        tel:        p.telefono?.toString() || '',
+        ROL:        p.rol || 'GUEST',
+        rol:        p.rol || 'GUEST',
+    }))
+
+    return { success: true, data: normalizedData }
+}
+
+// ================================================================
 // CREAR_PLANTA
 // Crea una nueva planta en la tabla plantas
 // ================================================================
 async function crearPlanta(adminClient: any, payload: any) {
     const plantaNombre = payload.nombre || payload.planta || payload.nombrePlanta;
     const idPlanta = payload.id || payload.id_planta;
-    
+
     if (!plantaNombre) throw new Error('Nombre de planta requerido');
-    if (!idPlanta) throw new Error('ID de planta requerido');
 
-    const insertData: any = {
-        id_planta: Number(idPlanta),
-        planta: plantaNombre.trim().toUpperCase(),
-        correo: payload.email || payload.correo || '',
-        telefono: payload.telefono ? Number(String(payload.telefono).replace(/\D/g, '')) : null,
-        rol: payload.rol || 'GUEST',
-        productora: payload.productora || null,
-        created_at: new Date().toISOString()
-    };
+    const cleanTel = payload.telefono ? Number(String(payload.telefono).replace(/\D/g, '')) || null : null;
 
-    // Verificar si ya existe
+    // Verificar si ya existe por nombre
     const { data: existente } = await adminClient
         .from('plantas')
         .select('id_planta')
-        .eq('planta', plantaNombre.trim().toUpperCase())
+        .ilike('planta', plantaNombre.trim())
+        .limit(1)
         .single();
 
     if (existente) {
-        throw new Error(`Ya existe una planta con nombre: ${plantaNombre}`);
+        // Ya existe — actualizar en lugar de fallar
+        const updateData: any = {
+            correo: payload.email || payload.correo || '',
+            telefono: cleanTel,
+            rol: payload.rol || 'GUEST',
+            updated_at: new Date().toISOString()
+        };
+        const { error: upErr } = await adminClient
+            .from('plantas')
+            .update(updateData)
+            .eq('id_planta', existente.id_planta);
+        if (upErr) throw upErr;
+        return {
+            success: true,
+            message: `Planta "${plantaNombre}" ya existía, datos actualizados.`,
+            data: { id_planta: existente.id_planta, planta: plantaNombre.trim().toUpperCase() }
+        };
+    }
+
+    const insertData: any = {
+        planta: plantaNombre.trim().toUpperCase(),
+        correo: payload.email || payload.correo || '',
+        telefono: cleanTel,
+        rol: payload.rol || 'GUEST',
+        created_at: new Date().toISOString()
+    };
+
+    // Solo incluir id_planta si es válido dentro del rango INT4
+    if (idPlanta) {
+        const numId = Number(String(idPlanta).replace(/\D/g, ''));
+        if (numId > 0 && numId < 2147483647) {
+            insertData.id_planta = numId;
+        }
     }
 
     const { data, error } = await adminClient
@@ -465,15 +607,16 @@ async function crearPlanta(adminClient: any, payload: any) {
 async function actualizarPlanta(adminClient: any, payload: any) {
     const plantaNombre = payload.nombre || payload.planta || payload.nombrePlanta;
     const idPlanta = payload.id || payload.id_planta;
-    
+
     if (!plantaNombre) throw new Error('Nombre de planta requerido');
+
+    const cleanTel = payload.telefono ? Number(String(payload.telefono).replace(/\D/g, '')) || null : null;
 
     const updateData: any = {
         planta: plantaNombre.trim().toUpperCase(),
-        correo: payload.email || payload.correo,
-        telefono: payload.telefono ? Number(String(payload.telefono).replace(/\D/g, '')) : null,
+        correo: payload.email || payload.correo || '',
+        telefono: cleanTel,
         rol: payload.rol || 'GUEST',
-        productora: payload.productora,
         updated_at: new Date().toISOString()
     };
 
@@ -483,6 +626,14 @@ async function actualizarPlanta(adminClient: any, payload: any) {
     if (payload.capacidad !== undefined) updateData.capacidad = payload.capacidad;
     if (payload.gps !== undefined) updateData.gps = payload.gps ? JSON.stringify(payload.gps) : null;
     if (payload.firma !== undefined) updateData.firma = payload.firma;
+
+    // Si se proporciona nuevoId, también actualizar el id_planta
+    if (payload.nuevoId) {
+        const numId = Number(String(payload.nuevoId).replace(/\D/g, ''));
+        if (numId > 0 && numId < 2147483647) {
+            updateData.id_planta = numId;
+        }
+    }
 
     let query = adminClient.from('plantas').update(updateData);
 
@@ -494,7 +645,6 @@ async function actualizarPlanta(adminClient: any, payload: any) {
     }
 
     const { error: pltErr } = await query;
-
     if (pltErr) throw pltErr;
 
     return {

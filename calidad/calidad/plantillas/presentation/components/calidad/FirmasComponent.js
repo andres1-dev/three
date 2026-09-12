@@ -7,11 +7,30 @@ export function FirmasComponent(reporte) {
   const auditor = reporte.auditor;
   const planta = reporte.representantePlanta;
 
-  const firmaPlantaSvg = planta.firmaSvg || `
-    <svg viewBox="0 0 300 80" style="max-height: 65px; width: auto;" stroke="#1E293B" stroke-width="2.5" fill="none" stroke-linecap="round">
-      <path d="M 20 50 Q 50 10, 80 45 T 140 30 Q 180 60, 220 20 T 280 40 M 60 45 L 240 45" />
-    </svg>
-  `;
+  const renderFirma = (firma, fallbackHtml) => {
+    if (!firma) return fallbackHtml;
+    const f = String(firma).trim();
+    if (!f || f === 'null' || f === 'undefined') return fallbackHtml;
+
+    if (f.startsWith('<svg') || f.includes('<svg')) {
+      const match = f.match(/<svg[\s\S]*<\/svg>/i);
+      let svg = match ? match[0] : f;
+      if (!svg.includes('viewBox') && !svg.includes('viewbox')) {
+        const w = svg.match(/width=["'](\d+(?:\.\d+)?)["']/i);
+        const h = svg.match(/height=["'](\d+(?:\.\d+)?)["']/i);
+        if (w && h) {
+          svg = svg.replace(/<svg/i, `<svg viewBox="0 0 ${w[1]} ${h[1]}"`);
+        }
+      }
+      return svg.replace(/<svg/i, '<svg style="max-height:70px;max-width:180px;width:auto;height:auto;display:inline-block;"');
+    }
+
+    if (f.startsWith('data:') || f.startsWith('http://') || f.startsWith('https://') || f.startsWith('/') || f.startsWith('./')) {
+      return `<img src="${f}" alt="Firma" style="max-height:70px;max-width:180px;object-fit:contain;display:inline-block;">`;
+    }
+
+    return fallbackHtml;
+  };
 
   return `
     <style>
@@ -44,6 +63,16 @@ export function FirmasComponent(reporte) {
         align-items: center;
         justify-content: center;
         width: 100%;
+        overflow: hidden;
+      }
+      .sig-img-wrap img,
+      .sig-img-wrap svg {
+        max-height: 70px;
+        max-width: 180px;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        display: inline-block;
       }
       .digital-seal {
         border: 1.5px dashed var(--primary);
@@ -113,32 +142,33 @@ export function FirmasComponent(reporte) {
         <!-- Columna 1: Auditor -->
         <div class="sig-col border-right">
           <div class="sig-img-wrap">
-            ${auditor.firmaSvg
-              ? auditor.firmaSvg
-              : `<div class="digital-seal">
-                  <i class="fas fa-certificate"></i> Certificación Digital de Auditoría
-                  <div class="seal-meta">
-                    AUDITOR: ${auditor.nombre}<br>
-                    REGISTRO: ${auditor.registroDigital}<br>
-                    ESTADO: FIRMADO ELECTRÓNICAMENTE
-                  </div>
-                </div>`
-            }
+            ${renderFirma(auditor.firmaSvg, `
+              <div class="digital-seal">
+                <i class="fas fa-certificate"></i> Certificación Digital de Auditoría
+                <div class="seal-meta">
+                  AUDITOR: ${auditor.nombre}<br>
+                  REGISTRO: ${auditor.registroDigital}<br>
+                  ESTADO: FIRMADO ELECTRÓNICAMENTE
+                </div>
+              </div>
+            `)}
           </div>
           <div class="sig-line"></div>
           <span class="sig-name">${auditor.nombre}</span>
-          <span class="sig-doc">C.C. ${auditor.cedula}</span>
+          ${auditor.cedula && auditor.cedula !== 'N/A' && auditor.cedula !== '—' ? `<span class="sig-doc">C.C. ${auditor.cedula}</span>` : ''}
           <span class="sig-role">${auditor.cargo}</span>
         </div>
 
         <!-- Columna 2: Planta / Taller -->
         <div class="sig-col padding-left">
           <div class="sig-img-wrap">
-            ${firmaPlantaSvg}
+            ${renderFirma(planta.firmaSvg, `
+              <span style="color:var(--text-muted);font-size:8pt;font-style:italic;">Firma No Registrada</span>
+            `)}
           </div>
           <div class="sig-line"></div>
           <span class="sig-name">${planta.nombre}</span>
-          <span class="sig-doc">C.C. ${planta.cedula}</span>
+          ${planta.cedula && planta.cedula !== 'N/A' && planta.cedula !== '—' ? `<span class="sig-doc">C.C. ${planta.cedula}</span>` : ''}
           <span class="sig-role">${planta.cargo}</span>
         </div>
       </div>

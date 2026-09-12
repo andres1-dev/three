@@ -1,6 +1,8 @@
 import { Toast } from '../../../components/Toast.js';
 import { generarReporteCalidadHtml } from '../utils/generarReporteCalidadHtml.js';
-import { generarMensajeWhatsAppCalidad, generarUrlWhatsApp } from '../utils/generarMensajeWhatsAppCalidad.js';
+import { generarReporteCalidadHtmlStatico } from '../utils/generarReporteCalidadHtmlStatico.js';
+import { generarMensajeWhatsAppCalidad, generarConsolidadoDiarioWhatsApp, generarUrlWhatsApp } from '../utils/generarMensajeWhatsAppCalidad.js';
+import { compartirODescargarPdf } from '../utils/generarPdfCliente.js';
 
 const TIPO_CONFIG = {
     AUDITORIA:     { color: '#8b5cf6', bg: '#f5f3ff', label: 'Auditoría'      },
@@ -49,6 +51,11 @@ export class MisReportesSubView {
                 </button>
                 <h1 class="page-title">Mis Reportes</h1>
                 <div class="header-actions">
+                    <button class="icon-btn" id="ar-btn-wa-consolidado" aria-label="Consolidado WhatsApp" title="Enviar consolidado diario por WhatsApp">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
+                    </button>
                     <button class="icon-btn" id="ar-btn-cal" aria-label="Seleccionar fecha" title="Cambiar fecha">
                         <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
                              stroke="currentColor" stroke-width="2">
@@ -95,6 +102,36 @@ export class MisReportesSubView {
 
         const inputFecha = this.container.querySelector('#ar-fecha');
         const btnCal     = this.container.querySelector('#ar-btn-cal');
+        const btnWaConsolidado = this.container.querySelector('#ar-btn-wa-consolidado');
+
+        // Consolidado de WhatsApp del día (o fecha filtrada)
+        btnWaConsolidado?.addEventListener('click', () => {
+            if (!this._reportes || !this._reportes.length) {
+                Toast.info('No hay reportes registrados para la fecha seleccionada');
+                return;
+            }
+
+            try {
+                const mensaje = generarConsolidadoDiarioWhatsApp({
+                    reportes: this._reportes,
+                    currentUser: this.currentUser,
+                    fecha: this._filtroFecha
+                });
+
+                if (!mensaje) {
+                    Toast.error('No se pudo generar el consolidado de WhatsApp');
+                    return;
+                }
+
+                const telefono = this.currentUser?.telefono || this.currentUser?.TELEFONO || '';
+                const url = generarUrlWhatsApp(telefono, mensaje);
+                window.open(url, '_blank');
+                Toast.success('Consolidado de WhatsApp preparado');
+            } catch (err) {
+                console.error('[MisReportesSubView.consolidadoWA]', err);
+                Toast.error('Error al generar consolidado de WhatsApp: ' + err.message);
+            }
+        });
 
         // El botón de calendario abre el date picker nativo del navegador
         btnCal?.addEventListener('click', () => {
@@ -228,14 +265,25 @@ export class MisReportesSubView {
                         </p>
                     </div>
                     <div class="ar-card-footer">
-                        <span class="ar-card-hint">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none"
-                                 stroke="currentColor" stroke-width="2.5">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            Ver / Imprimir
-                        </span>
+                        <div class="ar-card-actions-left">
+                            <span class="ar-card-hint" title="Ver reporte en plantilla interactiva completa">
+                                <svg viewBox="0 0 24 24" width="13" height="13" fill="none"
+                                     stroke="currentColor" stroke-width="2.5">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                Ver
+                            </span>
+                            <button class="ar-card-btn-basica" data-idx="${idx}" data-id="${r.ID}" title="Abrir plantilla básica tipo factura con recuadros">
+                                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                </svg>
+                                <span>Básica</span>
+                            </button>
+                        </div>
                         <button class="ar-card-btn-soporte" data-idx="${idx}" data-id="${r.ID}" title="Enviar soporte de calidad por WhatsApp o Correo oficial">
                             <svg viewBox="0 0 24 24" width="13" height="13" fill="none"
                                  stroke="currentColor" stroke-width="2.2">
@@ -252,6 +300,17 @@ export class MisReportesSubView {
             `;
         }).join('');
 
+        // Bind click en botón de plantilla básica
+        listEl.querySelectorAll('.ar-card-btn-basica').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.dataset.idx);
+                const id  = btn.dataset.id;
+                const card = btn.closest('.ar-report-card');
+                this._abrirReporte(idx, id, card, 'calidad-basica.html');
+            });
+        });
+
         // Bind click en botón de envío explícito de soporte
         listEl.querySelectorAll('.ar-card-btn-soporte').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -266,10 +325,10 @@ export class MisReportesSubView {
         // Bind click en cada card para ver / imprimir
         listEl.querySelectorAll('.ar-card-clickable').forEach(card => {
             card.addEventListener('click', (e) => {
-                if (e.target.closest('.ar-card-btn-soporte')) return;
+                if (e.target.closest('.ar-card-btn-soporte') || e.target.closest('.ar-card-btn-basica')) return;
                 const idx = parseInt(card.dataset.idx);
                 const id  = card.dataset.id;
-                this._abrirReporte(idx, id, card);
+                this._abrirReporte(idx, id, card, 'calidad.html');
             });
         });
     }
@@ -278,7 +337,7 @@ export class MisReportesSubView {
     //  Abrir reporte: obtener datos completos bajo demanda
     //  y pasar a la plantilla de impresión
     // ─────────────────────────────────────────────────────────
-    async _abrirReporte(idx, idReporte, cardEl) {
+    async _abrirReporte(idx, idReporte, cardEl, plantilla = 'calidad.html') {
         // Mostrar spinner en la propia card
         const overlay = cardEl.querySelector(`#ar-overlay-${idx}`);
         if (overlay) overlay.style.display = 'flex';
@@ -294,10 +353,10 @@ export class MisReportesSubView {
             // (la plantilla los lee y los borra al cargar)
             localStorage.setItem('printReporteCalidad', JSON.stringify(reporte));
 
-            // Construir URL absoluta a plantillas/calidad.html relativa al index.html de la SPA
+            // Construir URL absoluta a plantillas/${plantilla} relativa al index.html de la SPA
             // window.location.pathname puede ser "/index.html" o "/" — quitamos el archivo final
             const pathname = window.location.pathname.replace(/\/[^/]*\.html$/, '/').replace(/\/$/, '');
-            const url = `${window.location.origin}${pathname}/plantillas/calidad.html`;
+            const url = `${window.location.origin}${pathname}/plantillas/${plantilla}`;
             window.open(url, '_blank');
 
         } catch (err) {
@@ -347,40 +406,12 @@ export class MisReportesSubView {
                         telefono = String(match.telefono || match.tel || '').trim();
                         correo = String(match.email || match.correo || '').trim();
                     } else {
-                        // Si no existe, crear el registro usando EF
-                        try {
-                            // Generar ID temporal si no existe: usar hash del nombre de planta
-                            let idTemporal = String(reporte.id_planta || reporte.ID_PLANTA || reporte.nit || '').trim();
-                            if (!idTemporal) {
-                                // Generar ID numérico simple basado en el nombre
-                                const hash = plantaReporte.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                                idTemporal = String(9000000000 + (hash % 999999999)); // Rango 9xxxxxxxx
-                            }
-
-                            const resultado = await this.dataService.guardarOActualizarPlanta({
-                                id_planta: idTemporal,
-                                planta: plantaReporte,
-                                correo: String(reporte.correo || reporte.CORREO || reporte.email || '').trim(),
-                                telefono: String(reporte.telefono || reporte.TELEFONO || '').trim()
-                            });
-                            if (resultado?.success) {
-                                isCreated = true;
-                                // Recargar para obtener los datos creados
-                                const plantsUpdated = await this.dataService.getPlants();
-                                const matchNew = (plantsUpdated || []).find(p => {
-                                    const pPlanta = String(p.planta || p.nombre || '').trim().toUpperCase();
-                                    return pPlanta === plantaReporte;
-                                });
-                                if (matchNew) {
-                                    idPlanta = String(matchNew.id || matchNew.nit || matchNew.id_planta || '').trim();
-                                    nombrePlanta = String(matchNew.nombre || matchNew.planta || '').trim().toUpperCase();
-                                    telefono = String(matchNew.telefono || matchNew.tel || '').trim();
-                                    correo = String(matchNew.email || matchNew.correo || '').trim();
-                                }
-                            }
-                        } catch (createErr) {
-                            console.warn('[MisReportesSubView] Error al crear planta:', createErr);
-                        }
+                        // Si no existe en tabla plantas, inicializar con los datos disponibles del reporte
+                        idPlanta = String(reporte.id_planta || reporte.ID_PLANTA || reporte.nit || '').trim();
+                        nombrePlanta = String(plantaReporte || reporte.planta || '').trim().toUpperCase();
+                        telefono = String(reporte.telefono || reporte.TELEFONO || '').trim();
+                        correo = String(reporte.correo || reporte.CORREO || reporte.email || '').trim();
+                        isCreated = false;
                     }
                 } catch (err) {
                     console.warn('[MisReportesSubView] Error al buscar planta:', err);
@@ -405,182 +436,80 @@ export class MisReportesSubView {
     }
 
     _mostrarModalSoporte(reporte, plantaInfo) {
+        // Limpiar backdrops/sheets anteriores si existieran
+        document.getElementById('ar-modal-soporte-backdrop')?.remove();
+        document.getElementById('ar-modal-soporte-sheet')?.remove();
         document.getElementById('ar-modal-soporte-dialog')?.remove();
 
         const idReporte = reporte.id_reporte || reporte.ID || 'S/N';
         const op = reporte.op || reporte.lote || 'N/A';
         const ref = reporte.referencia || 'N/A';
-        const conclusion = reporte.conclusion || 'N/A';
-        const proceso = reporte.proceso || 'N/A';
-        const cantidad = reporte.cantidad || reporte.cant || '0';
         const asuntoDefault = `Reporte de Calidad — OP ${op} / Ref. ${ref}`;
 
-        const isAprob = conclusion.toLowerCase().includes('aprob') || conclusion.toLowerCase().includes('satis');
-        const badgeColor = isAprob ? '#166534' : '#991B1B';
-        const badgeBg = isAprob ? '#f0fdf4' : '#fef2f2';
+        const backdropEl = document.createElement('div');
+        backdropEl.id = 'ar-modal-soporte-backdrop';
+        backdropEl.className = 'p-backdrop';
 
-        const modalBackdrop = document.createElement('div');
-        modalBackdrop.id = 'ar-modal-soporte-dialog';
-        modalBackdrop.className = 'ar-email-modal-backdrop';
-
-        modalBackdrop.innerHTML = `
-            <div class="ar-email-modal" role="dialog" aria-modal="true" style="max-width:580px;">
-                <div class="ar-email-modal-header">
-                    <h3 class="ar-email-modal-title">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="22" y1="2" x2="11" y2="13"></line>
-                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                        </svg>
-                        Enviar Soporte de Calidad
-                    </h3>
-                    <button class="ar-email-modal-close" id="ar-modal-soporte-close" aria-label="Cerrar">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </button>
-                </div>
-
-                <div class="ar-email-modal-body">
-                    <!-- Resumen del Reporte -->
-                    <div class="ar-email-info-box">
-                        <div class="ar-email-info-row">
-                            <span>Radicado:</span>
-                            <strong>#${idReporte}</strong>
-                        </div>
-                        <div class="ar-email-info-row">
-                            <span>OP / Referencia:</span>
-                            <strong>OP ${op} &bull; ${ref}</strong>
-                        </div>
-                        <div class="ar-email-info-row">
-                            <span>Proceso / Cantidad:</span>
-                            <strong>${proceso} &bull; ${cantidad} unds.</strong>
-                        </div>
-                        <div class="ar-email-info-row">
-                            <span>Conclusión:</span>
-                            <span style="font-weight:700; background:${badgeBg}; color:${badgeColor}; padding:2px 8px; border-radius:6px; font-size:11px;">
-                                ${conclusion}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Datos del Taller / Planta en Supabase -->
-                    <div class="ar-soporte-section-title">
-                        <span>Datos del Taller / Planta</span>
-                        <span class="ar-badge-planta ${plantaInfo.isCreated ? 'success' : 'warning'}" id="ar-planta-badge">
-                            ${plantaInfo.isCreated 
-                                ? '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Registrado en Supabase' 
-                                : '⚠ Taller no registrado'}
-                        </span>
-                    </div>
-
-                    <div class="ar-soporte-grid">
-                        <div class="ar-email-form-group">
-                            <label class="ar-email-label" for="ar-soporte-id">ID / NIT Planta *</label>
-                            <input type="text" class="ar-email-input" id="ar-soporte-id"
-                                   value="${plantaInfo.idPlanta}" placeholder="Ej: 1144167164" required>
-                        </div>
-                        <div class="ar-email-form-group">
-                            <label class="ar-email-label" for="ar-soporte-nombre">Nombre de la Planta / Taller *</label>
-                            <input type="text" class="ar-email-input" id="ar-soporte-nombre"
-                                   value="${plantaInfo.nombrePlanta}" placeholder="Ej: TALLER CARLOS MENDOZA" required>
-                        </div>
-                    </div>
-
-                    <div class="ar-soporte-grid">
-                        <div class="ar-email-form-group">
-                            <label class="ar-email-label" for="ar-soporte-tel">Teléfono / WhatsApp *</label>
-                            <input type="tel" class="ar-email-input" id="ar-soporte-tel"
-                                   value="${plantaInfo.telefono}" placeholder="Ej: 3168007979">
-                        </div>
-                        <div class="ar-email-form-group">
-                            <label class="ar-email-label" for="ar-soporte-email">Correo Electrónico</label>
-                            <input type="email" class="ar-email-input" id="ar-soporte-email"
-                                   value="${plantaInfo.correo}" placeholder="taller@ejemplo.com">
-                        </div>
-                    </div>
-
-                    <!-- Configuración Adicional de Correo -->
-                    <div class="ar-soporte-grid" style="display: none;">
-                        <div class="ar-email-form-group">
-                            <label class="ar-email-label" for="ar-soporte-cc">Con Copia (CC - Opcional)</label>
-                            <input type="text" class="ar-email-input" id="ar-soporte-cc"
-                                   placeholder="correo1@tdm.com, correo2@tdm.com">
-                        </div>
-                        <div class="ar-email-form-group">
-                            <label class="ar-email-label" for="ar-soporte-subj">Asunto (Para Correo)</label>
-                            <input type="text" class="ar-email-input" id="ar-soporte-subj"
-                                   value="${asuntoDefault}">
-                        </div>
-                    </div>
-
-                    <div class="ar-email-badge-info">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"/>
-                            <line x1="12" y1="16" x2="12" y2="12"/>
-                            <line x1="12" y1="8" x2="12.01" y2="8"/>
-                        </svg>
-                        <span>
-                            Al enviar por <strong>WhatsApp</strong> o <strong>Correo (.html)</strong>, o pulsar <strong>Guardar Taller</strong>, la información se confirmará y guardará directamente en Supabase (tabla plantas).
-                        </span>
-                    </div>
-
-                    <!-- Acciones del Modal -->
-                    <div class="ar-soporte-actions" style="margin-top: 6px;">
-                        <button type="button" class="ar-email-btn-cancel" id="ar-modal-soporte-cancel">Cancelar</button>
-                        
-                        <button type="button" class="ar-btn-save-planta" id="ar-btn-guardar-planta" title="Guardar o actualizar datos de la planta en Supabase">
-                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                                <polyline points="17 21 17 13 7 13 7 21"/>
-                                <polyline points="7 3 7 8 15 8"/>
-                            </svg>
-                            <span>Guardar Taller</span>
-                        </button>
-
-                        <button type="button" class="ar-btn-whatsapp" id="ar-btn-send-whatsapp" title="Enviar soporte completo por WhatsApp">
-                            <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
-                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
-                            </svg>
-                            <span>Enviar por WhatsApp</span>
-                        </button>
-
-                        <button type="button" class="ar-btn-email" id="ar-btn-send-email" title="Enviar plantilla oficial .html adjunta por correo">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
-                            <span>Enviar por Correo (.html)</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
+        const sheetEl = document.createElement('div');
+        sheetEl.id = 'ar-modal-soporte-sheet';
+        sheetEl.className = 'p-sheet';
+        sheetEl.innerHTML = `
+            <div class="p-sheet-handle"></div>
+            <div id="ar-soporte-sheet-body"></div>
         `;
 
-        document.body.appendChild(modalBackdrop);
+        document.body.appendChild(backdropEl);
+        document.body.appendChild(sheetEl);
 
-        const cerrar = () => modalBackdrop.remove();
-        modalBackdrop.querySelector('#ar-modal-soporte-close')?.addEventListener('click', cerrar);
-        modalBackdrop.querySelector('#ar-modal-soporte-cancel')?.addEventListener('click', cerrar);
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) cerrar();
+        // Animar apertura desde abajo (idéntico a Personas)
+        requestAnimationFrame(() => {
+            backdropEl.classList.add('open');
+            sheetEl.classList.add('open');
         });
 
-        // Función reutilizable para sincronizar datos del taller en Supabase
-        const sincronizarPlanta = async (validarContacto = true) => {
-            const idVal  = (modalBackdrop.querySelector('#ar-soporte-id')?.value || '').trim();
-            const nomVal = (modalBackdrop.querySelector('#ar-soporte-nombre')?.value || '').trim().toUpperCase();
-            const telVal = (modalBackdrop.querySelector('#ar-soporte-tel')?.value || '').trim();
-            const corVal = (modalBackdrop.querySelector('#ar-soporte-email')?.value || '').trim();
+        const cerrar = () => {
+            backdropEl.classList.remove('open');
+            sheetEl.classList.remove('open');
+            document.removeEventListener('keydown', onEscape);
+            setTimeout(() => {
+                backdropEl.remove();
+                sheetEl.remove();
+            }, 280);
+        };
+
+        const onEscape = (e) => {
+            if (e.key === 'Escape') {
+                cerrar();
+            }
+        };
+        document.addEventListener('keydown', onEscape);
+        backdropEl.addEventListener('click', cerrar);
+        sheetEl.querySelector('.p-sheet-handle')?.addEventListener('click', cerrar);
+
+        // SVGs reutilizables (estilo Personas)
+        const SVG_WA    = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`;
+        const SVG_MAIL  = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>`;
+        const SVG_EDIT  = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+        const SVG_CHECK = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
+        const SVG_CLOSE = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
+        const getPlantInits = (nombre) => {
+            return (nombre || 'Taller').trim().split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || 'P';
+        };
+
+        // Función para guardar en Supabase
+        const sincronizarPlanta = async (idVal, nomVal, telVal, corVal, validarContacto = false) => {
+            idVal  = (idVal || '').trim();
+            nomVal = (nomVal || '').trim().toUpperCase();
+            telVal = (telVal || '').trim();
+            corVal = (corVal || '').trim();
 
             if (!idVal) {
-                Toast.error('Por favor ingresa el ID o NIT numérico del taller');
-                modalBackdrop.querySelector('#ar-soporte-id')?.focus();
+                Toast.error('Por favor ingresa la cédula o NIT del taller');
                 return null;
             }
             if (!nomVal) {
                 Toast.error('Por favor ingresa el nombre de la planta/taller');
-                modalBackdrop.querySelector('#ar-soporte-nombre')?.focus();
                 return null;
             }
             if (validarContacto && !telVal && !corVal) {
@@ -590,139 +519,311 @@ export class MisReportesSubView {
 
             if (this.dataService && typeof this.dataService.guardarOActualizarPlanta === 'function') {
                 try {
-                    await this.dataService.guardarOActualizarPlanta({
+                    const res = await this.dataService.guardarOActualizarPlanta({
                         id_planta: idVal,
                         planta: nomVal,
                         correo: corVal,
                         telefono: telVal,
-                        rol: 'GUEST'
+                        rol: 'GUEST',
+                        originalId: plantaInfo.idPlanta,
+                        originalPlanta: plantaInfo.nombrePlanta
                     });
 
-                    // Actualizar estado en UI
-                    const badgeEl = modalBackdrop.querySelector('#ar-planta-badge');
-                    if (badgeEl) {
-                        badgeEl.className = 'ar-badge-planta success';
-                        badgeEl.innerHTML = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg> Registrado en Supabase';
+                    if (res && res.error) {
+                        throw new Error(res.error || 'Error al guardar');
                     }
 
-                    // Actualizar datos locales en el reporte
+                    // Actualizar datos locales
+                    plantaInfo.idPlanta = idVal;
+                    plantaInfo.nombrePlanta = nomVal;
+                    plantaInfo.telefono = telVal;
+                    plantaInfo.correo = corVal;
+                    plantaInfo.isCreated = true;
+
                     reporte.planta = nomVal;
                     reporte.id_planta = idVal;
                     reporte.telefono = telVal;
                     reporte.correo = corVal;
 
+                    return { idVal, nomVal, telVal, corVal };
                 } catch (err) {
                     console.error('[MisReportesSubView.guardarPlanta]', err);
-                    Toast.error('Advertencia al guardar taller en Supabase: ' + err.message);
+                    Toast.error('Error al guardar taller en Supabase: ' + err.message);
+                    return null;
                 }
             }
 
             return { idVal, nomVal, telVal, corVal };
         };
 
-        // 1. Guardar Taller en Supabase explícitamente
-        const btnSavePlanta = modalBackdrop.querySelector('#ar-btn-guardar-planta');
-        btnSavePlanta?.addEventListener('click', async () => {
-            const origHtml = btnSavePlanta.innerHTML;
-            btnSavePlanta.disabled = true;
-            btnSavePlanta.innerHTML = '<div class="ar-spinner" style="width:12px;height:12px;border-width:2px;"></div> Guardando...';
+        // ── Vista de Detalle (Modo Lectura / Acciones) ──
+        const renderVistaDetalle = () => {
+            const body = sheetEl.querySelector('#ar-soporte-sheet-body');
+            if (!body) return;
+            const inits = getPlantInits(plantaInfo.nombrePlanta);
 
-            const res = await sincronizarPlanta(false);
-            if (res) {
-                Toast.success(`Taller "${res.nomVal}" sincronizado exitosamente en Supabase`);
-            }
-            btnSavePlanta.disabled = false;
-            btnSavePlanta.innerHTML = origHtml;
-        });
+            body.innerHTML = `
+                <div class="p-sheet-head">
+                    <div class="p-sheet-avatar" style="background:linear-gradient(135deg,#0284c7,#2563eb);border-radius:50%;font-size:1.15rem;font-weight:800;color:#fff;width:52px;height:52px;min-width:52px;min-height:52px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px rgba(0,0,0,.12);">
+                        ${inits}
+                    </div>
+                    <div style="min-width:0; overflow:hidden;">
+                        <p class="p-sheet-name" style="margin:0 0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${plantaInfo.nombrePlanta || 'Taller Sin Registrar'}</p>
+                        <p class="p-sheet-email" style="margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${plantaInfo.correo || 'Sin correo registrado'}</p>
+                    </div>
+                </div>
 
-        // 2. Enviar por WhatsApp
-        const btnWhatsApp = modalBackdrop.querySelector('#ar-btn-send-whatsapp');
-        btnWhatsApp?.addEventListener('click', async () => {
-            const telVal = (modalBackdrop.querySelector('#ar-soporte-tel')?.value || '').trim();
-            if (!telVal) {
-                Toast.error('Por favor ingresa el número de teléfono o WhatsApp del taller');
-                modalBackdrop.querySelector('#ar-soporte-tel')?.focus();
-                return;
-            }
+                <div class="p-section">
+                    <div class="p-section-title">Identificación</div>
+                    <div class="p-row">
+                        <span class="p-row-label">Cédula o Nit</span>
+                        <span class="p-row-value" style="max-width:none; word-break:break-word; white-space:normal;">${plantaInfo.idPlanta || '—'}</span>
+                    </div>
+                    <div class="p-row">
+                        <span class="p-row-label">Nombre de la Planta</span>
+                        <span class="p-row-value" style="max-width:none; word-break:break-word; white-space:normal; text-align:right;">${plantaInfo.nombrePlanta || '—'}</span>
+                    </div>
+                </div>
 
-            const origHtml = btnWhatsApp.innerHTML;
-            btnWhatsApp.disabled = true;
-            btnWhatsApp.innerHTML = '<span>Procesando...</span>';
+                <div class="p-section">
+                    <div class="p-section-title">Contacto</div>
+                    <div class="ar-contact-row">
+                        ${plantaInfo.telefono ? `
+                        <button type="button" class="ar-contact-btn" id="ar-row-btn-wa" title="Enviar soporte por WhatsApp" aria-label="WhatsApp">
+                            ${SVG_WA}
+                        </button>
+                        ` : '<span class="ar-contact-btn-placeholder"></span>'}
+                        <div class="ar-contact-text">
+                            <span class="ar-contact-lbl">Teléfono</span>
+                            <span class="ar-contact-val">${plantaInfo.telefono || '—'}</span>
+                        </div>
+                    </div>
+                    <div class="ar-contact-row">
+                        ${plantaInfo.correo ? `
+                        <button type="button" class="ar-contact-btn" id="ar-row-btn-mail" title="Enviar soporte por correo" aria-label="Correo">
+                            ${SVG_MAIL}
+                        </button>
+                        ` : '<span class="ar-contact-btn-placeholder"></span>'}
+                        <div class="ar-contact-text">
+                            <span class="ar-contact-lbl">Correo</span>
+                            <span class="ar-contact-val">${plantaInfo.correo || '—'}</span>
+                        </div>
+                    </div>
+                    <div class="ar-contact-row">
+                        <button type="button" class="ar-contact-btn" id="ar-row-btn-pdf" title="Generar PDF y compartir a WhatsApp o descargar" aria-label="Compartir PDF" style="color:#0284c7;">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="12" y1="18" x2="12" y2="12"></line>
+                                <line x1="9" y1="15" x2="15" y2="15"></line>
+                            </svg>
+                        </button>
+                        <div class="ar-contact-text">
+                            <span class="ar-contact-lbl">Documento PDF</span>
+                            <span class="ar-contact-val">Compartir a WhatsApp / Descargar</span>
+                        </div>
+                    </div>
+                </div>
 
-            const synced = await sincronizarPlanta(true);
-            if (!synced) {
-                btnWhatsApp.disabled = false;
-                btnWhatsApp.innerHTML = origHtml;
-                return;
-            }
-
-            // Construir mensaje enriquecido con toda la información útil
-            const mensaje = generarMensajeWhatsAppCalidad(reporte);
-            const waUrl = generarUrlWhatsApp(synced.telVal, mensaje);
-
-            window.open(waUrl, '_blank');
-            Toast.success('Mensaje de soporte preparado para WhatsApp y taller sincronizado');
-
-            btnWhatsApp.disabled = false;
-            btnWhatsApp.innerHTML = origHtml;
-        });
-
-        // 3. Enviar por Correo (.html)
-        const btnEmail = modalBackdrop.querySelector('#ar-btn-send-email');
-        btnEmail?.addEventListener('click', async () => {
-            const corVal = (modalBackdrop.querySelector('#ar-soporte-email')?.value || '').trim();
-            const subVal = (modalBackdrop.querySelector('#ar-soporte-subj')?.value || asuntoDefault).trim();
-            const ccRaw  = (modalBackdrop.querySelector('#ar-soporte-cc')?.value || '').trim();
-            const ccList = ccRaw ? ccRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-            if (!corVal || !corVal.includes('@')) {
-                Toast.error('Por favor ingresa un correo de destinatario válido');
-                modalBackdrop.querySelector('#ar-soporte-email')?.focus();
-                return;
-            }
-
-            const origHtml = btnEmail.innerHTML;
-            btnEmail.disabled = true;
-            btnEmail.innerHTML = `
-                <div class="ar-spinner" style="width:14px;height:14px;border-width:2px;border-top-color:#fff;"></div>
-                <span>Enviando...</span>
+                <div class="p-sheet-actions">
+                    <button type="button" class="p-btn-primary" id="ar-btn-switch-edit" title="Editar taller">
+                        ${SVG_EDIT} <span>Editar</span>
+                    </button>
+                    <button type="button" class="p-btn-secondary" id="ar-btn-sheet-close" title="Cerrar">
+                        Cerrar
+                    </button>
+                </div>
             `;
 
-            const synced = await sincronizarPlanta(true);
-            if (!synced) {
-                btnEmail.disabled = false;
-                btnEmail.innerHTML = origHtml;
-                return;
-            }
+            body.querySelector('#ar-btn-switch-edit')?.addEventListener('click', () => renderVistaEdicion());
+            body.querySelector('#ar-btn-sheet-close')?.addEventListener('click', cerrar);
 
-            try {
-                // Generar plantilla completa en .html oficial autocontenido
-                const plantillaHtml = generarReporteCalidadHtml(reporte);
+            // Generar y compartir / descargar PDF directamente en JS
+            const btnPdf = body.querySelector('#ar-row-btn-pdf');
+            btnPdf?.addEventListener('click', async () => {
+                const origHtml = btnPdf.innerHTML;
+                btnPdf.disabled = true;
+                btnPdf.innerHTML = `<div class="ar-spinner" style="width:12px;height:12px;border-width:2px;border-top-color:#0284c7;"></div>`;
 
-                if (!this.dataService || typeof this.dataService.enviarEmailReporte !== 'function') {
-                    throw new Error('Servicio de envío de correo no disponible');
+                try {
+                    Toast.info('Generando PDF en el dispositivo...');
+                    const plantillaHtml = generarReporteCalidadHtmlStatico(reporte);
+                    const filename = `${idReporte}.pdf`;
+                    const result = await compartirODescargarPdf({
+                        html: plantillaHtml,
+                        filename,
+                        title: `Reporte de Calidad #${idReporte}`,
+                        text: `Adjunto reporte de calidad OP ${op} / Ref. ${ref}`
+                    });
+
+                    if (result.shared) {
+                        Toast.success('¡PDF compartido exitosamente!');
+                    } else if (result.downloaded) {
+                        Toast.success(`PDF descargado como ${filename}`);
+                    }
+                } catch (err) {
+                    console.error('[MisReportesSubView.compartirPdf]', err);
+                    Toast.error('Error al generar PDF: ' + err.message);
+                } finally {
+                    btnPdf.disabled = false;
+                    btnPdf.innerHTML = origHtml;
                 }
+            });
 
-                await this.dataService.enviarEmailReporte({
-                    idReporte: idReporte,
-                    email: corVal,
-                    cc: ccList.length ? ccList : undefined,
-                    subject: subVal,
-                    nombre: synced.nomVal,
-                    reporte: reporte,
-                    attachmentHtml: plantillaHtml,
-                    attachmentName: `reporte_${idReporte}.html`
+            // Enviar por WhatsApp desde el icono en fila de Teléfono
+            const btnWA = body.querySelector('#ar-row-btn-wa');
+            btnWA?.addEventListener('click', async () => {
+                if (!plantaInfo.telefono) {
+                    Toast.error('El taller no tiene teléfono registrado. Haz clic en Editar para agregarlo.');
+                    renderVistaEdicion();
+                    return;
+                }
+                const origHtml = btnWA.innerHTML;
+                btnWA.disabled = true;
+                btnWA.innerHTML = '<span style="font-size:10px;">...</span>';
+                const mensaje = generarMensajeWhatsAppCalidad(reporte);
+                const waUrl   = generarUrlWhatsApp(plantaInfo.telefono, mensaje);
+                window.open(waUrl, '_blank');
+                Toast.success('Mensaje preparado para WhatsApp');
+                btnWA.disabled = false;
+                btnWA.innerHTML = origHtml;
+            });
+
+            // Enviar por Correo desde el icono en fila de Correo (.html adjunto)
+            const btnMail = body.querySelector('#ar-row-btn-mail');
+            btnMail?.addEventListener('click', async () => {
+                if (!plantaInfo.correo || !plantaInfo.correo.includes('@')) {
+                    Toast.error('El taller no tiene correo válido registrado. Haz clic en Editar para agregarlo.');
+                    renderVistaEdicion();
+                    return;
+                }
+                const origHtml = btnMail.innerHTML;
+                btnMail.disabled = true;
+                btnMail.innerHTML = `<div class="ar-spinner" style="width:12px;height:12px;border-width:2px;border-top-color:#fff;"></div>`;
+
+                try {
+                    const plantillaHtml = generarReporteCalidadHtmlStatico(reporte);
+                    if (!this.dataService || typeof this.dataService.enviarEmailReporte !== 'function') {
+                        throw new Error('Servicio de envío de correo no disponible');
+                    }
+                    await this.dataService.enviarEmailReporte({
+                        idReporte,
+                        email: plantaInfo.correo,
+                        subject: asuntoDefault,
+                        nombre: plantaInfo.nombrePlanta,
+                        reporte,
+                        attachmentHtml: plantillaHtml,
+                        attachmentName: `${idReporte}.pdf`
+                    });
+                    Toast.success(`Reporte ${idReporte} enviado a ${plantaInfo.correo}`);
+                    cerrar();
+                } catch (err) {
+                    console.error('[MisReportesSubView.enviarEmail]', err);
+                    Toast.error('Error al enviar correo: ' + err.message);
+                    btnMail.disabled = false;
+                    btnMail.innerHTML = origHtml;
+                }
+            });
+        };
+
+        // ── Vista de Edición (Formulario editable estilo Personas) ──
+        const renderVistaEdicion = () => {
+            const body = sheetEl.querySelector('#ar-soporte-sheet-body');
+            if (!body) return;
+            const inits = getPlantInits(plantaInfo.nombrePlanta);
+
+            body.innerHTML = `
+                <div class="p-sheet-head">
+                    <div class="p-sheet-avatar" style="background:linear-gradient(135deg,#0284c7,#2563eb);border-radius:50%;font-size:1.15rem;font-weight:800;color:#fff;width:52px;height:52px;min-width:52px;min-height:52px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 3px 8px rgba(0,0,0,.12);">
+                        ${inits}
+                    </div>
+                    <div style="min-width:0; overflow:hidden;">
+                        <p class="p-sheet-name" style="margin:0 0 3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Editar Datos del Taller</p>
+                        <p class="p-sheet-email" style="margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Actualizar información en Supabase</p>
+                    </div>
+                </div>
+
+                <div style="padding:14px 20px 0;">
+                    <div class="p-field">
+                        <div class="p-field-label">Cédula o Nit</div>
+                        <input class="p-field-input" id="ar-soporte-id" value="${plantaInfo.idPlanta || ''}" placeholder="Ej: 1144167164">
+                    </div>
+
+                    <div class="p-field">
+                        <div class="p-field-label">Nombre de la Planta</div>
+                        <input class="p-field-input" id="ar-soporte-nombre" value="${plantaInfo.nombrePlanta || ''}" placeholder="Ej: TALLER MENDOZA">
+                    </div>
+
+                    <div class="p-field">
+                        <div class="p-field-label">Teléfono</div>
+                        <input class="p-field-input" id="ar-soporte-tel" type="tel" maxlength="10" inputmode="numeric" value="${plantaInfo.telefono ? String(plantaInfo.telefono).replace(/\D/g, '').slice(0, 10) : ''}" placeholder="Ej: 3168007979">
+                    </div>
+
+                    <div class="p-field">
+                        <div class="p-field-label">Correo</div>
+                        <input class="p-field-input" id="ar-soporte-email" type="email" value="${plantaInfo.correo || ''}" placeholder="taller@ejemplo.com">
+                    </div>
+                </div>
+
+                <div class="p-sheet-actions">
+                    <button type="button" class="p-btn-primary" id="ar-soporte-save-btn">
+                        ${SVG_CHECK} <span>Guardar</span>
+                    </button>
+                    <button type="button" class="p-btn-secondary" id="ar-soporte-cancel-btn">
+                        Cancelar
+                    </button>
+                </div>
+            `;
+
+            // Restricción numérica de 10 dígitos (idéntico a PersonasModule)
+            const peTel = body.querySelector('#ar-soporte-tel');
+            if (peTel) {
+                peTel.addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
                 });
-
-                Toast.success(`Reporte ${idReporte} enviado exitosamente a ${corVal}`);
-                cerrar();
-            } catch (err) {
-                console.error('[MisReportesSubView.enviarEmail]', err);
-                Toast.error('Error al enviar correo: ' + err.message);
-                btnEmail.disabled = false;
-                btnEmail.innerHTML = origHtml;
+                peTel.addEventListener('keydown', (e) => {
+                    if (e.key === '+' || e.key === 'e' || e.key === '.' || e.key === '-') {
+                        e.preventDefault();
+                    }
+                });
             }
-        });
+
+            body.querySelector('#ar-soporte-cancel-btn')?.addEventListener('click', () => {
+                if (plantaInfo.idPlanta || plantaInfo.nombrePlanta) {
+                    renderVistaDetalle();
+                } else {
+                    cerrar();
+                }
+            });
+
+            const saveBtn = body.querySelector('#ar-soporte-save-btn');
+            saveBtn?.addEventListener('click', async () => {
+                const idVal = body.querySelector('#ar-soporte-id')?.value;
+                const nomVal = body.querySelector('#ar-soporte-nombre')?.value;
+                const telVal = body.querySelector('#ar-soporte-tel')?.value;
+                const corVal = body.querySelector('#ar-soporte-email')?.value;
+
+                saveBtn.disabled = true;
+                const origHtml = saveBtn.innerHTML;
+                saveBtn.innerHTML = '<span>Guardando...</span>';
+
+                const res = await sincronizarPlanta(idVal, nomVal, telVal, corVal, false);
+                if (res) {
+                    Toast.success(`Taller "${res.nomVal}" actualizado`);
+                    renderVistaDetalle();
+                } else {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = origHtml;
+                }
+            });
+        };
+
+        // Si ya está registrada en Supabase muestra Detalle; de lo contrario abre directamente Edición
+        if (plantaInfo.isCreated && (plantaInfo.idPlanta || plantaInfo.nombrePlanta)) {
+            renderVistaDetalle();
+        } else {
+            renderVistaEdicion();
+        }
     }
 
     // ─────────────────────────────────────────────────────────
@@ -760,6 +861,8 @@ export class MisReportesSubView {
     }
 
     unmount() {
+        document.getElementById('ar-modal-soporte-backdrop')?.remove();
+        document.getElementById('ar-modal-soporte-sheet')?.remove();
         this.container = null;
     }
 }

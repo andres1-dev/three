@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte de Calidad — Plantilla Básica (Estilo Liquidación)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --color-primary: #3f51b5;
+      --color-primary-dark: #303f9f;
+      --color-border: #e2e8f0;
+      --color-text-main: #1e293b;
+      --color-text-label: #64748b;
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --bg-table-header: #f8fafc;
+      --bg-total-row: #f1f5f9;
+      --bg-visita-cell: #dbeafe;
+      --color-visita-cell: #1e40af;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 9pt;
+      color: var(--color-text-main);
+      background: #f1f5f9;
+      line-height: 1.4;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    /* ── Hoja A4 ── */
+    .sheet {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      margin: 18px auto;
+      padding: 12mm 14mm 10mm;
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(63, 81, 181, 0.08);
+    }
+
+    /* ── Bloque de Cabecera (Idéntico a liquidacion-rodamiento) ── */
+    .header-block {
+      margin-bottom: 0.8rem;
+      padding: 0.75rem 1rem;
+      background: var(--glass-bg);
+      border: 2px solid var(--color-primary);
+      border-radius: 8px;
+    }
+
+    .header-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--color-border);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .header-title-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .header-logo-svg {
+      width: 40px;
+      height: 40px;
+      display: block;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .header-title h2 {
+      font-size: 11.5pt;
+      font-weight: 800;
+      color: var(--color-primary);
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      line-height: 1.2;
+    }
+
+    .header-title p {
+      margin: 0;
+      line-height: 1.25;
+    }
+
+    .header-prod-name {
+      font-size: 8pt;
+      font-weight: 700;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 2px;
+    }
+
+    .header-prod-nit {
+      font-size: 7pt;
+      font-weight: 600;
+      color: var(--color-text-label);
+      letter-spacing: 0.3px;
+      margin-top: 1px;
+    }
+
+    .header-data {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .header-data p {
+      margin: 0;
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--color-text-main);
+      line-height: 1.25;
+    }
+
+    .header-data p strong {
+      display: block;
+      font-size: 6.5pt;
+      color: var(--color-text-label);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 1px;
+    }
+
+    /* ── Barra de Estado y Decisión ── */
+    .status-band {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      margin-bottom: 0.75rem;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      font-size: 8pt;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 10px;
+      border-radius: 6px;
+      font-size: 11.5pt;
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      background: transparent !important;
+      line-height: 1.2;
+      margin-top: -3.5px;
+      box-sizing: border-box;
+    }
+
+    .status-badge.aprobado {
+      background: transparent !important;
+      color: #16a34a;
+      border: 1.5px solid #16a34a;
+    }
+
+    .status-badge.rechazado {
+      background: transparent !important;
+      color: #dc2626;
+      border: 1.5px solid #dc2626;
+    }
+
+    .status-badge.pausado,
+    .status-badge.pending {
+      background: transparent !important;
+      color: #2563eb;
+      border: 1.5px solid #2563eb;
+    }
+
+    /* ── Secciones con Recuadros (summary / cards) ── */
+    .section-card {
+      background: #ffffff;
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background: var(--bg-table-header);
+      border-bottom: 1px solid var(--color-border);
+      padding: 6px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-header h4 {
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-header span.badge-info {
+      font-size: 7.5pt;
+      font-weight: 600;
+      color: var(--color-text-label);
+      background: #ffffff;
+      padding: 2px 8px;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+    }
+
+    /* ── Cuadrícula de Datos de Operación y Taller ── */
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .data-cell {
+      border-right: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      padding: 5px 10px;
+    }
+
+    .data-cell:nth-child(4n) {
+      border-right: none;
+    }
+
+    .data-cell.span2 {
+      grid-column: span 2;
+    }
+
+    .data-cell .lbl {
+      display: block;
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--color-text-label);
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+
+    .data-cell .val {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--color-text-main);
+      word-break: break-word;
+    }
+
+    .data-cell .val.highlight {
+      color: var(--color-primary);
+    }
+
+    /* ── Tabla Estilo liquidacion-table (Exacto Legacy) ── */
+    .liquidacion-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+      font-size: 8pt;
+    }
+
+    .liquidacion-table th,
+    .liquidacion-table td {
+      border: 1px solid var(--color-border);
+      padding: 4.5px 7px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .liquidacion-table th {
+      background: var(--bg-table-header);
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 7pt;
+      letter-spacing: 0.5px;
+    }
+
+    .liquidacion-table td {
+      color: var(--color-text-main);
+    }
+
+    .liquidacion-table td.td-highlight {
+      background: #f8fafc;
+    }
+
+    .liquidacion-table tr:hover td,
+    .liquidacion-table tr:hover td.td-highlight {
+      background: #f1f5f9;
+    }
+
+    .liquidacion-table .planta-name {
+      text-align: left;
+      font-weight: 600;
+      color: var(--color-text-main);
+    }
+
+    .liquidacion-table .total-row {
+      background: var(--bg-total-row);
+      font-weight: 700;
+      color: var(--color-primary);
+      border-top: 1.5px solid var(--color-border);
+    }
+
+    .liquidacion-table .visita-cell {
+      font-weight: 700;
+      color: var(--color-text-main);
+    }
+
+    .empty-msg {
+      padding: 12px;
+      text-align: center;
+      color: var(--color-text-label);
+      font-size: 8pt;
+      font-style: italic;
+    }
+
+    /* ── Observaciones (Estilo Summary Card) ── */
+    .obs-box {
+      padding: 8px 12px;
+      font-size: 8.5pt;
+      color: var(--color-text-main);
+      min-height: 44px;
+      line-height: 1.5;
+      white-space: pre-line;
+      word-break: break-word;
+      text-indent: 0;
+    }
+
+    /* ── Firmas (Estilo Liquidación) ── */
+    .firmas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .firma-cell {
+      padding: 8px 14px;
+      text-align: center;
+      border-right: 1px solid var(--color-border);
+    }
+
+    .firma-cell:last-child {
+      border-right: none;
+    }
+
+    .firma-img-box {
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 4px;
+      overflow: hidden;
+    }
+
+    .firma-img-box img,
+    .firma-img-box svg {
+      max-height: 46px;
+      max-width: 160px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      display: inline-block;
+    }
+
+    .firma-line {
+      border-top: 1px solid #cbd5e1;
+      width: 75%;
+      margin: 0 auto 3px;
+    }
+
+    .firma-role {
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--color-text-label);
+      letter-spacing: 0.4px;
+    }
+
+    .firma-name {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--color-text-main);
+      margin-top: 1px;
+    }
+
+    .firma-cc {
+      font-size: 7pt;
+      color: var(--color-text-label);
+    }
+
+    /* ── Pie de Página ── */
+    .doc-footer {
+      margin-top: 8px;
+      border-top: 1px solid var(--color-border);
+      padding-top: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 6.5pt;
+      color: var(--color-text-label);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    /* ── Panel Flotante de Control ── */
+    .control-panel {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 99999;
+    }
+
+    .btn-ctrl {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(63, 81, 181, 0.35);
+      text-decoration: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .btn-ctrl:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(63, 81, 181, 0.45);
+    }
+
+    .btn-premium {
+      background: var(--color-primary);
+      color: #ffffff;
+    }
+
+    .btn-print {
+      background: #1e293b;
+      color: #ffffff;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+      }
+      .sheet {
+        margin: 0;
+        box-shadow: none;
+        border: none;
+        padding: 5mm 8mm;
+        width: 100%;
+        min-height: auto;
+      }
+      .control-panel {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sheet" id="app">
+    <div style="text-align:center;padding:60px 20px;color:var(--color-text-label);">
+      <i class="fas fa-spinner fa-spin" style="font-size:24px;color:var(--color-primary);margin-bottom:12px;"></i>
+      <p style="font-weight:600;">Cargando reporte de calidad...</p>
+    </div>
+  </div>
+
+  <div class="control-panel">
+    <a class="btn-ctrl btn-premium" href="./calidad.html">
+      <i class="fas fa-star"></i> Plantilla Completa
+    </a>
+    <button class="btn-ctrl btn-print" onclick="window.print()">
+      <i class="fas fa-print"></i> Imprimir / PDF
+    </button>
+  </div>
+
+  <script type="module">
+    import { LocalStorageCalidadRepository } from './infrastructure/repositories/LocalStorageCalidadRepository.js';
+
+    const app = document.getElementById('app');
+
+    function fmt(val, fallback = '—') {
+      if (val === null || val === undefined || val === '' || val === 'N/A' || val === 'null') {
+        return fallback;
+      }
+      return String(val).trim();
+    }
+
+    function renderFirmaHtml(firma, fallbackText = 'Firma Digital') {
+      if (!firma) {
+        return `<span style="color:#94a3b8;font-size:7.5pt;font-style:italic;">${fallbackText}</span>`;
+      }
+      let f = String(firma).trim();
+      if (!f || f === 'null' || f === 'undefined') {
+        return `<span style="color:#94a3b8;font-size:7.5pt;font-style:italic;">${fallbackText}</span>`;
+      }
+
+      // Si viene como SVG (código XML o elemento <svg>)
+      if (f.startsWith('<svg') || f.includes('<svg')) {
+        const match = f.match(/<svg[\s\S]*<\/svg>/i);
+        let svg = match ? match[0] : f;
+
+        // Asegurar viewBox si no tiene para permitir escalado responsivo
+        if (!svg.includes('viewBox') && !svg.includes('viewbox')) {
+          const wMatch = svg.match(/width=["'](\d+(?:\.\d+)?)["']/i);
+          const hMatch = svg.match(/height=["'](\d+(?:\.\d+)?)["']/i);
+          if (wMatch && hMatch) {
+            svg = svg.replace(/<svg/i, `<svg viewBox="0 0 ${wMatch[1]} ${hMatch[1]}"`);
+          }
+        }
+        return svg.replace(/<svg/i, '<svg style="max-height:46px;max-width:160px;width:auto;height:auto;display:inline-block;"');
+      }
+
+      // Si viene como URL o data URI
+      if (f.startsWith('data:') || f.startsWith('http://') || f.startsWith('https://') || f.startsWith('/') || f.startsWith('./')) {
+        return `<img src="${f}" alt="Firma" style="max-height:46px;max-width:160px;object-fit:contain;display:inline-block;">`;
+      }
+
+      return `<span style="color:#94a3b8;font-size:7.5pt;font-style:italic;">${fallbackText}</span>`;
+    }
+
+    function limpiarProductora(val) {
+      if (!val || val === 'N/A' || val === 'null') return '—';
+      const str = String(val).trim();
+      if (/^\d+$/.test(str)) {
+        try {
+          const cache = JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+          const found = cache.find(x => String(x.id_productora) === str);
+          if (found && found.productora) return found.productora.trim();
+        } catch (_) {}
+      }
+      const stripped = str.replace(/^\s*\d+\s*[-—–]+\s*/, '').trim();
+      return stripped || str;
+    }
+
+    function getEstadoBadge(conclusion) {
+      const c = (conclusion || '').toUpperCase().trim();
+      if (c === 'APROBADO') {
+        return { cls: 'aprobado', text: 'APROBADO' };
+      }
+      if (c === 'RECHAZADO') {
+        return { cls: 'rechazado', text: 'RECHAZADO' };
+      }
+      if (c === 'PAUSADO') {
+        return { cls: 'pausado', text: 'PAUSADO' };
+      }
+      return { cls: 'pending', text: c || 'PENDIENTE' };
+    }
+
+    function getTituloVisita(tipo) {
+      const t = (tipo || '').toUpperCase();
+      if (t.includes('RONDA')) return 'RONDA DE CALIDAD';
+      if (t.includes('CONTRAMUESTRA')) return 'CONTRAMUESTRA DE CALIDAD';
+      if (t.includes('SEGUIMIENTO')) return 'SEGUIMIENTO DE CALIDAD';
+      if (t.includes('APROBACION') || t.includes('APROBACIÓN')) return 'APROBACIÓN DE PLANTA';
+      return 'AUDITORÍA DE CALIDAD';
+    }
+
+    function calcularDVNit(nit) {
+      nit = String(nit).replace(/[.\-\s]/g, "");
+
+      if (!/^\d+$/.test(nit)) {
+        throw new Error("El NIT debe contener solo dígitos");
+      }
+
+      const pesos = [3, 7, 13, 17, 19, 23, 29, 37, 41, 43, 47, 53, 59, 61, 67];
+      const digitos = nit.split("").reverse().map(Number);
+
+      let suma = 0;
+      for (let i = 0; i < digitos.length; i++) {
+        suma += digitos[i] * pesos[i];
+      }
+
+      const residuo = suma % 11;
+      return String(residuo < 2 ? residuo : 11 - residuo);
+    }
+
+    function formatearNIT(nit) {
+      if (!nit) return '';
+      try {
+        let base = String(nit).trim();
+        if (base.includes('-')) {
+          base = base.split('-')[0];
+        }
+        const nitLimpio = base.replace(/[.\-\s]/g, "");
+        if (!nitLimpio || !/^\d+$/.test(nitLimpio)) return String(nit);
+        const dv = calcularDVNit(nitLimpio);
+        const conPuntos = nitLimpio.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        return `${conPuntos}-${dv}`;
+      } catch (_) {
+        return String(nit);
+      }
+    }
+
+    function obtenerNitProductora(r, raw) {
+      let rawNit = r?.nitProductora || r?.nit || raw?.nit_productora || raw?.nit || raw?.productora_nit;
+      if (rawNit && String(rawNit).trim() && String(rawNit).trim() !== '—' && String(rawNit).trim() !== 'null') {
+        return formatearNIT(String(rawNit).trim());
+      }
+
+      let idProd = raw?.id_productora || r?.idProductora;
+      if (!idProd && (r?.productora || raw?.productora)) {
+        const m = String(r?.productora || raw?.productora).match(/^\s*(\d+)\s*[-—–]/);
+        if (m) idProd = m[1];
+      }
+
+      try {
+        const cache = JSON.parse(localStorage.getItem('busint_productoras_cache') || '[]');
+        if (Array.isArray(cache) && cache.length) {
+          const found = cache.find(p => 
+            (idProd && String(p.id_productora ?? p.id) === String(idProd)) ||
+            (p.productora && String(p.productora).toUpperCase() === String(limpiarProductora(r?.productora || raw?.productora)).toUpperCase()) ||
+            (p.nombre_corto && String(p.nombre_corto).toUpperCase() === String(limpiarProductora(r?.productora || raw?.productora)).toUpperCase())
+          );
+          if (found && (found.nit || found.NIT)) {
+            return formatearNIT(String(found.nit || found.NIT).trim());
+          }
+        }
+      } catch (_) {}
+
+      const CATALOGO_PRODUCTORAS = {
+        '1': '900284712',
+        '2': '900415829',
+        '3': '900327654',
+        '4': '830089444',
+        'TEXTILES Y CREACIONES EL UNIVERSO S.A.S.': '900284712',
+        'TEXTILES Y CREACIONES LOS ANGELES S.A.S.': '900415829',
+        'HACEMOS MODA S.A.S.': '900327654',
+        'INVERSIONES URBANA S.A.S.': '900512348',
+        'EL TEMPLO DE LA MODA S.A.S.': '830089444',
+        'GRUPO TDM': '830089444'
+      };
+
+      if (idProd && CATALOGO_PRODUCTORAS[String(idProd)]) {
+        return formatearNIT(CATALOGO_PRODUCTORAS[String(idProd)]);
+      }
+
+      const clean = limpiarProductora(r?.productora || raw?.productora);
+      if (clean && CATALOGO_PRODUCTORAS[clean.toUpperCase()]) {
+        return formatearNIT(CATALOGO_PRODUCTORAS[clean.toUpperCase()]);
+      }
+
+      return null;
+    }
+
+    function renderCurva(curva, raw) {
+      let c = curva;
+
+      // 1. Si el entity no tiene filas/tallas, armar desde raw
+      if (!c || !c.tallas || !c.tallas.length || !c.filas || !c.filas.length) {
+        const rawCurva = raw?.curva_extensiones || raw?.curvaExtensiones || raw?.curva || raw?.extensiones || raw?.curva_produccion;
+        if (rawCurva) {
+          try {
+            const items = typeof rawCurva === 'string' ? JSON.parse(rawCurva) : rawCurva;
+            if (items && Array.isArray(items.tallas) && Array.isArray(items.filas) && items.filas.length > 0) {
+              c = items;
+            } else if (Array.isArray(items) && items.length > 0) {
+              const tallasSet = new Set();
+              items.forEach(i => { const t = String(i.talla ?? i.TALLA ?? '').trim(); if (t) tallasSet.add(t); });
+              const tallas = Array.from(tallasSet);
+              const colorMap = new Map();
+              items.forEach(i => {
+                const color = i.color || i.COLOR || 'ÚNICO';
+                const talla = String(i.talla ?? i.TALLA ?? '').trim();
+                const cant  = Number(i.cantidad ?? i.CANTIDAD ?? 0);
+                if (!colorMap.has(color)) colorMap.set(color, { color, cantidades: {} });
+                colorMap.get(color).cantidades[talla] = (colorMap.get(color).cantidades[talla] || 0) + cant;
+              });
+              c = { tallas, filas: Array.from(colorMap.values()) };
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (!c || !c.tallas || !c.tallas.length || !c.filas || !c.filas.length) {
+        return `
+          <div class="section-card">
+            <div class="section-header">
+              <h4><i class="fas fa-layer-group"></i> Curva de Producción</h4>
+            </div>
+            <div class="empty-msg">Sin registro de curva / extensiones de confección para esta OP.</div>
+          </div>
+        `;
+      }
+
+      // 2. Calcular descuentos desde novedades_auditoria (SIN CONFECCIONAR)
+      const descuentos = {}; // 'COLOR||TALLA' -> qty
+      // Anotaciones informativas (COBRO, PROMOCION, LAVADO) — no descuentan, solo se marcan
+      const anotaciones = {}; // 'COLOR||TALLA' -> { tipo, qty }[]
+      let novRaw = raw?.novedades_auditoria || raw?.novedades;
+      if (typeof novRaw === 'string') { try { novRaw = JSON.parse(novRaw); } catch (_) { novRaw = null; } }
+      if (Array.isArray(novRaw)) {
+        for (const nov of novRaw) {
+          const tipoUp = (nov.tipo || '').toUpperCase();
+          const esSinConfeccionar = tipoUp === 'SIN CONFECCIONAR';
+          const esAnotacion = tipoUp.includes('COBR') || tipoUp.includes('PROMOCI') || tipoUp.includes('LAVADO') || esSinConfeccionar;
+          for (const cod of (nov.codigos || [])) {
+            const k = `${(cod.color || '').toUpperCase()}||${cod.talla}`;
+            if (esSinConfeccionar) {
+              descuentos[k] = (descuentos[k] || 0) + Number(cod.cantidad || 0);
+            }
+            if (esAnotacion) {
+              if (!anotaciones[k]) anotaciones[k] = [];
+              anotaciones[k].push({ tipo: nov.tipo, qty: Number(cod.cantidad || 0) });
+            }
+          }
+        }
+      }
+      const totalDescontado = Object.values(descuentos).reduce((s, v) => s + v, 0);
+      const hayDescuentos = totalDescontado > 0;
+
+      const tallas = c.tallas;
+      const thTallas = tallas.map(t => `<th>${t}</th>`).join('');
+
+      let granTotalReal   = 0;
+      let granTotalActual = 0;
+
+      const rows = c.filas.map(f => {
+        const colorKey = (f.color || f.COLOR || '').toUpperCase();
+        let totalReal = 0, totalActual = 0;
+        const celdas = tallas.map(t => {
+          const qR = Number(f.cantidades?.[t] ?? f.cantidadesPorTalla?.[t] ?? f.cantidades?.[String(t)] ?? f[t] ?? 0);
+          const desc = descuentos[`${colorKey}||${t}`] || 0;
+          const qA = Math.max(0, qR - desc);
+          totalReal   += qR;
+          totalActual += qA;
+          // Anotaciones (SIN CONFECCIONAR descuenta, cobro/promo/lavado solo marcan)
+          const anots = anotaciones[`${colorKey}||${t}`];
+          if (anots && anots.length > 0) {
+            const iconMap = {
+              'SIN CONF': '<i class="fas fa-scissors" style="font-size:6pt;color:#cbd5e1;"></i>',
+              COBR:       '<i class="fas fa-money-bill" style="font-size:6pt;color:#cbd5e1;"></i>',
+              PROMOCI:    '<i class="fas fa-tag" style="font-size:6pt;color:#cbd5e1;"></i>',
+              LAVADO:     '<i class="fas fa-droplet" style="font-size:6pt;color:#cbd5e1;"></i>'
+            };
+            const anotHtml = anots.map(a => {
+              const tipoUp = (a.tipo || '').toUpperCase();
+              const icono = Object.entries(iconMap).find(([k]) => tipoUp.includes(k))?.[1] || '<i class="fas fa-circle-dot" style="font-size:6pt;color:#cbd5e1;"></i>';
+              return `<span style="display:inline-flex;align-items:center;gap:2px;font-size:6.5pt;">${icono}<span style="color:#cbd5e1;font-weight:600;">${a.qty}</span></span>`;
+            }).join('');
+            return `<td style="background:#f8fafc;padding:2px 4px;">
+              <span style="display:flex;align-items:center;gap:3px;justify-content:center;flex-wrap:wrap;">${anotHtml}</span>
+              <span style="display:block;font-weight:700;color:#334155;font-size:8.5pt;line-height:1.3;text-align:center;">${desc > 0 ? `${qA > 0 ? qA : '—'} <span style="text-decoration:line-through;color:#cbd5e1;font-size:7pt;font-weight:400;">${qR}</span>` : (qA > 0 ? qA : '—')}</span>
+            </td>`;
+          }
+          return `<td class="${qA > 0 ? 'visita-cell' : ''}">${qA > 0 ? qA : '—'}</td>`;
+        }).join('');
+        granTotalReal   += totalReal;
+        granTotalActual += totalActual;
+        return `<tr>
+          <td class="planta-name">${fmt(f.color || f.COLOR)}</td>
+          ${celdas}
+          <td style="font-weight:700;color:var(--color-primary);">${totalActual}</td>
+        </tr>`;
+      }).join('');
+
+      const totalesPorTalla = tallas.map(t => {
+        const tot = c.filas.reduce((acc, f) => {
+          const colorKey = (f.color || f.COLOR || '').toUpperCase();
+          const qR = Number(f.cantidades?.[t] ?? f.cantidadesPorTalla?.[t] ?? f.cantidades?.[String(t)] ?? f[t] ?? 0);
+          const desc = descuentos[`${colorKey}||${t}`] || 0;
+          return acc + Math.max(0, qR - desc);
+        }, 0);
+        return `<td>${tot}</td>`;
+      }).join('');
+
+      // Consolidar totales de anotaciones para el badge
+      const totalCobros    = Object.values(anotaciones).flat().filter(a => (a.tipo||'').toUpperCase().includes('COBR')).reduce((s,a) => s + a.qty, 0);
+      const totalPromos    = Object.values(anotaciones).flat().filter(a => (a.tipo||'').toUpperCase().includes('PROMOCI')).reduce((s,a) => s + a.qty, 0);
+      const totalLavados   = Object.values(anotaciones).flat().filter(a => (a.tipo||'').toUpperCase().includes('LAVADO')).reduce((s,a) => s + a.qty, 0);
+
+      const badgeParts = [];
+      if (totalDescontado > 0) badgeParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-scissors" style="color:#64748b;font-size:7pt;"></i><span style="color:#64748b;font-size:7pt;font-weight:600;">S/C: ${totalDescontado}</span></span>`);
+      if (totalCobros    > 0) badgeParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-money-bill" style="color:#64748b;font-size:7pt;"></i><span style="color:#64748b;font-size:7pt;font-weight:600;">Cobro: ${totalCobros}</span></span>`);
+      if (totalPromos    > 0) badgeParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-tag" style="color:#64748b;font-size:7pt;"></i><span style="color:#64748b;font-size:7pt;font-weight:600;">Promo: ${totalPromos}</span></span>`);
+      if (totalLavados   > 0) badgeParts.push(`<span style="display:inline-flex;align-items:center;gap:3px;"><i class="fas fa-droplet" style="color:#64748b;font-size:7pt;"></i><span style="color:#64748b;font-size:7pt;font-weight:600;">Lavado: ${totalLavados}</span></span>`);
+
+      const badgeHtml = badgeParts.length > 0
+        ? `<span class="badge-info" style="display:inline-flex;align-items:center;gap:8px;">${badgeParts.join('<span style="color:#e2e8f0;">|</span>')}</span>`
+        : ``;
+
+      const notaDescuento = '';
+
+      return `
+        <div class="section-card">
+          <div class="section-header">
+            <h4><i class="fas fa-layer-group"></i> Curva de Producción</h4>
+            ${badgeHtml}
+          </div>
+          <table class="liquidacion-table">
+            <thead>
+              <tr>
+                <th style="text-align:left;min-width:110px;">Color</th>
+                ${thTallas}
+                <th style="min-width:60px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+              <tr class="total-row">
+                <td class="planta-name">TOTAL</td>
+                ${totalesPorTalla}
+                <td>${granTotalActual}</td>
+              </tr>
+            </tbody>
+          </table>
+          ${notaDescuento}
+        </div>
+      `;
+    }
+
+    function renderHallazgos(reporte, raw) {
+      let items = [];
+
+      // 1. PRIORIDAD: novedades_auditoria crudas — tienen codigos[] con color/talla/cantidad
+      let novRaw = raw?.novedades_auditoria || raw?.novedades;
+      if (typeof novRaw === 'string') {
+        try { novRaw = JSON.parse(novRaw); } catch (_) { novRaw = null; }
+      }
+      if (Array.isArray(novRaw) && novRaw.length > 0) {
+        items = novRaw.map((n, i) => ({
+          idx: i + 1,
+          tipo: n.tipo || 'HALLAZGO',
+          proceso: n.proceso || null,
+          sin_proceso: !!n.sin_proceso,
+          codigos: Array.isArray(n.codigos) ? n.codigos : [],
+          color: n.color || '—',
+          total: Number(n.totalUnidades || n.defectuosas || n.cantidad || 1)
+        }));
+      }
+
+      // 2. Fallback: entities HallazgoDefectoEntity (cantidadesPorTalla → codigos[])
+      if (!items.length && Array.isArray(reporte.hallazgos) && reporte.hallazgos.length > 0) {
+        items = reporte.hallazgos.map((h, i) => {
+          const codigos = [];
+          if (h.cantidadesPorTalla && Object.keys(h.cantidadesPorTalla).length > 0) {
+            for (const [talla, cantidad] of Object.entries(h.cantidadesPorTalla)) {
+              if (Number(cantidad) > 0) codigos.push({ color: h.color || '—', talla, cantidad: Number(cantidad) });
+            }
+          }
+          const total = typeof h.getTotalUnidades === 'function' ? h.getTotalUnidades() : (h.totalUnidades || h.cantidad || 1);
+          return {
+            idx: i + 1,
+            tipo: h.tipo || 'NO ESPECIFICADO',
+            proceso: h.causa || null,
+            sin_proceso: false,
+            codigos: codigos.length ? codigos : [{ color: h.color || '—', talla: '—', cantidad: total }],
+            color: h.color || '—',
+            total
+          };
+        });
+      }
+
+      if (!items.length) {
+        return `
+          <div class="section-card">
+            <div class="section-header">
+              <h4><i class="fas fa-clipboard-check"></i> Hallazgos y Defectos de Calidad</h4>
+            </div>
+            <div class="empty-msg">No se registraron defectos ni novedades en este lote. Auditoría conforme.</div>
+          </div>
+        `;
+      }
+
+      const totalDefectos = items.reduce((acc, it) => acc + (Number(it.total) || 0), 0);
+      const totalPrendas = Number(reporte.cantidadTotal || raw?.cantidad || 0);
+      const tasaGlobal = totalPrendas > 0 ? ((totalDefectos / totalPrendas) * 100).toFixed(2) + '%' : '—';
+
+      // ── Agrupar consecutivos por TIPO ──
+      const grupos = [];
+      for (const it of items) {
+        const last = grupos[grupos.length - 1];
+        if (last && last.tipo === it.tipo) {
+          last.entries.push(it);
+          last.total += Number(it.total) || 0;
+        } else {
+          grupos.push({ tipo: it.tipo, idx: it.idx, entries: [it], total: Number(it.total) || 0 });
+        }
+      }
+
+      const rowsHtml = grupos.map(g => {
+        // Expandir cada entry en sub-filas por codigos[]
+        const subFilas = [];
+        for (const entry of g.entries) {
+          const proceso = entry.sin_proceso ? 'SIN PROCESO' : (entry.proceso || '');
+          const codigos = entry.codigos && entry.codigos.length ? entry.codigos : [{ color: entry.color, talla: '—', cantidad: entry.total }];
+
+          const tipoUpper = String(entry.tipo || g.tipo || '').toUpperCase().trim();
+          const isPromocion = tipoUpper.includes('PROMOCI');
+          const isCobro = tipoUpper.includes('COBR');
+
+          codigos.forEach((c, ci) => {
+            const procesoCell = ci === 0 ? proceso : '';
+            const procCellUpper = String(procesoCell).toUpperCase().trim();
+            const cellHasData = procCellUpper !== '' && procCellUpper !== '—';
+
+            // Solo se marca la fila que tiene algún proceso con dato; si está vacío no debe marcarse
+            let isRowHighlighted = false;
+            if (cellHasData) {
+              if (isPromocion && procCellUpper === 'SIN PROCESO') {
+                isRowHighlighted = true;
+              } else if (isCobro && procCellUpper !== 'SIN PROCESO') {
+                isRowHighlighted = true;
+              }
+            }
+
+            subFilas.push({
+              isFirstOfGroup: subFilas.length === 0,
+              proceso: procesoCell,
+              color: c.color || '—',
+              talla: c.talla || '—',
+              cantidad: Number(c.cantidad) || 0,
+              isHighlighted: isRowHighlighted
+            });
+          });
+        }
+
+        const rowCount = subFilas.length;
+
+        return subFilas.map((sf, si) => {
+          const isFirst = si === 0;
+          const isLast  = si === rowCount - 1;
+          const borderBottom = isLast ? '' : 'border-bottom:1px dashed #e2e8f0;';
+
+          const hlClass = sf.isHighlighted ? 'td-highlight' : '';
+
+          const tdIdx    = '';
+          const tdClasif = isFirst ? `<td rowspan="${rowCount}" style="font-weight:700;text-transform:uppercase;font-size:7.5pt;text-align:left;vertical-align:middle;border-right:1px solid var(--color-border);">${fmt(g.tipo)}</td>` : '';
+          const tdTotal  = isFirst ? `<td rowspan="${rowCount}" class="visita-cell" style="font-weight:800;vertical-align:middle;text-align:center;">${g.total}</td>` : '';
+
+          return `<tr style="${borderBottom}">
+            ${tdIdx}
+            ${tdClasif}
+            <td class="${hlClass}" style="text-align:center;font-size:7.5pt;color:#475569;">${sf.proceso ? `<span style="font-weight:700">${sf.proceso}</span>` : ''}</td>
+            <td class="${hlClass}" style="font-weight:600;text-transform:uppercase;">${fmt(sf.color)}</td>
+            <td class="${hlClass}" style="text-align:center;font-weight:600;">${sf.talla}</td>
+            <td class="${hlClass}" style="text-align:center;">${sf.cantidad}</td>
+            ${tdTotal}
+          </tr>`;
+        }).join('');
+      }).join('');
+
+      return `
+        <div class="section-card">
+          <div class="section-header">
+            <h4><i class="fas fa-triangle-exclamation"></i> Hallazgos de Calidad</h4>
+            <span class="badge-info">Afectación: ${totalDefectos} prendas ${tasaGlobal !== '—' ? '(' + tasaGlobal + ')' : ''}</span>
+          </div>
+          <table class="liquidacion-table">
+            <thead>
+              <tr>
+                <th style="text-align:left;min-width:120px;">Clasificación</th>
+                <th style="min-width:80px;text-align:center;">Proceso</th>
+                <th style="min-width:70px;">Color</th>
+                <th style="width:50px;text-align:center;">Talla</th>
+                <th style="width:50px;text-align:center;">Cant.</th>
+                <th style="width:50px;text-align:center;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+              <tr class="total-row">
+                <td colspan="5" style="text-align:right;">TOTAL HALLAZGOS:</td>
+                <td style="text-align:center;">${totalDefectos}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    async function init() {
+      // Soporte datos inline (para correo/PDF) o desde localStorage (para ventana normal)
+      const rawStr = (typeof __REPORTE_INLINE__ !== 'undefined' ? JSON.stringify(__REPORTE_INLINE__) : null)
+        || localStorage.getItem('printReporteCalidad')
+        || sessionStorage.getItem('printReporteCalidad');
+      if (!rawStr) {
+        app.innerHTML = `
+          <div style="text-align:center;padding:60px 20px;color:var(--color-text-label);">
+            <i class="fas fa-folder-open" style="font-size:36px;color:#94a3b8;margin-bottom:12px;display:block;"></i>
+            <p style="font-size:15px;font-weight:700;color:var(--color-text-main);margin-bottom:4px;">Sin datos de reporte</p>
+            <p style="font-size:12px;">Abre el reporte desde <strong>Mis Reportes</strong> en el módulo Archivo.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let raw = null;
+      try {
+        raw = JSON.parse(rawStr);
+        if (Array.isArray(raw)) raw = raw[0];
+      } catch (_) {}
+
+      try {
+        const repo = new LocalStorageCalidadRepository();
+        const r = await repo.getReportById();
+
+        const st = getEstadoBadge(r.conclusion || raw?.conclusion);
+        const fechaStr = r.fecha || (raw?.fecha ? new Date(raw.fecha).toLocaleDateString('es-CO') : '—');
+        const tituloVisita = getTituloVisita(r.tipoVisita || raw?.tipo_visita);
+        const nitProd = obtenerNitProductora(r, raw);
+
+        const auditorNombre = r.auditor?.nombre || raw?.auditor_nombre || raw?.auditor || '—';
+        const auditorCedula = r.auditor?.cedula || raw?.auditor_cedula || '';
+        const auditorFirma  = r.auditor?.firmaSvg || raw?.auditor_firma || raw?.auditor_firma_svg || null;
+
+        const plantaNombre = r.representantePlanta?.nombre || r.planta || raw?.planta || '—';
+        const plantaFirma  = r.representantePlanta?.firmaSvg || raw?.firma_svg || raw?.FIRMA_SVG || null;
+
+        // Calcular cantidad descontada (curva real − SIN CONFECCIONAR)
+        const cantidadBase = Number(r.cantidadTotal || raw?.cantidad || 0);
+        let sinConfeccionar = 0;
+        const _novD = (() => { try { const v = raw?.novedades_auditoria; return typeof v === 'string' ? JSON.parse(v) : (Array.isArray(v) ? v : []); } catch(_) { return []; } })();
+        for (const n of _novD) {
+          if ((n.tipo || '').toUpperCase() === 'SIN CONFECCIONAR') {
+            sinConfeccionar += (n.codigos || []).reduce((s, c) => s + Number(c.cantidad || 0), 0);
+          }
+        }
+        const cantidadFinal = cantidadBase > 0 ? Math.max(0, cantidadBase - sinConfeccionar) : cantidadBase;
+
+        app.innerHTML = `
+          <!-- 1. BLOQUE DE CABECERA (Estilo liquidacion-rodamiento) -->
+          <div class="header-block">
+            <div class="header-title">
+              <div class="header-title-left">
+                <svg class="header-logo-svg" xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" aria-label="Logo Grupo TDM">
+                  <defs>
+                    <linearGradient id="tdmLogoGrad" gradientUnits="userSpaceOnUse" x1="433" y1="929" x2="500" y2="94">
+                      <stop offset="0" stop-color="#3f51b5"/>
+                      <stop offset="1" stop-color="#303f9f"/>
+                    </linearGradient>
+                  </defs>
+                  <path fill="url(#tdmLogoGrad)" d="M501.29 94.22C502.23 94.18 503.17 94.14 504.11 94.12C610.95 90.39 714.86 129.47 792.76 202.68C874.77 279.04 922.28 385.41 924.41 497.45C927.94 610.9 886.34 721.12 808.73 803.95C735.84 880.85 628.02 926.37 522.38 929.03C415.75 931.76 312.19 893.19 233.33 821.37C147.09 742.19 103.37 637.2 99.56 521.11C97.15 417.07 135.16 308.02 205.34 230.91C285.17 143.21 383.61 99.15 501.29 94.22Z"/>
+                  <path fill="#ffffff" d="M510.87 287.56C527.52 288.88 525.41 303.77 525.84 316.38C528.13 382.25 623.34 399.94 619.09 467.96C617.74 489.49 608.71 505.94 592.93 520.23C604.6 532.92 603.67 539.23 591.4 550.72C591.81 562.3 591.05 574.53 591.73 586.02C600.19 586.5 609.92 586.3 618.47 586.31C630.02 586.4 641.56 586.31 653.1 586.04C653.82 580.16 653.75 565.84 653.44 559.88C647.17 552.63 646.74 549.39 653.01 542.34C642.17 531.17 635.91 522.68 634.62 506.26C631.52 469.09 670.72 455.69 686.32 428.35C690.95 420.24 689.24 403.06 691.36 393.95C692.41 389.46 696.25 384.77 701.29 385.11C714.3 386 711.67 402.81 713.15 411.8C714.16 419.04 715.9 426.11 720.92 431.77C741.72 455.22 782.51 475.25 773.53 512.71C770.39 525.8 764.82 532.35 755.16 541.29C761.85 548.54 761.98 552.26 755.47 559.41C754.7 567.95 755.03 581.69 755.03 590.51L755.03 645.47C755.03 654.76 755.29 664.18 754.62 673.44C754.28 678.15 750.38 682.18 745.61 682.38C737.49 682.72 729.27 682.55 721.12 682.54L672.32 682.48L514.25 682.48L348.91 682.47L301.32 682.5C293.69 682.51 285.38 682.77 277.8 682.26C274.06 682.01 272.15 678.75 270.07 675.87C269.1 664.49 269.69 649.89 269.56 638.28C269.25 612.39 269.96 586.14 269.51 560.28C267.14 557.17 265.62 555.39 264.04 551.82C265.78 546.92 266.21 546.13 269.62 542.54C258.93 532.49 251.34 523.21 250.02 508.09C246.73 470.66 288.25 455.03 306.15 429.27C313.73 418.35 308.54 398.31 316.05 388.61C317.6 386.78 319.6 385.7 321.91 385.55C333.45 384.78 333.13 398.3 332.88 406.71C332.16 431.12 345.62 440.58 362.21 455.64C375.82 468 390.73 482.69 390.86 502.65C391.01 521.53 383.15 530.76 371.14 543.41C377.71 550.4 376.97 552.81 371.25 559.95C370.8 568.12 371.04 577.96 371.06 586.25C378.09 586.35 429.76 587.2 431.74 585.21C434.47 582.47 433.44 555.82 433.31 550.62L429.86 547.16C419.91 537.21 422.74 529.06 432.01 520.39C420.23 508.05 412.29 497.75 408.42 480.77C393.16 413.94 462.62 396.06 490.08 347.94C495.17 338.89 496.25 328.71 497.34 318.62C498.63 306.63 495.7 291.04 510.87 287.56Z"/>
+                </svg>
+                <div>
+                  <h2>${tituloVisita}</h2>
+                  <p class="header-prod-name">${fmt(limpiarProductora(r.productora || raw?.productora), 'Grupo TDM')}</p>
+                  ${nitProd ? `<p class="header-prod-nit">NIT: ${nitProd}</p>` : ''}
+                </div>
+              </div>
+              <div>
+                <span class="status-badge ${st.cls}">
+                  ${st.text}
+                </span>
+              </div>
+            </div>
+
+            <div class="header-data">
+              <p style="text-align:left;">
+                <strong>Radicado</strong>
+                ${fmt(r.idReporte || raw?.id_reporte)}
+              </p>
+              <p style="text-align:center;">
+                <strong>Fecha Auditoría</strong>
+                ${fechaStr}
+              </p>
+              <p style="text-align:right;">
+                <strong>Tipo de Visita</strong>
+                ${fmt(r.tipoVisita || raw?.tipo_visita)}
+              </p>
+            </div>
+          </div>
+
+          <!-- 2. AUDITOR Y TALLER (Sub-barra informativa) -->
+          <div class="status-band" style="display:flex;gap:0;padding:0;">
+            <div style="flex:1;padding:6px 12px;border-right:1px solid #bfdbfe;">
+              <strong style="color:var(--color-primary);"><i class="fas fa-user-check" style="margin-right:5px;"></i></strong>${fmt(auditorNombre)}
+            </div>
+            <div style="flex:1;padding:6px 12px;text-align:left;">
+              <strong style="color:var(--color-primary);"><i class="fas fa-store" style="margin-right:5px;"></i></strong>${fmt(plantaNombre)}
+            </div>
+          </div>
+
+          <!-- 3. DATOS DE LA OPERACIÓN (Cuadrícula con bordes slate-200) -->
+          <div class="section-card">
+            <div class="section-header">
+              <h4><i class="fas fa-clipboard-list"></i> Trazabilidad</h4>
+              <span class="badge-info">OP: ${fmt(r.op || raw?.op)}</span>
+            </div>
+            <div class="data-grid">
+              <div class="data-cell"><span class="lbl">OP / Lote</span><div class="val highlight">${fmt(r.op || raw?.op)}</div></div>
+              <div class="data-cell"><span class="lbl">Referencia</span><div class="val">${fmt(r.referencia || raw?.referencia)}</div></div>
+              <div class="data-cell"><span class="lbl">Proceso</span><div class="val">${fmt(r.proceso || raw?.proceso)}</div></div>
+              <div class="data-cell"><span class="lbl">Línea</span><div class="val">${fmt(r.linea || raw?.linea)}</div></div>
+
+              <div class="data-cell"><span class="lbl">Prenda</span><div class="val">${fmt(r.prenda || raw?.prenda)}</div></div>
+              <div class="data-cell"><span class="lbl">Género</span><div class="val">${fmt(r.genero || raw?.genero)}</div></div>
+              <div class="data-cell"><span class="lbl">Cantidad Final</span><div class="val" style="color:var(--color-primary);font-weight:800;">${cantidadFinal}</div></div>
+              <div class="data-cell"><span class="lbl">Avance</span><div class="val">${(() => { const av = Number(r.avancePorcentaje || raw?.avance || 0); const esAuditoria = (r.tipoVisita || raw?.tipo_visita || '').toUpperCase().includes('AUDIT'); return (av === 0 && esAuditoria) ? '100' : fmt(av, '0'); })()}%</div></div>
+            </div>
+          </div>
+
+          <!-- 4. LOGÍSTICA Y DESTINO -->
+          <div class="section-card">
+            <div class="section-header">
+              <h4><i class="fas fa-truck-ramp-box"></i> Logística y Destino</h4>
+            </div>
+            <div class="data-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="data-cell"><span class="lbl">Destino Planta</span><div class="val">${fmt(r.destinoPlanta || raw?.destino_planta)}</div></div>
+              <div class="data-cell"><span class="lbl">Destino Proceso</span><div class="val">${fmt(r.destinoProceso || raw?.destino_proceso)}</div></div>
+            </div>
+          </div>
+
+          <!-- 5. CURVA DE PRODUCCIÓN (Si aplica) -->
+          ${renderCurva(r.curva, raw)}
+
+          <!-- 6. REGISTRO DE HALLAZGOS Y DEFECTOS (Estilo liquidacion-table) -->
+          ${renderHallazgos(r, raw)}
+
+          <!-- 7. OBSERVACIONES Y CONCLUSIÓN (Estilo Summary Card) -->
+          <div class="section-card">
+            <div class="section-header">
+              <h4><i class="fas fa-comment-dots"></i> Observaciones y Conclusión</h4>
+            </div>
+            <div class="obs-box" style="${(r.observaciones || raw?.observaciones) ? '' : 'color:#94a3b8;font-style:italic;'}">${(r.observaciones || raw?.observaciones || '').trim() || 'Sin observaciones adicionales registradas para este lote.'}</div>
+          </div>
+
+          <!-- 8. FIRMAS DE CONFORMIDAD -->
+          <div class="section-card">
+            <div class="section-header">
+              <h4><i class="fas fa-signature"></i> Firmas de Conformidad</h4>
+            </div>
+            <div class="firmas-grid">
+              <div class="firma-cell">
+                <div class="firma-img-box">
+                  ${renderFirmaHtml(auditorFirma, 'Registro Digital Verificado')}
+                </div>
+                <div class="firma-line"></div>
+                <div class="firma-role">Auditor de Calidad</div>
+                <div class="firma-name">${fmt(auditorNombre)}</div>
+                ${(auditorCedula && auditorCedula !== '—' && auditorCedula !== 'N/A') ? `<div class="firma-cc">CC: ${fmt(auditorCedula)}</div>` : ''}
+              </div>
+              <div class="firma-cell">
+                <div class="firma-img-box">
+                  ${renderFirmaHtml(plantaFirma, 'Firma No Registrada')}
+                </div>
+                <div class="firma-line"></div>
+                <div class="firma-role">Representante del Taller</div>
+                <div class="firma-name">${fmt(plantaNombre)}</div>
+                <div class="firma-cc">Taller / Confección</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 9. PIE DE PÁGINA -->
+          <div class="doc-footer">
+            <span>Radicado #${fmt(r.idReporte || raw?.id_reporte)} | Generado el ${new Date().toLocaleDateString('es-CO')}</span>
+          </div>
+        `;
+
+      } catch (err) {
+        console.error('[calidad-basica] Error:', err);
+        app.innerHTML = `<p style="text-align:center;padding:40px;color:#dc2626;">Error al estructurar reporte: ${err.message}</p>`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

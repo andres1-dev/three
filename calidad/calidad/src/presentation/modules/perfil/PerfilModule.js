@@ -226,7 +226,15 @@ export class PerfilModule {
                     </div>
 
                     <!-- Nombre en vista -->
-                    <h2 class="profile-name" id="perfil-nombre">—</h2>
+                    <div class="profile-name-wrap" id="perfil-nombre-wrap">
+                        <h2 class="profile-name" id="perfil-nombre">—</h2>
+                        <span class="profile-verified-badge" id="perfil-verified-badge" title="Perfil verificado" style="display:none;" aria-label="Perfil verificado">
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                                <path fill="#1d9bf0" d="m8.6 22.5-1.9-3.2-3.6-.8.4-3.7-2.5-2.8 2.5-2.8-.4-3.7 3.6-.8 1.9-3.2 3.4 1.5 3.4-1.5 1.9 3.2 3.6.8-.4 3.7 2.5 2.8-2.5 2.8.4 3.7-3.6.8-1.9 3.2-3.4-1.5-3.4 1.5z"/>
+                                <path fill="#ffffff" d="m10.2 16.2-3.5-3.5 1.4-1.4 2.1 2.1 5.3-5.3 1.4 1.4-6.7 6.7z"/>
+                            </svg>
+                        </span>
+                    </div>
 
                     <!-- Descripción (solo lectura, no editable desde la interfaz) -->
                     <p class="profile-descripcion" id="perfil-descripcion" style="display:none;"></p>
@@ -811,16 +819,9 @@ export class PerfilModule {
             const canvas = document.createElement('canvas');
             canvas.width = EXP_W; canvas.height = EXP_H;
             const ctx = canvas.getContext('2d');
-            const ratio = EXP_W / FRAME_W;
             const srcX = -tx / scale, srcY = -ty / scale;
             const srcW = FRAME_W / scale, srcH = FRAME_H / scale;
-            if (isCircle) {
-                ctx.save(); ctx.beginPath();
-                ctx.arc(EXP_W / 2, EXP_H / 2, EXP_W / 2, 0, Math.PI * 2);
-                ctx.closePath(); ctx.clip();
-            }
             ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, EXP_W, EXP_H);
-            if (isCircle) ctx.restore();
             canvas.toBlob(blob => {
                 _destroy();
                 if (blob) onConfirmed(blob);
@@ -1005,14 +1006,21 @@ export class PerfilModule {
 
         // Descripción debajo del nombre, centrada, solo lectura (no editable en la interfaz)
         const descEl = root.querySelector('#perfil-descripcion');
+        const hasDesc = !!(u.descripcion && String(u.descripcion).trim().length > 0);
         if (descEl) {
-            if (u.descripcion && String(u.descripcion).trim()) {
+            if (hasDesc) {
                 descEl.textContent = String(u.descripcion).trim();
                 descEl.style.display = '';
             } else {
                 descEl.textContent = '';
                 descEl.style.display = 'none';
             }
+        }
+
+        // Marca de verificación azul estilo Meta / Twitter: activa SOLO si perfil-descripcion tiene contenido
+        const verifiedBadge = root.querySelector('#perfil-verified-badge');
+        if (verifiedBadge) {
+            verifiedBadge.style.display = hasDesc ? 'inline-flex' : 'none';
         }
 
         const cumpleTexto = formatBirthdayText(u.cumpleanos);
@@ -1125,9 +1133,11 @@ export class PerfilModule {
 
         // 2. Info principal: nombre en input
         const nameEl = root.querySelector('#perfil-nombre');
+        const nameWrap = root.querySelector('#perfil-nombre-wrap');
         const nameEditWrap = root.querySelector('#pe-name-edit-wrap');
         const editNombreInput = root.querySelector('#pe-edit-nombre');
-        if (nameEl) nameEl.style.display = 'none';
+        if (nameWrap) nameWrap.style.display = 'none';
+        else if (nameEl) nameEl.style.display = 'none';
         if (nameEditWrap) nameEditWrap.style.display = 'flex';
         if (editNombreInput) editNombreInput.value = u.displayName || u.nombre || '';
 
@@ -1279,8 +1289,10 @@ export class PerfilModule {
 
         // 2. Info principal: volver a texto normal
         const nameEl = root.querySelector('#perfil-nombre');
+        const nameWrap = root.querySelector('#perfil-nombre-wrap');
         const nameEditWrap = root.querySelector('#pe-name-edit-wrap');
-        if (nameEl) nameEl.style.display = 'block';
+        if (nameWrap) nameWrap.style.display = 'inline-flex';
+        else if (nameEl) nameEl.style.display = 'block';
         if (nameEditWrap) nameEditWrap.style.display = 'none';
 
         // 3. Botones de acción

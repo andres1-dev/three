@@ -164,6 +164,9 @@
 
   <!-- Panel Flotante de Control Interactivo -->
   <div class="control-panel no-print">
+    <a class="btn-toggle" href="./calidad-basica.html" style="text-decoration:none; background:#047857;">
+      <i class="fas fa-file-lines"></i> Plantilla Básica
+    </a>
     <a class="btn-toggle" href="./novedad.html" style="text-decoration:none;">
       <i class="fas fa-triangle-exclamation"></i> Ver Novedades
     </a>
@@ -184,7 +187,9 @@
     import { HtmlCalidadRenderer }            from './infrastructure/renderers/HtmlCalidadRenderer.js';
     import { ENV }                            from '../src/infrastructure/config/env.js';
     import { generarReporteCalidadHtml }       from '../src/presentation/modules/archivo/utils/generarReporteCalidadHtml.js';
+    import { generarReporteCalidadHtmlStatico } from '../src/presentation/modules/archivo/utils/generarReporteCalidadHtmlStatico.js';
     import { generarMensajeWhatsAppCalidad, generarUrlWhatsApp } from '../src/presentation/modules/archivo/utils/generarMensajeWhatsAppCalidad.js';
+    import { compartirODescargarPdf }          from '../src/presentation/modules/archivo/utils/generarPdfCliente.js';
 
     const renderer = new HtmlCalidadRenderer();
     const appEl    = document.getElementById('app');
@@ -332,6 +337,10 @@
                 <i class="fas fa-floppy-disk"></i> Guardar Taller
               </button>
 
+              <button type="button" id="btnSharePdf" style="padding:8px 16px; background:#6366f1; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:6px;" title="Generar PDF y compartir a WhatsApp / Descargar">
+                <i class="fas fa-file-pdf"></i> Compartir PDF
+              </button>
+
               <button type="button" id="btnSendWhatsApp" style="padding:8px 16px; background:#25D366; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:700; display:flex; align-items:center; gap:6px;">
                 <i class="fab fa-whatsapp"></i> WhatsApp
               </button>
@@ -433,6 +442,38 @@
         if (res) alert(`Taller "${res.nomVal}" guardado exitosamente en Supabase.`);
       });
 
+      // Compartir / Descargar PDF en cliente
+      modal.querySelector('#btnSharePdf')?.addEventListener('click', async () => {
+        const btn = modal.querySelector('#btnSharePdf');
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando PDF...';
+
+        try {
+          const synced = await sincronizarPlantaSupabase();
+          const standaloneHtml = generarReporteCalidadHtmlStatico(currentReport);
+          const filename = `${idReporte}.pdf`;
+          const res = await compartirODescargarPdf({
+            html: standaloneHtml,
+            filename,
+            title: `Reporte de Calidad #${idReporte}`,
+            text: `Reporte de Auditoría de Calidad OP ${op} / Ref. ${ref} - Planta: ${synced?.nomVal || nombrePlanta}`
+          });
+
+          if (res.shared) {
+            // Compartido vía Web Share API (WhatsApp móvil, etc.)
+          } else if (res.downloaded) {
+            alert(`PDF generado y descargado como ${filename}`);
+          }
+        } catch (err) {
+          console.error('[calidad.html] Error al compartir PDF:', err);
+          alert('Error al generar PDF: ' + err.message);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = orig;
+        }
+      });
+
       // Enviar por WhatsApp
       modal.querySelector('#btnSendWhatsApp')?.addEventListener('click', async () => {
         const telVal = modal.querySelector('#calInputTel')?.value.trim();
@@ -483,7 +524,7 @@
               subject: subj,
               nombre: synced?.nomVal || currentReport?.planta || 'Productora',
               attachmentHtml: standaloneHtml,
-              attachmentName: `reporte_${idReporte}.html`
+              attachmentName: `${idReporte}.pdf`
             })
           });
 

@@ -208,27 +208,27 @@
     display: block;
 }
 
-/* ── Botón glass portada — sin borde circular ── */
+/* ── Botón portada ── */
 .cover-cam-btn {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 12px;
+    right: 12px;
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.25);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     border: none;
     outline: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     margin: 0;
     cursor: pointer;
-    opacity: 0.7;
+    opacity: 0.4;
     transition: opacity 0.2s ease, background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
     pointer-events: auto;
     z-index: 5;
@@ -245,22 +245,21 @@
 
 .profile-cover:hover .cover-cam-btn,
 .cover-cam-btn:focus {
-    opacity: 0.95;
-    background: rgba(15, 23, 42, 0.7);
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    opacity: 0.8;
+    background: rgba(15, 23, 42, 0.38);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .cover-cam-btn:hover {
-    opacity: 1;
-    background: rgba(15, 23, 42, 0.85);
-    border: none;
-    transform: scale(1.1);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    opacity: 0.95;
+    background: rgba(15, 23, 42, 0.48);
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .cover-cam-btn:active {
     transform: scale(0.95);
+    background: rgba(15, 23, 42, 0.58);
 }
 
 /* ── Avatar + botón glass ── */
@@ -299,7 +298,7 @@
     content: none;
 }
 
-/* Glass del avatar — sin borde circular ── */
+/* ── Botón avatar ── */
 .avatar-cam-btn {
     position: absolute;
     bottom: -2px;
@@ -307,19 +306,19 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    background: rgba(15, 23, 42, 0.25);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     border: none;
     outline: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
     margin: 0;
     cursor: pointer;
-    opacity: 0.7;
+    opacity: 0.4;
     transition: opacity 0.2s ease, background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
     z-index: 5;
 }
@@ -335,22 +334,21 @@
 
 .profile-avatar-container:hover .avatar-cam-btn,
 .avatar-cam-btn:focus {
-    opacity: 0.95;
-    background: rgba(15, 23, 42, 0.7);
-    border: none;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    opacity: 0.8;
+    background: rgba(15, 23, 42, 0.38);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .avatar-cam-btn:hover {
-    opacity: 1;
-    background: rgba(15, 23, 42, 0.85);
-    border: none;
-    transform: scale(1.1);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+    opacity: 0.95;
+    background: rgba(15, 23, 42, 0.48);
+    transform: scale(1.08);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 .avatar-cam-btn:active {
     transform: scale(0.95);
+    background: rgba(15, 23, 42, 0.58);
 }
 
 /* ── Iniciales del avatar ── */
@@ -383,11 +381,40 @@
     border-bottom: 1px solid var(--color-border);
 }
 
+.profile-name-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 100%;
+}
+
 .profile-name {
     font-size: var(--font-md);
     font-weight: 700;
     text-align: center;
     letter-spacing: 0.2px;
+    margin: 0;
+}
+
+.profile-verified-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: default;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.profile-verified-badge:hover {
+    transform: scale(1.2) rotate(4deg);
+}
+
+.profile-verified-badge svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    filter: drop-shadow(0 1px 3px rgba(29, 155, 240, 0.4));
 }
 
 .profile-meta {
@@ -403,7 +430,7 @@
     font-weight: 500;
     color: var(--color-text-muted);
     line-height: 1.45;
-    margin: 0;
+    margin: -0.45rem 0 0 0;
     padding: 0 1rem;
     width: 100%;
 }

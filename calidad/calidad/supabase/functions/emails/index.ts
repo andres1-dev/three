@@ -452,7 +452,7 @@ serve(async (req) => {
       (accion === "REPORTE_CALIDAD" && payload.adjunto !== false) ? htmlBody : undefined
     )
     const attachName = payload.attachmentName || (
-      idNovedad !== "N/A" ? `reporte_${idNovedad}.html` : "reporte.html"
+      idNovedad !== "N/A" ? `${idNovedad}.pdf` : "documento.pdf"
     )
 
     // Enviar con GAS

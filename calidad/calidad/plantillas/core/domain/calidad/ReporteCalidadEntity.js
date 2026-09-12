@@ -10,6 +10,7 @@ export class ReporteCalidadEntity {
     this.idReporte = data.idReporte || 'S/N';
     this.fecha = data.fecha || new Date().toISOString();
     this.productora = data.productora || '4 — EL TEMPLO DE LA MODA S.A.S.';
+    this.nitProductora = data.nitProductora || data.nit || '';
     this.tipoVisita = data.tipoVisita || 'AUDITORÍA INICIAL';
     this.conclusion = (data.conclusion || 'APROBADO').toUpperCase();
 

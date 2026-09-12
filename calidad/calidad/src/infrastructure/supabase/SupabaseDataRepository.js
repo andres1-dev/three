@@ -66,23 +66,53 @@ export class SupabaseDataRepository extends IDataService {
 
     /**
      * Llama a la Edge Function /personas (igual que fetchUsuariosData en original)
+     * Incluye timeout de 12s y reintentos automáticos (hasta 2) con backoff.
      */
-    async _callPersonas(accion, extra = {}) {
+    async _callPersonas(accion, extra = {}, { retries = 2, timeoutMs = 12000 } = {}) {
         const token = await this._getAccessToken();
-        const resp = await fetch(`${ENV.FUNCTIONS_URL}/personas`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'apikey': ENV.SUPABASE_KEY
-            },
-            body: JSON.stringify({ accion, ...extra })
-        });
-        if (!resp.ok) {
-            const text = await resp.text().catch(() => resp.status);
-            throw new Error(`[personas/${accion}] HTTP ${resp.status}: ${text}`);
+        let lastErr;
+
+        for (let attempt = 0; attempt <= retries; attempt++) {
+            if (attempt > 0) {
+                // Backoff exponencial: 800ms, 1600ms…
+                await new Promise(r => setTimeout(r, 800 * Math.pow(2, attempt - 1)));
+            }
+
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const resp = await fetch(`${ENV.FUNCTIONS_URL}/personas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                        'apikey': ENV.SUPABASE_KEY
+                    },
+                    body: JSON.stringify({ accion, ...extra }),
+                    signal: controller.signal
+                });
+                clearTimeout(tid);
+
+                if (!resp.ok) {
+                    const text = await resp.text().catch(() => resp.status);
+                    const isTimeout = typeof text === 'string' && text.includes('Gateway Timeout');
+                    lastErr = new Error(`[personas/${accion}] HTTP ${resp.status}: ${text}`);
+                    // Reintentar solo en timeout o 5xx
+                    if ((isTimeout || resp.status >= 500) && attempt < retries) continue;
+                    throw lastErr;
+                }
+                return resp.json();
+            } catch (err) {
+                clearTimeout(tid);
+                lastErr = err;
+                const isAbort   = err.name === 'AbortError';
+                const isNetwork = err instanceof TypeError;
+                if ((isAbort || isNetwork) && attempt < retries) continue;
+                throw err;
+            }
         }
-        return resp.json();
+        throw lastErr;
     }
 
     // ── USUARIOS ──────────────────────────────────────────────────────────────
@@ -183,7 +213,7 @@ export class SupabaseDataRepository extends IDataService {
                 return this._filterPlants(this._plantsCache, options);
             }
 
-            const result = await this._callPersonas('LISTAR_PLANTAS');
+            const result = await this._callArchivo({ accion: 'LISTAR_PLANTAS' });
             const raw = result.data || [];
             const plants = raw.map(Plant.fromRecord);
 
@@ -367,27 +397,26 @@ export class SupabaseDataRepository extends IDataService {
     }
 
     /**
-     * Crea una nueva planta/taller vía Edge Function /personas (CREAR_PLANTA)
+     * Crea una nueva planta/taller vía Edge Function /archivo (CREAR_PLANTA)
      */
     async createPersonaPlant(payload) {
         this._plantsCache = null;
-        return this._callPersonas('CREAR_PLANTA', payload);
+        return this._callArchivo({ accion: 'CREAR_PLANTA', ...payload });
     }
 
     /**
-     * Actualiza una planta/taller existente vía Edge Function /personas (ACTUALIZAR_PLANTA)
+     * Actualiza una planta/taller existente vía Edge Function /archivo (ACTUALIZAR_PLANTA)
      */
     async updatePersonaPlant(payload) {
         this._plantsCache = null;
-        return this._callPersonas('ACTUALIZAR_PLANTA', payload);
+        return this._callArchivo({ accion: 'ACTUALIZAR_PLANTA', ...payload });
     }
 
     /**
      * Guarda o actualiza los datos de un taller/planta en Supabase (tabla plantas) usando Edge Function /archivo.
-     * Busca SOLO por campo planta (match exacto). Si no existe, crea el registro.
-     * Genera ID temporal si no se proporciona uno.
+     * Soporta renombrado, cambio de cédula/NIT (nuevoId), teléfono, correo y registro de plantas nuevas.
      */
-    async guardarOActualizarPlanta({ id_planta, planta, correo, telefono, rol = 'GUEST' }) {
+    async guardarOActualizarPlanta({ id_planta, planta, correo, telefono, rol = 'GUEST', originalId, originalPlanta }) {
         this._plantsCache = null;
         const normNombre = String(planta || '').trim().toUpperCase();
         
@@ -397,44 +426,72 @@ export class SupabaseDataRepository extends IDataService {
 
         const plants = await this.getPlants();
         
-        // Match EXACTO por campo planta en tabla plantas
-        const existente = plants.find(p => {
+        // Buscar si ya existe la planta: por originalId, id_planta, originalPlanta o normNombre
+        const idSearch = String(originalId || id_planta || '').trim();
+        const nomSearch = String(originalPlanta || normNombre || '').trim().toUpperCase();
+
+        const existente = (plants || []).find(p => {
+            const pId = String(p.id || p.nit || p.id_planta || '').trim();
             const pPlanta = String(p.planta || p.nombre || '').trim().toUpperCase();
-            return pPlanta === normNombre;
+            return (idSearch && pId === idSearch) || (nomSearch && pPlanta === nomSearch);
         });
 
-        // Generar ID si no existe
+        // Determinar ID final
         let finalId = String(id_planta || '').trim();
+        if (!finalId && existente) {
+            finalId = String(existente.id || existente.nit || existente.id_planta || '').trim();
+        }
         if (!finalId) {
-            if (existente) {
-                finalId = String(existente.id || existente.nit || existente.id_planta || '').trim();
-            } else {
-                // Generar ID numérico simple basado en el nombre
-                const hash = normNombre.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-                finalId = String(9000000000 + (hash % 999999999)); // Rango 9xxxxxxxx
-            }
+            const hash = normNombre.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+            finalId = String(900000000 + (hash % 99999999)); // Rango seguro para INT4 (< 2.14B)
         }
 
-        const payload = {
-            accion: existente ? 'ACTUALIZAR_PLANTA' : 'CREAR_PLANTA',
-            id: finalId,
-            id_planta: parseInt(finalId, 10),
-            planta: normNombre,
-            nombrePlanta: normNombre,
-            correo: (correo || '').trim(),
-            email: (correo || '').trim(),
-            telefono: (telefono || '').trim(),
-            rol: rol || 'GUEST'
-        };
+        const cleanTel = String(telefono || '').replace(/\D/g, '');
+        const cleanCorreo = String(correo || '').trim();
 
-        const result = await this._callArchivo(payload);
-
-        this._plantsCache = null;
-        return {
-            success: true,
-            isNew: !existente,
-            data: result?.data || result
-        };
+        if (existente) {
+            // ACTUALIZAR planta existente vía /archivo (usa adminClient → bypasa RLS)
+            const idActual = String(existente.id || existente.nit || existente.id_planta || idSearch).trim();
+            const payload = {
+                accion: 'ACTUALIZAR_PLANTA',
+                id: idActual,
+                id_planta: idActual,
+                nuevoId: (finalId && finalId !== idActual) ? finalId : null,
+                nombre: normNombre,
+                planta: normNombre,
+                correo: cleanCorreo,
+                email: cleanCorreo,
+                telefono: cleanTel,
+                rol: rol || 'GUEST'
+            };
+            const result = await this._callArchivo(payload);
+            this._plantsCache = null;
+            return {
+                success: true,
+                isNew: false,
+                data: result?.data || result
+            };
+        } else {
+            // CREAR nueva planta vía /archivo (usa adminClient → bypasa RLS)
+            const payload = {
+                accion: 'CREAR_PLANTA',
+                id: finalId,
+                id_planta: finalId,
+                nombre: normNombre,
+                planta: normNombre,
+                correo: cleanCorreo,
+                email: cleanCorreo,
+                telefono: cleanTel,
+                rol: rol || 'GUEST'
+            };
+            const result = await this._callArchivo(payload);
+            this._plantsCache = null;
+            return {
+                success: true,
+                isNew: true,
+                data: result?.data || result
+            };
+        }
     }
 
     // ── EDGE FUNCTION /FORMULARIOS ───────────────────────────────────────────

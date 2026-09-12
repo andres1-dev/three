@@ -368,6 +368,36 @@
     transform: translateY(-1px);
 }
 
+.ar-card-actions-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ar-card-btn-basica {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    background: #f8fafc;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.ar-card-btn-basica:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+    transform: translateY(-1px);
+}
+
 .ar-card-btn-soporte:active,
 .ar-card-btn-email:active {
     transform: scale(0.96);
@@ -390,45 +420,62 @@
 .ar-email-modal-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.65);
+    background: rgba(15, 23, 42, 0.55);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     justify-content: center;
     z-index: 100000;
-    padding: 16px;
-    animation: ar-modal-fade-in 0.2s ease-out;
+    padding: 0;
+    animation: ar-modal-fade-in 0.22s ease-out;
 }
 
 .ar-email-modal {
-    background: #ffffff;
+    background: var(--color-surface, #ffffff);
     width: 100%;
-    max-width: 520px;
-    border-radius: 18px;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
+    max-width: 600px;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 32px rgba(15, 23, 42, 0.18);
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    animation: ar-modal-scale-up 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: ar-modal-slide-up 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: calc(100vh - 48px);
 }
 
 @keyframes ar-modal-fade-in {
     from { opacity: 0; }
-    to { opacity: 1; }
+    to   { opacity: 1; }
 }
 
-@keyframes ar-modal-scale-up {
-    from { opacity: 0; transform: scale(0.95) translateY(10px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes ar-modal-slide-up {
+    from { transform: translateY(100%); opacity: 0.6; }
+    to   { transform: translateY(0);    opacity: 1;   }
 }
 
 .ar-email-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 22px;
-    border-bottom: 1px solid #f1f5f9;
-    background: #f8fafc;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--color-border, #f1f5f9);
+    background: var(--color-surface, #f8fafc);
+    position: relative;
+}
+
+/* Drag handle visual arriba del modal (estilo bottom-sheet) */
+.ar-email-modal-header::before {
+    content: '';
+    display: block;
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(148, 163, 184, 0.55);
 }
 
 .ar-email-modal-title {
@@ -464,12 +511,13 @@
 }
 
 .ar-email-modal-body {
-    padding: 20px 22px;
+    padding: 18px 20px;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    max-height: 80vh;
+    gap: 14px;
     overflow-y: auto;
+    flex: 1;
 }
 
 .ar-email-info-box {
@@ -518,12 +566,80 @@
     color: #0f172a;
     background: #ffffff;
     outline: none;
-    transition: all 0.15s;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .ar-email-input:focus {
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+/* Input de solo lectura: aspecto desactivado */
+.ar-email-input[readonly], .ar-email-input.ar-input-ro[readonly] {
+    background: #f8fafc;
+    color: #64748b;
+    cursor: default;
+    border-color: #e2e8f0;
+}
+
+/* Input en modo edición activo */
+.ar-email-input.ar-input-editing {
+    background: #ffffff;
+    color: #0f172a;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+/* Wrapper para icono prefijo dentro del input */
+.ar-input-icon-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+
+.ar-input-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    color: #94a3b8;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.ar-email-input.ar-has-icon {
+    padding-left: 36px;
+    width: 100%;
+}
+
+/* Botón editar (lápiz) del header */
+.ar-soporte-edit-btn {
+    background: transparent;
+    border: 1.5px solid #e2e8f0;
+    color: #64748b;
+    cursor: pointer;
+    padding: 5px 9px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.ar-soporte-edit-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+.ar-soporte-edit-btn--active {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #2563eb;
+}
+.ar-soporte-edit-btn--active:hover {
+    background: #dbeafe;
+    color: #1d4ed8;
 }
 
 .ar-email-badge-info {
@@ -612,6 +728,34 @@
     }
 }
 
+/* ── Barra de acciones del modal de soporte ── */
+.ar-soporte-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+.ar-soporte-actions .ar-email-btn-cancel {
+    margin-right: auto;
+}
+
+@media (max-width: 480px) {
+    .ar-soporte-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .ar-soporte-actions .ar-email-btn-cancel {
+        margin-right: 0;
+        order: 99;
+    }
+    .ar-soporte-actions button {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
 .ar-soporte-section-title {
     font-size: 11px;
     font-weight: 800;
@@ -693,6 +837,39 @@
     transform: scale(0.97);
 }
 
+/* ── Input + botón en la misma fila ── */
+.ar-input-action-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.ar-input-action-row .ar-email-input {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Botón compacto integrado al input */
+.ar-btn-inline {
+    flex-shrink: 0;
+    padding: 0 14px;
+    height: 40px;
+    font-size: 12.5px;
+    border-radius: 10px;
+    gap: 6px;
+    white-space: nowrap;
+    box-shadow: none;
+}
+.ar-btn-inline:hover {
+    transform: none;
+    filter: brightness(1.08);
+    box-shadow: none;
+}
+.ar-btn-inline:active {
+    transform: scale(0.97);
+    filter: brightness(0.95);
+}
+
 .ar-btn-save-planta {
     display: inline-flex;
     align-items: center;
@@ -723,5 +900,108 @@
         width: 100%;
         justify-content: flex-start;
     }
+}
+
+/* ── Botón WhatsApp para bottom sheet (estilo Personas) ── */
+.p-btn-wa {
+    flex: 1;
+    padding: 12px;
+    background: #16a34a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: .84rem;
+    font-weight: 750;
+    font-family: inherit;
+    cursor: pointer;
+    transition: opacity .15s, transform .15s, background .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 3px 10px rgba(22, 163, 74, .25);
+}
+.p-btn-wa:hover { background: #15803d; }
+/* ── Filas de contacto y botones de acción neutrales (sin color) ── */
+.ar-contact-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-top: 1px solid #f1f5f9;
+    gap: 12px;
+}
+.ar-contact-row:first-of-type {
+    border-top: none;
+}
+
+.ar-contact-text {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+}
+
+.ar-contact-lbl {
+    font-size: 0.65rem;
+    font-weight: 750;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.ar-contact-val {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.35;
+}
+
+.ar-contact-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: #475569;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    flex-shrink: 0;
+    padding: 0;
+}
+.ar-contact-btn:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+.ar-contact-btn:active {
+    transform: scale(0.93);
+}
+.ar-contact-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+.ar-contact-btn svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+}
+
+/* Placeholder para alinear filas sin ícono */
+.ar-contact-btn-placeholder {
+    display: inline-block;
+    width: 32px;
+    min-width: 32px;
+    flex-shrink: 0;
 }
 

@@ -61,24 +61,34 @@ function normalizarCoords(loc) {
 // ─────────────────────────────────────────────────────────────
 function buildCurva(raw) {
     const items = parseJson(raw);
+    if (!items) return new CurvaProduccionEntity({ tallas: [], filas: [] });
+
+    // Si ya viene estructurado como objeto { tallas, filas }
+    if (items.tallas && items.filas) {
+        return new CurvaProduccionEntity({
+            tallas: items.tallas,
+            filas: items.filas
+        });
+    }
+
     if (!Array.isArray(items) || !items.length) {
         return new CurvaProduccionEntity({ tallas: [], filas: [] });
     }
 
-    // Tallas en orden de aparición, sin tocar
+    // Tallas en orden de aparición, sin tocar y tolerante a case
     const tallasOrden = [];
     const tallasVistas = new Set();
     items.forEach(i => {
-        const t = i.talla;
-        if (!tallasVistas.has(t)) { tallasVistas.add(t); tallasOrden.push(t); }
+        const t = String(i.talla ?? i.TALLA ?? '').trim();
+        if (t && !tallasVistas.has(t)) { tallasVistas.add(t); tallasOrden.push(t); }
     });
 
-    // Agrupar por color, sin tocar el valor
+    // Agrupar por color, sin tocar el valor y tolerante a case
     const colorMap = new Map(); // color → { hex, cantidades }
     items.forEach(i => {
-        const color = i.color;
-        const talla = i.talla;
-        const cant  = Number(i.cantidad || 0);
+        const color = i.color || i.COLOR || 'ÚNICO';
+        const talla = String(i.talla ?? i.TALLA ?? '').trim();
+        const cant  = Number(i.cantidad ?? i.CANTIDAD ?? 0);
         if (!colorMap.has(color)) {
             colorMap.set(color, { hex: colorHex(color), cantidades: {} });
         }
@@ -170,7 +180,7 @@ function buildHallazgos(raw, tallas) {
 // ─────────────────────────────────────────────────────────────
 export class LocalStorageCalidadRepository extends IReportRepository {
     async getReportById() {
-        const raw = localStorage.getItem('printReporteCalidad');
+        const raw = localStorage.getItem('printReporteCalidad') || sessionStorage.getItem('printReporteCalidad');
         if (!raw) throw new Error(
             'No hay datos de reporte. Abre el reporte desde Mis Reportes.'
         );
@@ -186,16 +196,18 @@ export class LocalStorageCalidadRepository extends IReportRepository {
         if (!r) throw new Error('Datos de reporte vacíos.');
 
         // Construir curva y hallazgos
-        const curva     = buildCurva(r.curva_extensiones);
+        const curva     = buildCurva(r.curva_extensiones || r.curvaExtensiones || r.curva || r.extensiones || r.curva_produccion);
         const hallazgos = buildHallazgos(r.novedades_auditoria, curva.tallas);
 
-        // Solo borrar localStorage DESPUÉS de construir todo exitosamente
-        localStorage.removeItem('printReporteCalidad');
+        // Mantener en localStorage y respaldar en sessionStorage para permitir recargar
+        // y alternar entre plantillas (calidad.html y calidad-basica.html)
+        try { sessionStorage.setItem('printReporteCalidad', raw); } catch (_) {}
 
         return new ReporteCalidadEntity({
             idReporte:   r.id_reporte  || 'S/N',
             fecha:       fmtFecha(r.fecha),
             productora:  r.productora  || String(r.id_productora || '') || 'N/A',
+            nitProductora: r.nit_productora || r.nit || r.productora_nit || '',
             tipoVisita:  r.tipo_visita || '',
             conclusion:  r.conclusion  || 'SIN CONCLUSIÓN',
             planta:      r.planta      || 'N/A',
@@ -219,17 +231,17 @@ export class LocalStorageCalidadRepository extends IReportRepository {
             hallazgos,
             observaciones: r.observaciones || '',
             auditor: {
-                nombre:          r.auditor_nombre || r.auditor || 'N/A',
-                cedula:          r.auditor_cedula || 'N/A',
+                nombre:          r.auditor_nombre || r.auditor || r.AUDITOR || 'N/A',
+                cedula:          r.auditor_cedula || r.cedula || r.CC || 'N/A',
                 cargo:           'Auditor de Calidad — Grupo TDM',
-                registroDigital: r.id_reporte || 'AUTH-TDM-OK',
-                firmaSvg:        r.auditor_firma  || null,
+                registroDigital: r.id_reporte || r.ID || 'AUTH-TDM-OK',
+                firmaSvg:        r.auditor_firma || r.auditor_firma_svg || null,
             },
             representantePlanta: {
-                nombre:   r.planta   || 'N/A',
+                nombre:   r.planta || r.PLANTA || 'N/A',
                 cedula:   'N/A',
                 cargo:    'Representante Planta / Taller Confección',
-                firmaSvg: r.firma_svg || null,
+                firmaSvg: r.firma_svg || r.FIRMA_SVG || null,
             }
         });
     }

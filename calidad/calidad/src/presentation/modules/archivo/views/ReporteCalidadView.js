@@ -516,7 +516,7 @@ export class ReporteCalidadView {
                         nombre: synced?.nomVal || plantaNombre,
                         reporte: raw,
                         attachmentHtml: plantillaHtml,
-                        attachmentName: `reporte_${idReporte}.html`
+                        attachmentName: `${idReporte}.pdf`
                     })
                 });
 
