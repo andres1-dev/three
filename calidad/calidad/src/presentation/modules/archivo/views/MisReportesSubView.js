@@ -5,30 +5,30 @@ import { generarMensajeWhatsAppCalidad, generarConsolidadoDiarioWhatsApp, genera
 import { compartirODescargarPdf } from '../utils/generarPdfCliente.js';
 
 const TIPO_CONFIG = {
-    AUDITORIA:     { color: '#8b5cf6', bg: '#f5f3ff', label: 'Auditoría'      },
-    RONDA:         { color: '#06b6d4', bg: '#ecfeff', label: 'Ronda'          },
-    CONTRAMUESTRA: { color: '#f59e0b', bg: '#fffbeb', label: 'Contramuestra'  },
-    SEGUIMIENTO:   { color: '#ec4899', bg: '#fdf2f8', label: 'Seguimiento'    },
-    APROBACION:    { color: '#10b981', bg: '#f0fdf4', label: 'Aprobación'     },
-    CALIDAD:       { color: '#3b82f6', bg: '#eff6ff', label: 'Calidad'        },
-    NOVEDAD:       { color: '#f97316', bg: '#fff7ed', label: 'Novedad'        }
+    AUDITORIA: { color: '#8b5cf6', bg: '#f5f3ff', label: 'Auditoría' },
+    RONDA: { color: '#06b6d4', bg: '#ecfeff', label: 'Ronda' },
+    CONTRAMUESTRA: { color: '#f59e0b', bg: '#fffbeb', label: 'Contramuestra' },
+    SEGUIMIENTO: { color: '#ec4899', bg: '#fdf2f8', label: 'Seguimiento' },
+    APROBACION: { color: '#10b981', bg: '#f0fdf4', label: 'Aprobación' },
+    CALIDAD: { color: '#3b82f6', bg: '#eff6ff', label: 'Calidad' },
+    NOVEDAD: { color: '#f97316', bg: '#fff7ed', label: 'Novedad' }
 };
 
 const MESES = [
-    'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
 export class MisReportesSubView {
     constructor({ container, currentUser, dataService, onBack }) {
-        this.container   = container;
+        this.container = container;
         this.currentUser = currentUser;
         this.dataService = dataService;
-        this.onBack      = onBack;
+        this.onBack = onBack;
 
-        this._reportes  = [];
+        this._reportes = [];
         this._filtrados = [];
-        this._loading   = false;
+        this._loading = false;
 
         // Por defecto, buscar SIEMPRE por hoy (YYYY-MM-DD en hora local)
         const pad = (n) => String(n).padStart(2, '0');
@@ -104,7 +104,7 @@ export class MisReportesSubView {
             ?.addEventListener('click', () => this.onBack?.());
 
         const inputFecha = this.container.querySelector('#ar-fecha');
-        const btnCal     = this.container.querySelector('#ar-btn-cal');
+        const btnCal = this.container.querySelector('#ar-btn-cal');
         const btnWaConsolidado = this.container.querySelector('#ar-btn-wa-consolidado');
 
         // Consolidado de WhatsApp del día (o fecha filtrada)
@@ -149,7 +149,7 @@ export class MisReportesSubView {
             try {
                 inputFecha.focus();
                 inputFecha.click();
-            } catch (err) {}
+            } catch (err) { }
         };
 
         // Tanto en PC como en móviles:
@@ -211,8 +211,8 @@ export class MisReportesSubView {
 
         try {
             const res = await this.dataService.listarReportes({
-                fecha:      this._filtroFecha,
-                rol:        this.currentUser?.rol   || this.currentUser?.ROL   || '',
+                fecha: this._filtroFecha,
+                rol: this.currentUser?.rol || this.currentUser?.ROL || '',
                 productora: this.currentUser?.idProductora || ''
             });
 
@@ -243,25 +243,25 @@ export class MisReportesSubView {
     //  Lista de cards — cada una abre el reporte al tocarla
     // ─────────────────────────────────────────────────────────
     _renderLista() {
-        const listEl  = this.container?.querySelector('#ar-list');
+        const listEl = this.container?.querySelector('#ar-list');
         const emptyEl = this.container?.querySelector('#ar-empty');
         if (!listEl || !emptyEl) return;
 
         if (!this._filtrados.length) {
-            listEl.style.display  = 'none';
+            listEl.style.display = 'none';
             emptyEl.style.display = 'flex';
             return;
         }
 
         emptyEl.style.display = 'none';
-        listEl.style.display  = 'flex';
+        listEl.style.display = 'flex';
 
         listEl.innerHTML = this._filtrados.map((r, idx) => {
-            const tipo  = (r.TIPO_VISITA || 'AUDITORIA').toUpperCase();
-            const cfg   = TIPO_CONFIG[tipo] || TIPO_CONFIG.AUDITORIA;
+            const tipo = (r.TIPO_VISITA || 'AUDITORIA').toUpperCase();
+            const cfg = TIPO_CONFIG[tipo] || TIPO_CONFIG.AUDITORIA;
             const fecha = this._formatFecha(r.FECHA || '');
-            const lote  = r.LOTE || r.ID || '—';
-            const ref   = r.REFERENCIA || '—';
+            const lote = r.LOTE || r.ID || '—';
+            const ref = r.REFERENCIA || '—';
             const planta = r.PLANTA || '—';
             const concl = r.CONCLUSION || '—';
             const clower = concl.toLowerCase();
@@ -327,7 +327,7 @@ export class MisReportesSubView {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const idx = parseInt(btn.dataset.idx);
-                const id  = btn.dataset.id;
+                const id = btn.dataset.id;
                 const card = btn.closest('.ar-report-card');
                 this._abrirReporte(idx, id, card, 'calidad-basica.html');
             });
@@ -338,7 +338,7 @@ export class MisReportesSubView {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const idx = parseInt(btn.dataset.idx);
-                const id  = btn.dataset.id;
+                const id = btn.dataset.id;
                 const card = btn.closest('.ar-report-card');
                 this._abrirModalSoporte(idx, id, card);
             });
@@ -349,7 +349,7 @@ export class MisReportesSubView {
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.ar-card-btn-soporte') || e.target.closest('.ar-card-btn-basica')) return;
                 const idx = parseInt(card.dataset.idx);
-                const id  = card.dataset.id;
+                const id = card.dataset.id;
                 this._abrirReporte(idx, id, card, 'calidad.html');
             });
         });
@@ -414,7 +414,7 @@ export class MisReportesSubView {
             if (this.dataService && typeof this.dataService.getPlants === 'function' && plantaReporte) {
                 try {
                     const plants = await this.dataService.getPlants();
-                    
+
                     // Match EXACTO por campo planta en tabla plantas
                     const match = (plants || []).find(p => {
                         const pPlanta = String(p.planta || p.nombre || '').trim().toUpperCase();
@@ -509,9 +509,9 @@ export class MisReportesSubView {
         sheetEl.querySelector('.p-sheet-handle')?.addEventListener('click', cerrar);
 
         // SVGs reutilizables (estilo Personas)
-        const SVG_WA    = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`;
-        const SVG_MAIL  = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>`;
-        const SVG_EDIT  = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+        const SVG_WA = `<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`;
+        const SVG_MAIL = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="2,4 12,13 22,4"/></svg>`;
+        const SVG_EDIT = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
         const SVG_CHECK = `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`;
         const SVG_CLOSE = `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
@@ -521,7 +521,7 @@ export class MisReportesSubView {
 
         // Función para guardar en Supabase
         const sincronizarPlanta = async (idVal, nomVal, telVal, corVal, validarContacto = false) => {
-            idVal  = (idVal || '').trim();
+            idVal = (idVal || '').trim();
             nomVal = (nomVal || '').trim().toUpperCase();
             telVal = (telVal || '').trim();
             corVal = (corVal || '').trim();
@@ -675,7 +675,7 @@ export class MisReportesSubView {
                         html: plantillaHtml,
                         filename,
                         title: `Reporte de Calidad #${idReporte}`,
-                        text: `Adjunto reporte de calidad OP ${op} / Ref. ${ref}`
+                        text: `Adjunto reporte de calidad para la Orden de Producción: ${op} Referencia: ${ref}`
                     });
 
                     if (result.shared) {
@@ -704,7 +704,7 @@ export class MisReportesSubView {
                 btnWA.disabled = true;
                 btnWA.innerHTML = '<span style="font-size:10px;">...</span>';
                 const mensaje = generarMensajeWhatsAppCalidad(reporte);
-                const waUrl   = generarUrlWhatsApp(plantaInfo.telefono, mensaje);
+                const waUrl = generarUrlWhatsApp(plantaInfo.telefono, mensaje);
                 window.open(waUrl, '_blank');
                 Toast.success('Mensaje preparado para WhatsApp');
                 btnWA.disabled = false;
@@ -853,20 +853,20 @@ export class MisReportesSubView {
     // ─────────────────────────────────────────────────────────
     _showLoader(show) {
         const loader = this.container?.querySelector('#ar-loader');
-        const list   = this.container?.querySelector('#ar-list');
-        const empty  = this.container?.querySelector('#ar-empty');
+        const list = this.container?.querySelector('#ar-list');
+        const empty = this.container?.querySelector('#ar-empty');
         if (!loader) return;
         loader.style.display = show ? 'flex' : 'none';
         if (show) {
-            if (list)  list.style.display  = 'none';
+            if (list) list.style.display = 'none';
             if (empty) empty.style.display = 'none';
         }
     }
 
     _showEmpty() {
-        const listEl  = this.container?.querySelector('#ar-list');
+        const listEl = this.container?.querySelector('#ar-list');
         const emptyEl = this.container?.querySelector('#ar-empty');
-        if (listEl)  listEl.style.display  = 'none';
+        if (listEl) listEl.style.display = 'none';
         if (emptyEl) emptyEl.style.display = 'flex';
     }
 
