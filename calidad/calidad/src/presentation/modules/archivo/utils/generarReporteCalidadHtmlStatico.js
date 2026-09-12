@@ -362,52 +362,51 @@ function renderHallazgosStatico(raw) {
 // ── CSS inline ───────────────────────────────────────────────────────
 
 const CSS = `
-    :root { --color-primary: #3f51b5; --color-border: #e2e8f0; --color-text-main: #1e293b; --color-text-label: #64748b; }
     *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size:9pt; color:var(--color-text-main); background:#fff; line-height:1.4; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    .sheet { width:100%; max-width:800px; margin:0 auto; padding:12mm 14mm; }
-    .header-block { margin-bottom:.8rem; padding:.75rem 1rem; background:#fff; border:2px solid var(--color-primary); border-radius:8px; }
-    .header-title { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.5rem; padding-bottom:.5rem; border-bottom:1px solid var(--color-border); }
+    body { font-family: Arial, Helvetica, sans-serif; font-size:9pt; color:#1e293b; background:#fff; line-height:1.4; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .sheet { width:100%; max-width:794px; margin:0 auto; padding:8mm 10mm; background:#ffffff; box-sizing:border-box; }
+    .header-block { margin-bottom:.8rem; padding:.75rem 1rem; background:#fff; border:2px solid #3f51b5; border-radius:8px; }
+    .header-title { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.5rem; padding-bottom:.5rem; border-bottom:1px solid #e2e8f0; }
     .header-title-left { display:flex; align-items:flex-start; gap:10px; }
     .header-logo-svg { width:40px; height:40px; display:block; flex-shrink:0; }
-    .header-title h2 { font-size:11.5pt; font-weight:800; color:var(--color-primary); margin:0; text-transform:uppercase; letter-spacing:.6px; }
+    .header-title h2 { font-size:11.5pt; font-weight:800; color:#3f51b5; margin:0; text-transform:uppercase; letter-spacing:.6px; }
     .header-prod-name { font-size:8pt; font-weight:700; color:#334155; text-transform:uppercase; margin-top:2px; }
-    .header-prod-nit { font-size:7pt; font-weight:600; color:var(--color-text-label); margin-top:1px; }
-    .header-data { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; }
-    .header-data p { margin:0; font-size:8.5pt; font-weight:700; }
-    .header-data p strong { display:block; font-size:6.5pt; color:var(--color-text-label); text-transform:uppercase; letter-spacing:.5px; margin-bottom:1px; font-weight:700; }
+    .header-prod-nit { font-size:7pt; font-weight:600; color:#64748b; margin-top:1px; }
+    .header-data { display:table; width:100%; table-layout:fixed; }
+    .header-data p { display:table-cell; vertical-align:middle; width:33.33%; margin:0; font-size:8.5pt; font-weight:700; color:#1e293b; }
+    .header-data p strong { display:block; font-size:6.5pt; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin-bottom:1px; font-weight:700; }
     .status-band { display:flex; justify-content:space-between; align-items:center; padding:6px 12px; margin-bottom:.75rem; background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; font-size:8pt; }
     .status-badge { display:inline-flex; align-items:center; padding:2px 10px; border-radius:6px; font-size:11.5pt; font-weight:800; letter-spacing:.6px; text-transform:uppercase; }
     .status-badge.aprobado { color:#16a34a; border:1.5px solid #16a34a; }
     .status-badge.rechazado { color:#dc2626; border:1.5px solid #dc2626; }
     .status-badge.pausado,.status-badge.pending { color:#2563eb; border:1.5px solid #2563eb; }
-    .section-card { background:#fff; border:1px solid var(--color-border); border-radius:8px; margin-bottom:.75rem; overflow:hidden; }
-    .section-header { background:#f8fafc; border-bottom:1px solid var(--color-border); padding:6px 12px; display:flex; justify-content:space-between; align-items:center; }
-    .section-header h4 { font-size:8pt; font-weight:700; color:var(--color-primary); text-transform:uppercase; letter-spacing:.5px; margin:0; display:flex; align-items:center; gap:6px; }
-    .badge-info { font-size:7.5pt; font-weight:600; color:#64748b; background:#fff; padding:2px 8px; border:1px solid var(--color-border); border-radius:4px; display:inline-flex; align-items:center; gap:8px; }
-    .data-grid { display:grid; grid-template-columns:repeat(4,1fr); }
-    .data-cell { border-right:1px solid var(--color-border); border-bottom:1px solid var(--color-border); padding:5px 10px; }
-    .data-cell:nth-child(4n) { border-right:none; }
-    .data-cell .lbl { display:block; font-size:6.5pt; font-weight:700; text-transform:uppercase; color:var(--color-text-label); letter-spacing:.4px; margin-bottom:2px; }
-    .data-cell .val { font-size:8.5pt; font-weight:700; color:var(--color-text-main); }
-    .data-cell .val.highlight { color:var(--color-primary); }
+    .section-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; margin-bottom:.75rem; overflow:hidden; }
+    .section-header { background:#f8fafc; border-bottom:1px solid #e2e8f0; padding:6px 12px; display:flex; justify-content:space-between; align-items:center; }
+    .section-header h4 { font-size:8pt; font-weight:700; color:#3f51b5; text-transform:uppercase; letter-spacing:.5px; margin:0; display:flex; align-items:center; gap:6px; }
+    .badge-info { font-size:7.5pt; font-weight:600; color:#64748b; background:#fff; padding:2px 8px; border:1px solid #e2e8f0; border-radius:4px; display:inline-flex; align-items:center; gap:8px; }
+    .data-table-layout { display:table; width:100%; table-layout:fixed; border-collapse:collapse; }
+    .data-row-layout { display:table-row; }
+    .data-cell { display:table-cell; vertical-align:middle; border-right:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; padding:5px 10px; box-sizing:border-box; }
+    .data-cell .lbl { display:block; font-size:6.5pt; font-weight:700; text-transform:uppercase; color:#64748b; letter-spacing:.4px; margin-bottom:2px; }
+    .data-cell .val { font-size:8.5pt; font-weight:700; color:#1e293b; }
+    .data-cell .val.highlight { color:#3f51b5; }
     .liquidacion-table { width:100%; border-collapse:collapse; margin:0; font-size:8pt; }
-    .liquidacion-table th,.liquidacion-table td { border:1px solid var(--color-border); padding:4.5px 7px; text-align:center; vertical-align:middle; }
+    .liquidacion-table th,.liquidacion-table td { border:1px solid #e2e8f0; padding:4.5px 7px; text-align:center; vertical-align:middle; }
     .liquidacion-table th { background:#f8fafc; font-weight:700; color:#475569; text-transform:uppercase; font-size:7pt; }
     .liquidacion-table td.td-highlight { background:#f8fafc; }
     .liquidacion-table tr:hover td, .liquidacion-table tr:hover td.td-highlight { background:#f1f5f9; }
-    .liquidacion-table .total-row { background:#f1f5f9; font-weight:700; color:var(--color-primary); border-top:1.5px solid var(--color-border); }
-    .empty-msg { padding:12px; text-align:center; color:var(--color-text-label); font-size:8pt; font-style:italic; }
-    .obs-box { padding:8px 12px; font-size:8.5pt; color:var(--color-text-main); min-height:44px; line-height:1.5; word-break:break-word; }
-    .firmas-grid { display:grid; grid-template-columns:1fr 1fr; }
-    .firma-cell { padding:8px 14px; text-align:center; border-right:1px solid var(--color-border); }
+    .liquidacion-table .total-row { background:#f1f5f9; font-weight:700; color:#3f51b5; border-top:1.5px solid #e2e8f0; }
+    .empty-msg { padding:12px; text-align:center; color:#64748b; font-size:8pt; font-style:italic; }
+    .obs-box { padding:8px 12px; font-size:8.5pt; color:#1e293b; min-height:44px; line-height:1.5; word-break:break-word; }
+    .firmas-grid { display:table; width:100%; table-layout:fixed; }
+    .firma-cell { display:table-cell; vertical-align:top; width:50%; padding:8px 14px; text-align:center; border-right:1px solid #e2e8f0; box-sizing:border-box; }
     .firma-cell:last-child { border-right:none; }
     .firma-img-box { height:48px; display:flex; align-items:center; justify-content:center; margin-bottom:4px; overflow:hidden; }
     .firma-line { border-top:1px solid #cbd5e1; width:75%; margin:0 auto 3px; }
-    .firma-role { font-size:6.5pt; font-weight:700; text-transform:uppercase; color:var(--color-text-label); }
-    .firma-name { font-size:8.5pt; font-weight:700; color:var(--color-text-main); margin-top:1px; }
-    .firma-cc { font-size:7pt; color:var(--color-text-label); }
-    .doc-footer { margin-top:8px; border-top:1px solid var(--color-border); padding-top:5px; display:flex; justify-content:space-between; font-size:6.5pt; color:var(--color-text-label); text-transform:uppercase; }
+    .firma-role { font-size:6.5pt; font-weight:700; text-transform:uppercase; color:#64748b; }
+    .firma-name { font-size:8.5pt; font-weight:700; color:#1e293b; margin-top:1px; }
+    .firma-cc { font-size:7pt; color:#64748b; }
+    .doc-footer { margin-top:8px; border-top:1px solid #e2e8f0; padding-top:5px; display:flex; justify-content:space-between; font-size:6.5pt; color:#64748b; text-transform:uppercase; }
     .fa-svg { display:inline-block; vertical-align:-0.125em; fill:currentColor; }
 `;
 
@@ -465,6 +464,7 @@ export function generarReporteCalidadHtmlStatico(raw) {
 </head>
 <body>
 <div class="sheet">
+  <style>${CSS}</style>
 
   <!-- CABECERA -->
   <div class="header-block">
@@ -490,10 +490,10 @@ export function generarReporteCalidadHtmlStatico(raw) {
   <!-- AUDITOR Y TALLER (Sub-barra informativa) -->
   <div class="status-band" style="display:flex;gap:0;padding:0;">
     <div style="flex:1;padding:6px 12px;border-right:1px solid #bfdbfe;display:flex;align-items:center;">
-      <strong style="color:var(--color-primary);margin-right:5px;display:inline-flex;align-items:center;">${faSvg('user-check')}</strong>${fmt(auditorNombre)}
+      <strong style="color:#3f51b5;margin-right:5px;display:inline-flex;align-items:center;">${faSvg('user-check')}</strong>${fmt(auditorNombre)}
     </div>
     <div style="flex:1;padding:6px 12px;text-align:left;display:flex;align-items:center;">
-      <strong style="color:var(--color-primary);margin-right:5px;display:inline-flex;align-items:center;">${faSvg('store')}</strong>${fmt(plantaNombre)}
+      <strong style="color:#3f51b5;margin-right:5px;display:inline-flex;align-items:center;">${faSvg('store')}</strong>${fmt(plantaNombre)}
     </div>
   </div>
 
@@ -503,24 +503,30 @@ export function generarReporteCalidadHtmlStatico(raw) {
       <h4>${faSvg('clipboard-list')} Trazabilidad</h4>
       <span class="badge-info">OP: ${fmt(raw?.op)}</span>
     </div>
-    <div class="data-grid">
-      <div class="data-cell"><span class="lbl">OP / Lote</span><div class="val highlight">${fmt(raw?.op)}</div></div>
-      <div class="data-cell"><span class="lbl">Referencia</span><div class="val">${fmt(raw?.referencia)}</div></div>
-      <div class="data-cell"><span class="lbl">Proceso</span><div class="val">${fmt(raw?.proceso)}</div></div>
-      <div class="data-cell"><span class="lbl">Línea</span><div class="val">${fmt(raw?.linea)}</div></div>
-      <div class="data-cell"><span class="lbl">Prenda</span><div class="val">${fmt(raw?.prenda)}</div></div>
-      <div class="data-cell"><span class="lbl">Género</span><div class="val">${fmt(raw?.genero)}</div></div>
-      <div class="data-cell"><span class="lbl">Cantidad Final</span><div class="val highlight">${cantidadFinal}</div></div>
-      <div class="data-cell"><span class="lbl">Avance</span><div class="val">${avanceStr}%</div></div>
+    <div class="data-table-layout">
+      <div class="data-row-layout">
+        <div class="data-cell" style="width:25%;"><span class="lbl">OP / Lote</span><div class="val highlight">${fmt(raw?.op)}</div></div>
+        <div class="data-cell" style="width:25%;"><span class="lbl">Referencia</span><div class="val">${fmt(raw?.referencia)}</div></div>
+        <div class="data-cell" style="width:25%;"><span class="lbl">Proceso</span><div class="val">${fmt(raw?.proceso)}</div></div>
+        <div class="data-cell" style="width:25%;border-right:none;"><span class="lbl">Línea</span><div class="val">${fmt(raw?.linea)}</div></div>
+      </div>
+      <div class="data-row-layout">
+        <div class="data-cell" style="width:25%;border-bottom:none;"><span class="lbl">Prenda</span><div class="val">${fmt(raw?.prenda)}</div></div>
+        <div class="data-cell" style="width:25%;border-bottom:none;"><span class="lbl">Género</span><div class="val">${fmt(raw?.genero)}</div></div>
+        <div class="data-cell" style="width:25%;border-bottom:none;"><span class="lbl">Cantidad Final</span><div class="val highlight">${cantidadFinal}</div></div>
+        <div class="data-cell" style="width:25%;border-right:none;border-bottom:none;"><span class="lbl">Avance</span><div class="val">${avanceStr}%</div></div>
+      </div>
     </div>
   </div>
 
   <!-- LOGÍSTICA -->
   <div class="section-card">
     <div class="section-header"><h4>${faSvg('truck-ramp-box')} Logística y Destino</h4></div>
-    <div class="data-grid" style="grid-template-columns:repeat(2,1fr);">
-      <div class="data-cell"><span class="lbl">Destino Planta</span><div class="val">${fmt(raw?.destino_planta)}</div></div>
-      <div class="data-cell"><span class="lbl">Destino Proceso</span><div class="val">${fmt(raw?.destino_proceso)}</div></div>
+    <div class="data-table-layout">
+      <div class="data-row-layout">
+        <div class="data-cell" style="width:50%;border-bottom:none;"><span class="lbl">Destino Planta</span><div class="val">${fmt(raw?.destino_planta)}</div></div>
+        <div class="data-cell" style="width:50%;border-bottom:none;border-right:none;"><span class="lbl">Destino Proceso</span><div class="val">${fmt(raw?.destino_proceso)}</div></div>
+      </div>
     </div>
   </div>
 
@@ -540,19 +546,21 @@ export function generarReporteCalidadHtmlStatico(raw) {
   <div class="section-card">
     <div class="section-header"><h4>${faSvg('signature')} Firmas de Conformidad</h4></div>
     <div class="firmas-grid">
-      <div class="firma-cell">
-        <div class="firma-img-box">${renderFirmaHtml(auditorFirma, 'Registro Digital Verificado')}</div>
-        <div class="firma-line"></div>
-        <div class="firma-role">Auditor de Calidad</div>
-        <div class="firma-name">${fmt(auditorNombre)}</div>
-        ${(auditorCedula && auditorCedula !== '—' && auditorCedula !== 'N/A') ? `<div class="firma-cc">CC: ${fmt(auditorCedula)}</div>` : ''}
-      </div>
-      <div class="firma-cell">
-        <div class="firma-img-box">${renderFirmaHtml(plantaFirma, 'Firma No Registrada')}</div>
-        <div class="firma-line"></div>
-        <div class="firma-role">Representante del Taller</div>
-        <div class="firma-name">${fmt(plantaNombre)}</div>
-        <div class="firma-cc">Taller / Confección</div>
+      <div style="display:table-row;">
+        <div class="firma-cell">
+          <div class="firma-img-box">${renderFirmaHtml(auditorFirma, 'Registro Digital Verificado')}</div>
+          <div class="firma-line"></div>
+          <div class="firma-role">Auditor de Calidad</div>
+          <div class="firma-name">${fmt(auditorNombre)}</div>
+          ${(auditorCedula && auditorCedula !== '—' && auditorCedula !== 'N/A') ? `<div class="firma-cc">CC: ${fmt(auditorCedula)}</div>` : ''}
+        </div>
+        <div class="firma-cell" style="border-right:none;">
+          <div class="firma-img-box">${renderFirmaHtml(plantaFirma, 'Firma No Registrada')}</div>
+          <div class="firma-line"></div>
+          <div class="firma-role">Representante del Taller</div>
+          <div class="firma-name">${fmt(plantaNombre)}</div>
+          <div class="firma-cc">Taller / Confección</div>
+        </div>
       </div>
     </div>
   </div>

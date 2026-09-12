@@ -107,34 +107,35 @@ export async function generarPdfBlob(htmlDoc, filename = 'reporte.pdf') {
     const html2pdf = await cargarHtml2Pdf();
     const { iframe, cleanup } = await montarIframe(htmlDoc);
 
-    // Esperar a que fonts y estilos terminen de aplicarse
-    await new Promise(resolve => setTimeout(resolve, 400));
+    // Esperar a que el iframe renderice completamente imágenes, SVG y estilos
+    await new Promise(resolve => setTimeout(resolve, 450));
 
-    const body = iframe.contentDocument?.body;
-    if (!body) {
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    const sheetEl = iframeDoc?.querySelector('.sheet') || iframeDoc?.body;
+    if (!sheetEl) {
         cleanup();
         throw new Error('No se pudo acceder al contenido del documento generado');
     }
 
     const opt = {
-        margin:      [6, 6, 6, 6],
+        margin:      [4, 4, 4, 4],
         filename:    filename,
-        image:       { type: 'jpeg', quality: 0.97 },
+        image:       { type: 'jpeg', quality: 0.98 },
         html2canvas: {
-            scale:        2,
-            useCORS:      true,
-            allowTaint:   false,
-            logging:      false,
-            scrollX:      0,
-            scrollY:      0,
-            windowWidth:  794,
-            windowHeight: iframe.contentDocument.documentElement.scrollHeight
+            scale:           2,
+            useCORS:         true,
+            allowTaint:      false,
+            logging:         false,
+            backgroundColor: '#ffffff',
+            scrollX:         0,
+            scrollY:         0,
+            windowWidth:     794
         },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
 
     try {
-        const pdfBlob = await html2pdf().set(opt).from(body).output('blob');
+        const pdfBlob = await html2pdf().set(opt).from(sheetEl).output('blob');
         return pdfBlob;
     } finally {
         cleanup();

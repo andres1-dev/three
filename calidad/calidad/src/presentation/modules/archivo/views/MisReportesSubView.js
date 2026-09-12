@@ -56,18 +56,21 @@ export class MisReportesSubView {
                             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                         </svg>
                     </button>
-                    <label for="ar-fecha" class="icon-btn" id="ar-btn-cal" aria-label="Seleccionar fecha" title="Cambiar fecha" role="button" tabindex="0">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
-                             stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                            <line x1="16" y1="2" x2="16" y2="6"/>
-                            <line x1="8" y1="2" x2="8" y2="6"/>
-                            <line x1="3" y1="10" x2="21" y2="10"/>
-                        </svg>
-                    </label>
-                    <input type="date" id="ar-fecha" value="${this._filtroFecha}"
-                           aria-label="Fecha de reportes"
-                           style="position:absolute;width:0;height:0;opacity:0;border:none;padding:0;margin:0;">
+                    <div class="ar-cal-wrap" style="position:relative;display:inline-flex;align-items:center;justify-content:center;">
+                        <button type="button" class="icon-btn" id="ar-btn-cal" aria-label="Seleccionar fecha" title="Cambiar fecha" tabindex="0">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none"
+                                 stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                        </button>
+                        <input type="date" id="ar-fecha" value="${this._filtroFecha}"
+                               aria-label="Fecha de reportes"
+                               title="Cambiar fecha"
+                               style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.001;cursor:pointer;z-index:3;margin:0;padding:0;border:none;background:transparent;font-size:16px;">
+                    </div>
                 </div>
             </div>
 
@@ -133,13 +136,33 @@ export class MisReportesSubView {
             }
         });
 
-        // El label[for="ar-fecha"] activa el date picker nativamente en todos los
-        // navegadores incluyendo iOS Safari (no necesita JS — el label lo hace solo).
-        // En teclado: Enter/Space sobre el label también lo abre.
+        const abrirPicker = () => {
+            if (!inputFecha) return;
+            try {
+                if (typeof inputFecha.showPicker === 'function') {
+                    inputFecha.showPicker();
+                    return;
+                }
+            } catch (err) {
+                // Si el navegador ya abrió el selector nativo o lanza NotAllowedError
+            }
+            try {
+                inputFecha.focus();
+                inputFecha.click();
+            } catch (err) {}
+        };
+
+        // Tanto en PC como en móviles:
+        // - En móviles (iOS/Android): el input sobrepuesto recibe el tap nativo directo abriendo el picker nativo
+        // - En PC: el click invoca showPicker() abriendo de inmediato el calendario flotante
+        inputFecha?.addEventListener('click', abrirPicker);
+        btnCal?.addEventListener('click', abrirPicker);
+
+        // Soporte de accesibilidad por teclado
         btnCal?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                inputFecha?.click();
+                abrirPicker();
             }
         });
 
