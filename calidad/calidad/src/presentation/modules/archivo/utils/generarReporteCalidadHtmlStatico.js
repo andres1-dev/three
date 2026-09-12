@@ -65,10 +65,28 @@ const FA_ICONS = {
     }
 };
 
-function faSvg(name, extraStyle = '') {
+function faSvg(name, extraStyle = '', size = 13, defaultColor = '#3f51b5') {
     const icon = FA_ICONS[name];
     if (!icon) return '';
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.vb}" class="fa-svg" style="width:1em;height:1em;vertical-align:-0.125em;fill:currentColor;display:inline-block;${extraStyle}" aria-hidden="true"><path d="${icon.d}"/></svg>`;
+
+    let fillColor = defaultColor;
+    const colorMatch = extraStyle.match(/color\s*:\s*([^;]+)/i);
+    if (colorMatch) {
+        fillColor = colorMatch[1].trim();
+    }
+
+    let iconSize = size;
+    const sizeMatch = extraStyle.match(/(?:font-size|width|height)\s*:\s*(\d+(?:\.\d+)?)(px|pt)?/i);
+    if (sizeMatch) {
+        const val = parseFloat(sizeMatch[1]);
+        if (sizeMatch[2] === 'pt') {
+            iconSize = Math.max(9, Math.round(val * 1.33));
+        } else if (sizeMatch[2] === 'px' || !sizeMatch[2]) {
+            iconSize = Math.max(9, Math.round(val));
+        }
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${icon.vb}" width="${iconSize}" height="${iconSize}" class="fa-svg" style="width:${iconSize}px;height:${iconSize}px;vertical-align:-0.15em;fill:${fillColor};display:inline-block;${extraStyle}" aria-hidden="true"><path fill="${fillColor}" d="${icon.d}"/></svg>`;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -197,10 +215,10 @@ function renderCurvaStatico(raw) {
     let granTotalActual = 0;
 
     const iconMapCurva = {
-        'SIN CONF': faSvg('scissors', 'font-size:6pt;color:#cbd5e1;'),
-        COBR:       faSvg('money-bill', 'font-size:6pt;color:#cbd5e1;'),
-        PROMOCI:    faSvg('tag', 'font-size:6pt;color:#cbd5e1;'),
-        LAVADO:     faSvg('droplet', 'font-size:6pt;color:#cbd5e1;')
+        'SIN CONF': faSvg('scissors', 'font-size:7pt;color:#64748b;'),
+        COBR:       faSvg('money-bill', 'font-size:7pt;color:#64748b;'),
+        PROMOCI:    faSvg('tag', 'font-size:7pt;color:#64748b;'),
+        LAVADO:     faSvg('droplet', 'font-size:7pt;color:#64748b;')
     };
 
     const rows = c.filas.map(f => {
@@ -215,7 +233,7 @@ function renderCurvaStatico(raw) {
             if (anots?.length) {
                 const anotTxt = anots.map(a => {
                     const tipoUp = (a.tipo || '').toUpperCase();
-                    const ic = Object.entries(iconMapCurva).find(([k]) => tipoUp.includes(k))?.[1] || faSvg('circle-dot', 'font-size:6pt;color:#cbd5e1;');
+                    const ic = Object.entries(iconMapCurva).find(([k]) => tipoUp.includes(k))?.[1] || faSvg('circle-dot', 'font-size:7pt;color:#64748b;');
                     return `<span style="display:inline-flex;align-items:center;gap:2px;font-size:6.5pt;">${ic}<span style="color:#cbd5e1;font-weight:600;">${a.qty}</span></span>`;
                 }).join('');
                 const valorStr = desc > 0
@@ -407,7 +425,7 @@ const CSS = `
     .firma-name { font-size:8.5pt; font-weight:700; color:#1e293b; margin-top:1px; }
     .firma-cc { font-size:7pt; color:#64748b; }
     .doc-footer { margin-top:8px; border-top:1px solid #e2e8f0; padding-top:5px; display:flex; justify-content:space-between; font-size:6.5pt; color:#64748b; text-transform:uppercase; }
-    .fa-svg { display:inline-block; vertical-align:-0.125em; fill:currentColor; }
+    .fa-svg { display:inline-block; vertical-align:-0.125em; }
 `;
 
 const SVG_LOGO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="99 88 826 842" aria-label="Logo Grupo TDM">
