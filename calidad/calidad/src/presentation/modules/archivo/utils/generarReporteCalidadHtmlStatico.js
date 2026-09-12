@@ -384,7 +384,7 @@ function renderHallazgosStatico(raw) {
 
 const CSS = `
     *,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
-    body { font-family: Arial, Helvetica, sans-serif; font-size:9pt; color:#1e293b; background:#fff; line-height:1.4; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; font-size:9pt; color:#1e293b; background:#fff; line-height:1.4; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
     .sheet { width:100%; max-width:794px; margin:0 auto; padding:8mm 10mm; background:#ffffff; box-sizing:border-box; }
     .header-block { margin-bottom:.8rem; padding:.75rem 1rem; background:#fff; border:2px solid #3f51b5; border-radius:8px; }
     .header-title { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:.5rem; padding-bottom:.5rem; border-bottom:1px solid #e2e8f0; }
