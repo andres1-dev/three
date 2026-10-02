@@ -1,0 +1,19 @@
+{
+  "name": "productos-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for product management system",
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --outfile=public/dist/main.js --platform=browser --target=es2020 --sourcemap",
+    "dev": "esbuild src/main.ts --bundle --outfile=public/dist/main.js --platform=browser --target=es2020 --sourcemap --watch",
+    "serve": "npx serve public -l 3000"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.3.0"
+  }
+}
